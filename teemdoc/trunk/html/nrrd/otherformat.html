@@ -154,8 +154,10 @@ When writing a <tt>Nrrd</tt> to a text file (that is, using the
 <tt>nrrdFormatTable</tt> format), these field specifiers are by
 default not written (true as of teem version 1.5beta1).  However, this
 can be explicitly toggled by setting the <tt>bareTable</tt> field in
-the <tt>NrrdIO</tt> passed to <tt>nrrdSave()</tt> or <tt>nrrdWrite()</tt>.
-
+the <tt>NrrdIO</tt> passed to <tt>nrrdSave()</tt> or
+<tt>nrrdWrite()</tt>.  Or, prior to the creation of the
+<tt>NrrdIO</tt> (with <tt>nrrdIONew()</tt>), change the value of
+global default <tt>nrrdDefWrtBareTable</tt> to non-zero.
 
 <a name="pnm">&nbsp;</a>
 <h3>PGM/PPM images</h3>
