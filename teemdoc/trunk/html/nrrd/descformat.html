@@ -40,6 +40,8 @@ GK's C code: nrrd: General Description of the NRRD format
 
 <h2>General Description of the NRRD format</h2>
 
+(See also <a href="format.html">full definition</a> of NRRD format.)
+<p>
 Like the <b>nrrd</b> library, the main virtue of the NRRD file
 format is stark simplicity. The NRRD header is simple ASCII text, one field
 per line.  The fields in the header do not have a strict ordering, and
@@ -176,33 +178,23 @@ old min and max (range of values pre-quantization)
 <a name="MetaImage"><h2>NRRD compared to MetaImage format</h2></a>
 
 This format (specs available from <a
-href="http://tolkien.rad.unc.edu/technologies/MetaImage/"><tt>http://tolkien.rad.unc.edu/technologies/MetaImage/</tt></a>)
-was developed at the <a href="http://tolkien.rad.unc.edu">Computer
+href="http://caddlab.rad.unc.edu/software/MetaIO/"><tt>http://caddlab.rad.unc.edu/software/MetaIO/</tt></a>)
+was developed at the <a href="http://caddlab.rad.unc.edu/">Computer
 Aided Diagnosis and Display Lab</a> at UNC.  It is extremely similar
 to NRRD in terms of representational capabilities, in that it
-represents arrays of general type and dimension.
-
-<p> Here are some differences in representational capability or
-aspects of the file format.  In favor of MetaImage:
+represents arrays of general type and dimension.  As of the version 4
+of the NRRD file format (with magic "<tt>NRRD0004</tt>") there are
+no major differences between the representational abilities of the
+two formats.  There are some superficial differences. 
+In favor of MetaImage:
 
 <ul>
-
-<li> Having a detached header file give a list of image (slice) filenames,
-while describing those images as a volume, is quite powerful, and
-MetaIO has two different ways of doing this.  This feature is on the
-"to-do" list for NRRD.
 
 <li> The <tt>ElementNumberOfChannels</tt> field allows a nominally
 3-D data header to describe what is logically a 4-D array.  NRRD
 suffers from a slight weirdness in this regard (a color image is a 
 three-dimensional nrrd), a consequence of its "everything is a scalar"
 mentality.
-
-<li> The distinction between element size and element spacing is
-fundamental to properly representing MRI data when the slice thickness
-is different (usually less than) the spacing between slices.  NRRD
-doesn't know anything about this difference, but you can still store 
-this information in a key/value pair.
 
 </ul>
 
@@ -213,20 +205,25 @@ In favor of NRRD:
 
 <li> The NRRD format has a simple "magic" on a line by itself at the
 beginning of the file, to unambiguously identify the type of the file
-to multi-format readers.  File formats without magic lead to headaches.
+to multi-format readers.
 
-<li> NRRD has more than just raw and ascii encoding: gzip and bzip2
-compression, as well as hex.  Being able to directly inspect data that
-someone has run "gzip" on is extremely conveniant.
+<li> NRRD supports both gzip and bzip2 
+compression, as well as hex, and the underlying modular implementation
+allows new encodings to be easily added, which work with and without
+attached headers.
 
-<li> A more conservative approach to representing optional information.
+<li> A very conservative approach to representing optional information.
 If you don't know information like sample spacing, you don't include
 that field. The NRRD reader remembers that you didn't know spacing, 
-instead of inventing some default value.
+instead of inventing a default value.
 
-<li> Has a powerful associated program, <a
+<li> A flexible and general approach to defining the array orientation,
+which enables the lossless representation of orientation information
+from NIFTY-1, Analyze, and DICOM images.
+
+<li> Has a powerful associated command-line program, <a
 href="../unrrdu/index.html"><tt>unu</tt></a> for doing image
-manipulation and procesing quickly and easily on the command-line.
+manipulation and pre-procesing quickly and easily.
 The underlying <b>nrrd</b> <a href="lib.html">library</a> provides an
 easy-to-use C API to the same functionality.
 
@@ -239,55 +236,63 @@ the two formats:
 <table border=0 cellpadding=0 cellspacing=0>
 <tr>
 <td align=right><b>NRRD</b>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><b>MetaImage</b>
 <tr>
 <td align=right><tt>#</tt>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>Comment</tt>
 <tr>
 <td align=right><tt>dimension</tt>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>NDims</tt>
 <tr>
 <td align=right><tt>sizes</tt>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>DimSize</tt>
 <tr>
 <td align=right><tt>type</tt>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>ElementType</tt>
 <tr>
 <td align=right><tt>endian</tt>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>ElementByteOrderMSB</tt>
 <tr>
 <td align=right><tt>byte skip</tt>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>HeaderSize</tt>
 <tr>
 <td align=right><tt>min</tt>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>ElementMin</tt>
 <tr>
 <td align=right><tt>max</tt>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>ElementMax</tt>
 <tr>
+<td align=right><tt>thicknesses</tt>
+<td><tt>&nbsp;-&nbsp;</tt>
+<td align=left><tt>ElementSize</tt>
+<tr>
 <td align=right><tt>content</tt>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>Name</tt>
 <tr>
 <td align=right><tt>axis mins</tt>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>Position</tt>
 <tr>
+<td align=right><tt>space origin</tt>, <tt>space directions</tt>
+<td><tt>&nbsp;-&nbsp;</tt>
+<td align=left><tt>Orientation</tt>, <tt>AnatomicalOrientation</tt>
+<tr>
 <td align=right><tt>data file</tt>
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>ElementDataFile</tt>
 <tr>
 <td align=right>(not using a detached header)
-<td><tt>&nbsp;-&nbsp;
+<td><tt>&nbsp;-&nbsp;</tt>
 <td align=left><tt>ElementDataFile LOCAL</tt>
 </table>
 
@@ -301,10 +306,8 @@ This sort of information would be stored as key/value pairs in NRRD:
 <li> <tt>ObjectType</tt>, <tt>ObjectSubType</tt>, <tt>TransformType</tt>, 
   <tt>Modality</tt>: descriptive strings
 <li> <tt>ID</tt>, <tt>ParentID</tt>: integers
-<li> <tt>Color</tt>, <tt>Orientation</tt>, <tt>AnatomicalOrientation</tt>:
-arrays
-<li> <tt>SequenceID</tt>: 4-tuple of integers specific to DICOM format,
-which uniquely identifies the dataset.
+<li> <tt>Color</tt>: arrays
+<li> <tt>SequenceID</tt>: 4-tuple of integers specific to DICOM format.
 </ul>
 
 <p>
@@ -316,11 +319,11 @@ Some NRRD fields that MetaImage doesn't seem to have analogs for:
 properly representing the difference between histograms and other types
 of sampled signals.
 
-<li> <tt>axis maxs</tt>: Necessary for unambiguously storing
+<li> <tt>axis maxs</tt>: Helpful for unambiguously storing
 histograms, scatterplots, and images with a specific field of view.
 
 <li> <tt>old min</tt>, <tt>old max</tt>: Very handy for remembering
-a value range pre-quantization.
+the original range of floating point values, prior to quantization.
 
 <li> <tt>line skip</tt>: When snarfing data from other formats (VTK,
 VFF, VisPack, and even PostScript), specifying the skip in terms of lines
