@@ -31,28 +31,43 @@ The options for creating histogram volumes are seen by running:
 ~/usr/local/irix6.n32/bin/gkms hvol
 -->
 <blockquote><pre>
-usage: gkms hvol [-s v,g,h] [-p v,g,h] [-d v,g,h] [-h lapl|hess|gmg] &lt;input&gt; &lt;hvolOut&gt;
-Default values are in {}s
-  -s v,g,h : Strategies for determining inclusion of values in the histogram
-             volume.  Each of v,g,h can be ... 
-             "f": fraction of maximum range
-             "p": percentile of highest values to exclude
-             "a": absolute specification
-             "s": multiple of standard deviation
-             {f,p,p}
-  -p v,g,h : Parameters to control chosen inclusion strategies. Each of v,g,h
-             should be a scalar value.
-             {f: 1.0; p: 0.15; a: (no default); s: 70}
-  -d v,g,h : Dimensions of output histogram volume.  Each of v,g,h should be
-             an integer
-             {256,256,256}
--h lapl|hess|gmg: how to measure second derivative
-             "lapl": Laplacian
-             "hess": Hessian-based
-             "gmg": gradient of gradient magnitude
-             {hess}
-     input : 3-D scalar nrrd being analyzed
-   hvolOut : 3-D histogram volume to be created
+gkms hvol: Make histogram volume. The histogram volume is a three-dimensional
+histogram recording the relationship between data value, gradient magnitude,
+and the second directional derivative along the gradient direction. Creating
+it is the first step in semi-automatic transfer function generation. 
+
+Usage: gkms hvol [-s &lt;incV incG incH&gt;] [-d &lt;dimV dimG dimH&gt;] [-k00 &lt;kernel&gt;] \
+       [-k11 &lt;kernel&gt;] [-k22 &lt;kernel&gt;] [-l] [-slow] [-gz] -i &lt;volumeIn&gt; \
+       -o &lt;hvolOut&gt;
+
+-s &lt;incV incG incH&gt; = Strategies for determining how much of the range of a
+                      quantity should be included and quantized in its axis of
+                      the histogram volume. Possibilities include:
+                    o "f:&lt;F&gt;": included range is some fraction of the
+                      total range, as scaled by F
+                    o "p:&lt;P&gt;": exclude the extremal P percent of the
+                      values
+                    o "s:&lt;S&gt;": included range is S times the standard
+                      deviation of the values
+                    o "a:&lt;min&gt;,&lt;max&gt;": range is from &lt;min&gt; to &lt;max&gt;
+                      (3 inclusion strategies)
+                      default: "f:1.0 p:0.005 p:0.015"
+-d &lt;dimV dimG dimH&gt; = Dimensions of histogram volume; number of samples along
+                      each axis (3 ints); default: "256 256 256"
+      -k00 &lt;kernel&gt; = value reconstruction kernel; default: "tent"
+      -k11 &lt;kernel&gt; = first derivative kernel; default: "cubicd:1,0"
+      -k22 &lt;kernel&gt; = second derivative kernel; default: "cubicdd:1,0"
+                 -l = Use Laplacian instead of Hessian to approximate second
+                      directional derivative. No faster, less accurate.
+              -slow = Instead of allocating a floating point VGH volume and
+                      measuring V,G,H once, measure V,G,H multiple times on
+                      seperate passes (slower, but needs less memory)
+                -gz = Use gzip compression for output histo-volume; much less
+                      disk space, slightly slower to read/write
+      -i &lt;volumeIn&gt; = input scalar volume for which a transfer function is
+                      needed
+       -o &lt;hvolOut&gt; = output histogram volume, used by "gkms scat" and "gkms
+                      info" (string)
 </pre></blockquote>
 
 One result of my Master's thesis research is that the chances are very
@@ -60,7 +75,7 @@ high that you don't need to worry about any of the optional
 command-line parameters!  The default parameters generally work quite
 well.  So, for the impatient, this may be all you need:
 <blockquote><pre>
-gkms hvol engine-crop.nrrd engine-hvol.nrrd
+gkms hvol -i engine-crop.nrrd -o engine-hvol.nrrd
 </pre></blockquote>
 
 <p>
@@ -72,25 +87,24 @@ the "inclusion strategy".  I have found the most reliable way to
 determine inclusion is by looking at linear histograms of the
 derivative value, and then determining what range would exclude some
 <b>percentile</b> of the hits.  This is why the default inclusion
-strategy for the first and second derivative axes (of the histogram
-volume) is "p".  Any time that the data is something other than
-super-clean synthetic data, there are going to be a few very high
-derivative values.  These are the voxels which should <b>not</b> be
-included in the histogram volume because it would decrease the
-precision with which we can represent the meaningful variations in the
-derivative values.
+strategies for the first and second derivative axes (of the histogram
+volume) is "<tt>p:0.005 p:0.015</tt>".  Any time that the data is
+something other than super-clean synthetic data, there are going to be
+a few very high derivative values.  These are the voxels which should
+<b>not</b> be included in the histogram volume because it would
+decrease the precision with which we can represent the meaningful
+variations in the derivative values.
 
 <p>
 
 One the other hand, the range of data values should probably be fully
-represented, so the inclusion strategy is "f": some <b>fraction</b> of
-the full range.  In <tt>gkms</tt>, the default fraction is 1.0, that
-is, the whole value range.  In other cases, you know exactly what
-range of values to include, in which case it makes the most sense to
-use inclusion "a": <b>absolute</b> specification of the derivative
-values to be represented by the histogram.  Some multiple of the ("s")
-<b>standard deviation</b> may be another interesting inclusion
-strategy.
+represented, so the default inclusion strategy is "f:1.0": meaning
+100% of the range of values should be included.  In other cases, you
+know exactly what range of values to include, in which case it makes
+the most sense to use inclusion "a": <b>absolute</b> specification of
+the derivative values to be represented by the histogram.  Some
+multiple of the ("s") <b>standard deviation</b> may be another
+interesting inclusion strategy.
 
 <p>
 
@@ -101,7 +115,7 @@ makes more sense to skimp on the derivative axes, than on the data
 value axis.  For example, to make a histogram volume with only
 128 bits for the two derivative axes, you'd run:
 <blockquote><pre>
-gkms hvol engine-crop.nrrd -d 256,128,128 tmp.hvol
+gkms hvol -i engine-crop.nrrd -d 256 128 128 -o tmp.hvol
 </pre></blockquote>
 
 <p>
@@ -113,16 +127,18 @@ something based on the Hessian, and something based on the gradient of
 the gradient magnitude.  As explained in <a
 href="http://www.cs.utah.edu/~gk/MS/html/node34.html">Appendix C</a>
 of my thesis, I feel the Hessian-based measure is probably the best,
-so it is the default.
+so it is made available in <tt>gkms</tt>.  The other measurement methods
+were available in previous version, but all recent versions use
+<a href="../../gage/index.html"><b>gage</b></a> for convolution-based
+derivative measurement.  Thus, in <tt>gkms hvol</tt> you can choose the
+kernels that will be used for values, 1st derivatives, and 2nd derivatives.
+The default settings generate central and second central differences for
+1st and 2nd derivatives, respectively.
 
 </blockquote>
 
 <p>
-<a href="http://validator.w3.org/check/referer"><img border="0"
-src="../../img/valid-html32s.gif"
-alt="Valid HTML 3.2!" height="20" width="58"></a>
-</p>
-
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
 </body>
 </html>
 

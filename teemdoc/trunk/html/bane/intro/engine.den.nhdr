@@ -1,11 +1,9 @@
-NRRD00.01
+NRRD0001
 content: engine
-type: uchar
+type: unsigned char
 dimension: 3
 sizes: 256 256 110
-labels: "x" "y" "z"
-spacings: 1.0 1.0 1.0
+spacings: 1 1 1
 data file: ./engine.den
-byte skip: 62
 encoding: raw
-
+byte skip: 62
