@@ -9,7 +9,7 @@
 <html>
 <head>
 <title>
-GK's C code: nrrd: Making the Visible Man Head
+GK's C code: nrrd: Making the Visible Man CT Head
 </title>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
 </head>
@@ -26,6 +26,10 @@ GK's C code: nrrd: Making the Visible Man Head
   <td width=80 height=80>
     <a href="../index.html"><img border=0 width=80 height=80 alt=""
     src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../demo.html"><img border=0 width=80 height=80 alt=""
+    src="../demo80.png"></a>
   <td>
 <tr>
   <td width=80 align=center valign=top>
@@ -34,8 +38,12 @@ GK's C code: nrrd: Making the Visible Man Head
     <b>/</b>
   <td width=80 align=center valign=top>
     <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../demo.html">demo</a></b>
   <td>
-    <h2>&nbsp;&nbsp;<b>Making the Visible Man Head</b></h2>
+    <h2>&nbsp;&nbsp;<b>Making the Visible Man CT Head</b></h2>
 </table>
 
 The frozen CT slices of the Visible Human male dataset are very good
@@ -59,8 +67,9 @@ ln -s <b>......</b>/VisibleHuman/male/radiological/frozenCTHeaders hdrs
 
 <p>
 
-One very useful trick: using <tt>xv</tt>, you can inspect one of the
-slices without needing to save out any other files:
+One very useful trick: using <tt>zcat</tt> and <tt>unu</tt> feeding
+into <tt>xv</tt>, you can inspect one of the slices directly from
+disk, without saving out any other files:
 
 <blockquote><pre>
 zcat data/c_vm1100.fro.Z \
