@@ -1,0 +1,18 @@
+# from, at, and up
+-fr 2 -5.4 4.8 
+-fr 3 -8.1 7.2
+-at 0 0 0
+-up 0 0 1
+
+# Gordon likes his coordinates right-handed
+-rh 
+
+# the near and far clipping planes contain the volume, and
+# the image plane cuts right through the middle of the volume
+-ar -dn -2 -di 0 -df 2 
+
+# these are big enough to capture the whole volume
+-ur -1.5 1.5 -vr -1.5 1.5
+
+# smallish image for now
+-is 200 200

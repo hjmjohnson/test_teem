@@ -1,0 +1,408 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2003, 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: mite: Overview of miter options
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<A href="http://sourceforge.net"><IMG 
+ src="http://sourceforge.net/sflogo.php?group_id=85445&amp;type=2"
+ align=right width="125" height="37" border="0" alt="SourceForge.net Logo"></A>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/mite80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">mite</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Overview of <tt>miter</tt> options</b></h2>
+</table>
+
+<tt>Miter</tt> needs six kinds of information to make a rendering:
+<ol>
+<li> Volume input, image output
+<li> Camera and image information
+<li> Lighting and surface properties
+<li> Kernels used in filtered sampling
+<li> Ray and compositing parameters
+<li> Transfer functions
+</ol>
+
+All of these are communicated to <tt>miter</tt> with various
+command-line options.  All the command-line parsing is done by <a
+href="../hest/index.html"><b>hest</b></a>.  
+
+<p>
+
+One very useful capability of <b>hest</b> is its support for "response
+files": text files that contain command-line options, especially those
+that aren't changing between multiple invocations of the same command.
+Response files can have multiple lines, with comments, to help clarify
+what information is being communicated.  See a 
+<a href="./demo0/index.html">basic <tt>miter</tt> demo</a> for an
+example of response file usage.
+
+<h3>1. Volume Input, Image Output</h3>
+
+<ul>
+<li> <tt>-i</tt> &lt;<i>input volume</i>&gt; : the 3-D nrrd to be
+volume rendered
+<li> <tt>-o</tt> &lt;<i>output image</i>&gt; : the RGBA rendering output
+</ul>
+
+<tt>Miter</tt> can render 3-D scalar data of any type, from unsigned
+char up to double.  The output of <tt>miter</tt> is a four-channel
+RGBA image of floats, usually saved as a nrrd.  Storing the opacity
+channel allows you to composite the rendering over different colors or
+patterns.  Using floating point ensures that operations like gamma
+correction can be done without any visual artifacts.
+
+<p>
+
+The <b>teem</b> program <tt>overrgb</tt> is the best way to convert
+the floating point RGBA output of <tt>miter</tt> into an 8-bit RGB
+image suitable for publication or the web.
+
+<h3>2. Camera and Image information</h3>
+
+The volume being rendered by <tt>miter</tt> is always centered at the
+origin in world-space, inscribed in a bi-unit cube from -1 to 1 along
+the X, Y, and Z axes.  Any non-isotropic voxels in the volume affects
+its aspect ratio and how it is inscribed in this cube, but the world
+space around the cube is of course independent from voxel spacings.
+
+<p>
+
+<tt>Miter</tt> uses the same set of command-line options for camera
+information as other <b>teem</b> programs.  There are unfortunately
+many different variables that have to set for the camera.  All
+(&lt;<i>X</i>&gt; &lt;<i>Y</i>&gt; &lt;<i>Z</i>&gt;</tt>) coordinates
+are in world coordinates.
+
+<ul>
+
+<li> <tt>-fr</tt> &lt;<i>X</i>&gt; &lt;<i>Y</i>&gt; &lt;<i>Z</i>&gt; :
+From point, or eye point; where camera is located, in world coordinates
+
+<li> <tt>-at</tt> &lt;<i>X</i>&gt; &lt;<i>Y</i>&gt; &lt;<i>Z</i>&gt; :
+At point; point that camera is nominally looking at.
+
+<li> <tt>-up</tt> &lt;<i>X</i>&gt; &lt;<i>Y</i>&gt; &lt;<i>Z</i>&gt; :
+Up vector; direction that projects to vertical in the image plane.
+
+<li> <tt>-dn</tt> &lt;<i>distance</i>&gt : distance to the near clipping plane
+
+<li> <tt>-df</tt> &lt;<i>distance</i>&gt : distance to the far clipping plane
+
+<li> <tt>-di</tt> &lt;<i>distance</i>&gt : distance to the image plane. 
+The "from" point 
+(<tt>-fr</tt>) and the "at" point (<tt>-at</tt>) only define a view origin
+and a view direction.  The placement of the image plane along this
+view direction has to be specified, since it is not always exactly 
+at the "at" point.
+
+<li> <tt>-ar</tt> : The plane distances above are to be at-relative.
+Without this option (the default),
+the image plane, and the near and far clipping planes are specified
+relative to the from "from" point (and they all must be positive).
+With this option, they are specified relative to the "at" point (and
+they can be positive or negative).
+
+<li> <tt>-rh</tt> : right-handed coordinate frame.  Without this option
+(the default), the <b>V</b> vector points upwards.  Since <b>U</b> points
+to the right, and <b>W</b> points towards the at point, this means that
+(<b>U</b>, <b>V</b>, <b>W</b>) is a left-handed view-space coordinate frame.
+With the <tt>-rh</tt> option, <b>V</b> points downwards, leading to a
+right-handed coordinate frame.
+
+<li> <tt>-or</tt> : orthogonal projection, instead of perspective projection.
+
+<li> <tt>-ur</tt> &lt;<i>Umin</i>&gt &lt;<i>Umax</i>&gt : U-range ;
+the range of horizontal positions on the 
+image plane that should be included in the image.  The line from "from" to
+"at" hits the image plane at U == 0.  
+
+<li> <tt>-vr</tt> &lt;<i>Umin</i>&gt &lt;<i>Umax</i>&gt : V-range ;
+the range of vertical positions on the 
+image plane that should be included in the image.  The line from "from" to
+"at" hits the image plane at V == 0.  
+
+<li> <tt>-is</tt> &lt;<i>Usize</i>&gt &lt;<i>Vsize</i>&gt : Image size 
+in integers; the resolution of the image to render.
+
+</ul>
+
+<b>Hest</b>'s "response files" come in especially handy with dealing
+with the many camera parameters.
+
+<h3>3. Lighting and surface properties</h3>
+
+For now, <tt>miter</tt> supports exactly one light, and it is always
+white.  All you can control is its direction, or rather, its
+"location", which is actually extended out to infinity in order to
+create a directional light.  Furthermore, you can only specify the
+light location in <b>view-space</b>, not world-space.  This is done
+with the "<tt>-ld</tt>" option:
+<ul>
+<li> <tt>-ld</tt> &lt;<i>X</i>&gt; &lt;<i>Y</i>&gt; &lt;<i>Z</i>&gt; :
+Light "position" in view space.
+</ul>
+
+<p>
+
+<tt>Miter</tt> supports the Phong lighting model, which gives
+you a few parameters to vary:
+<ul>
+<li> <tt>-am</tt>
+&lt;<i>R<sub>am</sub></i>&gt;
+&lt;<i>G<sub>am</sub></i>&gt;
+&lt;<i>B<sub>am</sub></i>&gt; : Ambient light color.
+<li> <tt>-ads </tt>
+&lt;<i>k<sub>a</sub></i>&gt;
+&lt;<i>k<sub>d</sub></i>&gt;
+&lt;<i>k<sub>s</sub></i>&gt; : Coefficients of ambient,
+diffuse, and specular contributions
+<li> <tt>-sp</tt> &lt;<i>power</i>&gt; : Specular power
+</ul>
+
+Except for specular power ("<tt>-sp</tt>"), all these numbers are
+intended to vary from 0.0 to 1.0 (but you can set them to whatever you
+want).  For the sake of simplicity, the k<sub>a</sub>, k<sub>d</sub>,
+k<sub>s</sub> values do <b>not</b> vary with the red, green, and blue
+channels.  The idea is that the transfer function assigns an intrinsic
+material color, which in visualization contexts is apt to vary across
+the surface.  The Phong shading parameters determine the surface
+appearance, and they are less apt to vary over the surface.
+
+<h3>4. Kernels used in filtered sampling</h3>
+
+The benefit of using <b>gage</b> for all volume measurements is that
+you can get very high quality filtered sampling of the volume.
+<b>Gage</b> uses seperable convolution of the original data values
+with various continuous kernels in order to measure the values and
+derivatives that are needed for the transfer function domain
+variables, and for shading.  Nothing is pre-computed- all quantities
+are computed <i>de novo</i> at each sample point along the ray.
+
+<p>
+
+
+For all this to work, you have to choose a set of kernels to use
+for the convolution based measurements.  Signal processing tells us
+that the choice of kernel can have a big effect on the quality of
+the resulting measurements, so some prior knowledge on your part
+is assumed here.  The kernels used here come from <b>nrrd</b>:
+
+<ul>
+<li> <tt>-k00</tt> &lt;<i>kernel specification</i>&gt; :
+The kernel used to reconstruct or interpolate the scalar data values
+that comprise the dataset.
+
+<li> <tt>-k11</tt> &lt;<i>kernel specification</i>&gt; :
+The kernel used to measure first derivatives, used for finding the 
+gradient direction for shading, and the gradient magnitude for
+transfer functions.  Often, this is the first derivative of a reconstruction
+or interpolation kernel.
+
+<li> <tt>-k22</tt> &lt;<i>kernel specification</i>&gt; :
+The kernel used to measure second derivatives. 
+Often, this is the second derivative of a reconstruction
+or interpolation kernel.
+</ul>
+
+The kernel specifications is of the same form as used for
+<a href="../unrrdu/resample.html"><tt>unu resample</tt></a>, and
+many different kernels are possible.  However, this combination of
+kernels is quite useful:
+<blockquote><pre>
+-k00 cubic:0,0.5 -k11 cubicd:1,0 -k22 cubicdd:1,0 
+</pre></blockquote>
+The "<tt>cubic</tt>" kernels are the BC-family of cubics described
+by Mitchell and Netravali.  "<tt>-k00 cubic:0,0.5</tt>" specifies
+that the Catmull-Rom kernel be used for interpolating data values.
+"<tt>-k11 cubicd:1,0</tt>" specifies that the first derivative of
+the B-spline kernel be used for measuring first derivatives, and
+similarly "<tt>-k22 cubicdd:1,0</tt>" says that the second derivative
+of the B-spline kernel should be used for measuring second derivatives.
+
+<p>
+
+Even if the transfer function does not require any second derivative
+information, there is no harm in specifying it.
+
+<h3>5. Ray and compositing parameters</h3>
+
+Because this is a ray-casting volume renderer, you need to set parameters
+describing the sampling along the ray and the compositing of those samples.
+
+<ul>
+
+<li> <tt>-step</tt> &lt;<i>step size</i>&gt; : Sampling step size along the 
+rays, in world space.  This is going to be a small number, considering
+that the whole volume fits in the [-1,1]<sup>3</sup> cube at the origin.
+If you want to set a particular sampling rate relative to the voxel
+size, that's up to you.  This is the most important knob in controlling the 
+trade-off between quality and rendering speed.
+
+<li> <tt>-ref</tt> &lt;<i>reference step</i>&gt; : <b>mite</b> is
+smart about modifying the opacity of the samples to compensate for
+changes in step size.  That is, halving an already small step size
+should result in a rendering of comparable appearance.  The mathematics
+here rely on some step size as being the reference (for which there is
+no opacity correction), and that is given by this option.
+
+<li> <tt>-nt</tt> &lt;<i># threads</i>&gt; : Thanks to <b>hoover</b>,
+<tt>miter</tt> is multi-threaded, although the load-balancing is a little
+dumb at the moment.  This is how you specify the number of threads.  
+If your <b>teem</b> wasn't built with pthreads enabled, then setting
+this has no effect; only one thread is used.
+
+<li> <tt>-n1</tt> &lt;<i>near 1.0</i>&gt; : An opacity value close
+enough to 1.0, so that if a ray has this opacity, it is terminated
+early.
+
+</ul>
+
+<h3>6. Transfer functions</h3>
+
+Last but not least, the transfer function has to be specified in order
+to make a volume rendering.  <b>Mite</b> uses seperable transfer
+functions of arbitrarily high dimension.  That is, you give
+<b>mite</b> a list of transfer functions (however many you want), each
+of which specifies some number of optical properties as a function of
+some number of locally measured data properties:
+<ul>
+<li> <tt>-txf</tt> 
+&lt;<i>function 0</i>&gt; 
+&lt;<i>function 1</i>&gt; 
+&lt;<i>function 2</i>&gt;  ...
+</ul>
+
+<b>Mite</b> will use
+the multiplicative product of all those transfer functions in the
+rendering.  In practice, the dimension of the individual transfer
+functions is at most two.  One current limitation is that the
+individual transfer functions ware only lookup tables: not even linear
+interpolation is supported.
+
+<p>
+
+As one might guess, Nrrds are used to represent transfer functions.
+There are some specific conventions for how the domain and range
+of the transfer function are encoded in the nrrd; these are described
+here.
+
+<p>
+
+The first axis in the nrrd always encodes the <b>range</b> of the transfer
+function.  Whether the range of the transfer function is a single
+scalar (such as opacity), or a list of scalars (such as RGB color), one axis
+of the nrrd is reserved for describing the
+transfer function range.  
+Thus, the dimension of the nrrd is always one greater than the
+dimension of the transfer function.  A transfer
+function which assigns opacity as a function of one quantity (data
+value) is a one-dimensional transfer function, but it is
+represented with a two-dimensional nrrd.
+The quantities
+in the range of the transfer function are specified in the <b>label</b>
+of axis zero, according to a set of single-letter codes:
+
+<ul>
+<li> "<tt>A</tt>" : opacity
+<li> "<tt>R</tt>" : red
+<li> "<tt>G</tt>" : green
+<li> "<tt>B</tt>" : blue
+<li> "<tt>E</tt>" : emissivity
+<li> "<tt>a</tt>" : phong ambient coefficient
+<li> "<tt>d</tt>" : phong diffuse coefficient
+<li> "<tt>s</tt>" : phong specular coefficient
+<li> "<tt>p</tt>" : phong specular power
+</ul>
+
+The number of samples along axis zero has to exactly match the
+number of characters in the axis zero label.  For transfer functions
+which assign only opacity, the axis zero label will be "A", and the
+number of samples along axis zero will be one.
+
+<p>
+
+The remaining dimensions of the nrrd give the <b>domain</b> of the
+transfer function, one dimension per transfer function domain
+variable.  Two pieces of information need to be set along an axis in
+order for <b>mite</b> to understand it as a transfer function domain
+variable.  First, the <b>axis min</b> and <b>axis max</b> fields have
+to be set to the minimum and maximum value of the domain variable
+that is handled by the lookup table.  Measured values outside this
+range are clamped to the range.
+
+<p>
+
+Second, the axis label identifies which quantity is used for that axis
+of the transfer function.  <b>Mite</b> will measure this quantity,
+clamp it to the interval of domain values given by the axis min and
+max, and then perform the lookup into the transfer function table.
+The domain variable quantities are essentially every scalar that <b>gage</b>
+knows how to measure in a scalar field, combined with some other
+numbers that <b>mite</b> computes for you along each ray.
+
+<ul>
+<li> "<tt>gage(v)</tt>" : data value
+<li> "<tt>gage(gm)</tt>" : gradient magnitude
+<li> "<tt>gage(l)</tt>" : Laplacian
+<li> "<tt>gage(2d)</tt>" : 2nd directional derivative along gradient direction
+<li> "<tt>gage(k1)</tt>" : 1st principle curvature
+<li> "<tt>gage(k2)</tt>" : 2nd principle curvature
+<li> "<tt>gage(cv)</tt>" : "curvedness" (total curvature): L2 norm of K1, K2
+<li> "<tt>gage(st)</tt>" : (K1+K2)/Curvedness
+<li> "<tt>gage(si)</tt>" : Koenderink's curvature shape index
+<li> "<tt>gage(mc)</tt>" : Mean curvature
+<li> "<tt>gage(gc)</tt>" : Gaussian curvature
+<li> "<tt>gage(fc)</tt>" : Flowline curvature
+<li> "<tt>Xw</tt>" : X position, world space
+<li> "<tt>Xi</tt>" : X position, index space
+<li> "<tt>Yw</tt>" : Y position, world space
+<li> "<tt>Yi</tt>" : Y position, index space
+<li> "<tt>Zw</tt>" : Z position, world space
+<li> "<tt>Zi</tt>" : Z position, index space
+<li> "<tt>Tw</tt>" : position along ray (world space)
+<li> "<tt>Ti</tt>" : ray index, ray sample number
+<li> "<tt>NdotV</tt>" : surface normal dotted with view vector 
+(which points towards eye)
+<li> "<tt>NdotL</tt>" : surface normal dotted with light vector
+(which points towards light location)
+<li> "<tt>GTdotV</tt>" : normal curvature in view direction
+</ul>
+
+<p>
+
+For example, a rendering of unsigned 8-bit data might use a single
+transfer function, giving opacity as a function of data value. 
+The two-dimensional nrrd used for this has an axis[0] label of "<tt>A</tt>".
+On axis[1], the min and max are probably 0 and 255 respectively,
+and the axis[1] label is "<tt>gage(v)</tt>".
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
