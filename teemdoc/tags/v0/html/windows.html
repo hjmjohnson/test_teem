@@ -1,0 +1,157 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Teem on Windows
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>Teem on Windows</h1>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="./index.html">teem</a></b>
+  <td>
+  <td>
+  <td>
+</table>
+
+<p>
+
+<h2>Using Teem:</h2>
+
+On Windows all the <b>teem</b> libraries are built into one monolithic
+DLL and an import library that <b>teem</b> users can link against.  While 
+<b>teem</b> normally builds about a dozen little <a
+href="./bin/index.html">command-line programs</a>, only the few listed
+below are currently included in the Windows distribution.
+
+<p>
+
+You can download precompiled binaries with the compression encodings
+enabled or not.  For both, you'll need to copy <tt>lib/teem.dll</tt>
+to somewhere within the Windows path.  For the compression encodings,
+you'll need to download (and copy into Windows path) the DLLs for zlib
+and bzip2 as described below.
+
+<p>
+
+Note that the precompiled binaries are linked against the
+<b>multithreaded DLL</b> version of the Windows C runtime library
+(MSVCRT.lib).  This means that you have to link against the same
+library in your project by setting the appropriate compiler flag
+(/MD), which is unfortunately not the default setting in Visual Studio.
+Linking against a different version will result in <b>unexpected
+crashes</b> of your program.
+
+<p>
+<center>
+<hr width="80%" noshade>
+</center>
+<p>
+
+<h2>Building Teem:</h2>
+<ol>
+
+<li> <a href="download/index.html">Download</a> the <b>teem</b>
+distribution
+
+<li> Untar it.<br>
+Throughout this and all other <b>teem</b> documentation, the directory
+just created will be referred to as "<tt>teem</tt>", even though it
+will actually be called "<tt>teem-1.XblahN</tt>" or something similar.
+
+<li> Go into this directory.
+
+<li> Go into the "win32/make" directory.
+
+</ol>
+
+<h3>Visual Studio 6.0 users</h3>
+<ol> 
+<li> Go into the "vc6" directory.
+<li> Open the Visual Studio 6.0 workspace file (teem.dsw).
+<li> Select the configuration you want to compile (Release / Debug /
+Release Compression / Debug Compression) using
+the Build menu's Set Active Configuration item.
+<li> Select all projects by shift-clicking on them in the workspace file-view
+window.
+<li> Right click on the selection and hit "Build" in the
+pop-up menu.
+</ol>
+
+<h3>Visual Studio .NET users</h3>
+<ol>
+<li> Go into the "vc7" directory.
+<li> Open the Visual Studio .NET solution file (teem.sln).
+<li> Select the configuration you want to compile
+(Release / Debug / Release + Compression / Debug + Compression) using
+the Build menu's Configuration Manager item.
+<li> In the solution explorer window right click on "Solution 'teem'" and hit
+"Build Solution" in the pop-up menu.
+</ol>
+
+The libraries and executables are compiled in the win32/lib and win32/bin
+ subdirectories and comprise:
+  <ul>
+  <li>lib/teem.dll and lib/teem.lib<br>
+  lib/teemd.dll and lib/teemd.lib are the Debug versions
+  <li>bin/<a href="unrrdu/index.html">unu</a>.exe: Utah Nrrd Utilities.
+  Command-line nrrd interface, piping works as of version 1.5beta1.
+  <li>bin/<a href="bane/intro/index.html">gkms</a>.exe: 
+  Semi-automatic generation of transfer functions.
+  <li>bin/<a href="bin/qbert/index.html">qbert</a>.exe:
+  Generating volumes for <a href="http://www.cs.utah.edu/~jmk/simian/">Simian</a>
+  <li>bin/<a href="bin/mrender/index.html">mrender</a>.exe:
+  Command-line volume rendering without lighting or transfer functions.
+  </ul>
+By default these files and the public headers are copied into the
+bin, lib, and include subdirectories of the teem root directory during
+ the build.  Optionally, you can set the $TEEM_DEST environment variable to
+  customize the installation.  Note that the directory $TEEM_DEST
+ points to must contain bin, lib, and include subdirectories, 
+otherwise the installation will fail.
+
+You can also copy the dll and the executables manually to a directory in the Windows
+path ($PATH).  In this case, the import library (teem.lib) usually goes into one of
+the Visual Studio library directories (e.g. 'path to visual
+studio'\Vc7\lib).  Likewise, the headers can be placed in one of the Visual
+Studio include directories.
+
+<p>
+
+The compression options require the zlib and bzip2 libraries, which
+are available in source or precompiled Windows binary form at <a
+href="http://www.gzip.org/zlib/">http://www.gzip.org/zlib/</a> and 
+<a
+href="http://sources.redhat.com/bzip2/">http://sources.redhat.com/bzip2/</a>.
+These libraries must be available to the compiler, e.g. by copying the
+import libraries and headers to the Visual Studio library and include
+subdirectories, otherwise the build will fail.
+
+<p>
+
+No <b>teem</b> development is currently done on Windows.  Using the
+Visual Studio files is simply the path-of-least-borg-resistance for
+distributing sources in a form that facilitates easy building on
+Windows.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

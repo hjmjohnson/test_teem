@@ -1,0 +1,93 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: hest: Comments, other information
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/hest80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">hest</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Comments, other information</b></h2>
+</table>
+<p>
+
+Computer science graduate students should not be spending their time
+writing libraries for command-line parsing.  I spent the time to write
+this because I couldn't find a simple C library with the features I
+was after: flagged and unflagged, variable and fixed arguments of many
+different types, with response files, and automatic generation of
+usage and option information.  The primary motivation for this was to
+provide a consistent command-line interface for all the <a
+href="../unrrdu/index.html"><b>unrrdu</b></a> tools.  I can only hope that other
+people can find some use for this.
+
+<p>
+
+The current <b>hest</b> implementation has some characteristics which
+should probably be considered short-comings, but in the interests of
+time and simplicity I've decided to document them, rather than fix them.
+In order of decreasing importance:
+
+<ul>
+
+<li>String parameters shouldn't contain space, because the simple
+methods of parsing the parameters into options can get confused.
+
+<li>Only one level of response file expansion is supported: response
+files themselves can't name more response files in which to find
+further arguments.
+
+<li>There is no simple way for the <tt>hestParse()</tt> caller to know
+what string or strings were parsed in order to specify the value for
+an option.
+
+<li>Only one one unflagged variable parameter option.  One could
+theoretically deal with a sequence of unflagged single variable
+parameter options at the very end of the command line (with usage info
+like "<tt>[&lt;a&gt; [&lt;b&gt; [&lt;c&gt;]]]</tt>"), but this
+requires more complicated logic.
+
+</ul>
+
+Surely there are other short-comings, hopefully the <tt>hestParm</tt>
+argument to all the important functions will provide the avenue for
+increased future flexibility.
+
+<p>
+
+Like much of <b>teem</b>, <b>hest</b> has been <a
+href="http://www.rational.com/products/purify_unix/index.jsp">purified</a>
+to minimize the chance of memory leaks, which is important given how
+much dynamic memory allocation it does.
+
+<p><a href="http://validator.w3.org/check/referer">&nbsp;</a>
+
+</body>
+</html>
+
+

@@ -1,0 +1,66 @@
+nrrd: Nearly Raw Raster Data
+
+nrrd is a software library which was written to assist scientific
+visualization and imaging research which involves representing and
+manipulating raster data.  Originally written by Gordon Kindlmann as a
+tool in his own research, its usage has grown to other members in the
+SCI group, and it is now the basis of some optional modules in BioPSE.
+
+Stark simplicity is the main principle of nrrd. The goal of nrrd is
+not to introduce any layers of abstraction between the programmer and
+the numerical data resident in the computer's memory.  Rather, the
+point is to create the thinnest and most simplistic possible interface
+to raster data.  For instance, it assumes that the programmer is
+comfortable with thinking about arrays as being simultaneously
+multi-dimensional in logical structure while strictly uni-dimensional
+in memory layout.  This comes fairly easily to people who have spent
+significant time manipulating and processing data in "raw" form.
+Essentially, nrrd is a toolbox for making the manipulation of raw data
+more convenient for those programmers who are comfortable thinking at
+that low level of representation, or for those software components
+that need to operate at that level.  As such, it does not rely on or
+offer any of the operational mechanisms or syntactic pleasantries of
+C++; nrrd is implemented in C alone.
+
+nrrd is able to represent raster data of any dimension and any type
+(fixed point or floating point), from unsigned char up to long long
+double, or a user-defined type described at run-time.  The basic unit
+of the nrrd library is the Nrrd struct, which is little more than a
+thin wrapper around a "void *" pointing to the underlying raw array in
+memory.  The wrapper holds information such as the type, dimension,
+axis lengths, and comments.
+
+The closest analog in Unix software is the "xv" tool for image viewing
+and manipulation, which makes no claims to Photoshop-level power and
+grace, but which is still an indespensible tool for all daily mundane
+operations on images. nrrd functionality includes:
+cropping + padding
+slicing + stitching
+blurring, filtering, or other resampling
+quantizing floating point data to fixed point
+casting between data types
+axis permutation
+histogramming, histogram image generation
+axis-histogramming
+projection
+PGM and PPM images
+
+Given the class of operations that nrrd offers, an important role that
+nrrd can play in the context of a larger software system is that of a
+data pre-processing engine, in which both the input and output is raw
+raster data (as opposed to higher-level processing such as
+segmentation or visualization).  ... ? ... For instance, bane
+in a weekend thanks to histogram madness.
+
+In addition to this functionality, nrrd also supports a simple file
+format: human-readable and editable ASCII header on top of raw (or
+ASCII) data.  To make it easier to extract data from other file
+formats, the header can be a seperate file, recording how and where
+tbe data can be found in some other file, raw or otherwise.
+
+nrrd is one library out of a larger set of libraries being developed
+by Gordon Kindlmann, called "teem".  teem includes a set of tools, the
+Utah Nrrd Utilities (unrrdu), based on the nrrd library and providing
+much of its functionality to a simple command-line interface.  Also
+in teem is bane...
+

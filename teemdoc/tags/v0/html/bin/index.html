@@ -1,0 +1,135 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: teem bins
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="../img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>bins</h1>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td>
+  <td align=center>
+    <img width=256 height=256 alt="Some bins, of course"
+      src="../img/bin256.jpg"><br>
+  <td align=left valign=middle><font size="+1">
+    - <!-- <a href="pos2idx/index.html"> --><tt>pos2idx,idx2pos</tt><!-- </a> --><br>
+    - <a href="../unrrdu/index.html"><tt>unu</tt></a><br> 
+    - <!-- <a href="qbert/index.html"> --><tt>qbert</tt><!-- </a> --><br> 
+    - <!-- <a href="overrgb/index.html"> --><tt>overrgb</tt><!-- </a> --><br> 
+    - <a href="ilk/index.html"><tt>ilk</tt></a><br> 
+    - <!-- <a href="ungantry/index.html"> --><tt>ungantry</tt><!-- </a> --><br> 
+    - <!-- <a href="mrender/index.html"> --><tt>mrender</tt><!-- </a> --><br> 
+    - <!-- <a href="vprobe/index.html"> --><tt>vprobe</tt><!-- </a> --><br> 
+    - <a href="../bane/intro/index.html"><tt>gkms</tt></a><br> 
+    - <!-- <a href="miter/index.html"> --><tt>miter</tt><!-- </a> --><br>
+   </font>
+</table>
+
+<h2>Command-line tools</h2>
+
+Anything useful in <b>teem</b> is implemented in one the libraries.
+However, writing C/C++ code to use these libraries is not always very
+convenient.  Therefore, <b>teem</b> comes with some simple
+command-line tools which provide fast and easy access the
+functionality in the various libraries.  All of these programs are
+compiled from a single source file, usually very short (the
+<tt>unu</tt> program itself is only 90 lines long).  They are built
+when you do a <a href="../build.html">full build</a> of <b>teem</b>
+(but Windows users only get <tt>unu</tt>, <tt>qbert</tt>,
+<tt>gkms</tt>, and <tt>mrender</tt>).  Most of the programs use <a
+href="../hest/index.html"><b>hest</b></a> for their command-line
+parsing.
+
+<p>
+
+<blockquote>
+<table border=0 cellpadding=10 cellspacing=0>
+<tr>
+  <td align=right valign=middle>
+    <!-- <a href="pos2idx/index.html"> --><tt>pos2idx</tt><br><tt>idx2pos</tt><!-- </a> -->
+  <td align=left>
+    Converting between index and "world" space, given the distinction
+    between node-centered and cell-centered samples.  Very boring,
+    very fundamental.
+<tr>
+  <td align=right valign=middle>
+    <a href="../unrrdu/index.html"><font size="+2"><tt>unu</tt></font></a>
+  <td align=left>
+    Utah Nrrd Utilities
+<tr>
+  <td align=right valign=middle>
+    <!-- <a href="qbert/index.html"> --><font size="+2"><tt>qbert</tt></font><!-- </a> -->
+  <td align=left>
+    Measures values, gradients, and second directional derivatives in
+    a scalar volume, in order to generate a dataset that can be used by
+    the <a href="http://www.cs.utah.edu/~jmk/simian/">Simian</a>
+    volume renderer.
+<tr>
+  <td align=right valign=middle>
+    <!-- <a href="overrgb/index.html"> --><font size="+2"><tt>overrgb</tt></font><!-- </a> -->
+  <td align=left>
+    Takes an RGBA nrrd and composites over a given background color,
+    with gamma correction, to produce an 8-bit RGB image.
+<tr>
+  <td align=right valign=middle>
+    <a href="ilk/index.html"><font size="+2"><tt>ilk</tt></font></a>
+  <td align=left>
+    Geometric transformations on images with filtered sampling.
+<tr>
+  <td align=right valign=middle>
+    <!-- <a href="ungantry/index.html"> --><font size="+2"><tt>ungantry</tt></font><!-- </a> -->
+  <td align=left>
+    For CT scans acquired with an angled image plane, this removes
+    the "gantry tilt" by shearing the data back to a rectilinear grid.
+<tr>
+  <td align=right valign=middle>
+    <!-- <a href="mrender/index.html"> --><font size="+2"><tt>mrender</tt></font><!-- </a> -->
+  <td align=left>
+    Volume rendering without shading or transfer functions.  More
+    interesting than you might think.
+<tr>
+  <td align=right valign=middle>
+    <!-- <a href="vprobe/index.html"> --><font size="+2"><tt>vprobe</tt></font><!-- </a> -->
+  <td align=left>
+    Produce a volume of measurements from a volume of data.  Can produce
+    a volume of gradient magnitudes, or gradient vectors, from a
+    scalar volume input.
+<tr>
+  <td align=right valign=middle>
+    <a href="../bane/intro/index.html"><font size="+2"><tt>gkms</tt></font></a>
+  <td align=left>
+    The algorithms implemented for my
+    <a href="http://www.cs.utah.edu/~gk/MS">Master's Thesis</a>
+    on the semi-automatic generation of transfer functions.
+<tr>
+  <td align=right valign=middle>
+    <!-- <a href="miter/index.html"> --><font size="+2"><tt>miter</tt></font><!-- </a> -->
+  <td align=left>
+    Volume rendering with shading and transfer functions.
+  
+</table>
+</blockquote>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

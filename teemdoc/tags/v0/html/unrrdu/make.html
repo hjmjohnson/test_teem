@@ -1,0 +1,219 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: unu make
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h1>&nbsp;&nbsp;<b><tt>unu make</tt></b></h1>
+</table>
+
+<blockquote><pre>
+unu make: Create a nrrd (or nrrd header) from scratch. The data can be in a
+file or coming from stdin. This provides an easy way of providing the bare
+minimum information about some data so as to wrap it in a nrrd, either to pass
+on for further unu processing, or to save to disk. However, with "-h", this
+creates only a detached nrrd header file, without ever reading or writing
+data.
+
+Usage: unu make [-h] -i &lt;file&gt; -t &lt;type&gt; -s &lt;sz0 sz1 ...&gt; [-sp &lt;spc0 \
+       spc1 ...&gt;] [-l &lt;lab0 lab1 ...&gt;] [-c &lt;content&gt;] [-ls &lt;lineskip&gt;] \
+       [-bs &lt;byteskip&gt;] [-e &lt;encoding&gt;] [-en &lt;endian&gt;] [-o &lt;nout&gt;]
+
+                 -h = Generate header ONLY: don't write out the whole nrrd,
+                      don't even bother reading the input data, just output
+                      the detached nrrd header file (usually with a ".nhdr"
+                      extension) determined by the options below. The filename
+                      given with "-i" should probably start with "./" to
+                      indicate that the data file is to be found relative to
+                      the header file (as opposed to the current working
+                      directory of whomever is reading the nrrd)
+          -i &lt;file&gt; = Filename of data file; use "-" for stdin (string)
+          -t &lt;type&gt; = type of data (e.g. "uchar", "int", "float", "double",
+                      etc.)
+   -s &lt;sz0 sz1 ...&gt; = number of samples along each axis (and implicit
+                      indicator of dimension of nrrd) (1 or more ints)
+-sp &lt;spc0 spc1 ...&gt; = spacing between samples on each axis. Use "nan" for any
+                      non-spatial axes (e.g. spacing between red, green, and
+                      blue along axis 0 of interleaved RGB image data)
+                      (1 or more doubles)
+ -l &lt;lab0 lab1 ...&gt; = short string labels for each of the axes
+                      (1 or more strings)
+       -c &lt;content&gt; = Specifies the content string of the nrrd, which is
+                      built upon by many nrrd function to record a history of
+                      operations (string)
+     -ls &lt;lineskip&gt; = number of ascii lines to skip before reading data
+                      (int); default: "0"
+     -bs &lt;byteskip&gt; = number of bytes to skip (after skipping ascii lines, if
+                      any) before reading data (int); default: "0"
+      -e &lt;encoding&gt; = output file format. Possibilities include:
+                    o "raw": raw encoding
+                    o "ascii": print data in ascii
+                    o "hex": two hex digits per byte
+                    o "gzip", "gz": gzip compressed raw data
+                    o "bzip2", "bz2": bzip2 compressed raw data
+                      default: "raw"
+       -en &lt;endian&gt; = Endianness of data; relevent for any data with value
+                      representation bigger than 8 bits, with a non-ascii
+                      encoding: "little" for Intel and friends; "big" for
+                      everyone else. Defaults to endianness of this machine;
+                      default: "little"
+          -o &lt;nout&gt; = output filename (string); default: "-"
+</pre></blockquote>
+
+This is the first <tt>unu</tt> command listed because it is often the
+first one to be used in a longer chain of <tt>unu</tt> unu commands.
+The main value in this program is the fact that you don't have to
+remember and type nrrd field specifications according to the <a
+href="../nrrd/format.html">NRRD format</a>.  You tell "<tt>unu make</tt>"
+the information about the data, and "<tt>unu make</tt>" will produce
+the NRRD header for you.
+
+<p>
+
+It has two distinct roles:
+<ol>
+
+<li> with "<tt>-h</tt>": making detached headers only, 
+without ever reading or writing data.
+
+<li> without "<tt>-h</tt>": making whole nrrds, with or without
+detached headers, by reading the data (in various possible encodings)
+and writing it out (as raw)
+
+</ol>
+
+<h3>Wrapping a brick of bytes (with -h)</h3>
+
+A common use of "<tt>unu make</tt>" is to write a header for some
+brick of bytes, which is often already in a seperate file.  For
+instance, an <a
+href="http://www.ahpcrc.org/software/bob/mol.150x150x150.gz">electron
+density function dataset (<tt>mol.150x150x150.gz</tt>)</a> is
+available from the <a href="http://www.ahpcrc.org">Army
+High-Performance Computing Research Center</a>, the makers of <a
+href="http://www.ahpcrc.org/software/bob/">BoB (Brick of Bytes)</a>,
+an early interactive volume renderer.  If we download the dataset as
+is, keeping it compressed (use <a
+href="http://www.xach.com/snarf/">snarf</a> if your browser automatically
+decompresses the data), we can generate a header for it using
+"<tt>unu make -h</tt>":
+
+<blockquote><pre>
+unu make -h -i ./mol.150x150x150.gz -s 150 150 150 -t uchar -e gzip -o <a href="mol.nhdr">mol.nhdr</a>
+</pre></blockquote>
+
+The resulting <tt>mol.nhdr</tt> file is simply:
+<blockquote><pre>
+NRRD0001
+type: unsigned char
+dimension: 3
+sizes: 150 150 150
+data file: ./mol.150x150x150.gz
+encoding: gz
+</pre></blockquote>
+
+But this is enough to start using <tt>unu</tt> for other tasks, like
+doing axis-aligned maximum intensity projection:
+<blockquote><pre>
+unu project -i mol.nhdr -a 2 -m max -o <a href="mol-zmax.pgm">mol-zmax.pgm</a>
+</pre></blockquote>
+<center>
+<img src="mol-zmax.jpg" width=150 height=150>
+</center>
+
+The "<tt>./</tt>" at the beginning of the data file name indicates
+that the dataset is <a href="../nrrd/format.html#headerel">found
+relative to the header file</a>.  If the data was uncompressed,
+then "<tt>-e raw</tt>" would be used instead of "<tt>-e gzip</tt>":
+
+<blockquote><pre>
+unu make -h -i ./mol.150x150x150 -s 150 150 150 -t uchar -e raw -o mol.nhdr
+
+NRRD0001
+type: unsigned char
+dimension: 3
+sizes: 150 150 150
+data file: ./mol.150x150x150
+encoding: raw
+</pre></blockquote>
+
+<h3>Snarfing data from a VTK file (without -h)</h3>
+
+<b>Nrrd</b> can not currently read <a
+href="http://public.kitware.com/VTK/">VTK files</a>, but getting data
+out of them is facilited by the arguments to <tt>unu make</tt>.  One
+of the datasets distributed with VTK is <tt>ironProt.vtk</tt>, in the
+older 1.0 format.  By reading through the ASCII header, we can see
+that there are 13 lines VTK header to skip before getting to the
+<tt>raw</tt> data.  If we don't use "<tt>-h</tt>", and don't save the
+output to a file ending with "<tt>.nhdr</tt>" a new nrrd is created
+with an attached header:
+<blockquote><pre>
+unu make -i ironProt.vtk -t uchar -s 68 68 68 -sp 1 1 1 -c "Iron protein" \
+  -e raw -ls 13 -o ironProt.nrrd
+</pre></blockquote>
+
+The "<tt>-ls 13</tt>" says to skip 13 lines of ASCII before getting to
+the data, and using the "<tt>-c</tt>" flag allows use to use the
+<tt>content</tt> field of the nrrd to emulate the second line of the
+VTK file.  The "<tt>-t</tt>" and "<tt>-sp</tt>" options are set
+according to the "<tt>SCALARS</tt>" and "<tt>ASPECT_RATIO</tt>" lines
+of the VTK header.
+
+<p> Since this data has large regions of constancy, compression
+will work well:
+<blockquote><pre>
+unu make -i ironProt.vtk -t uchar -s 68 68 68 -sp 1 1 1 -c "Iron protein" \
+  -e raw -ls 13 | unu save -f nrrd -e gzip -o ironProt.nrrd
+</pre></blockquote>
+This results in a file that is more than four times smaller.  The
+NRRD header is still uncompressed ASCII, but the data is compressed
+with gzip.
+
+<p>
+
+Inspection of the data is possible without creating a seperate
+nrrd file:
+<blockquote><pre>
+unu make -i ironProt.vtk -t uchar -s 68 68 68 -e raw -ls 13 \
+| unu project -a 0 -m max | unu save -f pnm | xv -
+</pre></blockquote>
+Assuming that the image viewer <tt>xv</tt> is available, than this will show
+a maximum intensity projection along the first axis:
+<center>
+<img src="ironProt.jpg" width=68 height=68>
+</center>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

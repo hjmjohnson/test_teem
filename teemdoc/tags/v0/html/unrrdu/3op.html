@@ -1,0 +1,69 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: unu 3op
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h1>&nbsp;&nbsp;<b><tt>unu 3op</tt></b></h1>
+</table>
+
+<blockquote><pre>
+unu 3op: Ternary operation on three nrrds or constants. Can have one, two, or
+three nrrds, but not zero. Use "-" for an operand to signify a nrrd to be read
+from stdin (a pipe). Note, however, that "-" can probably only be used once
+(reliably).
+
+Usage: unu 3op &lt;operator&gt; &lt;in1&gt; &lt;in2&gt; &lt;in3&gt; [-t &lt;type&gt;] [-o &lt;nout&gt;]
+
+&lt;operator&gt; = Ternary operator. Possibilities include:
+           o "clamp": second value is clamped to range between the first
+             and the third
+           o "lerp": linear interpolation between the second and third
+             values, as the first value varies between 0.0 and 1.0,
+             respectively
+           o "exists": if the first value exists, use the second value,
+             otherwise use the third
+           o "between": 1 iff second value is &gt;= first and &lt;= second, 0
+             otherwise
+     &lt;in1&gt; = First input. Can be float or nrrd.
+     &lt;in2&gt; = Second input. Can be float or nrrd.
+     &lt;in3&gt; = Third input. Can be float or nrrd.
+ -t &lt;type&gt; = type to convert all nrrd inputs to, prior to doing operation.
+             This also determines output type. By default (not using this
+             option), the types of the input nrrds are left unchanged.
+ -o &lt;nout&gt; = output nrrd (string); default: "-"
+</pre></blockquote>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

@@ -1,0 +1,255 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: bin: ilk
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/bin80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">bin</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>ilk</b></h2>
+</table>
+
+<tt>ilk</tt> demonstrates functionality in the <a
+href="../../moss/index.html"><b>moss</b></a> library.  It is a fairly
+general tool for performing geometric transformations on "images": any
+non-<tt>block</tt>-type 2D and 3D NRRD.  I know and love the <a
+href="http://www.imagemagick.org/">Image Magick</a> tools, and most of
+the functionality here is a subset of what is available in <a
+href="http://www.imagemagick.org/www/mogrify.html">mogrify</a>, but
+<tt>ilk</tt> will happily work on an image with 50 <tt>double</tt>s
+per pixel.
+
+<p>
+
+This page gives a summary of the various capabilities of <tt>ilk</tt>.
+Everytime that an image is preceeded by some <tt>text in mono-spaced
+font</tt>, that text can be pasted into a shell in order to regenerate
+the image.  This assumes that <tt>ilk</tt>, <a
+href="../../unrrdu/index.html"><tt>unu</tt></a>, and <tt>cjpeg</tt>
+are all in your path, or are aliased.
+
+<h3>General Usage Information</h3>
+
+<blockquote><pre>
+ilk: (I)mage (L)inear Trans(X--&gt;K)forms. Applies linear (homogenous
+coordinate) transforms to a given image, using the given kernel for resampling.
+
+Usage: ilk [@file ...] [-i &lt;image&gt;] [-0 &lt;origin&gt;] -t &lt;xform0 ...&gt; \
+       [-k &lt;kernel&gt;] [-min &lt;xMin yMin&gt;] [-max &lt;xMax yMax&gt;] [-b &lt;boundary&gt;] \
+       [-bg &lt;bg0 bg1 ...&gt;] [-s &lt;xSize ySize&gt;] [-o &lt;filename&gt;]
+
+        @file ... = response file(s) containing command-line arguments
+       -i &lt;image&gt; = input image; default: "-"
+      -0 &lt;origin&gt; = where to location (0,0) prior to applying transforms.
+                  o "u:&lt;float&gt;,&lt;float&gt;" locate origin in a unit box
+                    [0,1]x[0,1] which covers the original image
+                  o "p:&lt;float&gt;,&lt;float&gt;" locate origin at a particular
+                    pixel location, in the index space of the image
+                    default: "p:0,0"
+  -t &lt;xform0 ...&gt; = transform(s) to apply to image. Transforms are applied in
+                    the order in which they appear.
+                  o "identity": no geometric transform, just resampling
+                  o "translate:x,y": shift image by vector (x,y), as
+                    measured in pixels
+                  o "rotate:ang": rotate CCW by ang degrees
+                  o "scale:xs,ys": scale by xs in X, and ys in Y
+                  o "shear:fix,amnt": shear by amnt, keeping fixed the
+                    pixels along a direction &lt;ang&gt; degrees from the X axis
+                  o "flip:ang": flip along axis an angle &lt;ang&gt; degrees
+                    from the X axis
+                  o "a,b,c,d,tx,ty": specify the transform explicitly 
+                    (1 or more 2D transforms)
+      -k &lt;kernel&gt; = reconstruction kernel; default: "cubic:0,0.5"
+ -min &lt;xMin yMin&gt; = lower bounding corner of output image. Default (by not
+                    using this option) is the lower corner of input image.
+                    (2 doubles)
+ -max &lt;xMax yMax&gt; = upper bounding corner of output image. Default (by not
+                    using this option) is the upper corner of input image.
+                    (2 doubles)
+    -b &lt;boundary&gt; = what to do when sampling outside original image.
+                  o "bleed": copy values at image border outward
+                  o "wrap": do wrap-around on image locations
+                  o "pad": use a given background value (via "-bg")
+                    default: "bleed"
+-bg &lt;bg0 bg1 ...&gt; = background color to use with boundary behavior "pad".
+                    Defaults to all zeroes. (1 or more floats)
+ -s &lt;xSize ySize&gt; = For each axis, information about how many samples in
+                    output:
+                  o "x&lt;float&gt;": number of output samples is some scaling
+                    of the number input samples; multiplied by &lt;float&gt;
+                  o "&lt;int&gt;": specify exact number of samples
+                    (2 sampling specifications)
+                    default: "x1 x1"
+    -o &lt;filename&gt; = file to write output nrrd to (string); default: "-"
+</pre></blockquote>
+
+The "<tt>-t</tt>" option is the only required one.  The input and
+output default to standard input and standard output, respectively.
+The options may come in any order.  Options my be repeated, but
+seqsequent appearance <b>override</b> previous ones.  You don't build
+up a transformation in steps with multiple "<tt>-t</tt>" flags: the
+single "<tt>-t</tt>" takes an arbitrary number of transformations
+after it, as demonstrated later on this page.
+
+<p>
+
+Options which will be used verbatim many times may be entered into a
+"response file"; when these are indicated on the command line with
+"<tt>@filename</tt>", the contents of the file are effectively
+inserted there on the command line.  Within the response file, line
+breaks count as white space, and comments lines begin with
+"<tt>#</tt>".
+
+<h3>Demonstration image</h3>
+
+To demonstrate, we'll use <a href="huysumcrop.ppm">a cropping
+(<tt>huysumcrop.ppm</tt>)</a> of a still life by <a
+href="http://www.rijksmuseum.nl/asp/framuk.asp?name=zoek">Jan van
+Huysum</a>.  For ease of display on this page, we'll actually use a
+downsampled version of the image, and results of processing will be
+saved out as high-quality JPEGs, using <a
+href="http://www.ijg.org/"><tt>cjpeg</tt>.</a>
+
+<blockquote><pre>
+<a href="../../unrrdu/resample.html">unu resample</a> -i huysumcrop.ppm -s = x0.6 x0.6 -o <a href="init.ppm">init.ppm</a>
+cjpeg -quality 99 init.ppm &gt; <a href="init.jpg">init.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="init.jpg">
+</center>
+
+Note: this isn't entirely true.  If you want to follow along with the
+examples here by running the commands yourself, you should hand-edit
+<tt>init.ppm</tt> so that it doesn't have any <a
+href="../../nrrd/otherformat.html#pnm"><tt>"# NRRD>"</tt>
+comment/headers</a>, since these will change the behavior of some of
+the commands demonstrated here, in a way that will only complicate the
+explanation.
+
+<p>
+
+The output of <tt>ilk</tt> is a <a
+href="../../nrrd/format.html">NRRD</a> file, but it will have the same
+dimension and type as the input 8-bit color image, which means it can
+be converted to a PPM file (really just changing the header), and then
+saved as a JPEG, with the following sequence:
+
+<blockquote><pre> ... | unu save -f pnm | cjpeg -quality 99 out.jpg
+</pre></blockquote>
+
+Because this will be used so often, I'll create an alias for it:
+
+<blockquote><pre>
+alias tojpg "unu save -f pnm | cjpeg -quality 99"
+</pre></blockquote>
+
+<b>HOWEVER</b>, the thing to keep in mind as you read this page, is
+that <tt>ilk</tt> will happily process <b>any</b> 3D NRRD file; it
+will just take the number of samples along the fastest axis as the
+number of components/channels associated with each pixel. This means
+that <tt>ilk</tt> is good for operating on spectral image data, as
+well doing axis-aligned operations on 3D scalar fields.
+
+including one which is actually a 
+
+<h3>The axes, the origin</h3>
+
+The "X" and "Y" axes that <tt>ilk</tt> uses may take a little getting
+used to; they are the raster directions of the image data, meaning
+that the origin of this basis is in the upper left:
+<blockquote><pre>
+(0,0) -----------&gt; <b>X</b>
+  |
+  |
+  |
+  v
+
+  <b>Y</b>
+</pre></blockquote>
+When describing angles, the units are always degrees, and "0" means
+parallel with the X axis, "90" means parallel with the Y axis, with
+angles increasing counter-clockwise.
+
+<p>
+
+There are two ways of specifying the origin to <tt>ilk</tt>:
+
+<ol>
+
+<li> <tt>-0 u:&lt;<i>X</i>&gt;,&lt;<i>Y</i>&gt;</tt>: The (X,Y)
+location of the origin is relative to position inside a <b>u</b>nit
+box spanning the image, using the same axes orientation as shown
+above.  <tt>-0&nbsp;u:0.5,0.5</tt> is the center of the image.
+
+<li> <tt>-0 p:&lt;<i>X</i>&gt;,&lt;<i>Y</i>&gt;</tt>: The (X,Y)
+location of the origin is in the index space of the image itself, so
+these are effectively <b>p</b>ixel locations (but they don't
+have to be integers).
+
+</ol>
+
+The little pages describing different capabilities and uses:
+
+<ul>
+
+<li> <a href="scale.html">Scaling</a>: scale by (possibly different)
+amounts in X and Y, based on where the origin is set
+
+<li> <a href="flip.html">Flipping</a>: Can flip across a line at an
+arbitrary orientation
+
+<li> <a href="rotscale.html">Rotations with scalings</a>: Demonstrates
+the different boundary behaviors that can be specified.
+
+<li> <a href="transhear.html">Translations, Shear</a>: These too are possible!
+
+<li> <a href="arb.html">Arbitrary transforms</a>: You can specify the
+individual elements of the transform matrix
+
+<li> <a href="comp.html">Composition of transforms</a>: You can specify
+an arbitrary number of transforms on the command line, and <tt>ilk</tt>
+will multiply them together prior to resampling.
+
+<li> <a href="kernel.html">Kernel choice</a>: Information about the different
+kernels availble in <tt>ilk</tt>
+
+<li> <a href="kqual.html">Kernel quality evaluated with multiple resamplings</a>:
+How multiple passes through <tt>ilk</tt> can serve as an indicator
+of reconstruction kernel quality.
+
+<li> <a href="minmax.html">Explicitly setting min, max, sizes</a>: How to 
+resample on a different domain than the original image, or at a 
+different resolution.
+
+</ul>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

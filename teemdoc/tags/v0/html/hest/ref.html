@@ -1,0 +1,408 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: hest: Reference
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/hest80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">hest</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Reference</b></h2>
+</table>
+<p>
+
+<hr noshade align=center width="70%">
+<font size="+2"><b>Dependencies:</b></font><p>
+
+<b>hest</b> depends on the <a href="../air/index.html"><b>air</b></a> library
+for the <tt>airType</tt> enum, the <tt>airParseStr[]</tt> array of
+parsing functions, the <tt>airStrtok()</tt> and <tt>airStrntok()</tt>
+functions, and the <tt>airMop</tt> functionality (used for memory
+management).
+
+<hr noshade align=center width="70%">
+<font size="+2"><b>Structs:</b></font><p>
+
+The <tt>hestOpt</tt> struct is the important one:
+the struct contains all the information and state used to deal with
+identifying and parsing one command-line option. The last two members
+of the struct are used by <tt>hestParse()</tt> for book-keeping,
+and should be of no interest to <b>hest</b> users.
+
+<pre>
+<a name="hestOpt">typedef</a> struct {
+  char *<i>flag</i>,           /* how the option is identified on the cmd line */
+    *<i>name</i>;              /* simple description of option's parameter(s) */
+  int <i>type</i>,             /* type of option (from airType enum) */
+    <i>min</i>, <i>max</i>;           /* min and max # of parameters for option */
+  void *<i>valueP</i>;         /* storage of parsed values */
+  char *<i>dflt</i>,           /* default value written out as string */
+    *<i>info</i>;              /* description to be printed with "glossary" info */
+  int *<i>sawP</i>,            /* used ONLY for multiple variable parameter options
+			   (min &lt max &gt; 2): storage of # of parsed values */
+
+  /* --------------------- end of user-defined fields */
+
+    <i>kind</i>,               /* what kind of option is this, based on min and max,
+			   set by hestParse() (actually _hestPanic()),
+			   later used by hestFree():
+			   1: min == max == 0
+			      a binary flag, no parameters
+			   2: min == max == 1
+                              one required parameter
+			   3: min == max >= 2
+                              multiple required parameters
+			   4: min == 0; max == 1;
+                              one optional parameter
+			   5: max - min >= 1; max >= 2 
+                              multiple optional parameter */
+    <i>alloc</i>;              /* information about whether flag is non-NULL, and what
+			   parameters were used, that determines whether or
+			   not memory was allocated by hestParse(); info
+			   later used by hestParseFree():
+			   0: no free()ing needed
+			   1: free(*valueP), either because it is a single
+			      string, or because was a dynamically allocated
+			      array of non-strings
+			   2: free((*valueP)[i]), because they are elements
+			      of a fixed-length array of strings
+			   3: free((*valueP)[i]) and free(*valueP), because
+ 			      it is a dynamically allocated array of strings */
+} hestOpt;
+</pre>
+
+All the <b>hest</b> functions which take a <tt>hestOpt*</tt> has one
+of their arguments expect an array of these structs (and not an array
+of pointers to the structs).  Such an array can be created statically
+or dynamically, see <a href="usage1.html">usage basics</a>.  The
+<b>hest</b> functions assume that the array is terminated by a struct
+who's <tt><i>tag</i></tt> and <tt><i>name</i></tt> are both NULL, and
+who's <tt><i>type</i></tt> is zero (not a valid type value in the
+<tt>airType</tt> enum).
+<p>
+
+The <tt>hestParm</tt> struct contains various parameters affecting the
+behavior of the <b>hest</b> functions, is the place for future
+customizations and extra control.  If you are happy with the defaults,
+you can always pass NULL instead of a <tt>hestParm</tt> pointer.
+<pre>
+<a name="hestParm">typedef</a> struct {
+  int verbosity,        /* verbose diagnostic messages to stdout */
+    respFileEnable,     /* whether or not to use response files */
+    columns;            /* number of printable columns in output */
+  char respFileFlag,    /* the character at the beginning of an argument
+			   indicating that this is a response file name */
+    respFileComment,    /* comment character for the repose files */
+    varParamStopFlag;   /* prefixed by '-' to form the flag which signals
+			   the end of a flagged variable parameter option
+			   (single or multiple) */
+} hestParm;
+</pre>
+
+<hr noshade align=center width="70%">
+<a name="globals"><font size="+2"><b>Globals:</b></font></a><p>
+
+These define the default behavior that you get by passing a NULL
+<tt>hestParm</tt> to any of the <b>hest</b> functions.  When a
+<tt>hestParmNew()</tt> creates a new <tt>hestParm</tt>, the fields are
+initialized to the values shown below.  This is an extract from
+the <tt>defaults.c</tt> file which defines these variables:
+<pre>
+int hestVerbosity = 0;
+int hestRespFileEnable = AIR_FALSE;
+int hestColumns = 80;
+char hestRespFileFlag = '@';
+char hestRespFileComment = '#';
+char hestVarParamStopFlag = '-';
+</pre>
+
+Note that response files are not enabled by default.  The
+<tt>hestColumns</tt> variable controls word wrap-around in the
+printing that <tt>hestInfo()</tt>, <tt>hestUsage()</tt> and
+<tt>hestGlossary</tt> do.  The <tt>hestRespFileFlag</tt> character
+should be chosen to be a very very unlikely first character of any
+unflagged parameters.  
+
+<hr noshade align=center width="70%">
+<font size="+2"><b>The Important Functions:</b></font><p>
+
+<b>Note:</b> See the <a href="example.html">examples</a> page for
+demonstrations of the output of the functions below for a variety
+of different options.
+
+<pre><b>
+int <a name="hestParse">hestParse</a>(hestOpt *<i>opt</i>, int <i>argc</i>, char **<i>argv</i>,
+              char **<i>errP</i>, hestParm *<i>parm</i>);
+</b></pre>
+
+<ul>
+
+<li>The return value is 0 if there was no problem, and 1 if there was
+a problem.
+
+<li><tt><i>opt</i></tt> is an array of <a
+href="#hestOpt"><tt>hestOpt</tt></a> structs, created by either of the
+means illustrated in <a href="usage1.html">usage basics</a>.
+
+<li><tt><i>argc</i></tt>, <tt><i>argv</i></tt> are the part of the
+command line that <tt>hestParse()</tt> is supposed to make sense of.
+For most programs, the executable name is in <tt>argv[0]</tt>,
+so you would pass <tt><i>argc-1</i></tt>, <tt><i>argv+1</i></tt>
+where <tt><i>argc</i></tt> and <tt><i>argv</i></tt> are the arguments
+to your <tt>main()</tt> function.  <tt>hestParse()</tt> will <b>not</b>
+alter the contents of these arrays, all the work it does are with
+local copies.
+
+<li><tt><i>errP</i></tt> is the address of a <tt>char*</tt>.  If there
+is an error in parsing, <tt>hestParse()</tt> will set <tt>*errP</tt>
+to the address of a newly allocated the error message.  If you pass
+NULL, no error message is allocated, and you don't get to know what
+went wrong.  If you do pass a non-NULL <tt><i>errP</i></tt> and there
+is an error, it is your responsibility to <tt>free()</tt> the
+resulting error message buffer.  <tt>hestParseFree()</tt> will not do
+it for you.
+
+<li><tt><i>parm</i></tt> is how you control behavior relating to how
+parsing is done.  If all the defaults are just fine with you
+(as seen in <a href="#globals">Globals</a> above), then you
+just pass NULL.  Otherwise, you
+create a <tt>hestParm</tt> with <a
+href="#hestParmNew"><tt>hestParmNew()</tt></a>, and set the members as you
+wish, before passing it to all the <b>hest</b> functions which take a
+<tt>hestParm</tt>.  When you're done, delete it with <a
+href="#hestParmFree"><tt>hestParmFree()</tt></a>.
+
+</ul>
+
+<pre><b>
+void hestParseFree(hestOpt *<i>opt</i>);
+</b></pre>
+
+<ul>
+
+<li> As described in <a href="usage2.html">usage details</a>,
+<tt>hestParse()</tt> sometimes allocates memory in order to save the
+values that are parsed from the command line.  If its important to you
+to stay on top of each and every bit of dynamic memory allocation,
+then you can call <tt>hestParseFree()</tt> to free all the memory that
+<tt>hestParse()</tt> allocates.
+
+<li> The information that is ultimately being passed to
+<tt>free()</tt> is the <tt>valueP</tt> member of the <tt>hestOpt</tt>
+struct, which generally is set to the address of some pointer variable
+in the user's program.  <tt>hestParseFree()</tt> <u>will set the
+pointer variable to NULL</u> to make sure no one accidentally uses
+freed memory.
+
+<li> Obviously, you need to pass to <tt>hestParseFree()</tt> the same
+<tt><i>opt</i></tt> argument you've previously passed to
+<tt>hestParse()</tt>.
+
+</ul>
+
+<pre><b>
+void hestUsage(FILE *<i>file</i>, hestOpt *<i>opt</i>,
+               char *<i>argv0</i>, hestParm *<i>parm</i>);
+</b></pre>
+
+<ul>
+
+<li> The usage information is printed to the given <tt>FILE*</tt>;
+<tt>stderr</tt> is a likely choice.  
+
+<li> <tt><i>opt</i></tt> is as described above.
+
+<li> <tt><i>argv0</i></tt> is a string containing the executable name
+of the program for which you want the usage information.  This string
+precedes all the identification of the options in the printed usage
+line.
+
+<li> <tt><i>parm</i></tt> is as described above.
+
+<li> How an option is identified in the usage information is a little
+complicated, but the basics are:
+<ul>
+<li> If the option is optional (since default information has been
+supplied), then its identification is deliminated by square bracets.
+<li> If the option is flagged, then the flag is printed at the beginning
+of the identification
+<li> The "name" of the option (the <tt>name</tt> member of the
+<tt>hestOpt</tt> struct) appears in angle brackets.
+</ul>
+
+</ul>
+
+<pre><b>
+void hestGlossary(FILE *<i>file</i>, hestOpt *<i>opt</i>,
+                  hestParm *<i>parm</i>);
+</b></pre>
+
+<ul>
+<li> The glossary information is printed to the given <tt>FILE*</tt>;
+<tt>stderr</tt> is a likely choice.  
+
+<li> The role of the glossary information is to display the
+<tt>info</tt> member of the <tt>hestOpt</tt> struct (a longer and more
+detailed explanation of the option), to identify what information will
+be parsed on the command line (how many parameters, and of what type),
+and to indicate what the default values (if any) are for the option.
+
+</ul>
+
+<pre><b>
+void hestInfo(FILE *<i>file</i>, char *<i>argv0</i>,
+              char *<i>info</i>, hestParm *<i>parm</i>);
+</b></pre>
+
+<ul>
+
+<li> Sometimes, in addition to the usage or glossary information, it
+is nice to print a longer description of what a program does in
+general.  <tt>hestInfo()</tt> simply prints that information, subject to
+the word wrapping imposed by the number of columns.
+
+<li> The general information is printed to the given <tt>FILE*</tt>;
+<tt>stderr</tt> is a likely choice.
+
+<li> <tt><i>argv0</i></tt> is a string containing the executable name
+of the program for which you want the general information.
+
+<li> <tt><i>info</i></tt> is a string containing the general information.
+
+</ul>
+
+
+<hr noshade align=center width="70%">
+<font size="+2"><b>Utility Functions:</b></font><p>
+
+<pre><b>
+hestParm *hestParmNew();
+hestParm *hestParmFree(hestParm *<i>parm</i>);
+</b></pre>
+
+<ul>
+
+<li> These are the pseudo-constructors and destructors for the
+<tt>hestParm</tt> struct
+
+<li> The return value of <tt>hestParmNew()</tt> is the address of a
+newly allocated and initialized <tt>hestParm</tt>, using the default
+values set in <a href="#globals"><tt>defaults.c</tt></a>.
+
+<li> The return value of <tt>hestParmFree()</tt> is NULL, to assist
+in the avoidance of pointers to freed memory.
+
+<li> Currently the <tt>hestParm</tt> has no dynamically allocated
+elements, so these functions are currently slightly overkill.
+
+</ul>
+
+<pre><b>
+void hestOptAdd(hestOpt **<i>optP</i>, char *<i>flag</i>, char *<i>name</i>,
+                int <i>type</i>, int <i>min</i>, int <i>max</i>,
+                void *<i>valueP</i>, char *<i>dflt</i>, char *<i>info</i>, ...);
+</b></pre>
+
+<ul>
+<li> This is the function which is called repeatedly to build up an
+array of <tt>hestOpt</tt> structs, to be passed on to the other
+<b>hest</b> functions.
+
+<li> The first argument to this is the address of a <tt>hestOpt</tt>
+pointer.  You start building an option list by passing the address of
+a pointer initialized to NULL.  With each call, a bigger array is
+allocated and the old contents are copied over, so the value of
+<tt>*optP</tt> may change after each call.  Maximally slick, fast, and
+efficient?  No-- but who cares: we're just parsing a stupid command
+line, and a single function to build the option list is nice to have.
+
+<li> The next eight arguments are exactly the same as the first
+eight members of the <tt>hestOpt</tt> struct.
+
+<li> You should not try to mix static and dynamic <tt>hestOpt</tt>
+array declarations.
+
+<li> Notice that the last argument is a <tt>va_list</tt> variable
+argument list.  This argument is <em>only</em> for multiple variable
+parameter options (<tt>min</tt> &lt; <tt>max</tt>; <tt>max</tt> &gt;
+1), and in this case it must be used.  As is shown in <a
+href="usage1.html#hestOptAdd">usage basics</a>, pass the address of an
+int for this argument, so that you can learn how many elements were
+parsed on the command line.
+
+<li> As is the general practice in <b>teem</b>, the strings arguments
+to this function are <em>always</em> duplicated, so you need not
+worry about the <tt>char*</tt>s in the <tt>hestOpt</tt> array pointing
+to memory which you might want to free.
+
+</ul>
+
+<pre><b>
+int hestOptCheck(hestOpt *<i>opt</i>, char **<i>errP</i>);
+</b></pre>
+
+<ul>
+
+<li> This is how you check to make sure that you're <tt>hestOpt</tt>
+array is well-defined.  This applies to <tt>hestOpt</tt> arrays
+created either statically or dynamically.
+<li> The return value is 0 if there are no problems, and 1 if there
+are problems.
+<li> If you pass the address of a <tt>char*</tt> as <tt>errP</tt>,
+and there is an error, then <tt>hestOptCheck()</tt> will set <tt>*errP</tt>
+to a newly allocated string containing the error message.  It is up
+to you to free this string.  If there is no error, then <tt>*errP</tt>
+is set to NULL.
+<li> You can pass NULL as <tt>errP</tt>, but you won't know why the
+<tt>hestOpt</tt> array is broken.  The return value of <tt>hestOptCheck()</tt>
+is still a useful indicator.
+
+
+</ul>
+
+<pre><b>
+hestOpt *hestOptFree(hestOpt *<i>opt</i>);
+</b></pre>
+
+<ul>
+
+<li> This frees the <tt>hestOpt</tt> array that was created
+dynamically by repeated calls to <tt>hestOptAdd()</tt>, and this also
+frees the numerous strings that hang off the <tt>hestOpt</tt> struct.
+
+<li> This is only for freeing a <tt>hestOpt</tt> array created
+dynamically (with <tt>hestOptAdd()</tt>).
+
+</ul>
+
+<p><a href="http://validator.w3.org/check/referer">&nbsp;</a>
+
+</body>
+</html>
+
+

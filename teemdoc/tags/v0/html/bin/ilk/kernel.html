@@ -1,0 +1,131 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: bin: ilk: Kernel choice
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/bin80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">bin</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>ilk: Kernel choice</b></h2>
+</table>
+<p>
+
+<h3>Kernel choice and resampling quality</h3>
+
+Notice that in the demonstration of <a href="rotscale.html">rotation
+combined with down-scaling</a>, the "<tt>cubic:1,0</tt>" kernel was
+specified.  This is not an interpolating kernel; it blurs.  All the
+other examples use the default "<tt>cubic:0,0.5</tt>", an
+interpolating kernel called the Catmull-Rom kernel.  Here are the
+available kernels:
+
+<ul>
+<li> "<tt>box</tt>": box filter (basically nearest neighbor)
+<li> "<tt>tent</tt>": bilinear interpolation
+<li> "<tt>cubic:1,0</tt>": maximally-blurring cubic kernel
+<li> "<tt>cubic:0,0.5</tt>": most accurate interpolating cubic ("Catmull-Rom")
+<li> "<tt>cubic:B,C</tt>": B,C Mitchell/Netravali family of cubics
+<li> "<tt>quartic:0.0834</tt>": good C2 interpolating quartic
+<li> "<tt>gauss:&lt;sig&gt;,&lt;cut&gt;</tt>": Gaussian kernel, with standard
+deviation of <tt>sig</tt>, and cut-off at <tt>cut</tt> standard deviations.
+</ul>
+
+<tt>ilk</tt> is not very good about properly handling downsampling.
+Ideally, the kernel would eliminate the frequencies higher than the
+Nyquist rate associated with the new, lower sampling rate.
+Intelligent scaling of the resampling kernel is done by <a
+href="../../unrrdu/resample.html"><tt>unu resample</tt></a>, but
+<tt>ilk</tt> does not do this.  Its up to you do choose an amount of
+blurring associated with the new sampling rate.  All the kernels can
+take an extra argument which precedes all the others, which gives a
+stretch factor: 1 = interpolation, 2 = stretched out by a factor of
+two, and half as tall.
+
+<blockquote><pre>
+echo "-i init.ppm -b wrap -t scale:0.33,0.33 rotate:5" > kdemo.txt
+ilk @kdemo.txt -k cubic:0,0.5 | tojpg &gt; <a href="k1.jpg">k1.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="k1.jpg">
+</center>
+
+<blockquote><pre>
+ilk @kdemo.txt -k cubic:3,0,0.5 | tojpg &gt; <a href="k2.jpg">k2.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="k2.jpg">
+</center>
+
+Looking at the thin plant stems and other small features in the upper
+image, aliasing is visible; each copy of a small feature looks
+different.  In the lower one, this is not so much the case.
+
+<p>
+
+However, you can't (currently) control the kernel width with
+<tt>ilk</tt> in a directionally varying manner, as would be necessary
+to properly sample this:
+
+<blockquote><pre>
+ilk @kdemo.txt shear:0,2 -k cubic:3,0,0.5 | tojpg &gt; <a href="k3.jpg">k3.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="k3.jpg">
+</center>
+
+<p>
+
+Do not be tempted to use <tt>ilk</tt> as a tool for doing Gaussian
+blurring of images, when no non-axis-aligned transform is required.
+This command:
+
+<blockquote><pre>
+ilk -i init.ppm -t identity -k gauss:3,4 | tojpg &gt; blur.jpg
+</pre></blockquote>
+
+will produce the same as:
+
+<blockquote><pre>
+unu resample -i init.ppm -k gauss:3,4 -s = x1 x1 | tojpg &gt; <a href="blur.jpg">blur.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="blur.jpg">
+</center>
+
+but <tt>unu resample </tt> is about <b>thirty</b> times faster, for a
+variety of reasons relating to how <tt>unu resample</tt> orders the
+kernel evaluation and convolution steps.  Also, <tt>unu resample</tt>
+does a renormalization step to compensate for filters which are not
+first-order accurate, a step which would slow <tt>ilk</tt> down too much.
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

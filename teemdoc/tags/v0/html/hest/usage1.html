@@ -1,0 +1,246 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: hest: Usage Basics
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/hest80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">hest</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Usage Basics</b></h2>
+</table>
+<p>
+
+All the parameters in an option need to be of the same type: boolean,
+or int, or float, <i>etc</i>.  The types come from the <a href="../air/index.html">
+<b>air</b></a> library, in the <tt>air.h</tt> header file:
+<pre>
+  typedef enum {
+    airTypeUnknown,   /* 0 */
+    airTypeBool,      /* 1 */
+    airTypeInt,       /* 2 */
+    airTypeFloat,     /* 3 */
+    airTypeDouble,    /* 4 */
+    airTypeChar,      /* 5 */
+    airTypeString,    /* 6 */
+    airTypeLast
+  } airType;
+</pre>
+
+All the information about an option that is required to parse it is given
+in a struct called a <tt>hestOpt</tt>.  The important part of 
+the struct is (as copied from <tt>hest.h</tt>):
+<pre>
+  char *flag,           /* how the option is identified on the cmd line */
+    *name;              /* simple description of option's parameter(s) */
+  int type,             /* type of option (from airType enum) */
+    min, max;           /* min and max # of parameters for option */
+  void *valueP;         /* storage of parsed values */
+  char *dflt,           /* default value written out as string */
+    *info;              /* description to be printed with "glossary" info */
+  int *sawP,            /* used ONLY for multiple variable parameter options
+                           (min < max > 2): storage of # of parsed values */
+</pre>
+
+These are the pieces of information which <b>hest</b> uses to parse
+the command line:
+
+<ul>
+
+<li><tt>flag</tt>: Strings identifying the short and/or long form of
+the flag which identifies the option on the command line.  The short
+form is prefixed by a single hyphen ("<tt>-</tt>"); the long form
+is prefixed by two hyphens ("<tt>--</tt>").  
+
+<li><tt>name</tt>: A short (about one word) identifier or description
+for the option, which is printed after the flag in the
+automatically-generated usage information.  With <tt>flag</tt>
+"-input" and <tt>name</tt> "filename", the usage information would
+include "[-input&nbsp;&lt;filename&gt;]".  The <tt>name</tt> is
+mandatory for all options except stand-alone flags (for which it is
+ignored).
+
+<li><tt>type</tt>: chosen from the <tt>airType</tt> enum given above.
+
+<li><tt>min</tt>, <tt>max</tt>: as described in the <a
+href="term.html">terminology</a> section, this determines the kind
+of the option, since <tt>min</tt> and <tt>max</tt> define
+the range of the allowable number of parameters for the option.
+
+<li><tt>valueP</tt>: where information parsed from the command line or
+from the given defaults is stored.  If NULL, then the option is
+discarded after it is parsed.  The values of <tt>min</tt> and
+<tt>max</tt> (above) determines how <tt>valueP</tt> will be
+interpreted: an address of a scalar variable, an array, an address of
+a pointer, an address of an array of pointers, <i>etc</i>.
+
+<li><tt>dflt</tt>: how default information is given.  This is how you
+specify whether or not a flagged option is mandatory, and how to set the
+parameters if the option does not appear on the command line.
+<tt>dflt</tt> is wholly ignored for unflagged options, since they must
+appear on the command line.  For flagged options, if <tt>dflt</tt> is
+NULL, the flag is mandatory: if it does not appear, <a
+href="ref.html#hestParse"><tt>hestParse()</tt></a> will return an
+error.  If <tt>dflt</tt> is non-NULL, then it is parsed in lieu of
+command-line arguments in order to generate values for the option's
+variable. It may seem odd to be using a string for this, but the very
+compelling benefit is that it can work for any number of parameters of
+any type, since strings are how the information is being given on the
+command line anyway.
+
+<li><tt>info</tt>: more detailed information describing the option,
+printed with the automatically generated "glossary" that defines the
+different options.  Can be NULL if no such detailed information is
+pertinent.
+
+<li><tt>sawP</tt>: when parsing multiple variable parameters, the
+caller can't know how many parameters there are, so the
+<tt>hestParse()</tt> function allocates the memory for the array in
+which to store the parsed parameters, then records in <tt>*sawP</tt>
+the length of that array (the number of items seen on the command
+line).
+
+</ul>
+
+The <tt>hestParse()</tt> function which does the command-line parsing
+takes as one of its arguments an array of <tt>hestOpt</tt> structs.
+There are two ways of creating this array: statically and dynamically.
+In the static method, we use C's ability to initialize a subset of the
+members of a struct:
+
+<pre>
+  hestOpt opt[] = {
+    {"res",   "sx sy", airTypeInt,    2,  2,   res,  NULL, 
+     "image resolution"},
+    {"v",     "level", airTypeInt,    0,  1,   &amp;v,   "0",
+     "verbosity level"},
+    {"out",   "file",  airTypeString, 1,  1,   &amp;out, "output.ppm",
+     "PPM image output"},
+    {NULL,    "input", airTypeString, 1, -1,   &amp;in,  NULL,
+     "input image file(s)", &amp;numIn},
+    {NULL, NULL, 0}
+  };
+</pre>
+
+So <tt>"res"</tt> is initializing <tt>flag</tt>, <tt>"sx sy"</tt> is
+initializing <tt>name</tt>, and so on.  In the last option, min is 1,
+and max is -1.  A max of -1 is always internally interpreted by
+<b>hest</b> as <tt>INT_MAX</tt> (from <tt>limits.h</tt>).  This is how
+a <b>hest</b> user would say "1 or more" arguments.  Because there are
+a variable number of multiple arguments, we also pass
+<tt>&amp;numIn</tt> (stored in <tt>sawP</tt> in the <tt>hestOpt</tt>
+struct) so that <tt>hestParse()</tt> can store the number of strings
+parsed.
+
+<p>
+
+For the sake of simplicity, there is a single function which called
+repeatedly in order to <a name="hestOptAdd">dynamically</a> create the
+same array:
+
+<pre>
+  hestOpt *opt = NULL;
+  ...
+  hestOptAdd(&amp;opt, "res",   "sx sy", airTypeInt,    2,  2,  res,  NULL,
+             "image resolution");
+  hestOptAdd(&amp;opt, "v",     "level", airTypeInt,    0,  1,  &amp;v,   "0",
+             "verbosity level");
+  hestOptAdd(&amp;opt, "out",   "file",  airTypeString, 1,  1,  &amp;out, "output.ppm",
+             "PPM image output");
+  hestOptAdd(&amp;opt, NULL,    "input", airTypeString, 1, -1,  &amp;in,  NULL,
+             "input image file(s)", &amp;numIn);
+</pre>
+
+Notice that the necessary fields in the static and dynamic cases are
+identical.  In both cases, the length of the the array of options does
+not need to be explicitly calculated or communicated, since <tt>{NULL,
+NULL, 0}</tt> values are set in the last <tt>hestOpt</tt> struct to
+signal the end of the array.  To free all the memory created by calls
+to <tt>hestOptAdd()</tt>, use <tt>hestOptFree()</tt>.
+
+<p>
+
+Basically, the important part of the <b>hest</b> library is a single
+function call:
+<pre>
+  hestOpt *opt;
+  char *err;
+  ...
+  if (<b>hestParse(opt, argc-1, argv+1, &amp;err, NULL)</b>) {
+    fprintf(stderr, "ERROR: %s\n", err);
+    free(err); exit(1);
+  }
+</pre>
+
+You give to <tt>hestParse()</tt> only that part of the command line
+that you want it to process, which is why <tt>argc-1, argv+1</tt> is
+being passed, as opposed to <tt>argc, argv</tt>, since <tt>argv[0]</tt> is
+the executable's name (and for <a
+href="http://www.cvshome.org">CVS</a>- and <a
+href="http://www-2.cs.cmu.edu/afs/andrew.cmu.edu/usr/shadow/www/afs.html">AFS</a>-like
+programs, both <tt>argv[0]</tt> and <tt>argv[1]</tt> are the command
+name).  If all goes well, the return value of <tt>hestParse()</tt> is 0,
+and all the parsed values are stored in the locations which had been
+given as the <tt>valueP</tt> fields in the <tt>hestOpt</tt> array.  If
+things go wrong, the return value of of <tt>hestParse()</tt> is 1, and
+<tt>err</tt> is <u>allocated</u> to a string holding an error message.
+The last NULL argument to <tt>hestParse()</tt> indicates that all
+defaults in the behavior of <tt>hestParse()</tt> are acceptable.
+Whenever parsing strings or a variable number of parameters for an
+option, <tt>hestParse()</tt> allocates memory for storage, and the
+<tt>valueP</tt> field in <tt>hestOpt</tt> struct is set to point to
+this new memory.  To simplify the process of cleaning up this memory,
+the single function <tt>hestParseFree()</tt> will free any and all
+memory allocated to store parsed values.
+
+
+<p>
+
+The other useful parts of <b>hest</b> are <tt>hestUsage()</tt> and
+<tt>hestGlossary()</tt>.  The <tt>hestUsage()</tt> function prints a
+compact reresentation of the various options available on the command
+line.  <tt>hestGlossary()</tt> gives a longer description of the
+different options, with at least one line per option.  Given the
+option definitions above, the generated usage and glossary information
+is:
+<pre>
+  Usage: cmd -res &lt;sx sy&gt; [-v [&lt;level&gt;]] [-out &lt;file&gt;] &lt;input...&gt;
+
+  -res &lt;sx sy&gt; = image resolution (2 ints)
+  -v [&lt;level&gt;] = verbosity level (optional int); default 0
+   -out &lt;file&gt; = PPM image output (string); default output.ppm
+    &lt;input...&gt; = input image file(s) (1 or more strings)
+</pre>
+
+
+<p><a href="http://validator.w3.org/check/referer">&nbsp;</a>
+
+</body>
+</html>
+
+

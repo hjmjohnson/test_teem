@@ -1,0 +1,208 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: hest: Terminology
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/hest80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">hest</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Terminology</b></h2>
+</table>
+<p>
+
+In order to describe and document <tt><b>hest</b></tt>, first some
+terminology:
+
+<ul>
+
+<li>The entire command line is a list of <u>arguments</u>.  Each element of
+the <tt>argv[]</tt> array is an argument.
+
+<li>The things like "<tt>-v</tt>" and "<tt>-size</tt>", by which you 
+indicate what information you're giving, are called <u>flags</u>.
+
+<li>The set of arguments following the flag, and logically associated
+with it, are the flag's <u>parameters</u>.  Flags can have zero, one, or
+more parameters.
+
+<li>The flag, and its associated parameters, are together called an
+<u>option</u>.  The unfortunate aspect of this word choice is that
+options can be either mandatory or, well, optional.
+
+<li>Not all options start with a flag; the parameters for an option
+can just start at some assumed position along the command line.  These
+are <u>unflagged</u> options.  Obviously, unflagged options must have
+one or more parameters.
+
+<li>Some options (both flagged and unflagged) can have a variable
+number of parameters.  These are <u>variable parameter</u> options.
+If an option's number of parameters is not variable, it is a <u>fixed
+parameter</u> option.
+
+</ul>
+
+<p>An example (arg = argument, parm = parameter):
+<blockquote><pre>
+                  arg 
+   arg    arg  arg |  arg arg arg args    arg     arg   arg
+    |      |    |  |   |   |   |    |      |       |     |
+<b>composite -verb 3 -bg 255 255 255 *.pgm bingo.pgm -o final.pgm</b>
+           |    |  |  \_________/   |      |       |     |
+         flag parm flag   parms    parms  parm    flag  parm
+         \_______/ \__________/    \_________/    \________/
+           option     option         option         option
+</pre></blockquote>
+
+The fact that "*.pgm bingo.pgm" constitute one option, and a seperate
+option from "-bg&nbsp;255&nbsp;255&nbsp;255" would be known from the
+information about options specified by the caller of the
+<tt><b>hest</b></tt> functions.
+
+<p>
+
+<tt><b>hest</b></tt> allows parsing of flagged and unflagged, variable
+and fixed parameter options.  After the flagged options and their
+associated parameters are parsed, they are removed from the list of
+command line arguments, and remaining arguments are parsed as the
+unflagged options.  The immediate practical implication of this is
+that you can have at most one unflagged variable parameter option.
+You can have any number of flagged variable parameter options.  If an
+option does not appear, information is set according to given default
+values.  Options (specifically, their parameters) can be of type
+boolean, int, float, double, char, and string (a "char *").  The
+booleans are actually treated as integers, but "on", "yes", "y",
+"true", "t", and "1" are all parsed as 1, and "off", "no", "n",
+"false", "f", and "0" are all parsed as 0.
+
+<p>
+
+The different set of possibilities created by having any number of
+parameters can be organized according to "min" and "max" integers, which
+are the minimum and maximum number of parameters to be associated with a
+flag.  Fixed parameter options have min&nbsp;==&nbsp;max, variable parameter
+options have min&nbsp;&lt;&nbsp;max.  The grid of possibilities is
+here:
+<p>
+<table align=center border=1 cellpadding=2 cellspacing=2>
+<tr>
+  <td>
+  <td align=center>min=<br>0
+  <td align=center valign=bottom>1
+  <td align=center valign=bottom>2
+  <td align=center valign=bottom>3
+  <td align=center valign=bottom>4
+<tr>
+  <td align=center>max=<br>0
+  <td align=center>stand-alone<br>flag
+  <td>
+  <td>
+  <td>
+  <td>
+<tr>
+  <td align=center>1
+  <td align=center>single<br>variable<br>parm
+  <td align=center>single<br>fixed<br>parm
+  <td>
+  <td>
+  <td>
+<tr>
+  <td align=center>2
+  <td align=center>0-2<br>variable<br>parms
+  <td align=center>1-2<br>variable<br>parms
+  <td align=center>2<br>fixed<br>parms
+  <td>
+  <td>
+<tr>
+  <td align=center>3
+  <td align=center>0-3<br>variable<br>parms
+  <td align=center>1-3<br>variable<br>parms
+  <td align=center>2-3<br>variable<br>parms
+  <td align=center>3<br>fixed<br>parms
+  <td>
+<tr>
+  <td align=center>4
+  <td align=center>0-4<br>variable<br>parms
+  <td align=center>1-4<br>variable<br>parms
+  <td align=center>2-4<br>variable<br>parms
+  <td align=center>3-4<br>variable<br>parms
+  <td align=center>4<br>fixed<br>parms
+</table>
+
+<p>
+
+There are, then, <em>five</em> different <u>kinds</u> of options which the
+<tt><b>hest</b></tt> deals with, and treats seperately (the <u>kind</u> is
+independent of <u>type</u>: boolean, int, float, <i>etc</i>.):
+<ol>
+
+<li> <u>Stand-alone flag</u>: Because there are no parameters
+associated with a stand-alone flag, whether or not the flag appears on
+the command line is all that matters.
+
+<li> <u>Single fixed parameter</u>: The option has exactly one parameter.
+
+<li> <u>Multiple fixed parameters</u>: There are a fixed number (greater
+than 1) of parameters in the option.  Specifying a background color (as
+with "-bg&nbsp;255&nbsp;255&nbsp;255") might fall in this category.
+
+<li> <u>Single variable parameter</u>: This is useful for situations where
+a user may want to enable some behavior, or enable some behavior to a
+specified level.  For example, verboseness of diagnostic error
+messages can be controlled with "-v":  for no verboseness, "-v" is
+<em>not</em> given;  for some verboseness, "-v" alone can be used;
+for a specific level of verbosness, "-v 3" (for example) can be used.
+
+<li> <u>Multiple variable parameters</u>: The option can have a varying
+number of parameters, and the maximum number is greater than 1.  The list
+of filenames resulting from shell expansion (as from "-i&nbsp;*.txt")
+would fall in this category.  The end of a variable parameter
+list is signalled by another recognized flag, or the end of the command
+line.
+
+</ol> 
+
+Recall that options can be flagged or unflagged.  The only kind of
+option which cannot be unflagged is the stand-alone flag; all other
+kinds of options can be either flagged or unflagged.  The ability to
+deal with different combinations of flagged and unflagged, single and
+multiple, fixed and variable options leads, unfortunately, to somewhat
+complicated rules on the behavior of the <tt><b>hest</b></tt>
+functions, such as how the default information is handled, how memory
+is allocated, and what variables are required and not.  The simplest
+behavior is for kinds 1 through 3 above; things get a little weird for
+4 and 5.  The usage and behavior will be documented in terms of the
+different kinds shown above, and in terms of the terminology defined
+above.
+
+<p><a href="http://validator.w3.org/check/referer">&nbsp;</a>
+
+</body>
+</html>
+
+

@@ -1,0 +1,106 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Visible Female Color Data Processing: Image Differences 2
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="head80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <font size="-1"><a href="./index.html">Visible<br>Female</a></font>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Image Differences 2</b></h2>
+</table>
+<p>
+
+
+<ul>
+<li><pre>
+324: avf1109a.raw.Z
+325: avf1109b.raw.Z
+326: avf1109c.raw.Z
+327: avf1110a.raw.Z
+</pre>
+</ul>
+
+<blockquote><pre>
+unu join -i histax{R,G,B}.ppm -a 3 | unu crop -min 0 <b>321</b> 0 0 -max M m+9 M M \
+  | histaxzoom | topng doc/<a href="hist2.png">hist2.png</a>
+zcat data/<b>avf1109a</b>.raw.Z | sliceprep -o 0.ppm
+zcat data/<b>avf1109b</b>.raw.Z | sliceprep -o 1.ppm
+zcat data/<b>avf1109c</b>.raw.Z | sliceprep -o 2.ppm
+zcat data/<b>avf1110a</b>.raw.Z | sliceprep -o 3.ppm
+unu 2op - {0,1}.ppm -t int | cquant | shrink | topng doc/<a href="diff2CA.png">diff2CA.png</a>
+unu 2op - {1,2}.ppm -t int | cquant | shrink | topng doc/<a href="diff2CB.png">diff2CB.png</a>
+unu 2op - {2,3}.ppm -t int | cquant | shrink | topng doc/<a href="diff2CC.png">diff2CC.png</a>
+unu 2op - {0,1}.ppm -t int | nquant | shrink | topng doc/<a href="diff2NA.png">diff2NA.png</a>
+unu 2op - {1,2}.ppm -t int | nquant | shrink | topng doc/<a href="diff2NB.png">diff2NB.png</a>
+unu 2op - {2,3}.ppm -t int | nquant | shrink | topng doc/<a href="diff2NC.png">diff2NC.png</a>
+</pre></blockquote>
+
+<center>
+<table>
+<tr>
+  <td align=center colspan=3><img width=420 height=260 alt="" src="hist2.png">
+<tr>
+  <td align=center colspan=3><tt>hist2.png</tt>: Segments of the red,
+green, and blue <a href="problem.html#percomp">axis histograms</a>,
+for Z slices 321 to 330.
+<tr>
+  <td><img width=312 height=237 alt="" src="diff2CA.png">
+  <td><img width=312 height=237 alt="" src="diff2CB.png">
+  <td><img width=312 height=237 alt="" src="diff2CC.png">
+<tr>
+  <td align=center><tt>diff2CA.png</tt>
+  <td align=center><tt>diff2CB.png</tt>
+  <td align=center><tt>diff2CC.png</tt>
+<tr>
+  <td><img width=312 height=237 alt="" src="diff2NA.png">
+  <td><img width=312 height=237 alt="" src="diff2NB.png">
+  <td><img width=312 height=237 alt="" src="diff2NC.png">
+<tr>
+  <td align=center><tt>diff2NA.png</tt>
+  <td align=center><tt>diff2NB.png</tt>
+  <td align=center><tt>diff2NC.png</tt>
+</table>
+</center>
+
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
+
+
