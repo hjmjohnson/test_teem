@@ -186,32 +186,50 @@ represents arrays of general type and dimension.
 aspects of the file format.  In favor of MetaImage:
 
 <ul>
+
 <li> Having a detached header file give a list of image (slice) filenames,
 while describing those images as a volume, is quite powerful, and
-MetaIO has two different ways of doing this.
+MetaIO has two different ways of doing this.  This feature is on the
+"to-do" list for NRRD.
+
 <li> The <tt>ElementNumberOfChannels</tt> field allows a nominally
 3-D data header to describe what is logically a 4-D array.  NRRD
 suffers from a slight weirdness in this regard (a color image is a 
 three-dimensional nrrd), a consequence of its "everything is a scalar"
 mentality.
+
 <li> The distinction between element size and element spacing is
 fundamental to properly representing MRI data when the slice thickness
 is different (usually less than) the spacing between slices.  NRRD
-doesn't know anything about this difference, and perhaps it should.
+doesn't know anything about this difference, but you can still store 
+this information in a key/value pair.
+
 </ul>
 
 <p>
 
 In favor of NRRD:
 <ul>
-<li> Has a simple "magic" on a line by itself at the beginning of the file,
-to unambiguously identify the type of the file to multi-format readers.
-<li> Having more than just raw and ascii encoding: gzip and bzip2 compression,
-as well as hex.
+
+<li> The NRRD format has a simple "magic" on a line by itself at the
+beginning of the file, to unambiguously identify the type of the file
+to multi-format readers.  File formats without magic lead to headaches.
+
+<li> NRRD has more than just raw and ascii encoding: gzip and bzip2
+compression, as well as hex.  Being able to directly inspect data that
+someone has run "gzip" on is extremely conveniant.
+
 <li> A more conservative approach to representing optional information.
 If you don't know information like sample spacing, you don't include
 that field. The NRRD reader remembers that you didn't know spacing, 
 instead of inventing some default value.
+
+<li> Has a powerful associated program, <a
+href="../unrrdu/index.html"><tt>unu</tt></a> for doing image
+manipulation and procesing quickly and easily on the command-line.
+The underlying <b>nrrd</b> <a href="lib.html">library</a> provides an
+easy-to-use C API to the same functionality.
+
 </ul>
 
 <p>
@@ -275,7 +293,10 @@ the two formats:
 
 <p>
 
-Some MetaImage fields that NRRD has no good analog for:
+There are various MetaImage fields that NRRD has no immediate analog for,
+because NRRD aims to be more minimalist in its representational abilibites.
+This sort of information would be stored as key/value pairs in NRRD:
+
 <ul>
 <li> <tt>ObjectType</tt>, <tt>ObjectSubType</tt>, <tt>TransformType</tt>, 
   <tt>Modality</tt>: descriptive strings
@@ -290,15 +311,26 @@ which uniquely identifies the dataset.
 
 Some NRRD fields that MetaImage doesn't seem to have analogs for:
 <ul>
-<li> <tt>centers</tt>: cell-vs-node centering
-<li> <tt>axis maxs</tt>: good with histograms, scatterplots, fields of view
-<li> <tt>old min</tt>, <tt>old max</tt>:
-  remembering value range pre-quantization
-<li> <tt>line skip</tt>: very handy for snarfing data from other formats,
-  such as VTK, VisPack, and PostScript
+
+<li> <tt>centers</tt>: cell-vs-node centering.  This is fundamental to
+properly representing the difference between histograms and other types
+of sampled signals.
+
+<li> <tt>axis maxs</tt>: Necessary for unambiguously storing
+histograms, scatterplots, and images with a specific field of view.
+
+<li> <tt>old min</tt>, <tt>old max</tt>: Very handy for remembering
+a value range pre-quantization.
+
+<li> <tt>line skip</tt>: When snarfing data from other formats (VTK,
+VFF, VisPack, and even PostScript), specifying the skip in terms of lines
+(rather than bytes) is much simpler.
+
 <li> <tt>labels</tt>: arbitrary string per axis
+
 <li> <tt>units</tt>: arbitrary string per axis giving units that spacing
   is measured in.
+
 </ul>
 
 <p>
@@ -318,7 +350,7 @@ pre-computed univariate histogram (to help in isovalue navigation), or
 a collection of different one-, two-, and three-dimensional lookup
 tables which are good transfer functions for a given volume.  I am
 leaning towards implementing this multi-NRRD association with XML on
-top of regular NRRD0001 files.  If you need this, though, you should
+top of regular NRRD files.  If you need this, though, you should
 probably be using <a href="http://hdf.ncsa.uiuc.edu/">HDF
 (<tt>http://hdf.ncsa.uiuc.edu/</tt>)</a>
 
