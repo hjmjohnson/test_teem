@@ -84,8 +84,9 @@ defined functionality.  Whatever exists in the way of documentation
 for each of the libraries is below.  The libraries heavily depend on
 each other (in a non-circular way), so they are built and distributed
 as a group.  The only other library that is required is the math
-library ("<tt>-lm</tt>").  The libraries populate a common directory
-structure (under CVS control), collectively they are called
+library ("<tt>-lm</tt>"), although <b>nrrd</b> can optionally use
+zlib, bzip2, and PNG.  The <b>teem</b> libraries populate a common
+directory structure (under CVS control), collectively they are called
 <b>teem</b>.  There are also assorted command-line programs, see
 below.
 
@@ -101,6 +102,11 @@ below.
   Supported platforms are: GNU/Linux, <a
   href="http://www.cygwin.com">Cygwin</a>, Irix (n32, 64), Solaris,
   Windows, Mac OS X.
+
+<li>
+  <a href="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/teem/teem/">
+  View Source</a>: 
+  you can inspect the individual source files via ViewCVS.
 
 <li>
  <a href="bugs.html">Known bugs and limitations</a>. 
