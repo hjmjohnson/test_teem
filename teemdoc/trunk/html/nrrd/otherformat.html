@@ -123,7 +123,7 @@ be <tt>uchar</tt>, <tt>short</tt>, <tt>int</tt>, <tt>float</tt>, or
 <tr>
 <td>"<tt>.nhdr</tt>"
 <td colspan=3>NRRD file (<tt>nrrdFormatNRRD</tt>) with
-<a href="format.html#sect3">detached header</a>.
+<a href="format.html#detached">detached header</a>.
 Seperate data file will be written with requested encoding, with
 filename suffix defined in <a href="format.html#encoding">NRRD
 file format definition</a>
@@ -183,7 +183,7 @@ from the first line of the file.  If this fails, then
 <tt>nrrdRead()</tt> fails.
 
 <li> On a line, floating point values are written in ASCII and
-interpreted according to <a href="format.html#sect2">Section 2</a> of
+interpreted according to <a href="format.html#ascii">Section 2</a> of
 the <a href="format.html">NRRD format</a> definition.  They can be
 seperated by one or more characters from the C string "<tt> ,\t</tt>"
 (blank, comma, and tab).
@@ -209,8 +209,8 @@ specifiers in the text file, in lines starting with
 "<tt>#&nbsp;</tt>", which preceed all the ASCII values.
 <tt>nrrdRead()</tt> will try to parse everything after
 "<tt>#&nbsp;</tt>" as field specifiers, according to <a
-href="format.html#sect4">Section 4</a> and <a
-href="format.html#sect5">Section 5</a> of the <a
+href="format.html#basic">Section 5</a> and <a
+href="format.html#per-axis">Section 6</a> of the <a
 href="format.html">NRRD format</a> definition.  For instance, the line
 "<tt>#&nbsp;spacings:&nbsp;1&nbsp;2</tt>" allows the text file to give
 information about the sample spacing along each axis.  Not all field

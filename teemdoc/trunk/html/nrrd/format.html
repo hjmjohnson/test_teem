@@ -41,25 +41,25 @@ GK's C code: nrrd: Definition of NRRD File Format
 <table border=1>
 <tr><td>
 <ol>
-<li><a href="#sect1">General Information</a>
+<li><a href="#general">General Information</a>
   <ol>
-  <li><a href="#sect1.1">Format versions and magics</a>
-  <li><a href="#sect1.2">Basic header structure</a>
-  <li><a href="#sect1.3">"Per-axis" versus "basic" fields, and field specification ordering</a>
-  <li><a href="#sect1.4">Axis ordering, and a minimalist header</a>
-  <li><a href="#sect1.5">Optional information and its representation</a>
-  <li><a href="#sect1.6">Miscellaneous info</a>
+  <li><a href="#general.1">Format versions and magics</a>
+  <li><a href="#general.2">Basic header structure</a>
+  <li><a href="#general.3">"Per-axis" versus "basic" fields, and field specification ordering</a>
+  <li><a href="#general.4">Axis ordering, and a minimalist header</a>
+  <li><a href="#general.5">Optional information and its representation</a>
+  <li><a href="#general.6">Miscellaneous info</a>
   </ol>
-<li><a href="#sect2">ASCII encoding of floating point values</a>
-<li><a href="#sect3">Detached headers with "<tt>data file:</tt>"</a>
-<li><a href="#sect4">Space and orientation information</a><br>
+<li><a href="#ascii">ASCII encoding of floating point values</a>
+<li><a href="#detached">Detached headers with "<tt>data file:</tt>"</a>
+<li><a href="#space">Space and orientation information</a><br>
 <a href="#space"><tt>space</tt></a>, 
 <a href="#spacedimension"><tt>space dimension</tt></a>,
 <a href="#spaceunits"><tt>space units</tt></a>,
 <a href="#spaceorigin"><tt>space origin</tt></a>,
 <a href="#spacedirections"><tt>space directions</tt>
 
-<li><a href="#sect5">Basic field specifications </a><br>
+<li><a href="#basic">Basic field specifications </a><br>
 <a href="#dimension"><tt>dimension</tt></a>,
 <a href="#type"><tt>type</tt></a>,
 <a href="#blocksize"><tt>block size</tt></a>,
@@ -76,7 +76,7 @@ GK's C code: nrrd: Definition of NRRD File Format
 <a href="#number"><tt>number</tt></a>,
 <a href="#sampleunits"><tt>sample units</tt></a>
 
-<li><a href="#sect6">Per-axis field specifications</a><br>
+<li><a href="#per-axis">Per-axis field specifications</a><br>
 <a href="#sizes"><tt>sizes</tt></a>,
 <a href="#spacings"><tt>spacings</tt></a>,
 <a href="#thicknesses"><tt>thicknesses</tt></a>,
@@ -108,11 +108,11 @@ printing.
 
 When saved, the filenames for NRRD files should end in
 "<tt>.nrrd</tt>".  Detached headers, discussed in <a
-href="#sect3">Section 3</a>, should end in "<tt>.nhdr</tt>".
+href="#detached">Section 3</a>, should end in "<tt>.nhdr</tt>".
 Suggested suffixes for data files associated with detached headers
 ("<tt>.raw</tt>", "<tt>.txt</tt>", etc) are listed in the <a
 href="#encoding"><tt>encoding</tt></a> part of <a
-href="#sect5">Section 5</a>.
+href="#basic">Section 5</a>.
 
 <p>
 
@@ -122,15 +122,15 @@ href="index.html"><b>nrrd</b></a> library are intended to completely
 support the format as described here, but as yet there is no test
 suite.
 
-<h2><a name="sect1">1. General Information</a></h2>
+<h2><a name="general">1. General Information</a></h2>
 
-<h3><a name="sect1.1">1.1 Format versions and magics</a></h3>
+<h3><a name="general.1">1.1 Format versions and magics</a></h3>
 
 NRRD files come in two forms: with an attached header (in which the
 header and the data are in the same file), and with a detached header
 (header and data are in two separate files). The attached-header form
 is described first, and the minor variation that enables detached
-headers is described in <a href="#sect3">Section 3</a>.  NRRD readers
+headers is described in <a href="#detached">Section 3</a>.  NRRD readers
 must be able to support attached and detached headers.
 
 <p>
@@ -181,7 +181,7 @@ field to identify multiple data files.
 
 </ul>
 
-<h3><a name="sect1.2">1.2 Basic header structure</a></h3>
+<h3><a name="general.2">1.2 Basic header structure</a></h3>
 
 Because the NRRD format uses a multi-line text header, some mention
 should be made of what exactly a line is.  When Windows (and sometimes
@@ -272,7 +272,7 @@ previous information in the header.  This is why there is no standard
 template for all NRRD headers, or a context-free grammar for NRRD
 headers.
 
-<h3><a name="sect1.3">1.3 "Per-axis" versus "basic" fields, and field specification ordering</a></h3>
+<h3><a name="general.3">1.3 "Per-axis" versus "basic" fields, and field specification ordering</a></h3>
 
 Some field specifications give a piece of
 information about each and every axis in a nrrd; these are called
@@ -324,7 +324,7 @@ of information need to be parsed (the same as the dimension), as well
 as avoiding attempts at cleverness in the form of guessing the
 dimension from the first per-axis specification.  There is a similar
 field specification ordering constraint associated with the orientation
-information described in <a href="#sect4">Section 4</a>: the space in
+information described in <a href="#space">Section 4</a>: the space in
 which the array conceptually "lives" has to be identified (or at least
 its dimension given) prior to parsing all the other orientation-related
 fields which have one piece of information per space coordinate.  A 
@@ -340,15 +340,15 @@ always necessary will be introduced and discussed briefly. The general
 characteristics of the per-axis and basic specifications will
 be described.  The importance of NaN as an indicator of "don't know"
 will be described.  The following sections expand on these points.  <a
-href="#sect2">Section 2</a> will define how NRRD readers and writers
+href="#ascii">Section 2</a> will define how NRRD readers and writers
 must handle ascii encoding of floating point data.  <a
-href="#sect3">Section 3</a> describes how NRRD handles detached
+href="#detached">Section 3</a> describes how NRRD handles detached
 headers.  Finally, careful definition of all the different field
-specifications are found in <a href="#sect5">Section 5</a> and <a
-href="#sect6">Section 6</a>.
+specifications are found in <a href="#basic">Section 5</a> and <a
+href="#per-axis">Section 6</a>.
 -->
 
-<h3><a name="sect1.4">1.4 Axis ordering, and a minimalist header</a></h3>
+<h3><a name="general.4">1.4 Axis ordering, and a minimalist header</a></h3>
 <p>
 
 The issue of axis ordering is fundamental.  In memory and on disk,
@@ -386,7 +386,7 @@ point, and so on.  Useful variants like "<tt>uchar</tt>" (same as
 "<tt>unsigned char</tt>") are allowed.  There is also the
 <tt>block</tt> type, which is used to represent some chunk of opaque
 memory, of user-specified size; see the <a href="#type"><tt>type</tt>
-specification</a> in <a href="#sect5">Section 5</a> for all the
+specification</a> in <a href="#basic">Section 5</a> for all the
 details.  
 
 <p>
@@ -396,7 +396,7 @@ header) is written out; "<tt>ascii</tt>" and "<tt>raw</tt>" are common
 values, but "<tt>hex</tt>" allows extraction of images from some
 PostScript files, and compression is also supported; see the <a
 href="#encoding"><tt>encoding</tt> specification</a> (<a
-href="#sect5">Section 5</a>).  NRRD readers must be able to support
+href="#basic">Section 5</a>).  NRRD readers must be able to support
 raw and ASCII encoding, everything else is optional.  See the 
 <a href="descformat.html">general description of NRRD format</a>
 for more information about how optional encodings are handled.
@@ -434,10 +434,10 @@ specifications become necessary as a function of other fields: if the
 <tt>type</tt> was "<tt>float</tt>", and the <tt>encoding</tt> is
 something other than "<tt>ascii</tt>", then the <tt>endian</tt> of the
 data would have to be recorded.  The details of which fields require
-which other fields are spelled out in <a href="#sect5">Section 5</a>
-and <a href="#sect6">Section 6</a>.
+which other fields are spelled out in <a href="#basic">Section 5</a>
+and <a href="#per-axis">Section 6</a>.
 
-<h3><a name="sect1.5">1.5 Optional information and its representation</a></h3>
+<h3><a name="general.5">1.5 Optional information and its representation</a></h3>
 
 One of the things that makes reading a NRRD header complicated is that
 the absence of optional information is just as important to record
@@ -496,13 +496,13 @@ interpret the case-insensitive string "<tt>nan</tt>" as a NaN, even if
 this is not already the behavior of <tt>sscanf()</tt> on a given
 platform (it probably isn't).  Writing a small wrapper function
 around <tt>sscanf()</tt> is a very small price to pay for the
-representational convenience of NaN.  <a href="#sect2">Section 2</a>
+representational convenience of NaN.  <a href="#ascii">Section 2</a>
 gives the details for how NRRD readers and writers should handle ASCII
 encoding of the the IEEE 754 special values.
 
-<h3><a name="sect1.6">1.6 Miscellaneous info</a></h3>
+<h3><a name="general.6">1.6 Miscellaneous info</a></h3>
 
-In <a href="#sect5">Section 5</a> and <a href="#sect6">Section 6</a>,
+In <a href="#basic">Section 5</a> and <a href="#per-axis">Section 6</a>,
 when a field specification is described as harmless, it means that the
 field specification probably shouldn't be in the header, because its
 information is either irrelevant or meaningless in that context.
@@ -513,7 +513,7 @@ complain if the field specification is malformed and unparsable.
 
 <p>
 
-In <a href="#sect5">Section 5</a> and <a href="#sect6">Section 6</a>,
+In <a href="#basic">Section 5</a> and <a href="#per-axis">Section 6</a>,
 numeric field specification descriptions include a "Type", which
 identifies the minimum precision with which the information must be
 represented by the NRRD reader.  In this context, "<tt>int</tt>" means
@@ -534,14 +534,14 @@ descriptors (strings) are delimited by quotes).
 <p>
 No other fields are allowed in a "<tt>NRRD0001</tt>" or
 "<tt>NRRD00.01</tt>" magic file other than those defined in <a
-href="#sect5">Section 5</a> and <a href="#sect6">Section 6</a>.  NRRD
+href="#basic">Section 5</a> and <a href="#per-axis">Section 6</a>.  NRRD
 readers are not expected to make any efforts to deal with
 non-conformant files (in contrast to PNM recommendations), but
 specific and intelligent human-readable error messages are of course
 encouraged.
 -->
 
-<h2><a name="sect2">2. ASCII Encoding of Floating Point Values</a></h2>
+<h2><a name="ascii">2. ASCII Encoding of Floating Point Values</a></h2>
 
 Float point field descriptors in the NRRD header, and floating point
 data written with ASCII encoding, have some special rules regarding
@@ -614,7 +614,7 @@ patterns for positive and negative infinity.
 NRRD writers should verify that their <tt>printf()</tt> function behaves
 in accordance with these rules.
 
-<h2><a name="sect3">3. Detached Headers with "<tt>data file:</tt>"</a></h2>
+<h2><a name="detached">3. Detached Headers with "<tt>data file:</tt>"</a></h2>
 
 Detached headers allow data stored in one or more separate files,
 with or without headers of another format, to be accessed by a NRRD
@@ -773,7 +773,7 @@ datafile, at which point it becomes annoying to move the header and
 data together to a different directory.
 -->
 
-<h2><a name="sect4">4. Space and Orientation Information</a></h2>
+<h2><a name="space">4. Space and Orientation Information</a></h2>
 
 Staring with <tt>NRRD0004</tt> files, NRRD headers can describe the
 orientation of the raster grid relative to some surrounding "space".
@@ -784,7 +784,7 @@ header defines a relationship between the individual axes of the
 array, and the basis vectors of the (single) space in which the array
 conceptually lives.  Because orientation information is a self-contained
 topic, all the related field specifications are described here, instead
-of in <a href="#sect5">Section 5</a> and <a href="#sect6">Section 6</a>.
+of in <a href="#basic">Section 5</a> and <a href="#per-axis">Section 6</a>.
 
 <p>
 
@@ -917,8 +917,9 @@ is, in some other formats, "RAS" implies something about axis
 ordering: that the coordinates along the fastest axis increase in the
 left to right direction, and that the second and third array
 coordinates increase along the anterior and superior directions.  The
-NRRD format, in contrast, is very careful to separate the issue of axis
-ordering with the issue of array orientation.  
+NRRD format, in contrast, is careful to separate the issue of axis
+ordering from the task of identifying the space in which the array 
+is oriented.
 
 <a name="spacedimension"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
@@ -1006,7 +1007,7 @@ axis) may be specified:
 space directions: none (1,0,0) (0,1,0) (0,0,3)
 </pre></blockquote>
 
-<h2><a name="sect5">5. Basic Field Specifications</a></h2>
+<h2><a name="basic">5. Basic Field Specifications</a></h2>
 
 <a name="dimension"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
@@ -1198,7 +1199,7 @@ the encoding field descriptor, with associated meaning are:
 
   <td>Integral values are written/read as with
   <tt>printf()</tt>/<tt>sscanf()</tt>, and floating point values are
-  used in a way consistent with <a href="#sect2">Section 2</a>.
+  used in a way consistent with <a href="#ascii">Section 2</a>.
   The individual values are separated by one or more whitespace
   characters (from the C string "<tt>&nbsp;\t\n\r\v\f</tt>").  No line
   terminations are required anywhere.  Their presence is no different
@@ -1439,12 +1440,12 @@ datafile: LIST [&lt;<i>subdim</i>&gt;]
 <li> Always optional
 </ul>
 
-(Read <a href="#sect3">Section 3</a>)
+(Read <a href="#detached">Section 3</a>)
 <p>
 
 This is always optional, but it is the only means of distinguishing
 from an attached or a detached NRRD header.  When it is present, it is
-interpreted according to <a href="#sect3">Section 3</a>, and the
+interpreted according to <a href="#detached">Section 3</a>, and the
 header is considered finished at the EOF, or at the blank line
 following the last field, whichever comes first.  If the header ends
 with a blank line, any data after the blank line is ignored.  If
@@ -1467,7 +1468,7 @@ file in order to get to the where the data actually begins.  If this
 is used in an attached NRRD header, then the lines are skipped after
 the blank line at the end of the NRRD header.  The definition of a
 "line" in this context is the same as given in <a
-href="#sect1.2">Section 1.2</a>.  When this field does not appear,
+href="#general.2">Section 1.2</a>.  When this field does not appear,
 <i>skip</i> is taken to be zero.
 
 <p>
@@ -1599,7 +1600,7 @@ array.  However, all coordinates of a vector (such as a velocity
 vector) are apt to have the same units, so this field is still useful
 in that case.
 
-<h2><a name="sect6">6. Per-axis Field Specifications</a></h2>
+<h2><a name="per-axis">6. Per-axis Field Specifications</a></h2>
 
 The individual field descriptors in these specifications are delimited
 by one or more spaces ("<tt> </tt>") or tabs ("<tt>\t</tt>"), or some

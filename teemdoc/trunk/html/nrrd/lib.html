@@ -1,5 +1,5 @@
 <!--
-  Documentation for "teem: Gordon Kindlmann's research software"
+  Documentation for "Teem: Gordon Kindlmann's research software"
   Copyright (C)  2005 Gordon Kindlmann
   Copyright (C)  2004, 2003, 2002, 2001, 2000 University of Utah
   This documentation may not be modified or redistributed in any
@@ -30,7 +30,7 @@ GK's C code: nrrd: Library Description
   <td>
 <tr>
   <td width=80 align=center valign=top>
-    <b><a href="../index.html">teem</a></b>
+    <b><a href="../index.html">Teem</a></b>
   <td valign=top>
     <b>/</b>
   <td width=80 align=center valign=top>
@@ -48,6 +48,7 @@ GK's C code: nrrd: Library Description
 <li><a href="#data">Getting data into and out of nrrds</a>
 <li><a href="#peraxis">Setting/Getting per-axis information</a>
 <li><a href="#keyvalue">Key/Value Pairs</a>
+<li><a href="#space">Space and Orientation</a>
 <li><a href="#overview">Overview of rest of API</a>
 </ol>
 </table>
@@ -56,8 +57,8 @@ GK's C code: nrrd: Library Description
 
 This page is intended to be a basic introduction to programming with
 the <b>nrrd</b> API.  The stand-alone <b>NrrdIO</b> library includes
-all the functions described in Section 1 through 6; it lacks the
-functions (listed in Section 7) which perform non-trivial
+all the functions described in Section 1 through 7; it lacks the
+functions (listed in Section 8) which perform non-trivial
 manipulations of the array values.  This page will make the most sense
 if you already know what sort of data and meta-data can be represented
 in a nrrd.  The <a href="intro.html">Introduction</a> to nrrd is
@@ -213,34 +214,122 @@ typedef struct {
 
 <p>
 
+<b>Nrrd</b> uses C enums for representing discrete information with more
+semantic content than a normal integer.  The three most important are:
+<ul>
+<li> <tt>nrrd-&gt;type</tt> takes on values from the <tt>nrrdType</tt> enum:
+<pre>
+/*
+******** nrrdType enum
+**
+** all the different types, identified by integer
+*/
+enum {
+  nrrdTypeUnknown=0,     /*  0: signifies "type is unset/unknown" */
+  nrrdTypeDefault=0,     /*  0: signifies "determine output type for me" */
+  nrrdTypeChar,          /*  1:   signed 1-byte integer */
+  nrrdTypeUChar,         /*  2: unsigned 1-byte integer */
+  nrrdTypeShort,         /*  3:   signed 2-byte integer */
+  nrrdTypeUShort,        /*  4: unsigned 2-byte integer */
+  nrrdTypeInt,           /*  5:   signed 4-byte integer */
+  nrrdTypeUInt,          /*  6: unsigned 4-byte integer */
+  nrrdTypeLLong,         /*  7:   signed 8-byte integer */
+  nrrdTypeULLong,        /*  8: unsigned 8-byte integer */
+  nrrdTypeFloat,         /*  9:          4-byte floating point */
+  nrrdTypeDouble,        /* 10:          8-byte floating point */
+  nrrdTypeBlock,         /* 11: size user defined at run time; MUST BE LAST */
+  nrrdTypeLast
+};
+</pre>
+<li> <tt>nrrd-&gt;axis[i].center</tt> takes on values from the <tt>nrrdCenter</tt> enum:
+<pre>
+/*
+******** nrrdCenter enum
+**
+** node-centered vs. cell-centered
+*/
+enum {
+  nrrdCenterUnknown,         /* 0: no centering known for this axis */
+  nrrdCenterNode,            /* 1: samples at corners of things
+                                (how "voxels" are usually imagined)
+                                |\______/|\______/|\______/|
+                                X        X        X        X   */
+  nrrdCenterCell,            /* 2: samples at middles of things
+                                (characteristic of histogram bins)
+                                 \___|___/\___|___/\___|___/
+                                     X        X        X       */
+  nrrdCenterLast
+};
+</pre>
+<li> <tt>nrrd-&gt;axis[i].kind</tt> takes on values from the <tt>nrrdKind</tt> enum:
+<pre>
+/*
+******** nrrdKind enum
+**
+** For describing the information along one axis of an array.  This is
+** most important for clarifying the representation of non-scalar
+** data, in order to distinguish between axes that are genuine image
+** domain axes, and axes that exist just to store the multiple
+** attributes per sample.  One could argue that this information
+** should be per-array and not per-axis, but you still have to
+** indicate which one of the axes is the attribute axis.  And, if you
+** have, say, the gradient of RGB colors, you want the per-pixel 3x3
+** array to have those two attribute axes tagged accordingly.
+**
+** More of these may be added in the future, as when nrrd supports bricking.
+**
+** NOTE: The nrrdKindSize() function returns the suggested length for these.
+*/
+enum {
+  nrrdKindUnknown,
+  nrrdKindDomain,            /*  1: "Yes, you can resample me" */
+  nrrdKindSpace,             /*  2: a spatial domain */
+  nrrdKindTime,              /*  3: a temporal domain */
+  nrrdKindList,              /*  4: "No, it is goofy to resample me" */
+  nrrdKindStub,              /*  5: axis with one sample (a placeholder) */
+  nrrdKindScalar,            /*  6: effectively, same as a stub */
+  nrrdKindComplex,           /*  7: real and imaginary components */
+  nrrdKind2Vector,           /*  8: 2 component vector */
+  nrrdKind3Color,            /*  9: ANY 3-component color value */
+  nrrdKind4Color,            /* 10: ANY 4-component color value */
+  nrrdKind3Vector,           /* 11: 3 component vector */
+  nrrdKind3Normal,           /* 12: 3 component vector, assumed normalized */
+  nrrdKind4Vector,           /* 13: 4 component vector */
+  nrrdKind2DSymMatrix,       /* 14: Mxx Mxy Myy */
+  nrrdKind2DMaskedSymMatrix, /* 15: mask Mxx Mxy Myy */
+  nrrdKind2DMatrix,          /* 16: Mxx Mxy Myx Myy */
+  nrrdKind2DMaskedMatrix,    /* 17: mask Mxx Mxy Myx Myy */
+  nrrdKind3DSymMatrix,       /* 18: Mxx Mxy Mxz Myy Myz Mzz */
+  nrrdKind3DMaskedSymMatrix, /* 19: mask Mxx Mxy Mxz Myy Myz Mzz */
+  nrrdKind3DMatrix,          /* 20: Mxx Mxy Mxz Myx Myy Myz Mzx Mzy Mzz */
+  nrrdKind3DMaskedMatrix,    /* 21: mask Mxx Mxy Mxz Myx Myy Myz Mzx Mzy Mzz */
+  nrrdKindLast
+};
+</pre>
+</ul>
+
 In general, you do not directly set the struct members- you set this
 information via functions in the <b>nrrd</b> API.  As a matter of
 convenience, however, it is common and okay to read value directly
-from the <tt>Nrrd</tt> struct.  The value of looking at the struct
-definitions is to understand what information can be represented.
-There is one <tt>NrrdAxis</tt> struct for each axis (or dimension) in
-the dataset, and the only necessary piece of information is the
-<tt>size</tt>; everything else is optional meta-information.
-<tt>spacing</tt>, <tt>thickness</tt>, <tt>min</tt>, and <tt>max</tt> are all doubles which
-follow the convention that if no useful value is known, then the value
-is set to <tt>AIR_NAN</tt>, which represents
+from the <tt>Nrrd</tt> struct, although many accessor functions are
+available as well.  The value of looking at the struct definitions above is
+to understand what information can be represented.  There is one
+<tt>NrrdAxis</tt> struct for each axis (or dimension) in the dataset,
+and the only necessary piece of information is the <tt>size</tt>;
+everything else is optional meta-information.  <tt>spacing</tt>,
+<tt>thickness</tt>, <tt>min</tt>, and <tt>max</tt> are all doubles
+which follow the convention that if no useful value is known, then the
+value is set to <tt>AIR_NAN</tt>, which represents
 Not-A-Number. <tt>label</tt> and <tt>unit</tt> are standard C char*
-strings.  The <tt>center</tt> field takes on values from a C enum
-defined in <tt>nrrdEnums.h</tt>; useful values are
-<tt>nrrdCenterUnknown</tt>, <tt>nrrdCenterNode</tt>, and
-<tt>nrrdCenterCell</tt>; using <tt>nrrdCenterUnknown</tt> when
-sample-centering is unknown or irrelevant.
+strings.  The <tt>center</tt> field takes on values from the 
+<tt>nrrdCenter</tt> enum (above).
 
 <p>
 
 In the <tt>Nrrd</tt> struct, the basic information describing the
 array are given in <tt>data</tt>, <tt>type</tt>, and <tt>dim</tt>.
-<tt>type</tt> takes values from a C enum (again in
-<tt>nrrdEnums.h</tt>); sample values include <tt>nrrdTypeUChar</tt>,
-<tt>nrrdTypeUShort</tt>, <tt>nrrdTypeFloat</tt>, and
-<tt>nrrdTypeDouble</tt>, for C types <tt>unsigned char</tt>,
-<tt>unsigned short</tt>, <tt>float</tt>, and <tt>double</tt>,
-respectively.  Any and all information about the array that is
+<tt>type</tt> takes values from the <tt>nrrdType</tt> enum (above).
+Any and all information about the array that is
 specific to each axis is in the <tt>axis</tt> array of
 <tt>NrrdAxis</tt> structs (note that this is an array of structs, not
 an array of pointers to structs).  The rest of the <tt>Nrrd</tt>
@@ -275,13 +364,13 @@ for writing, and you choose depending on whether you giving a
 
 <p>
 
-As with most functions in <b>teem</b> libraries, these functions
+As with most functions in <b>Teem</b> libraries, these functions
 return an <tt>int</tt> to signify an error condition or successful
 completion.  <b>Teem</b> uses verbose, detailed, textual error messages
 in favor of cryptic, integer error codes.  The error messages
 accumulate in a seperate library devoted to error handling, called
 <b>biff</b>.  Thus, handling errors in <b>nrrd</b> (or any other
-<b>teem</b> library) involves making <b>biff</b> calls to get the
+<b>Teem</b> library) involves making <b>biff</b> calls to get the
 error messages.  Here is a fairly complete/pedantic example of using
 <tt>nrrdLoad</tt> and <tt>nrrdSave</tt> with error handling:
 
@@ -574,35 +663,48 @@ nrrdAxisInfoSet(nval, nrrdAxisInfoLabel, "x", "y", "z");
 Because <b>nrrd</b> has the mentality that "everything is a scalar",
 you'll need a 4-D array to represent a volume in which each voxel
 has multiple values associated with it, such as with a 3-D vector
-field.  There is no <b>nrrd</b>-imposed convention on how to do
-this, but you probably want to use the axis labels to document
-what values are appearing along each axis, for example:
+field.  The "kind" per-axis information is how <b>nrrd</b> provides
+guidance on representing this situation:
 
 <blockquote><pre>
+nrrdAxisInfoSet(nvec, nrrdAxisInfoKind,
+                nrrdKind3Vector, nrrdKindSpace, nrrdKindSpace, nrrdKindSpace);
 nrrdAxisInfoSet(nvec, nrrdAxisInfoLabel, "Vx;Vy;Vz", "x", "y", "z");
 </pre></blockquote>
 
-Recovering these strings from a given nrrd can be done this way
+Recovering these values from a given nrrd can be done this way
 if you know exactly what the dimension of the nrrd is:
 
 <blockquote><pre>
 char *lab0, *lab1, *lab2, *lab3;
+int *kind0, *kind1, *kind2, *kind3;
 ...
 nrrdAxisInfoGet(nvec, nrrdAxisInfoLabel, &amp;lab0, &amp;lab1, &amp;lab2, &amp;lab3);
-printf("labels were: %s, %s, %s, %s\n", lab0, lab1, lab2, lab3);
+nrrdAxisInfoGet(nvec, nrrdAxisInfoKind, &amp;kind0, &amp;kind1, &amp;kind2, &amp;kind3);
+printf("labels were: \"%s\", \"%s\", \"%s\", \"%s\"\n",
+       lab0, lab1, lab2, lab3);
+printf("kinds were: %s (%d), %s (%d), %s (%d), %s (%d)\n",
+       airEnumStr(nrrdKind, kind0), kind0,
+       airEnumStr(nrrdKind, kind1), kind1,
+       airEnumStr(nrrdKind, kind2), kind2,
+       airEnumStr(nrrdKind, kind3), kind3);
 </pre></blockquote>
 
 It may be easier to use the dimensionally general version of the
-function (although the <tt>printf()</tt> call does again assume
-a 4-D nrrd, which could be checked at run-time):
+function:
 
 <blockquote><pre>
 char *lab[NRRD_DIM_MAX];
+int kind[NRRD_DIM_MAX];
+int di;
 ...
 nrrdAxisInfoGet_nva(nvec, nrrdAxisInfoLabel, lab);
-printf("labels were: %s, %s, %s, %s\n", lab[0], lab[1], lab[2], lab[3]);
+nrrdAxisInfoGet_nva(nvec, nrrdAxisInfoKind, kind);
+for (di=0; di<nvec->dim; di++) {
+  printf("axis %d: label = \"%s\", kind = %s (%d)\n",
+         di, lab[di], airEnumStr(nrrdKind, kind[di]), kind[di]);
+}
 </pre></blockquote>
-
 <ul>
 
 <li> <tt>NRRD_DIM_MAX</tt> is a compile-time limit on the dimension
@@ -625,6 +727,7 @@ e.g. <tt>nval-&gt;axis[0].label</tt>).
 
 </ul>
 
+<!--
 <p>
 
 Using <tt>nrrdAxisInfoGet()</tt> is always harmless, and
@@ -632,14 +735,17 @@ Using <tt>nrrdAxisInfoGet()</tt> is always harmless, and
 confuse things by calling <tt>nrrdAxisInfoSet(nrrd, nrrdAxisInfoSize,...)</tt>
 and giving an inconsistent set of axis sizes.  Currently, not even a
 warning message is printed in this case!
+-->
 
 <p>
 
-Here is a more typical example of setting axis labels, centerings, and
+Here is a more complete example of setting axis labels, centerings, and
 spacings:
 
 <blockquote><pre>
 nrrdAxisInfoSet(nvec, nrrdAxisInfoLabel, "Vx;Vy;Vz", "x", "y", "z");
+nrrdAxisInfoSet(nvec, nrrdAxisInfoKind,
+                nrrdKind3Vector, nrrdKindSpace, nrrdKindSpace, nrrdKindSpace);
 nrrdAxisInfoSet(nvec, nrrdAxisInfoCenter,
                 nrrdCenterUnknown,
                 nrrdCenterNode, nrrdCenterNode, nrrdCenterNode);
@@ -687,7 +793,7 @@ int ki, nk;
 char *key, *val;
 ...
 nk = nrrdKeyValueSize(nrend);
-for (ki=0; ki$lt;nk; ki++) {
+for (ki=0; ki&lt;nk; ki++) {
   nrrdKeyValueIndex(nrend, &amp;key, &amp;val, ki);
   printf("%s = %s\n", key, val);
   free(key); free(val);
@@ -703,7 +809,136 @@ the return from <tt>nrrdKeyValueGet()</tt> and
 Individual key/value pairs are erased with <tt>nrrdKeyValueErase()</tt>,
 all pairs are erased with <tt>nrrdKeyValueClear()</tt>.
 
-<a name="overview"><h2>7. Overview of rest of API</h2></a>
+<a name="space"><h2>7. Space and orientation</h2></a>
+
+Starting with version 4 of the NRRD format (with magic "<tt>NRRD0004</tt>"),
+the <tt>Nrrd</tt> struct can describe how the array is oriented and 
+positioned relative to some surrounding space.  See the <a href="format.html#space">relevant section of the NRRD file format spec</a> to see what
+space and orientation information can be represented.  The values of
+<tt>nrrd-&gt;space</tt> come from an enum (in <tt>nrrdEnums.h</tt>):
+
+<blockquote><pre>
+/*
+******** nrrdSpace* enum
+**
+** Identifies the space in which which the origin and direction
+** vectors have their coordinates measured.  When a direction is named
+** here (like "Left" or "Anterior"), that implies a basis vector that
+** points in that direction, along which that coordinate becomes *larger*
+** (this is the opposite of MetaIO, for example).
+**
+** All of these spaces have a well-defined expected dimension, as
+** determined by nrrdSpaceDimension(), and setting a nrrd to be in
+** such a space, by nrrdSpaceSet(), will automatically set nrrd-&gt;spaceDim.
+**
+** The first six spaces here are PATIENT-ORIENTED spaces, which are
+** properly speaking aligned with the patient, and not the scanner
+** itself.  But nrrdSpaceScannerXYZ and nrrdSpaceScannerXYZTime are
+** DEVICE-ORIENTED spaces, irrespective of the patient, used in a
+** previous version of the DICOM standard.  When the two spaces are
+** lined up with normal patient orientation in the scanner,
+** nrrdSpaceScannerXYZ is the same as nrrdSpaceLeftPosteriorSuperior.
+** To quote Part 3 (Information Object Definitions) of the DICOM spec
+** (page 275): "If a patient lies parallel to the ground, face-up on
+** the table, with his feet-to-head direction same as the
+** front-to-back direction of the imaging equipment, the direction of
+** the axes of this patient based coordinate system and the equipment
+** based coordinate system in previous versions of this Standard will
+** coincide."
+*/
+enum {
+  nrrdSpaceUnknown,
+  nrrdSpaceRightAnteriorSuperior,     /*  1: NIFTI-1 (right-handed) */
+  nrrdSpaceLeftAnteriorSuperior,      /*  2: standard Analyze (left-handed) */
+  nrrdSpaceLeftPosteriorSuperior,     /*  3: DICOM 3.0 (right-handed) */
+  nrrdSpaceRightAnteriorSuperiorTime, /*  4: */
+  nrrdSpaceLeftAnteriorSuperiorTime,  /*  5: */
+  nrrdSpaceLeftPosteriorSuperiorTime, /*  6: */
+  nrrdSpaceScannerXYZ,                /*  7: ACR/NEMA 2.0 (pre-DICOM 3.0) */
+  nrrdSpaceScannerXYZTime,            /*  8: */
+  nrrdSpace3DRightHanded,             /*  9: */
+  nrrdSpace3DLeftHanded,              /* 10: */
+  nrrdSpace3DRightHandedTime,         /* 11: */
+  nrrdSpace3DLeftHandedTime,          /* 12: */
+  nrrdSpaceLast
+};
+</pre></blockquote>
+
+There are some
+API functions which facilitate setting and getting this information.
+
+<ul>
+<li> <tt>int nrrdSpaceDimension(int space)</tt><br> returns the dimension 
+associated with the given space (from the <tt>nrrdSpace</tt> enum), or 0 if
+the space value is unrecognized.
+<li> <tt>int nrrdSpaceSet(Nrrd *nrrd, int space)</tt><br> set the space.
+<li> <tt>int nrrdSpaceDimensionSet(Nrrd *nrrd, int spaceDim)</tt><br>
+set the space dimension, for when the space used is not a recognized and
+named space (from the <tt>nrrdSpace</tt> enum).
+<li> <tt>int nrrdSpaceKnown(const Nrrd *nrrd)</tt><br>
+non-zero return means that
+some kind of space or orientiation info is known.  If zero, means that the
+only information known is (possibly) the per-axis min, max, spacing.
+<li> <tt>void nrrdSpaceGet(const Nrrd *nrrd, int *space, int *spaceDim)</tt><br>
+Sets <tt>*space</tt> to the space  and <tt>*spaceDim</tt>  to
+the space dimension of the surrounding space.  <tt>*space</tt> will be set to
+nrrdSpaceUnknown if the space dimension is known, but no named spaced is
+being used.
+<li> <tt>void nrrdSpaceOriginGet(const Nrrd *nrrd, double vector[NRRD_SPACE_DIM_MAX])</tt><br> Gets the spaceOrigin from the nrrd (vector[0] through
+vector[spaceDim-1] are set).
+<li> <tt>int nrrdOriginCalculate3D(const Nrrd *nrrd, int ax0, int ax1, int ax2, int defaultCenter, double origin[3])</tt><br> For those cases where you want 
+something like an "origin" even though you don't have space information,
+pick the three axes (<tt>ax0</tt>, <tt>ax1</tt>, <tt>ax2</tt>)
+that you think represent the spatial
+axes of the volume, and pick a default centering
+(<tt>nrrdCenterNode</tt> or <tt>nrrdCenterCell</tt>) and this will try
+to figure out an origin from the per-axis min, max, and spacing.  Return values are from the <tt>nrrdOriginStatus</tt> enum:
+<blockquote><pre>
+/*
+******** nrrdOriginStatus* enum
+**
+** how origin information was or was not computed by nrrdOriginCalculate
+*/
+enum {
+  nrrdOriginStatusUnknown,        /* 0: nobody knows, or invalid parms */
+  nrrdOriginStatusDirection,      /* 1: chosen axes have spaceDirections */
+  nrrdOriginStatusNoMin,          /* 2: axis-&gt;min doesn't exist */
+  nrrdOriginStatusNoMaxOrSpacing, /* 3: axis-&gt;max or -&gt;spacing doesn't exist */
+  nrrdOriginStatusOkay,           /* 4: all is well */
+  nrrdOriginStatusLast
+};
+</pre></blockquote>
+<li> <tt>int nrrdSpacingCalculate(const Nrrd *nrrd, int ax, double *spacing, double vector[NRRD_SPACE_DIM_MAX])</tt>: determine spacing information for
+the given axis.  This is useful for nrrd with and without space information,
+since the information can come either from the per-axis spacing or the
+per-axis space direction.  Return value indicates status of information:
+<blockquote><pre>
+/*
+******** nrrdSpacingStatus* enum
+**
+** a way of describing how spacing information is known or not known for a 
+** given axis, as determined by nrrdSpacingCalculate
+*/
+enum {
+  nrrdSpacingStatusUnknown,           /* 0: nobody knows,
+                                         or invalid axis choice */
+  nrrdSpacingStatusNone,              /* 1: neither axis-&gt;spacing nor
+                                         axis-&gt;spaceDirection is set */
+  nrrdSpacingStatusScalarNoSpace,     /* 2: axis-&gt;spacing set,
+                                         w/out space info */
+  nrrdSpacingStatusScalarWithSpace,   /* 3: axis-&gt;spacing set, but there *is*
+                                         space info, which means the spacing
+                                         does *not* live in the surrounding
+                                         space */
+  nrrdSpacingStatusDirection,         /* 4: axis-&gt;spaceDirection set, and 
+                                         measured according to surrounding
+                                         space */
+  nrrdSpacingStatusLast
+};
+</pre></blockquote>
+</ul>
+
+<a name="overview"><h2>8. Overview of rest of API</h2></a>
 
 The following aims to give a brief description of the important
 <b>nrrd</b> library calls.  See <tt>teem/src/nrrd/nrrd.h</tt> for
@@ -785,8 +1020,8 @@ is different than the current one
 
 <h3>Utility functions</h3>
 
-<tt>nrrdSanity()</tt> should be called on a new <b>teem</b> build
-to make sure things are all okay.  There is in fact a <b>teem</b>
+<tt>nrrdSanity()</tt> should be called on a new <b>Teem</b> build
+to make sure things are all okay.  There is in fact a <b>Teem</b>
 stand-alone binary called <tt>nrrdSanity</tt> which is really
 just a wrapper around <tt>nrrdSanity()</tt>.
 
@@ -1287,7 +1522,7 @@ a variety of criteria
 </center>
 
 <!--
-Currently, the <b>nrrd</b> library, as with all the <b>teem</b>
+Currently, the <b>nrrd</b> library, as with all the <b>Teem</b>
 libraries, is implemented completely in C.  
 
 There are various aspects
