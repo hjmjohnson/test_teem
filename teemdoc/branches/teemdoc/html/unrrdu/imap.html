@@ -1,0 +1,73 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: unu imap
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h1>&nbsp;&nbsp;<b><tt>unu imap</tt></b></h1>
+</table>
+
+<blockquote><pre>
+unu imap: Map nrrd through *irregular* univariate map ("colormap"). A map is
+irregular if the control points are not evenly spaced along the domain, and
+hence their position must be explicitly represented in the map. As nrrds,
+these maps are necessarily 2D. Along axis 0, the first value is the location
+of the control point, and the remaining values give are the range of the map
+for that control point. The output value(s) is the result of linearly
+interpolating between value(s) from the map.
+
+Usage: unu imap -m &lt;map&gt; [-l &lt;aclLen&gt;] [-r] [-min &lt;value&gt;] [-max &lt;value&gt;] \
+       [-t &lt;type&gt;] [-i &lt;nin&gt;] [-o &lt;nout&gt;]
+
+    -m &lt;map&gt; = irregular map to map input nrrd through
+ -l &lt;aclLen&gt; = length of accelerator array, used to try to speed-up task of
+               finding between which pair of control points a given value
+               lies. Not terribly useful for small maps (about 10 points or
+               less). Use 0 to turn accelorator off. (int); default: "0"
+          -r = rescale the input values from the input range to the map
+               domain
+-min &lt;value&gt; = Value to map to low end of map. Defaults to lowest value found
+               in input nrrd. Explicitly setting this (and the same for the
+               max) is useful only with rescaling ("-r") (double)
+-max &lt;value&gt; = Value to map to high end of map. Defaults to highest value
+               found in input nrrd. (double)
+   -t &lt;type&gt; = specify the type ("int", "float", etc.) of the output nrrd. By
+               default (not using this option), the output type is the map's
+               type.
+    -i &lt;nin&gt; = input nrrd
+   -o &lt;nout&gt; = output nrrd (string); default: "-"
+</pre></blockquote>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

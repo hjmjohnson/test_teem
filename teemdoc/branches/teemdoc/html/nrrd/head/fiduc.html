@@ -1,0 +1,258 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Visible Female Color Data Processing: Fiducial Inspection
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="head80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <font size="-1"><a href="./index.html">Visible<br>Female</a></font>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Fiducial Inspection</b></h2>
+</table>
+
+<p>
+
+Having cropped out images of the fiducials, we need a way of
+differentiating the pixels inside and outside the fiducial markers, in
+order to analyze how they move from slice to slice.  Since the markers
+are gray, the the background is blue, the saturation of the pixel
+color should be a good indicator.  "<tt>unu</tt>" doesn't know
+anything about saturation or color, but it can compute the standard
+deviation of the three color components.  More saturated colors will
+have higher standard deviation.  Here are images of the standard
+deviations of the the circle and I-beam images shown above:
+
+<blockquote><pre>
+unu project -i avf1130a.raw.Z.circle.ppm -a 0 -m sd \
+  | unu quantize -b 8 | topng doc/<a href="circle-sd.png">circle-sd.png</a>
+unu project -i avf1130a.raw.Z.ibeam.ppm -a 0 -m sd \
+  | unu quantize -b 8 | topng doc/<a href="ibeam-sd.png">ibeam-sd.png</a>
+</pre></blockquote>
+<ul>
+
+<li> <tt><a href="../../unrrdu/quantize.html">unu quantize</a>
+... </tt> Takes integral and floating point data down to a smaller
+number of bits.  By not explicitly specifying a min and max, the min
+and max present in the input are mapped to 0 and 255, respectively.
+
+</ul>
+<center>
+<table>
+<tr>
+  <td align=center><img alt="" width=80 height=80 src="circle-sd.png">
+  <td align=center><img alt="" width=80 height=80 src="ibeam-sd.png">
+<tr>
+  <td align=center><tt>circle-sd.png</tt>
+  <td align=center><tt>ibeam-sd.png</tt>
+</table>
+</center>
+
+This looks very promising, and it certainly beats trying to do some
+sort of segmentation!  It also demonstrates a benefit of <b>nrrd</b>'s
+philosophy that "everything is a scalar".  That is, <b>nrrd</b> has no
+notion of vector-valued sample values.  There is no such thing as a 3D
+array of colors, there is only a 4D array of color components.  While
+it might seem strange to make a seperate axis for color information,
+since its not a spatial axis like X, Y, and Z, in this case it enabled
+us to use one of <b>nrrd</b>'s many projection measures to collapse
+the RGB color into a useful scalar.
+
+<p>
+
+Now we can produce what are essentially graphs of the fiducials' X and
+Y positions, going through the 855 slices of the head:
+
+<blockquote><pre>
+unu join -i *<b>circle</b>.ppm -a 3 \
+  | unu project -a 0 -m sd | unu project -a <b>1</b> -m min \
+  | unu quantize -b 8 | unu resample -k box -s x2 = \
+  | unu swap -a 0 1 | topng doc/<a href="circle-X.png">circle-X.png</a>
+unu join -i *<b>ibeam</b>.ppm -a 3 \
+  | unu project -a 0 -m sd | unu project -a <b>1</b> -m min \
+  | unu quantize -b 8 | unu resample -k box -s x2 = \
+  | unu swap -a 0 1 | topng doc/<a href="ibeam-X.png">ibeam-X.png</a>
+unu join -i *<b>circle</b>.ppm -a 3 \
+  | unu project -a 0 -m sd | unu project -a <b>0</b> -m min \
+  | unu quantize -b 8 | unu resample -k box -s x2 = \
+  | unu swap -a 0 1 | topng doc/<a href="circle-Y.png">circle-Y.png</a>
+unu join -i *<b>ibeam</b>.ppm -a 3 \
+  | unu project -a 0 -m sd | unu project -a <b>0</b> -m min \
+  | unu quantize -b 8 | unu resample -k box -s x2 = \
+  | unu swap -a 0 1 | topng doc/<a href="ibeam-Y.png">ibeam-Y.png</a>
+</pre></blockquote>
+
+There is some non-trivial <tt>unu</tt> cleverness going on here; each
+step of the first command (ending with <tt>circle-X.png</tt>) is:
+<ul>
+
+<li> <tt><a href="../../unrrdu/join.html">unu join</a> ... </tt> This
+collects all the PPM images into a volume, a 4-D array of color
+values.  The "<tt>-a 3</tt>" flag says that the arrays are being
+joined along axis 3, which doesn't exist in the input arrays, so
+<tt>unu join</tt> knows that the output has one higher dimension.  The
+axis ordering of the output of this step is (RGB,X,Y,Z).
+
+<li> 1st <tt><a href="../../unrrdu/project.html">unu project</a>
+... </tt> This projection along the color axis gives us an indicator
+of being inside or outside the fiducial.  Projecting along an axis
+removes it from the axis ordering, going from (RGB,X,Y,Z) to (X,Y,Z).
+
+<li> 2nd <tt>unu project ... </tt> Now we want to project
+along Y in order to get a picture of how the X position of the marker
+changes as a function of Z.  Because Y is now the second axis, we
+project along axis 1. We use the "<tt>-m min</tt>" measure because the
+marker is darker than the background.  Again, projection removes an
+axis from the ordering, so now the output ordering is (X,Z).  To
+verify this, we can look at the labels of the output of this stage:
+<blockquote><pre>
+unu join -i *circle.ppm -a 3 \
+  | unu project -a 0 -m sd | unu project -a 1 -m min \
+  | unu head - | grep labels
+
+labels: "X" ""
+</pre></blockquote>
+
+The label for the second axis (Z) is empty because we've never
+specified one (and currently <tt>unu join</tt> doesn't have a way
+of doing that).
+
+<li> <tt><a href="../../unrrdu/quantize.html">unu quantize</a>
+... </tt> The output of the first projection (standard dev of color)
+was a floating point volume, and all subsequent steps have also
+therefore been on floating point volumes.  At some point, however, we
+need to get back to the world of fixed point.
+
+<li> <tt><a href="../../unrrdu/resample.html">unu resample</a>
+... </tt> This uses nearest-neighbor interpolation ("<tt>-k box</tt>")
+to double the number of samples ("<tt>x2</tt>") along the first axis
+(X), while leaving the second axis entirely untouched ("<tt>=</tt>").
+This will have the effect of exaggerating any displacements between
+slices.
+
+<li> <tt><a href="../../unrrdu/swap.html">unu swap</a> ... </tt> The
+input axis ordering is still (X,Z), which if put on screen would have
+Z along the vertical, but we want to have these drawn on screen as a
+more of a horizontal graph, with Z along the horizontal.  The easiest
+way to do this is to just switch the axis ordering to (Z,X).  <b>Keep
+in mind</b>, however, that when the data is shown in usual raster
+order on a screen, the X values increase as you go <b>downward</b>,
+not <b>upward</b>.  (If this was a problem, we could follow <tt>unu
+swap</tt> with "<tt>unu flip -a 1</tt>".)
+
+</ul>
+
+<img alt="" width=855 height=160 src="circle-X.png"><br>
+<tt>circle-X.png</tt>: X versus Z
+<p>
+<img alt="" width=855 height=160 src="ibeam-X.png"><br>
+<tt>ibeam-X.png</tt>: X versus Z
+<p>
+<img alt="" width=855 height=160 src="circle-Y.png"><br>
+<tt>circle-Y.png</tt>: Y versus Z
+<p>
+<img alt="" width=855 height=160 src="ibeam-Y.png"><br>
+<tt>ibeam-Y.png</tt>: Y versus Z
+<p>
+
+What do these pictures tell us?  The motivation in making these
+pictures was to see if there were sharp discontinuities.  There are
+some, such as the shifts downward (toward higher X values) between Z
+locations 88 and 89, 405 and 406, and 712 and 713, which are visible
+to some extent in both the circle and I-beam X-versus-Z graphs.  But
+these shifts are small, only about one pixel.  For now, we won't try
+to correct for these; we'll make a volume dataset and then see if any
+artifacts we notice can be plausibly associated with the displacements
+measured by the graphs above.
+
+<p>
+
+The other thing to notice is that both markers moved in X and Y, and
+more in Y than in X.  We can also see this in differences between
+images near the top and bottom.  To improve image quality, we'll
+average three images at each location.
+
+<blockquote><pre>
+unu join -i avf100{7,8,9}a.raw.Z.circle.ppm -a 3 \
+  | unu project -a 0 -m sd | unu project -a 2 -m mean -o top.nrrd
+unu join -i avf128{3,4,5}a.raw.Z.circle.ppm -a 3 \
+  | unu project -a 0 -m sd | unu project -a 2 -m mean -o bot.nrrd
+unu 2op - top.nrrd bot.nrrd \
+  | unu quantize -b 8 | topng doc/<a href="diff-circle.png">diff-circle.png</a>
+unu join -i avf100{7,8,9}a.raw.Z.ibeam.ppm -a 3 \
+  | unu project -a 0 -m sd | unu project -a 2 -m mean -o top.nrrd
+unu join -i avf128{3,4,5}a.raw.Z.ibeam.ppm -a 3 \
+  | unu project -a 0 -m sd | unu project -a 2 -m mean -o bot.nrrd
+unu 2op - top.nrrd bot.nrrd \
+  | unu quantize -b 8 | topng doc/<a href="diff-ibeam.png">diff-ibeam.png</a>
+</pre></blockquote>
+
+<ul>
+
+<li> 2nd <tt>unu project ... </tt> The axis ordering in the output
+of the first projection is (X,Y,Z), so then projecting along axis 2
+will eliminate Z, to give us (X,Y).  We measure the average with
+"<tt>-m mean</tt>".  The order of projections here matters: taking
+the standard deviation of the averages wouldn't be as useful.
+We save the output of the projection as a floating point nrrd.
+
+<li> <tt><a href="../../unrrdu/2op.html">unu 2op</a> ... </tt> A
+number of unary, binary, and ternery arithmetic operations are
+available on nrrds; this just does a component-wise difference between
+the <tt>/tmp/top.nrrd</tt> and <tt>/tmp/bot.nrrd</tt>.
+
+</ul>
+
+<center>
+<table>
+<tr>
+  <td align=center><img width=80 height=80 alt="" src="diff-circle.png">
+  <td align=center><img width=80 height=80 alt="" src="diff-ibeam.png">
+<tr>
+  <td align=center><tt>diff-circle.png</tt>
+  <td align=center><tt>diff-ibeam.png</tt>
+</table>
+</center>
+
+Looking carefully at the circle and I-beam Y-versus-Z graphs, it seems
+that I-beam moved downward <b>more</b> than the circle did, which
+implies there was some small amount of rotatation, in addition to the
+translation.  This seems to be a very small effect, so we won't worry
+about it, but at least we had the means of detecting it.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

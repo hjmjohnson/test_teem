@@ -1,0 +1,1467 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: NRRD File Format
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>File Format</b></h2>
+</table>
+
+This document defines the NRRD file format.  It gives requirements and
+recommendations of readers and writers of this format.  Because the
+<b>nrrd</b> library also supports PPM, PGM, and plain text files, see
+also <a href="otherformat.html">NRRD-Compatible File Formats</a> to
+see how comments embedded in these files can be used to losslessly
+encode the information normally found in a NRRD header.  Since this
+document aims to be a self-contained reference for the NRRD file
+format, some of the material here repeats ideas found elsewhere in the
+<a href="index.html"><b>nrrd</b></a> documentation.  Besides defining
+the format, this document also seeks to supply some rationale.  I have
+no prior experience in writing file format definitions; please feel
+free to email me questions and/or suggestions:
+<tt>gk@cs.utah.edu</tt>.  This page has been written with a view
+towards keeping it useful upon printing.
+
+<h2><a name="sect0">0. Description of format</a></h2>
+
+The NRRD format was primarily designed to be easy to write, rather
+than easy to read.  The NRRD header is simple ASCII text, one field
+per line.  The fields in the header do not have a strict ordering, and
+most of them are optional.  Most strings are case insensitive, and
+alternate forms of many of the identifiers and descriptors are
+allowed.  Writing NRRD headers by hand, from scratch, is entirely
+feasible (although the <a href="../unrrdu/index.html">Utah Nrrd
+Utilities</a> program "<tt>unu make -h</tt>" is probably a better
+solution).  When writing non-ASCII data, the byte ordering is
+recorded, but not altered to match one particular endianness.  The format
+flexibility greatly increases the complexity and responsibilities of a
+NRRD reader, but the compelling benefit is having a simple portable
+format that is general with respect to dimension and type.
+
+<p>
+
+The NRRD file format was also conceived as being somewhat analogous to
+the PPM format for color images: straight-forward, friendly to
+programmers, and descriptive of a sufficiently large class of data to
+be useful in research.  Time and experience with the NRRD format has
+gradually increased its complexity (such as with the introduction of
+node- versus cell-centered samples), but the feature set has very
+nearly converged.  As a general representation of raster data, NRRD is
+intended to occupy the very large but sparsely populated niche between
+<ol>
+
+<li> Raw, headerless data, hopefully with some nearby README file 
+explaining the type and dimensions.
+
+<li> Very sophisticated, powerful (complicated) formats such as <a
+href="http://hdf.ncsa.uiuc.edu/">HDF
+(<tt>http://hdf.ncsa.uiuc.edu/</tt>)</a>.
+
+</ol>
+
+<p>
+
+The <a href="http://public.kitware.com/VTK/pdf/file-formats.pdf">VTK
+(<tt>http://public.kitware.com/VTK/pdf/file-formats.pdf</tt>)</a> file
+format is the closest to NRRD, but there are many differences.  In
+NRRD:
+<ul>
+<li> The dimension of the array is general.
+<li> Compression encodings are supported.
+<li> More scalar types are supported.<br>
+However,
+<li> Only rectilinear data is supported; no point, polygonal, or mesh types.
+<li> Only one array per file.
+<li> Vector and tensor types are not explicitly supported; these are
+represented by using a short non-spatial axis prior to the spatial axes
+</ul>
+
+<p>
+
+Various aspects of the NRRD format borrow heavily from the PCGV volume
+dataset format developed by James Durkin at the Cornell Program of
+Computer Graphics.  The <tt>nrrdRead()</tt> and <tt>nrrdWrite()</tt>
+functions of the <a href="index.html"><b>nrrd</b></a> library are
+intended to completely support the format as described here, but there
+is currently no test suite or validation program.
+
+<h2><a name="sect1">1. General information</a></h2>
+
+When saved, the filenames for NRRD files should end in
+"<tt>.nrrd</tt>".  Detached headers, discussed in <a
+href="#sect3">Section 3</a>, should end in "<tt>.nhdr</tt>".  Standard
+suffixes for data files associated with detached headers are listed in
+the <a href="#encoding"><tt>encoding</tt></a> part of <a
+href="#sect4">Section 4</a>.
+
+<p>
+
+Because the NRRD format uses a multi-line text header, some mention
+should be made of what exactly a line is.  When Windows (and sometimes
+Cygwin) create a text file, each line is terminated by a pair of
+characters, "<tt>\r\n</tt>".  When everyone else creates a text file,
+each line is terminated by just "<tt>\n</tt>".  NRRD readers must be
+able to handle both types of line terminations; NRRD writers can use
+one or the other or both.  While C's ability to open files in "ASCII"
+mode ideally handles this, this approach may be complicated by the
+fact that the header can be followed by binary data, which must be
+read and written byte-for-byte untransformed.  The line termination is
+ignored once the line has been read from file, so when the description
+below says "the line contains ...", it is referring to everything
+prior to the character(s) comprising the line termination.  In the current
+definition of the format, there is <b>no</b> limit to how long a line
+can be.  If a reader can't handle a given line in a file, it should
+die with an error message to that effect.  The <tt>content</tt>,
+<tt>labels</tt>, and comment fields (described below) allow for
+arbitrarily long strings.  ASCII encoding is assumed.
+
+<p>
+
+NRRD files come in two forms: with an attached header (in which the
+header and the data are in the same file), and with a detached header
+(header and data are in two separate files). The attached-header form
+is described first, and the minor variation that enables detached
+headers is described in <a href="#sect3">Section 3</a>.  NRRD readers
+must be able to support attached and detached headers.
+
+<p>
+
+The general format of a NRRD file (with attached header) is:
+<blockquote><pre>
+NRRD0001
+&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
+&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
+# &lt;<i>comment</i>&gt;
+...
+&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
+&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
+# &lt;<i>comment</i>&gt;
+
+&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;...
+</pre></blockquote> 
+
+<p>
+
+The very first line contains nothing but the NRRD "magic".  The magic
+is what identifies the file as a NRRD file.  For NRRD files, the first
+four characters are always "<tt>NRRD</tt>".  The idea is that
+the next four numbers give the version number of the file format, but
+this may or may not be developed in the future.  The only current
+magic for NRRD files is "<tt>NRRD0001</tt>".  For the time being, this
+is the magic to use when writing all NRRD files.  NRRD readers should
+obviously recognize "<tt>NRRD0001</tt>", as well as a magic used in
+early implementations, "<tt>NRRD00.01</tt>".  Readers encountering a
+magic starting with "<tt>NRRD</tt>" but ending with something besides
+"<tt>0001</tt>" or "<tt>00.01</tt>" need not make any effort to
+continue parsing the file.
+
+<p>
+
+Each of the "&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;" lines
+specifies information about one of the fields in the nrrd.  Each of
+these lines is called a "field specification", or more loosely, a
+"field".  Each field specification is contained in one line.  
+
+<p>
+
+Comment lines start with a pound, "<tt>#</tt>", with no proceeding
+whitespace.  The comment string itself starts with the first character
+which is a not a pound or a space ("<tt> </tt>").  Comment lines with
+a zero-length comment string should be ignored.  Comment lines may be
+interspersed with field specifications in any order. This allows field
+specifications to be commented out and commented upon easily.  Since
+comments are effectively a catch-all for peripheral information which
+doesn't otherwise fit in nrrd, gracious NRRD readers should store all
+the comments seen in the header, but this is not a requirement.
+Comments are intended to be case sensitive.
+
+<p>
+
+The magic, field specifications, and comments comprise the NRRD
+header.  After the header, there is a single blank line containing
+zero characters.  This separates the header from the data, which
+follows.  Unlike the header, the data segment is not structured in
+ASCII lines. The encoding of the data (raw, ASCII, compressed, or
+other) is specified by the <tt>encoding</tt> field in the header.  The
+header, the blank line, and the data comprise the NRRD file.  A single
+NRRD file can store the information and data for a single array.
+There is currently no facility for storing multiple arrays in a single
+NRRD file.
+
+<p>
+
+All of the field specifications have the same structure: a string
+"&lt;<i>field</i>&gt;" identifying the field (called the field
+identifier), then a colon followed by a single space "<tt>: </tt>",
+and then the information describing the field "&lt;<i>desc</i>&gt;"
+(called the field descriptor).  All field identifiers are case
+insensitive.  The only field descriptors which are not case insensitive
+are the one which contain strings (the <tt>content</tt> and
+<tt>labels</tt> fields).  Whitespace (which does not constitute the
+previous line's termination) is not allowed before a field
+identifier. Extra whitespace after the field descriptor and before the
+line termination should be ignored.  The NRRD format is complicated by
+the fact that some fields are always necessary, while some fields are
+always optional, and some fields are necessary only some of the time.
+Whether or not a field is necessary depends on previous information in
+the header.  This is why there is no standard template for all NRRD
+headers, or a context-free grammar for NRRD headers.
+
+<p>
+
+Some field specifications have field descriptors which give a piece of
+information about each and every axis in a nrrd; these are called
+"per-axis specifications".  Identifying how many samples there are
+along each dimension of the array is an example of this.  Per-axis
+specifications must have as many components as there are dimensions in
+the array, so that they can identify information for every axis.
+There is no partial or "implied" per-axis information.  Other field
+specifications are general with respect to array dimension, such as
+the type of the array; these are called "non-per-axis specifications".
+
+<p>
+
+An important, and always necessary, non-per-axis field specification
+is the one giving the dimension of the nrrd.  The format is:
+
+<blockquote><pre>
+dimension: &lt;<i>int</i>&gt;
+</pre></blockquote>
+
+&lt;<i>int</i>&gt; can be any integer greater than 0.  NRRD readers
+may not have the ability to represent absolutely any dimension, but
+they must be able to handle nrrds with dimension 16 or less, which is
+what the current <b>nrrd</b> implementation can do.
+
+<p>
+
+Per-axis specifications can only appear <b>after</b> the dimension
+field specification.  This simplifies the task of parsing per-axis
+specifications, since we know how many pieces of information need to
+be parsed (the same as the dimension).  This also avoids any attempts
+at cleverness in the form of guessing the nrrd dimension based on the
+first per-axis specification.  Non-per-axis specifications can appear
+<b>both before and after</b> the dimension field.  Other than the one
+constraint about per-axis specification location, field specifications
+may appear in <b>any</b> order within the header (after the magic).
+
+<!-- 
+<p>
+In the remainder of this section, the other specifications which are
+always necessary will be introduced and discussed briefly. The general
+characteristics of the per-axis and non-per-axis specifications will
+be described.  The importance of NaN as an indicator of "don't know"
+will be described.  The following sections expand on these points.  <a
+href="#sect2">Section 2</a> will define how NRRD readers and writers
+must handle ascii encoding of floating point data.  <a
+href="#sect3">Section 3</a> describes how NRRD handles detached
+headers.  Finally, careful definition of all the different field
+specifications are found in <a href="#sect4">Section 4</a> and <a
+href="#sect5">Section 5</a>.
+-->
+
+<p>
+
+The number of samples along each axis is the only always-necessary
+per-axis specification.  The format is:
+
+<blockquote><pre>
+sizes: &lt;<i>size[0]</i>&gt; &lt;<i>size[1]</i>&gt; ... &lt;<i>size[dim-1]</i>&gt;
+</pre></blockquote>
+
+&lt;<i>size[i]</i>&gt; is the number of samples along axis <i>i</i>,
+with axis ordering going from fastest to slowest.  The number of
+integers must obviously equal the dimension specified in the
+<tt>dimension</tt> field.  As with all the other per-axis field
+identifiers, <tt>sizes</tt> ends with "s" to emphasize the plurality
+of the field it specifies.  The field identifiers do not change,
+however, for one-dimensional nrrds.
+
+<p>
+
+The issue of axis ordering is fundamental.  In memory and on disk,
+there is a strict linear order of all the values in an array.
+Logically, however, each sample has one or more coordinates which
+identify its position, as many coordinates as there are dimensions in
+the array.  The "fastest" axis is the one associated with the
+coordinate which increments fastest as the samples are traversed in
+memory order.  Typical raster ordering of interleaved RGB data is
+logically a three-dimensional array.  The fastest axis is the
+three-samples-long color axis, followed by the horizontal axis, with
+the vertical axis being the slowest.  All the per-axis field
+specifications identify information for each axis, and the axis
+ordering is always (reading left to right) fastest to slowest.  NRRD
+makes no attempt to "name" the axes, such as "X", "Y", and "Z": they
+are identified solely by their location in the ordering from fastest
+to slowest.
+
+<p>
+
+Besides <tt>dimension</tt>, there are two other always-necessary
+non-per-axis specifications: the type and the encoding specifications.
+Their format is:
+
+<blockquote><pre>
+type: &lt;<i>type</i>&gt;
+encoding: &lt;<i>encoding</i>&gt;
+</pre></blockquote>
+
+The possible values for <tt><i>type</i></tt> include the C
+identifiers you would probably use to identify a type: "<tt>int</tt>"
+means a 32-bit signed integer, "<tt>float</tt>" means 32-bit floating
+point, and so on.  Useful variants like "<tt>uchar</tt>" (same as
+"<tt>unsigned char</tt>") are allowed.  There is also the
+<tt>block</tt> type, which is used to represent some chunk of opaque
+memory, of user-specified size; see the <a href="#type"><tt>type</tt>
+specification</a> in <a href="#sect4">Section 4</a> for all the
+details.  
+
+<p>
+
+The encoding tells how the data (following the blank line after the
+header) is written out; "<tt>ascii</tt>" and "<tt>raw</tt>" are common
+values, but "<tt>hex</tt>" allows extraction of images from some
+PostScript files, and compression is also supported; see the <a
+href="#encoding"><tt>encoding</tt> specification</a> (<a
+href="#sect4">Section 4</a>).  NRRD readers must be able to support
+raw and ASCII encoding, everything else is optional.  However, <!--
+there is no risk that NRRD will turn into another TIFF, a format so
+flexible that few readers actually support all of the <a
+href="http://partners.adobe.com/asn/developer/PDFS/TN/TIFF6.pdf">121
+page specification</a>.  The only --> the <b>only</b> optional
+encodings which may be added to NRRD in the future will be ones for
+which there exist freely available command-line tools to convert the
+encoded data (in isolation) to raw data.  If you have a NRRD file
+<tt>volume.nrrd</tt>, with an attached header, using a data encoding
+not supported by the available nrrd implementation, you can always use
+the unix/linux/cygwin command "<tt>tail&nbsp;+N&nbsp;volume.nrrd</tt>"
+(where N is two plus the number of lines in the header) to get at all
+the data, so as to pass it onto a stand-alone converter.  Or, the <a
+href="../unrrdu/index.html">Utah Nrrd Utilities</a> command
+"<tt>unu&nbsp;data</tt>" is a much easier way of doing the exact same
+thing.  Data in a separate file, detached from the NRRD header, is
+obviously trivial to pass to a converter.
+
+<p>
+
+The field specifications described so far provide the means of writing a
+minimal NRRD header:
+<blockquote><pre>
+NRRD0001
+# my first nrrd
+type: uchar
+dimension: 3
+sizes: 3 640 480
+encoding: raw
+</pre></blockquote>
+This is identical in meaning to the PPM header:
+<blockquote><pre>
+P6
+# my first nrrd
+640 480
+255
+</pre></blockquote>
+
+If "<tt>encoding: ascii</tt>" had appeared instead in the NRRD header,
+the PPM magic would be "<tt>P3</tt>" instead of "<tt>P6</tt>".
+
+<p>
+
+The field specifiers described so far, and illustrated above, are the
+only ones which are always necessary.  However, other field
+specifications become necessary as a function of other fields: if the
+<tt>type</tt> was "<tt>float</tt>", and the <tt>encoding</tt> is
+something other than "<tt>ascii</tt>", then the <tt>endian</tt> of the
+data would have to be recorded.  The details of which fields require
+which other fields are spelled out in <a href="#sect4">Section 4</a>
+and <a href="#sect5">Section 5</a>.
+
+<p>
+
+One of the things that makes reading a NRRD header complicated is the
+idea that the absence of an optional piece of information is just as
+important to record as the information when it was explicitly given.
+Whatever data structure is created or updated as the result of reading
+a NRRD header must enable the writer to write the exact same NRRD
+header, up to field ordering.  If you generate a nrrd at run-time, and
+you don't have specific values for an optional field, or, if values
+for an optional field were never specified by an input NRRD header,
+then specific values for this field must not be invented in an output
+NRRD header, and the field should not be saved at all.  Keeping
+headers as concise as possible makes them easier to understand when
+read by humans, and eliminates the risk that misleading information is
+invented solely for the sake of conforming to a file format.
+
+<p>
+
+In order to implement this in NRRD, each of the optional fields must
+have a way of representing the idea of "don't know"-- a state distinct
+from knowing a specific default value, or knowing the value specified
+in the header.  All of optional fields can be initialized to "don't
+know", and only after "known" values are specified in an input header
+does the field become worthy of being saved in an output NRRD header.
+For optional fields with string values (<a
+href="#content"><tt>content</tt></a>, <a
+href="#labels"><tt>labels</tt></a>, and <a
+href="#units"><tt>units</tt></a>), the empty string (<tt>""</tt>) is
+the obvious choice for "don't know".  For <a
+href="#centers"><tt>centers</tt></a>, the string "<tt>???</tt>" (and
+the value used to represent it) means "don't know".
+In contrast, the optional fields
+with integer values (<a href="#lineskip"><tt>line skip</tt></a> and <a
+href="#byteskip"><tt>byte skip</tt></a>) actually have sensible a
+sensible "known" default value, namely zero.
+
+<p>
+
+But how does one represent "don't know" with optional floating point
+data?  NRRD uses NaN, or Not-a-Number.  NaN is a value that can be
+represented in the ubiquitous IEEE 754 floating point standard, as the
+result of doing undefined arithmetic operations, such as zero divided
+by zero. While it may seem overly cute or clever to use NaN as a flag
+for "don't know", this is in fact exactly in keeping with the purpose
+of NaN as described in the original 754 standard.  Furthermore, as
+described in the documentation for the <b>air</b> library, <a
+href="../air/754.html">it is possible to generate a NaN</a> at compile
+time (so that it doesn't have to be produced as a result of doing an
+undefined arithmetic operation), and it is possible to quickly test if
+a given number is NaN.  Even if operations involving NaN are not
+implemented in the floating point hardware, but in software emulation
+supplied by the operating system, they will never be the bottle neck
+in reading and writing a NRRD file.  Because of NaN's important role
+as signifier of "don't know", the NRRD reader must be able to
+interpret the case-insensitive string "<tt>nan</tt>" as a NaN, even if
+this is not already the behavior of <tt>sscanf()</tt> on a given
+platform.  Writing a small wrapper function around <tt>sscanf()</tt>
+is a very small price to pay for the representational convenience of
+NaN.  <a href="#sect2">Section 2</a> gives the details for how NRRD
+readers and writers should handle ASCII encoding of the the IEEE 754
+special values.
+
+<p>
+
+In <a href="#sect4">Section 4</a> and <a href="#sect5">Section 5</a>,
+when a field specification is described as harmless, it means that the
+field specification probably shouldn't be in the header, because its
+information is either irrelevant or meaningless in that context.
+However, for the sake of implementation simplicity, its presence
+shouldn't count as an error.  The information in harmless field
+specifications must be ignored by NRRD readers, but it is okay to
+complain if the field specification is malformed and unparsable.
+
+<p>
+
+In <a href="#sect4">Section 4</a> and <a href="#sect5">Section 5</a>,
+numeric field specification descriptions include a "Type", which
+identifies the minimum precision with which the information must be
+represented by the NRRD reader.  In this context, "<tt>int</tt>" means
+a 32-bit signed integer, and "<tt>double</tt>" means a 64-bit floating
+point number.  Field specifications with alternate equivalent forms
+are listed together (for example, "<tt>block&nbsp;size</tt>" is the
+same as <tt>blocksize</tt>").  Equivalent field descriptors are listed
+together in the table enumerating the meanings of the various
+descriptors (for example, "<tt>uchar</tt> is the same as
+"<tt>unsigned&nbsp;char</tt>").  Quotes are used to delimit the field
+descriptors in the explanation of their meaning; quotes are not part
+of the descriptor itself (except for the <a
+href="#labels"><tt>labels</tt></a> and <a
+href="#units"><tt>units</tt></a> specifications, in which the
+descriptors (strings) are delimited by quotes).
+
+<p>
+
+No other fields are allowed in a "<tt>NRRD0001</tt>" magic NRRD file
+other than those defined in <a href="#sect4">Section 4</a> and <a
+href="#sect5">Section 5</a>.  NRRD readers are not expected to make
+any efforts to deal with non-conformant files (in contrast to PNM
+recommendations), but specific and intelligent human-readable error
+messages are of course encouraged.
+
+<h2><a name="sect2">2. ASCII encoding of floating point</a></h2>
+
+Float point field descriptors in the NRRD header, and floating point
+data written with ASCII encoding, have some special rules regarding
+their interpretation.  Unfortunately, these are not always consistent
+with how the <tt>sscanf()</tt> C library call works on all platforms.
+The rules described here are a minimalist way of making sure that the
+basic IEEE 754 special values can be reliably read and written in NRRD
+files, across a variety of platforms.  The rules described here apply
+to both 32-bit and 64-bit floating point values, or rather, the
+strings which are used to represent these values:
+
+<ol>
+<li>If the string contains the substring "<tt>nan</tt>"
+(case-insensitive), the value must be parsed as NaN, either signaling
+or quiet. There is no restriction on the
+specific bit pattern used in the fraction field of the value.
+<li>Otherwise, if the string contains "<tt>-inf</tt>" (case-insensitive),
+the value must be parsed as negative infinity.
+<li>Otherwise, if the string contains "<tt>inf</tt>" (case-insensitive),
+the value must be parsed as positive infinity.
+<li>Otherwise, the string can be parsed with the standard <tt>sscanf()</tt>
+C library function, and if that fails, than the string is malformed.
+</ol>
+
+The use of special floating point values NaN, +inf, and -inf, are
+justified by the extremely widespread adoption of the IEEE 754
+standard for 32-bit and 64-bit floating point representation.  If it
+weren't for IEEE 754, there would be no portable way of storing raw
+floating point data.  NRRD is not portable to platforms not supporting
+this standard.
+
+<p>
+
+The difference between a quiet and signaling NaN is a detail of IEEE
+754 which was left implementation-specific, so different platforms
+have different ways of distinguishing between quiet and signaling
+NaN, and some don't distinguishing between them at all.  The intent
+was that quiet NaNs represent an <i>indeterminate</i> value, as in
+0/0, or inf/inf, meaning simply that arithmetic doesn't define a
+single value for the result.  On the other hand, signaling NaNs
+represent an <i>invalid</i> value, to signal that a non-existent or
+uninitialized floating point value was accessed, or that the input
+parameters to a function were so botched that no valid output can be
+generated; the signaling NaN is supposed to signal "someone goofed".
+Based on the fact that different portions of 754 can implemented in
+software, or hardware, or a combination of the two, there may be
+performance considerations between the two kinds of NaNs.
+But in any case, its basically all moot, since unfortunately, there is
+no cross-platform standard API for the floating point exception
+handlers which can interact with signaling NaNs.  
+
+<p> 
+
+Given this, in the NRRD file format (and in the <a
+href="index.html"><b>nrrd</b></a> library), a NaN is a NaN is a NaN,
+with no difference between signaling and quiet, and no recognition of
+the integer value in the fraction field of the NaN.  If the
+signaling/quiet distinction mattered, then when writing raw floating
+point data, not only would endianness have to be recorded, but also
+the convention for representing quiet NaN, and if the data came from a
+platform that knows the difference between the two NaNs.  Readers
+would have to possibly traverse the whole array after input to detect
+and switch NaN representations.  Doing this checking is not practical
+or efficient, and the consequences of not doing it are either moot or
+non-existent.  Thankfully, there are unique and fully specified bit
+patterns for positive and negative infinity.
+
+<p>
+
+NRRD writers should verify that their <tt>printf()</tt> function behaves
+in accordance with these rules.
+
+<h2><a name="sect3">3. Detached headers</a></h2>
+
+The ability to have detached headers is one of the most useful
+features of the NRRD format.  Detached headers allow data stored in
+another file format to be accessed by <b>nrrd</b> functions, while
+leaving the original file intact.  The <tt>line&nbsp;skip</tt> and
+<tt>byte&nbsp;skip</tt> fields are especially useful for these
+cases. Detached headers are also very useful in situations where very
+large amounts of data are to be read or written with direct IO, a very
+fast method of IO in which the device driver transfers data directly
+between blocks on disk and user-space memory (<a
+href="index.html"><b>nrrd</b></a> currently supports direct IO on
+SGIs, via the <a href="../air/index.html"><b>air</b></a> library).
+Direct IO requires special alignment between the data segment
+beginning and block boundaries on disk, which makes using attached
+headers nearly impossible.  Detached headers are also the simplest way
+to deal with NRRD readers which do not support the optional encodings,
+since a stand-alone program (such as "<tt>gzip/gunzip</tt>" or
+<tt>bzip2/bunzip2</tt>") will be able to process the separate data
+file.
+
+<p>
+
+There is one new field specification which is required in detached
+headers. The format is:
+
+<blockquote><pre>
+data file: &lt;<i>filename</i>&gt;
+</pre></blockquote>
+
+"<tt>datafile:</tt>" is also valid.  "<tt><i>filename</i></tt>"
+identifies the file that contains the data. The addition of this field
+is the only difference between attached headers and detached headers.
+The magic at the beginning is the same, so there is currently no way
+to immediately detect if the header being parsed is attached or
+detached.  The rest the field specifications are the same, and because
+the <tt>data file</tt> field specification is a non-per-axis
+specification, it may appear anywhere in the header.  Detached headers
+may end with the the last field specification, or with a single blank
+line following the last field specification (in which case anything
+following the blank line is ignored).
+
+<p>
+
+<a name="headerel">Breaking</a> the dataset into two files raises new
+concerns, namely that the header file can't know if the data file has
+been erased, renamed, or moved.  NRRD provides no means to overcome
+these problems once they've been created.  On the other hand, moving
+the header and data files together to a new place is a common
+operation, and is supported by the special semantics associated with
+the data filename descriptor:
+
+<ul>
+
+<li> If "<tt><i>filename</i></tt>" begins with "<tt>./</tt>", the
+remainder after "<tt>./</tt>" is taken to be the filename of the data
+file, <i>relative to the location of the detached header file</i>.
+The NRRD reader is responsible for constructing the data filename from
+the filename of the detached header, and the remainder of
+"<tt><i>filename</i></tt>" after "<tt>./</tt>".  Obviously, if the
+detached header has been passed to the reader not as a file name, but
+as a <tt>FILE*</tt> (such as <tt>stdin</tt>), this filename
+construction is impossible, and the reader should abort with an error
+message.
+
+<li> Otherwise, "<tt><i>filename</i></tt>" gives the name of the data
+file.  It is passed directly to <tt>fopen()</tt> without any
+interpretation.
+
+</ul>
+
+By using "<tt>./</tt>", a reader invoked in a directory different than
+the detached header can know how to find the data file.  Without it,
+the detached header would either have to know where the reader is
+invoked from, or the header would have to specify the full path to the
+datafile, at which point it becomes annoying to move the header and
+data together to a different directory.
+
+<h2><a name="sect4">4. Non-Per-Axis Field specifications</a></h2>
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="dimension">dimension: &lt;<i>int</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always necessary
+<li> Type: <tt>int</tt>
+</ul>
+
+This gives the dimension of the array stored in the nrrd (1 for
+univariate histograms, 2 for grayscale images, 3 for scalar volumes
+and color images, 4 for time-varying scalar volumes, etc.)  The
+dimension must be greater than 0, but can in principle be arbitrarily
+large.  On the other hand, dynamic allocation of all the per-axis
+information is pretty annoying, so currently, NRRD readers are only
+required to handle dimensions of 16 or less.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="type">type: &lt;<i>type</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always necessary
+</ul>
+
+This identifies the type of the data within the array.  
+<table border=1>
+<tr>
+  <td><b>&lt;<i>type</i>&gt;</b>
+  <td><b>Meaning</b>
+  <td><b>C type</b>
+<tr>
+  <td>"<tt>signed char</tt>", "<tt>int8</tt>", "<tt>int8_t</tt>"
+  <td>signed 1-byte integer
+  <td><tt>signed char</tt>
+<tr>
+  <td>"<tt>uchar</tt>", "<tt>unsigned char</tt>", "<tt>uint8</tt>", "<tt>uint8_t</tt>"
+  <td>unsigned 1-byte integer
+  <td><tt>unsigned char</tt>
+<tr>
+  <td>"<tt>short</tt>", "<tt>short int</tt>", "<tt>signed short</tt>", "<tt>signed short int</tt>", "<tt>int16</tt>", "<tt>int16_t</tt>"
+  <td>signed 2-byte integer
+  <td><tt>short</tt>
+<tr>
+  <td>"<tt>ushort</tt>", "<tt>unsigned short</tt>", "<tt>unsigned short int</tt>", "<tt>uint16</tt>", "<tt>uint16_t</tt>"
+  <td>unsigned 2-byte integer
+  <td><tt>unsigned short</tt>
+<tr>
+  <td>"<tt>int</tt>", "<tt>signed int</tt>", "<tt>int32</tt>", "<tt>int32_t</tt>"
+  <td>signed 4-byte integer
+  <td><tt>int</tt>
+<tr>
+  <td>"<tt>uint</tt>", "<tt>unsigned int</tt>", "<tt>uint32</tt>", "<tt>uint32_t</tt>"
+  <td>unsigned 4-byte integer
+  <td><tt>unsigned int</tt>
+<tr>
+  <td>"<tt>longlong</tt>", "<tt>long long</tt>", "<tt>long long int</tt>", "<tt>signed long long</tt>", "<tt>signed long long int</tt>", "<tt>int64</tt>", "<tt>int64_t</tt>"
+  <td>signed 8-byte integer
+  <td><tt>long long int</tt>
+<tr>
+  <td>"<tt>ulonglong</tt>", "<tt>unsigned long long</tt>", "<tt>unsigned long long int</tt>", "<tt>uint64</tt>", "<tt>uint64_t</tt>"
+  <td>unsigned 8-byte integer
+  <td><tt>unsigned long long int</tt>
+<tr>
+  <td>"<tt>float</tt>"
+  <td>4-byte floating point
+  <td><tt>float</tt>
+<tr>
+  <td>"<tt>double</tt>"
+  <td>8-byte floating point
+  <td><tt>double</tt>
+<tr>
+  <td>"<tt>block</tt>" <td colspan=2>An opaque chunk of memory with
+  user-defined size (via the "<tt>block&nbsp;size:</tt>" specifier)
+</table>
+
+<p>
+
+The type descriptors used are valid type declarations in C, C99,
+Matlab, Microsoft-land, or some other program.  Notice that
+"<tt>char</tt>" is not a NRRD type descriptor, to avoid potential
+confusion associated with the inherent signed/unsigned ambiguity of
+the "<tt>char</tt>" C type.  If the platform has different C type
+names for the types described (for example, if "<tt>int</tt>" is 8
+bytes, or an "<tt>unsigned char</tt>" is 4), there will have to be a
+disconnect between the type implied by the type descriptor, and the
+actual types used.  In other words, the NRRD format <b>requires</b> a
+binding between the first two columns in the chart above.  The third
+column is just what the current <b>nrrd</b> implementation uses on most
+supported platforms; this has proven surprisingly portable.
+
+<p> As currently defined, NRRD is simply not portable to platforms on
+which all the types described above (second column) are not available
+via some C type declaration or another.  For example, in Windows,
+there is no "<tt>long long</tt>", so "<tt>__int64</tt>" is used
+instead.  We will eventually have many computers in which the minimum
+addressable unit is larger than 8 bits, in which case NRRD will either
+have to be expanded to allow types with unaddressable values (in which
+case a <tt>bit</tt> type might as well be added), or, some rules will
+have to be defined for converting a smaller type into an addressable
+type during data read.  Having addressable samples vastly simplifies
+the task of implementing array operations.
+
+<p>
+
+<a name="block">The <tt>block</tt> type</a> is unlike the others.  It
+is included for completeness in representation of the types available
+in the <b>nrrd</b> library, which uses this type to represent C
+structs or C++ objects: opaque chunks of memory that can be copied and
+permuted, but not interpreted as (or generated from) scalar values.
+The size of that chunk is given in the <tt>block size</tt> field
+specification. But <tt>block</tt> is not safe as a cross-platform
+general purpose type.  Here are the special considerations:
+<ol>
+
+<li> There is no way to fix the endianness of the block type, so it is
+not at all portable between machines with differing byte orders.
+
+<li> In addition, if the block is representing a C struct or a C++
+object, there are no guarantees that another machine would use the
+same amount of space (<tt>block size</tt>) to represent the same
+struct or object.
+
+<li> <tt>ascii</tt> encoding is not possible with block type, but
+<tt>raw</tt>, and any alternate representation of raw (<tt>hex</tt>,
+and the optional compressions <tt>gzip</tt> and <tt>bzip2</tt>) are
+all valid.
+
+</ol>
+
+One may be tempted to pack descriptive information about the block
+into the <a href="#content"><tt>content</tt> field</a>, and this is
+certainly possible, but if it is really important to represent general
+structures in a portable way, you shouldn't be using NRRD files.  Use
+<a href="http://www.faqs.org/rfcs/rfc1014.html">XDR
+(<tt>http://www.faqs.org/rfcs/rfc1014.html</tt>)</a> instead.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="blocksize">block size: &lt;<i>int</i>&gt;</a>
+blocksize: &lt;<i>int</i>&gt;
+</pre></blockquote>
+<ul>
+<li> Necessary for <tt>block</tt> type nrrds; harmless for all other types.
+<li> Type: <tt>int</tt>
+</ul>
+
+Blocks are opaque chunks of memory of user-specified size.  The
+<tt>block size</tt> specification gives the size of that chunk, it
+must be greater than zero.  Specifically, it identifies the number of
+bytes between the beginning of one block and the beginning of the
+next.  Perhaps confusingly, it says nothing about the block size of
+the file system in use.  Knowing the block size allows the NRRD reader
+to know how many bytes of raw data should be read from file.  The
+block size is often the return from <tt>sizeof()</tt> operator applied
+to a C struct or a C++ object, but as usual, this may not be the same
+as the sum of the sizes of the constituent members.  See the <a
+href="#block">points regarding the block type</a> (above) for the
+restrictions and warnings on encoding of blocks.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="encoding">encoding: &lt;<i>encoding</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always necessary
+</ul>
+
+The encoding field descriptor describes how the data (following the
+blank line, following the header) is formatted.  Possible values for
+the encoding field descriptor, with associated meaning are:
+
+<table border=1>
+<tr>
+  <td><b>&lt;<i>encoding</i>&gt;</b>
+  <td><b>Meaning</b>
+  <td><b>Standard detached suffix</b>
+<tr>
+
+  <td>"<tt>raw</tt>" <td>The data appears on disk exactly the same as
+  in memory, in terms of byte values and byte ordering.  Produced by
+  <tt>write()</tt> and <tt>fwrite()</tt>, suitable for
+  <tt>read()</tt> or <tt>fread()</tt>.
+  <td>"<tt>.raw</tt>"
+
+<tr>
+  <td>"<tt>txt</tt>", "<tt>text</tt>", "<tt>ascii</tt>"
+
+  <td>Integral values are written/read as with
+  <tt>printf()</tt>/<tt>sscanf()</tt>, and floating point values are
+  used in a way consistent with <a href="#sect2">Section 2</a>.
+  The individual values are separated by one or more whitespace
+  characters (from the C string "<tt>&nbsp;\t\n\r\v\f</tt>").  No line
+  terminations are required anywhere.  Their presence is no different
+  than any other kind of whitespace.  <td>"<tt>.txt</tt>"
+
+<tr>
+  <td>"<tt>hex</tt>" <td>The data is raw, but written with two
+  (case-insensitive) hexadecimal characters per byte.  White space
+  characters (as defined above) are ignored on reading. Writers should
+  put a line termination after every 70 characters, and after the
+  last line of numbers. 
+  <td>"<tt>.hex</tt>"
+
+<tr>
+  <td>"<tt>gz</tt>", "<tt>gzip</tt>"
+
+  <td>The data is raw, but compressed with the gzip program.
+  Implementation and specification is available from <a
+  href="http://www.gzip.org/"><tt>http://www.gzip.org/</tt></a>, but
+  the <b>nrrd</b> library actually uses the zlib library available from
+  <a href="http://www.gzip.org/zlib/"><tt>http://www.gzip.org/zlib/</tt></a>.
+  However, the compressed data must start with the gzip binary header,
+  the same as is produced/read by the <tt>gzip/gunzip</tt> command-line tools.
+  Compressed data starting with only the zlib binary header (from the
+  underlying library) is not allowed.
+  <td>"<tt>.raw.gz</tt>"
+
+<tr>
+  <td>"<tt>bz2</tt>", "<tt>bzip2</tt>"
+
+  <td>The data is raw, but compressed with the bzip2 program.
+  Analogous to the <tt>gzip</tt> encoding, the compressed data must start
+  with the same binary header as produced by the command-line <tt>bzip2</tt>
+  program, to ensure inter-operability with it.
+  Implementation and information is available from <a
+  href="http://sources.redhat.com/bzip2/"><tt>http://sources.redhat.com/bzip2/</tt></a>.  
+  <td>"<tt>.raw.bz2</tt>"
+
+
+</table>
+
+<p>
+
+The formatting for <tt>hex</tt> is mostly the same as the
+<b>ASCIIHexDecode</b> and the <b>ASCIIHexEncode</b> filters of
+PostScript, but they are not identical: PostScript allows multiple
+filters (data can be run-length encoded as well as hex-encoded), null
+(<tt>'\0'</tt>) characters count as whitespace, and the end of the
+data is explicitly indicated by a "<tt>&gt;</tt>".  However, in
+combination with the <a href="#lineskip"><tt>line skip</tt></a>
+specifier, it is usually possible to extract 8-bit image data from
+PostScript files, assuming you understand enough PostScript to
+determine the image dimensions.
+
+<p>
+
+The "standard detached suffix" is the filename suffix that should be used by
+NRRD writers producing a separate data file in conjunction with a
+detached header.  This is most important for the compressed encodings;
+as the stand-alone programs expect certain suffixes, and the filename
+of their output should end in "<tt>.raw</tt>".  <tt>gzip</tt> and
+<tt>bzip2</tt> are currently the only compression methods supported.
+NRRD readers, however, should not care about the filename
+suffix of a detached data file.
+
+<p>
+
+Data file contents remaining after all data has been read should be
+ignored.  This sanctions the strategy of using a detached nrrd header
+to refer to some smaller chunk of data in a separate larger data file.
+Data before the region of interest can be passed over with <a
+href="#lineskip"><tt>line skip</tt></a> and/or <a
+href="#byteskip"><tt>byte skip</tt></a>.
+
+<p>
+
+See the <a href="#byteskip"><tt>byte skip</tt></a> specification for
+information about how compression encoding changes its meaning.
+
+<p>
+
+There is complete orthogonality between the encoding of the data, and
+whether the header is attached or detached.  The header is never
+compressed- it is necessarily straight ASCII text.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="endian">endian: &lt;<i>endian</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Necessary for non-<tt>block</tt> type nrrds if and only if the size
+of the type is greater than one byte, and, the encoding chosen exposes
+the endianness of the architecture (that is, if it isn't <tt>ascii</tt>)
+<li> Harmless for <tt>ascii</tt> encoding and <tt>block</tt>-type nrrds.
+</ul>
+
+<table border=1>
+<tr>
+  <td><b>&lt;<i>endian</i>&gt;</b>
+  <td><b>Meaning</b>
+  <td><b>Who</b>
+<tr>
+  <td>"<tt>little</tt>"
+  <td>Most significant bytes are at higher addresses ("little end first")
+  <td>Intel and compatible
+<tr>
+  <td>"<tt>big</tt>"
+  <td>Most significant bytes are at lower addresses ("big end first")
+  <td>Everyone else
+</table>
+
+<p>
+
+The convention with NRRD files is that non-<tt>ascii</tt> data
+<b>should</b> reflect the byte ordering of the current platform.
+There is no preference for one endian or the other in NRRD files, and
+NRRD writers should never have to worry about fixing endianness, only
+recording it when necessary.  Fixing endianness is the responsibility
+of the NRRD reader.  This way, NRRD readers and writers used within
+one platform never pay the overhead of fixing endianness.  That
+overhead should only be incurred when going between platforms with
+different endiannesses.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="content">content: &lt;<i>string</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always optional
+</ul>
+
+The &lt;<i>string</i>&gt; field starts after the "<tt>: </tt>"
+colon/space pair separating the field identifier and descriptor, and
+continues until the line termination, with no explicit delimiting.
+There is no fixed limit on how long the line containing the
+<tt>content</tt> field can be.
+
+<p>
+
+This field is intended as the place to store a very concise textual
+description of the information in the array, similar to the second
+line (the "title") of a VTK file format header.  The <b>nrrd</b>
+library, for instance, uses <tt>content</tt> to store a textual
+representation of a summary of the operations applied to a nrrd.  If
+<tt>nrrdSlice()</tt> slices a nrrd with content "<tt>engine</tt>"
+along axis 0 at position 50, then the content of the result will be
+"<tt>slice(engine,0,50)</tt>".
+
+<p>
+
+
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="min">min: &lt;<i>min</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always optional
+<li> Type: <tt>double</tt>
+</ul>
+
+This can be used to record the minimum value in the array, to save the
+effort of finding the extremal values after reading the data in.  Any
+value, infinite or not, NaN or not, is valid.  "<tt>nan</tt>" means
+"don't know", but in that case, the field shouldn't be written in the
+header anyway.  Of course, the NRRD header has no way of insuring that
+the information here is correct.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="max">max: &lt;<i>max</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always optional
+<li> Type: <tt>double</tt>
+</ul>
+
+Same the <a href="#min"><tt>min</tt></a> field, but represents the
+maximum value in the array.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="oldmin">old min: &lt;<i>min</i>&gt;</a>
+oldmin: &lt;<i>min</i>&gt;
+</pre></blockquote>
+<ul>
+<li> Always optional
+<li> Meaningless for floating-point and block nrrds
+<li> Type: double
+</ul>
+
+For integral data values which were produced as a result of linear
+quantization, this records the lowest input value that was mapped to
+the lowest output integral value.  If a floating point nrrd with
+values ranging from 0.0 to 1.0 is quantized to 8 bits,
+<tt>old&nbsp;min</tt> will be 0.0.  This is not the middle of the
+range of values that were all mapped to the lowest output integer, but
+the lowest of those values.
+
+<p>
+
+Infinite values are not valid, "<tt>nan</tt>" means "don't know".
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="oldmax">old max: &lt;<i>max</i>&gt;</a>
+oldmax: &lt;<i>max</i>&gt;
+</pre></blockquote>
+<ul>
+<li> Always optional
+<li> Meaningless for floating-point and block nrrds
+<li> Type: double
+</ul>
+
+Same as <a href="#oldmin"><tt>old min</tt></a>, but represents the 
+highest of the input values that were mapped to the highest output
+integral value.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="datafile">data file: &lt;<i>file</i>&gt;</a>
+datafile: &lt;<i>file</i>&gt;
+</pre></blockquote>
+<ul>
+<li> Always optional
+</ul>
+
+This is always optional, but it the only means of distinguishing from
+an attached or a detached NRRD header.  When it is present, it is
+interpreted according to <a href="#sect3">Section 3</a>, and the 
+header is considered finished at the EOF, or at the blank line following
+the last field, and any data after the blank line (if present) is ignored.
+If this field is not present, the data is assumed to be in the same file
+as the header, following the blank line marking the end of the header.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="lineskip">line skip: &lt;<i>skip</i>&gt;</a>
+lineskip: &lt;<i>skip</i>&gt;
+</pre></blockquote>
+<ul>
+<li> Always optional
+<li> Type: <tt>int</tt>
+</ul>
+
+This is most useful in a detached header.  It tells the NRRD reader to
+skip some number of lines (greater than or equal to zero) in the data
+file in order to get to the where the data actually begins.  This
+enables detached NRRD headers to access data in VTK files, for
+instance.  If this is used in an attached NRRD header, then the lines
+are skipped after the blank line at the end of the NRRD header.  The
+definition of a "line" in this context is the same as given at the
+beginning of <a href="#sect1">Section 1</a>.  When this field does not
+appear, <i>skip</i> is taken to be zero.  Negative values are not
+valid.
+
+<p>
+
+When used in combination with <a
+href="#byteskip"><tt>byte&nbsp;skip</tt></a>, the line skipping is
+done <b>before</b> the byte skipping.  The meaning of <tt>line
+skip</tt> is not affected by the <tt>encoding</tt> field.
+
+<p>
+
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="byteskip">byte skip: &lt;<i>skip</i>&gt;</a>
+byteskip: &lt;<i>skip</i>&gt;
+</pre></blockquote>
+<ul>
+<li> Always optional
+<li> Type: <tt>int</tt>
+</ul>
+
+Like <a href="#lineskip"><tt>line skip</tt></a>, this is most useful
+in a detached header.  It tells how many bytes (greater than or equal
+to zero) to skip in a data file in order to get to the beginning of
+the data.  By definition, the bytes are skipped according to the
+action of <tt>fgetc()</tt>.  When used in combination with <a
+href="#byteskip"><tt>line&nbsp;skip</tt></a>, the byte skipping is
+done <b>after</b> the line skipping.  When this field does not appear,
+<i>skip</i> is taken to be zero.  Negative values are not valid.
+
+<p>
+
+The interpretation of <tt>byte skip</tt> changes according to whether
+or not the <tt>encoding</tt> used is a form of compression or not.
+The only compressions supported in <tt>NRRD0001</tt> are gzip and
+bzip2.  In uncompressed encodings, the byte skipping is done just like
+the line skipping: within the data file, so as to locate the beginning
+of the data, and prior to the decoding of any data.  In compressed
+encodings however, the line skipping is done first, and then the
+decompression begins.  The byte skipping is done <b>within</b> the
+stream of decompressed data.
+
+<p>
+
+The reason for skipping bytes but not lines in the decompressed stream
+is basically motivated by the conceptual difference between ASCII and
+binary headers.  One reason to write headers in ASCII is to make them
+human readable, so they probably shouldn't be compressed to begin
+with.  Also, ASCII headers (such as in PNM images) often allow
+multiple lines of optional comments, so the number of lines to skip
+has to be determined on a per-file basis by looking at the
+(uncompressed) file, at which point the data might as well be written
+out as a NRRD file.  In contrast, binary headers (such as in many
+non-DICOM images saved from medical scanners), are very often fixed
+length, and not human readable, which means that when the header and
+data are compressed together, the beginning of the data can be easily
+found via a <tt>byte skip</tt> offset.  This also applies to large
+datasets written by FORTRAN programs, for which even "raw" data can be
+proceeded by a four-byte representation of the data length.
+
+<!-- 
+<hr noshade width="30%" align=left>
+<a name="">
+<blockquote><pre>
+: &lt;<i></i>&gt;
+</pre></blockquote>
+</a>
+<ul>
+<li> 
+</ul>
+-->
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="number">number: &lt;<i>string</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always harmless
+</ul>
+
+In the early days of NRRD (when the magic was <tt>NRRD00.01</tt>), the
+number of elements in the whole array had to be explicitly given in
+the header, even though this is entirely redundant with the
+information implied by the <a href="#sizes"><tt>sizes</tt></a> field.
+The number of bytes in the (perhaps uncompressed) data can always be
+determined by the product of the <tt>sizes</tt>, multiplied by the
+byte length of one element, which is determined from the <a
+href="#type"><tt>type</tt></a>, and possibly <a
+href="#blocksize"><tt>blocksize</tt></a> fields.  In keeping with the
+principle of making NRRD headers as concise as possible, the
+<tt>number</tt> field should never be written, and always ignored on
+reading, without even an attempt to parse the field as an integer.
+
+<h2><a name="sect5">5. Per-Axis Specifications</a></h2>
+
+The individual field descriptors in these specifications are delimited
+by one or more spaces ("<tt> </tt>") or tabs ("<tt>\t</tt>"), or some
+combination of the two, but no other kinds of white space delimiters
+are valid.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="sizes">sizes: &lt;<i>size[0]</i>&gt; &lt;<i>size[1]</i>&gt; ... &lt;<i>size[dim-1]</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always necessary
+<li> Type: <tt>int</tt>
+</ul>
+
+All the &lt;<i>size[i]</i>&gt; are integers greater than 0.
+&lt;<i>size[i]</i>&gt; is the number of samples along axis i in the
+array.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="spacings">spacings: &lt;<i>space[0]</i>&gt; &lt;<i>space[1]</i>&gt; ... &lt;<i>space[dim-1]</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always optional
+<li> Type: <tt>double</tt>
+</ul>
+
+This field describes how sample spacing along each axis can vary among
+the axes, common in medical datasets where the slice spacing is
+different than the within-slice pixel spacing.  Spacing values of
+positive and negative infinity are not allowed, nor is zero.  Positive
+and negative finite values are allowed, as is NaN. 
+
+<p>
+
+Because there must be one spacing for each axis, spacings must be
+given for axes which don't logically have a spatial component, such as
+the RGB axis of color image data, which is usually axis 0.  Rather
+than invent a value (such as 1.0) for sample spacing where no value is
+sensible, a spacing value of "<tt>nan</tt>" should be used instead.
+In addition, "<tt>nan</tt>" can represent the fact that spacing
+information would be sensible here, but simply isn't known.  Of
+course, if spacings are NaN for every axis, the field probably
+shouldn't be in the header.
+
+<p>
+
+The meaning and interpretation of the <tt>spacings</tt> field is
+independent of the <tt>centers</tt>, <tt>axis min</tt> and <tt>axis
+maxs</tt> fields, even though mutually incompatible settings are
+possible.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="axismins">axis mins: &lt;<i>min[0]</i>&gt; &lt;<i>min[1]</i>&gt; ... &lt;<i>min[dim-1]</i>&gt;</a>
+axismins: &lt;<i>min[0]</i>&gt; &lt;<i>min[1]</i>&gt; ... &lt;<i>min[dim-1]</i>&gt;
+</pre></blockquote>
+<ul>
+<li> Always optional
+<li> Type: <tt>double</tt>
+</ul>
+
+In those cases where there the samples along an axis are logically
+located along a certain range in some assumed world space, then the
+<tt>axis mins</tt> information gives the lower bound of that range.
+These cases are probably a superset of those cases where
+<tt>spacings</tt> information is meaningful.  In a computer graphics
+context, this allows representation of the lower bounds in the (U,V)
+space of the image plane that was sampled during the rendering
+process.  Also, in order to be meaningful, univariate histograms and
+multi-dimensional scatterplots require the use the axis mins field.
+
+<p>
+
+Infinite values are not valid as axis mins.  Any non-infinite values,
+including zero, are valid.  As with <tt>spacings</tt> information, the
+use of "<tt>nan</tt>" as an axis min value is probably preferable to
+inventing one where no value is meaningful or known.
+
+<p>
+
+Presence of the <tt>axis mins</tt> field does not require presence of
+the <tt>axis maxs</tt> field, although it is often useful for these to
+appear together.  However, using the <tt>axis mins</tt> field alone
+can emulate the <tt>ORIGIN</tt> field of the VTK file format header.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="axismaxs">axis maxs: &lt;<i>max[0]</i>&gt; &lt;<i>max[1]</i>&gt; ... &lt;<i>max[dim-1]</i>&gt;</a>
+axismaxs: &lt;<i>max[0]</i>&gt; &lt;<i>max[1]</i>&gt; ... &lt;<i>max[dim-1]</i>&gt;
+</pre></blockquote>
+<ul>
+<li> Always optional
+<li> Type: <tt>double</tt>
+</ul>
+
+This field is useful in the same contexts as <tt>axis mins</tt>; it
+specifies the "upper" bound of the axes in some assumed world space.
+Which values are valid for this field are identical to those of
+<tt>axis mins</tt>, and the utility of "<tt>nan</tt>" is also the
+same.  The axis max values do not, however, have to be greater than
+the axis min values.  If samples along one axis are flipped, the axis
+min and max would be interchanged.
+
+<p>
+
+The settings of <tt>axis mins</tt> and <tt>axis maxs</tt> would seem
+to imply a value for <tt>spacings</tt>, but this also depends on the
+values of <tt>centers</tt>.  Mutually incompatible settings of
+these fields are possible to save in a NRRD header, but is not the job
+of the NRRD reader to ensure their consistency, only to check that the
+individual values in isolation are sensible (for instance, an axis max
+can't be infinite).
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="centers">centers: &lt;<i>cent[0]</i>&gt; &lt;<i>cent[1]</i>&gt; ... &lt;<i>cent[dim-1]</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always optional
+</ul>
+
+This field indicates if the information along each axis is cell or
+node centered, or if neither is known.
+
+<table border=1>
+<tr>
+  <td><b>&lt;<i>cent[i]</i>&gt;</b>
+  <td><b>Meaning</b>
+  <td><b>Examples</b>
+<tr>
+  <td>"<tt>cell</tt>"&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <td>The location of the sample is centered in the interior of
+  the grid element.
+  <td>Histograms, scatterplots, images for mip-maps, images in contexts in
+  which a pixel can be correctly thought of as "a little square", volumes
+  as a grid of cuberilles.
+<tr>
+  <td>"<tt>node</tt>"
+  <td>The location of the sample is at the boundary between grid elements.
+  <td>Volumes as a grid of "voxels", and pretty much any multi-dimensional
+  signal processing context in which something other than nearest neighbor
+  filtering is being applied.
+<tr>
+  <td>"<tt>???</tt>"
+  <td>Centering information for this axis is either meaningless or unknown
+  <td>Any non-spatial axis, such as a short axis for vector or tensor 
+  components, preceding all the spatial axes.
+</table>
+
+As one example of the distinction between cell and node centering,
+supposed that some axis has axis min 0.0, axis max 1.0, with five
+samples.  In node-centered sampling, the samples would be "located" at
+positions 0.00, 0.25, 0.50, 0.75, and 1.00, for a spacing of 0.25.
+In cell-centered sampling, the samples would be "located" at 
+positions 0.10, 0.30, 0.50, 0.70, and 0.90, for a spacing of 0.20.
+
+<p>
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="labels">labels: "&lt;<i>label[0]</i>&gt;" "&lt;<i>label[1]</i>&gt;" ... "&lt;<i>label[dim-1]</i>&gt;"</a>
+</pre></blockquote>
+<ul>
+<li> Always optional
+</ul>
+
+This allows the axes to be "named", which is helpful and descriptive
+in functions where the axes of an output nrrd are a subset of the axes
+of in input nrrd, such as with slicing or projecting.  In scatterplots
+and lookup tables, the axis labels can name the quantity associated
+with each axis.  The label strings aren't otherwise parsed or
+interpreted by functions that operate on nrrd arrays, other than to
+simply associate a label with an axis through all operations in which
+an axis is logically preserved.  For example, slicing a nrrd with
+labels "X", "Y", and "Z" along axis 2 should result in a nrrd with
+labels "X" and "Y".
+
+<p>
+
+As shown above, each label is delimited by double quotes.  Within each
+label, double quotes may be included by escaping them (<tt>\"</tt>),
+but no other form of escaping is supported.  For axes with no labels,
+use a quoted empty string (<tt>""</tt>).
+
+<p>
+
+<!--
+For short, non-spatial axes, there is an informal convention that the
+label can be used to name the individual position along the axis, by a
+sequence of comma-seperated strings.  In RGB color image data, for
+example, the label specification might be:
+
+<blockquote><pre>
+labels: "R,G,B" "X" "Y"
+</pre></blockquote>
+
+<p>
+
+-->
+
+There is no fixed limit on how long the line containing the
+<tt>labels</tt> field can be.
+
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="units">units: "&lt;<i>unit[0]</i>&gt;" "&lt;<i>unit[1]</i>&gt;" ... "&lt;<i>unit[dim-1]</i>&gt;"</a>
+</pre></blockquote>
+<ul>
+<li> Always optional
+</ul>
+
+For all practical purposes, this is just like the <tt>labels</tt>
+field, in that the field gives a quote-delimited string for each axis.
+As with labels, these strings are not otherwise parsed or interpreted
+by functions, but should remain associated with an axis whenever
+sensible.  The intended role of this field is to allow saving the
+units of the world space associated with the <tt>spacings</tt>,
+<tt>axis mins</tt>, and <tt>axis maxs</tt> fields.  For scalar arrays
+in which every axis is spatial, and logically lives in the same space,
+the units information will unfortunately be repeated for all axes.
+Having separate units for all axes is more compelling in the case of
+multi-dimensional scatterplots and spectral image data.
+
+<h2><a name="sect6">6. Future Extensions</a></h2>
+
+I have some ideas on how the NRRD file format may be extended in the
+future, but these are not likely to happen within the next year.
+If they are developed, it will be with the introduction of a slightly
+different magic, to be distinct from <tt>NRRD0001</tt>.
+
+<ul>
+
+<li> More than one array per NRRD file:  There are many situations
+where it is good to logically associate multiple NRRD files together
+as one "data set".  Examples include a large volume and its
+pre-computed univariate histogram (to help in isovalue navigation), or
+a collection of different one-, two-, and three-dimensional lookup
+tables which are good transfer functions for a given volume.  I am
+leaning towards implementing this multi-NRRD association with XML on
+top of regular NRRD0001 files.  If you need this, though, you should
+probably be using <a href="http://hdf.ncsa.uiuc.edu/">HDF
+(<tt>http://hdf.ncsa.uiuc.edu/</tt>)</a>
+
+<li> More general storage of attribute/value pairs: Something more
+than writing and parsing comments would be good.  But again, this is
+really the domain of HDF.
+
+<li> Bricking:  Whenever I do get around to implementing bricking in
+<b>nrrd</b>, the results will be saved in NRRD files.  One level of
+bricking will turn a 3-D array into a 6-D array.  For various subtle
+reasons, the representation of the axis mins and maxs becomes
+ambiguous in the case of cell-centered data, and this information is
+meaningless for all the bricked axes.  Brick overlap should be
+represented too, but this means a new field.
+
+<li> Other compression methods: It would be really nice to have a
+compression method that worked well on floating point data.
+
+</ul>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

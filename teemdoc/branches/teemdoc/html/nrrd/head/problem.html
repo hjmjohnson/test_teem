@@ -1,0 +1,324 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Visible Female Color Data Processing: Inter-slice Brightness Problem
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="head80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <font size="-1"><a href="./index.html">Visible<br>Female</a></font>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Inter-slice Brightness Problem</b></h2>
+</table>
+<p>
+
+The real problem with the Visible Human Female color data lies in how
+the brightness changes suddenly from slice to slice.  This problem was
+previously described in <a
+href="http://www.nlm.nih.gov/research/visible/vhp_conf/marquez/marquez.htm">a
+paper by M&aacute;quez and Schmitt</a> presented at the 1996 <a
+href="http://www.nlm.nih.gov/research/visible/vhp_conf/vhpconf.htm">Visible
+Human Project Conference</a>.  That work was focused on the lungs of
+the Visible Human Male color data, but the problem is the same as
+described here. Those authors also described a method for correcting
+the problem.  My pages here serve more to precisely visualize the
+problem as it occurs in the head of the Visible Human Female.
+
+<p>
+
+<!-- 
+I'm consistently mis-using the term "brightness".  "Intensity" would
+be more appropriate.  Brightness is the perceived intrinsic
+reflectivity of a surface, a very subjective quantity, whereas the
+problem here is with inter-slice variations in the recorded intensity
+of the same material.
+<p>
+-->
+
+The easiest way to see the brightness problem is with simple
+summed projections, using the half-size head images created
+<a href="crop.html">in an earlier step</a>:
+
+<blockquote><pre>
+unu join -i *.headsm.ppm -a 3 \
+  | unu project -a <b>2</b> -m sum | unu swap -a 1 2 -o xsum.nrrd
+unu join -i *.headsm.ppm -a 3 \
+  | unu project -a <b>1</b> -m sum | unu swap -a 1 2 -o ysum.nrrd
+unu quantize -i xsum.nrrd -b 8 | unu save -f pnm | topng doc/<a href="ysum.png">ysum.png</a>
+unu quantize -i ysum.nrrd -b 8 | unu save -f pnm | topng doc/<a href="xsum.png">xsum.png</a>
+</pre></blockquote>
+
+<ul>
+
+<li> <tt>unu project ... </tt> The axis ordering of the <tt>unu join</tt>
+output is (RGB,X,Y,Z).  To create an image showing something about X versus
+Z, we sum along axis 2 (Y), to produce ordering (RGB,X,Z).  To show Y versus
+Z, w sum along axis 1 (X), to produce ordering (RGB,Y,Z).
+</ul>
+
+<img alt="" width=855 height=274 src="ysum.png"><br>
+<tt>ysum.png</tt>: Summation along Y: X versus Z
+<p>
+<img alt="" width=855 height=337 src="xsum.png"><br>
+<tt>xsum.png</tt>: Summation along X: Y versus Z
+<p>
+<img alt="" width=856 height=344 src="colgraph.gif"><br>
+Graph of R,G,B sums (see below)
+</center>
+<p>
+
+The problem is the vertical bands in the RGB projection images.  The
+fact that these bands appear in both images (regardless of projection
+direction), and that they appear uniformly in the images (regardless
+of the non-projected position) suggest that they are not a property of
+the tissue or the background, but of the image intensity itself.  We
+can also graph the sum of component values over the whole slice.
+<b>Nrrd</b> doesn't (yet) have any facility for graphing, so we'll
+start with nrrd ...
+
+<blockquote><pre>
+unu project -i xsum.nrrd -a 2 -m sum -o colsum.txt
+</pre></blockquote>
+<ul>
+
+<li> <tt>unu project ... </tt> The axis ordering in <tt>xsum.nrrd</tt>
+is (RGB,Z,X), so summing along axis 2 gives us a 2-D nrrd with
+ordering (RGB,Z).
+
+<li> <tt> ... -o colsum.txt</tt>: All the <tt>unu</tt> commands (except
+<tt>unu make</tt> and <tt>unu save </tt>) guess output format based on
+filename extension.  "<tt>.txt</tt>" signifies a plain headerless text
+file.
+
+</ul>
+
+... and then graph it in Matlab ... 
+<blockquote><pre>
+&gt;&gt; rgb = dlmread('colsum.txt');
+&gt;&gt; d = 0:1:854;
+&gt;&gt; plot(d,rgb(:,1),'r',  d,rgb(:,2),'g',  d,rgb(:,3),'b')
+&gt;&gt; axis tight                                          
+</pre></blockquote>
+
+... and then this was resized, clipped and saved to the graph image
+seen above.  The locations of the bands in the image correspond to the
+sudden jumps seen in the graphs of the color component sums.  The
+glitches in these graphs occur in all the color components
+simultaneously, which means we have a chance of correcting them with a
+scaling applied to all colors.  Note, however, the jump associated
+with the missing bit of chin.  There, blue jumped upward while red
+jumped downward.
+
+<p>
+
+Because the variations seem to apply to all colors, we can get another
+kind of representation which starts with summing the three color
+components together, and then histogramming them on a per-slice basis:
+<blockquote><pre>
+unu join -i *.headsm.ppm -a 3 | unu project -a 0 -m sum \
+  | unu reshape -s 92338 855 \
+  | unu histax -a 0 -b 324 -t float -o histax.nrrd
+cat > colormap.txt
+  0.3 0.3 0
+  0 0 1
+  1 0 0
+  1 1 0
+  1 1 1
+<i>(Ctrl-D)</i>
+unu heq -i histax.nrrd -b 1024 -s 2 -a 0.7 \
+  | unu swap -a 0 1 | unu flip -a 1 \
+  | unu rmap -m colormap.txt | unu quantize -b 8 -o histax.ppm
+convert histax.ppm doc/<a href="histax.png">histax.png</a>
+</pre></blockquote>
+<ul>
+
+<li> <tt>unu project ... </tt> This sums along the RGB axis, reducing
+the (RGB,X,Y,Z) volume to (X,Y,Z).
+
+<li> <tt><a href="../../unrrdu/reshape.html">unu reshape</a> ... </tt>
+Just like Matlab's reshape: the data isn't changed, but the logical
+axis sizes are.  This turns the (X&nbsp;,&nbsp;Y&nbsp;,&nbsp;Z) volume
+into a 2-dimensional (XY&nbsp;,&nbsp;Z) image, in which every
+(gray-scale) slice has been stretched into one long scanline.
+
+<li> <tt><a href="../../unrrdu/histax.html">unu histax </a>... </tt>
+This replaces every scanline with a histogram of the scanline.  The
+dimension of the nrrd stays the same, but the option for number of
+bins ("<tt>-b</tt>") determines the new size.  Why 324 bins?  A
+previous run of the command found the min and max values along the
+histogram axis to be 33 and 682; this number of bins produces the
+least banding by putting two values per bin.  The output axis
+ordering is (H,Z).
+
+<li> <tt><a href="../../unrrdu/heq.html">unu heq</a> ... </tt> The
+goal is the put the axis histogram on screen in an intelligible way,
+and one way of improving the contrast of an image (so as to better
+utilitize the 8-bits of screen display) is to apply some amount of
+histogram equalization to the image.  (Never mind the fact that the
+image in question is already a histogram!)
+
+<li> <tt><a href="../../unrrdu/swap.html">unu swap</a> ... </tt>
+Changes the axis ordering from (H,Z) to (Z,H).
+
+<li> <tt><a href="../../unrrdu/flip.html">unu flip</a> ... </tt> The
+axis ordering stays the same, but the samples along the histogram axis
+(the second axis, axis 1) are flipped end-to-end, so that the
+histogram has the same sense as the RGB graphs above.
+
+<li> <tt><a href="../../unrrdu/rmap.html">unu rmap</a> ... </tt> This
+applies the colormap stored in <tt>colormap.txt</tt> to the image
+generated by the previous steps.  The colormap makes it much easier to
+discern positional discontinuities in the histogram.  The <b>nrrd</b>
+reader can read <a href="../otherformat.html">plain text files</a> as
+2-D arrays of floats.
+
+</ul>
+
+<img alt="" width=855 height=324 src="histax.png"><br>
+<tt>histax.png</tt>
+<p>
+<img alt="" width=855 height=274 src="ysum.png"><br>
+<tt>ysum.png</tt> (repeated for comparison)
+<p>
+
+These histograms are a little hard to understand at first.  As
+arranged here, every vertical scanling corresponds to one Z slice.
+The bottom of the histogram represents low values, the top represents
+high values.  Bright regions indicate where (both in terms of slice
+and in terms grayscale value) there were the most pixels.  When the
+slices suddenly get dark near the eyes, there is a jog downward in the
+upper band of the histogram.  The isolated dark slices are visible as
+small spikes along the bottom edge of the histogram.  The value in
+looking at this histogram, as opposed to simply looking at the R,G,B
+sum plots (above), is that it provides a sense of how the whole
+distribution of values is changing.
+
+<p>
+
+You can make a color version of this histogram too, by not initially
+summing the color components, so that the red, green, and blue
+channels of the axis histogram portray positional variations in the
+corresponding color component.  The result may have more aesthetic
+value than informational value:
+
+<blockquote><pre>
+unu join -i *.headsm.ppm -a 3 | unu reshape -s 3 92338 855 \
+  | unu histax -a 0 -b 256 -t float -o histaxcol.nrrd
+unu heq -i histaxcol.nrrd -b 1024 -s 2 -a 0.7 \
+  | unu swap -a 1 2 | unu flip -a 2 \
+  | unu quantize -b 8 | topng doc/<a href="histaxcol.png">histaxcol.png</a>
+</pre></blockquote>
+<ul>
+
+<li> <tt>unu join ... </tt> Creates a
+(RGB&nbsp;,&nbsp;X&nbsp;,&nbsp;Y&nbsp;,&nbsp;Z) volume
+
+<li> <tt>unu reshape ... </tt> Converts it to an
+(RGB&nbsp;,&nbsp;XY&nbsp;,&nbsp;Z) "image"
+
+<li> <tt>unu histax ... </tt> Generates an
+(RGB&nbsp;,&nbsp;H&nbsp;,&nbsp;Z) image.
+
+<li> <tt>unu swap, flip ... </tt> Ends up an
+(RGB&nbsp;,&nbsp;Z&nbsp;,&nbsp;H) image.
+
+</ul>
+<img alt="" width=855 height=256 src="histaxcol.png"><br>
+<tt>histaxcol.png</tt>
+<p>
+
+<a name="percomp">A better way to get a component-specific
+visualization of how the brightness variations is to simply do axis
+histogramming for the red, green, and blue channels in isolation:
+
+<blockquote><pre>
+unu slice -i histaxcol.nrrd -a 0 -p <b>0</b> | unu heq -b 1024 -s 2 -a 0.7 \
+  | unu swap -a 0 1 | unu flip -a 1 | unu rmap -m colormap.txt \
+  | unu quantize -b 8 -o histaxR.ppm
+unu slice -i histaxcol.nrrd -a 0 -p <b>1</b> | unu heq -b 1024 -s 2 -a 0.7 \
+  | unu swap -a 0 1 | unu flip -a 1 | unu rmap -m colormap.txt \
+  | unu quantize -b 8 -o histaxG.ppm
+unu slice -i histaxcol.nrrd -a 0 -p <b>2</b> | unu heq -b 1024 -s 2 -a 0.7 \
+  | unu swap -a 0 1 | unu flip -a 1 | unu rmap -m colormap.txt \
+  | unu quantize -b 8 -o histaxB.ppm
+convert histaxR.ppm doc/<a href="histaxR.png">histaxR.png</a>
+convert histaxG.ppm doc/<a href="histaxG.png">histaxG.png</a>
+convert histaxB.ppm doc/<a href="histaxB.png">histaxB.png</a>
+</pre></blockquote>
+<ul>
+
+<li> <tt><a href="../../unrrdu/slice.html">unu slice</a> ... </tt> The
+axis histogram <tt>histaxcol.nrrd</tt> had axes
+(RGB&nbsp;,&nbsp;H&nbsp;,&nbsp;Z), and we want to see the (H,Z) image
+for red, green, and blue seperately, so we slice along the first axis
+(axis 0).
+
+</ul>
+<img alt="" width=855 height=256 src="histaxR.png"><br>
+<tt>histaxR.png</tt>
+<p>
+<img alt="" width=855 height=256 src="histaxG.png"><br>
+<tt>histaxG.png</tt>
+<p>
+<img alt="" width=855 height=256 src="histaxB.png"><br>
+<tt>histaxB.png</tt>
+<p>
+
+These component-specific axis histograms tell a great deal:
+<ul>
+
+<li> The location (in Z) of the head is evident from from the location
+of the upper histogram bands in red and green.  The blue histogram has
+only one major band.
+
+<li> The largest step discontinuities appear in all components.
+
+<li> There is more high-frequency variation in the green component than
+the other colors.
+
+<li> On the right side of the histograms, single slices which are
+darker than their neighbors are more visible in the green and blue
+histograms than the red.  These slices are indicated by spikes
+pointing downwards from the lower histogram band.
+
+<li> Two features associated with blue voxels are visible in the blue
+histogram: the sinuses, and the missing chin.
+
+</ul>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

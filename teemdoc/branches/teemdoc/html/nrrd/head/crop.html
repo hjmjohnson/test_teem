@@ -1,0 +1,223 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Visible Female Color Data Processing: Cropping
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="head80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <font size="-1"><a href="./index.html">Visible<br>Female</a></font>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Cropping</b></h2>
+</table>
+<p>
+
+Supposing that we'd like to crop the slices so to only contain the
+head, we need to know where to crop.  We can project through a small
+subset of the slices in order to see where the "footprint" of the head
+is, within the frame of the color images.  One kind of projection
+which should work is simply maximum intensity projection, since any
+tissue will be brighter in red and green than the blue surrounding
+material.  The subset of slices we'll use is <tt>*{0,5}a.raw.Z</tt>
+(every 15th slice), but only up to <tt>avf1215a</tt>, since that is
+where the shoulders begin:
+
+<blockquote><pre>
+ls -1 data/avf11?{0,5}a.raw.Z data/avf12{0,1}{0,5}a.raw.Z | wc -l
+            24
+</pre></blockquote>
+
+Knowing that the number of slices to project through is 24,
+we can now create the color volume and project it:
+
+<blockquote><pre>
+zcat data/avf11?{0,5}a.raw.Z data/avf12{0,1}{0,5}a.raw.Z \
+  | unu make -i - -t uchar -s 2048 1216 3 24 -e raw \
+  | unu project -a 3 -m max \
+  | unu permute -p 2 0 1 -o headmax.ppm
+</pre></blockquote>
+
+<ul>
+
+<li> <tt><a href="../../unrrdu/make.html">unu make</a> ... </tt>
+Running <tt>zcat</tt> on a sequence of files (each of which is an
+image for a different Z coordinate) will generate raw data in which
+the Z coordinate changes the slowest.  Since the axis ordering for one
+image is (X,Y,RGB), the axis ordering for the <tt>zcat</tt> output
+should be (X,Y,RGB,Z), so the axis sizes given to "<tt>-s</tt>" are in
+that order.
+
+<li> <tt><a href="../../unrrdu/project.html">unu project</a> ... </tt>
+Projecting along the Z axis means that the Z axis is eliminated from
+the volume. The dimension is decreased by one, and the axis ordering
+of the output is (X,Y,RGB). Each scaline along Z is replaced by a
+single scalar which measures some aspect of the scanline.  We're using
+maximum intensity projection: "<tt>-m max</tt>".
+
+<li> <tt><a href="../../unrrdu/permute.html">unu permute</a> ... </tt>
+The output of projection has to be axis permuted just like an
+individual slice.
+
+</ul>
+
+<p>
+
+The resulting image (headmax.ppm) is as big as one of the slices;
+here's a downsampled version:
+<blockquote><pre>
+unu resample -i headmax.ppm -s = x0.3 x0.3 | topng doc/<a href="headmaxsm.png">headmaxsm.png</a>
+</pre></blockquote>
+
+<center>
+<img width=614 height=364 alt="" src="headmaxsm.png">
+</center>
+
+<p>
+
+By inspecting this image, a bound on the head was found with the
+help of <tt>xv</tt> (middle button gives pixel coordinates):
+
+<blockquote><pre>
+unu crop -i headmax.ppm -min 0 771 271 -max M 1319 945 \
+  | unu resample -k cubic:0,0.5 -s = x0.5 x0.5 \
+  | topng doc/<a href="headmaxcrop.png">headmaxcrop.png</a>
+</pre></blockquote>
+<ul>
+
+<li> <tt><a href="../../unrrdu/crop.html">unu crop</a> ... </tt> This
+selects a sub-array from the input, bounded by the coordinates given
+to "<tt>-min</tt>" and "<tt>-max</tt>".  "<tt>M</tt>" means "highest
+coordinate along this axis".
+
+</ul>
+<center>
+<img alt="" width=274 height337 src="headmaxcrop.png">
+</center>
+
+<p>
+
+Besides cropping down to the head, we would also like to see if there
+are any problems with spatial displacements between the images, which
+would create sharp edges in the data where none existed in the tissue.
+This is facilitated with the fiducial markers which appear in every
+slice.  Inspection of individual slices (with the commands <a
+href="inspect.html">shown earlier</a>) determined 80x80 pixel windows
+which bound the circle marker, and the I-beam marker on the opposite
+side of the slice.  Here they are for slice <tt>avf1130a</tt>:
+
+<blockquote><pre>
+zcat data/avf1130a.raw.Z \
+  | unu make -i - -t uchar -s 2048 1216 3 -e raw \
+  | unu permute -p 2 0 1 -o tmp.ppm
+unu crop -i tmp.ppm -min 0 365 945 -max M m+79 m+79 \
+  | topng doc/<a href="circle.png">circle.png</a>
+unu crop -i tmp.ppm -min 0 1660 950 -max M m+79 m+79 \
+  | topng doc/<a href="ibeam.png">ibeam.png</a>
+</pre></blockquote>
+<center>
+<table>
+<tr>
+  <td><img alt="" width=80 height=80 src="circle.png">
+  <td><img alt="" width=80 height=80 src="ibeam.png">
+<tr>
+  <td align=center><tt>circle.png</tt>
+  <td align=center><tt>ibeam.png</tt>
+</table>
+</center>
+
+Having identified the region for the head and markers in each image,
+we go through all 855 slices and save out these regions as PPMs.
+We also save a half-size version of the head images, as these will
+be easier to handle in a later processing step.
+
+<blockquote><pre>
+foreach SLC ( `(cd data; echo avf*.raw.Z)` )
+  echo $SLC
+  zcat data/$SLC \
+     | unu make -i - -t uchar -s 2048 1216 3 -l X Y RGB -e raw \
+     | unu permute -p 2 0 1 -o tmp.ppm
+  unu crop -i tmp.ppm -min 0 365 945 -max M m+79 m+79 -o $SLC.circle.ppm
+  unu crop -i tmp.ppm -min 0 1660 950 -max M m+79 m+79 -o $SLC.ibeam.ppm
+  unu crop -i tmp.ppm -min 0 771 271 -max M 1319 945 -o $SLC.head.ppm
+  unu resample -i $SLC.head.ppm -k tent -s = x0.5 x0.5 -o $SLC.headsm.ppm
+end
+</pre></blockquote>
+
+<ul>
+
+<li> <tt><a href="../../unrrdu/make.html">unu make</a> ... </tt> The
+only new thing here is the use of the "<tt>-l</tt>" option to give a
+"label" for each axis.  Axis labels are short descriptive strings
+which follow the axis through various <b>nrrd</b> transformations.
+These will be used below to keep track of which axes are which.
+
+</ul>
+
+Go grab lunch will this runs, it can take over an hour, a significant
+part of which is simply running <tt>zcat</tt> over and over.
+
+<p>
+
+One useful aspect of the NRRD writer is that when it writes PPM
+images, it stores information for the NRRD headers in PPM comments.
+Since the NRRD file format can contain <a
+href="../format.html#sect4">many different fields</a>, its handy to
+have them stored in non-NRRD files.  It is easy to read these headers,
+too.  Instead of using <tt>head</tt> to look at the PPM header (and
+risk clobbering your terminal settings with bizarro binary data), use
+<tt>unu head</tt>:
+
+<blockquote><pre>
+unu save -i avf1130a.raw.Z.head.ppm -f nrrd | unu head -
+
+NRRD0001
+content: crop(permute(???,2,0,1),[0,2]x[771,1319]x[271,945])
+type: unsigned char
+dimension: 3
+sizes: 3 549 675
+labels: "RGB" "X" "Y"
+encoding: raw
+</pre></blockquote>
+
+The <tt>content</tt> field shows that this image is the result of
+permuting and then cropping some original array, and there is enough
+information here to recreate the result.  The <tt>labels</tt> field
+shows what became of the information originally given to <tt>unu
+make</tt>'s "<tt>-l</tt>" option.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

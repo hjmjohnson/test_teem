@@ -1,0 +1,261 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"> 
+<html>
+<head>
+<title>
+GK's C code: bane/gkms tutorial: Step 4
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+
+<h2><a href="../"><img border=0 width=80 height=80
+src="../../img/bane80.jpg"></a><br>
+<small><small>&nbsp;</small></small><br>
+<tt><b>bane</b></tt>/<tt><b>gkms</b></tt> tutorial: Step 4:
+Generating maps of p(v,g)</h2>
+
+<blockquote>
+
+One of the basic ideas in my MS research was construction of what I
+called a "position function", although "distance map" may mesh better
+with more recent volume graphics terminology.  Usually, a distance map
+describes the signed distance to a surface as measured from sample
+points on a regular grid; this is one way of implicitly representing a
+surface with volume data.
+
+<p>
+
+The distance map in my case is somewhat different: the domain of the
+distance map is not the (x,y,z) position in the volume, but it is the
+space of the scalar data values which comprise the volume dataset.
+The space of data values is the one that matters for setting transfer
+functions.  Wouldn't it be nice to know which data values tend to
+correspond with the centers of boundaries in the dataset (these would
+make good isovalues for iso-surfacing), or how far from the boundary
+center a given isovalue tends to lie?  The position function (or
+distance map) can give this information: for each data value <i>v</i>,
+<i>p</i>(<i>v</i>) gives the signed distance to the nearest boundary.
+Furthermore, it is calculated automatically from the histogram volume.
+With the position function, we can give opacity to the values which
+tend to occur in the middles of boundaries, thereby visualizing
+important structural elements of the data.
+
+<p> 
+
+However, the position function does not need to have merely
+one-dimensional; two-dimensional opacity functions have been around
+since <a href="http://graphics.Stanford.EDU/~levoy/">Marc Levoy</a>'s
+influential <a
+href="http://graphics.Stanford.EDU/papers/volume-cga88/"> 1988 Display
+of Surfaces from Volume Data</a> paper.  As in Levoy's paper, I use
+gradient magnitude as the second axis for my opacity function.  When
+voxel data is projected into the 2-D space of data value and gradient
+magnitude, subtleties about the boundaries become discernable,
+assuming that you <a
+href="http://www.cs.utah.edu/~gk/MS/html/node10.html">have some
+intuition</a> for what those projections look like.  When, in
+addition, the information about second derivatives is added to the
+picture, you have a rich account of the potential boundaries which
+exist in the data.  This information can be fed into futher (semi-)
+automated analysis, or it can be inspected on its own for guidance in
+setting a transfer function by hand.
+
+
+<p>
+<b><tt>&lt;digression&gt;</tt></b>
+<p>
+
+It is important to point out that the position function estimate does
+not have to be perfectly accurate in order to be useful.  The position
+function estimate is most accurate when the data obeys a <a
+href="http://www.cs.utah.edu/~gk/MS/html/node7.html">certain boundary
+model</a>.  Strictly speaking, absolutely <b>no</b> real measured data
+actually obeys that model, yet my method still tends to work on
+(relatively clean, well-sampled) real data.  This is probably because
+the most important part of the position function not its exact shape,
+but simply its sign: for a given data value, is the position function
+positive, negative, or zero?  That is, is the isosurface for a given
+data value outside, inside, or on top of the center of a material
+boundary?  The sign of the position function is derived from the
+second derivative measurement.  One powerful way of locating the
+middle of a transition region between two regions is to find the zero
+crossing in a second derivative measure.
+
+<p>
+
+So the important property of the automatically calculated position
+function is the location of its zero crossings, and the continuity of
+the position function near its zero crossings.  Everything past that
+relies to a greater or lesser extent on the particular boundary model,
+but in my experience, that reliance has not been the weakest component
+of my method.  Rather, I feel the weakest component of my Master's
+thesis research has to do with the combination of two factors:
+<ul>
+<li>The histogram process loses <b>all</b> spatial information, including any
+notions of spatial locality.
+<li>The measurement contained in the histogram happens only at one
+resolution-- the resolution of the voxel's sample points-- and never any
+coarser or finer.
+</ul>
+This means that there is no way of tuning the process to be sensitive
+to particular scales of boundary, and there is no way of knowing if
+some hits in the histogram volume came from scattered noise, or from
+some spatially localized pattern.  Essentially, the current method for
+calculating the histogram volume is not the best way to measure
+information about the "boundaries that matter", or, the information it
+measures is not the most important information for setting transfer
+functions that work optimally in a variety of cases.
+
+<p>
+
+Here is probably the <a
+href="http://www.cs.utah.edu/~gk/papers/vv98/node5.html#strongclaim">
+strongest claim</a> from the <a
+href="http://www.cs.utah.edu/~gk/papers/vv98/">VolVis 98 paper</a>:
+<blockquote>
+"This is the main benefit of this method: if the histogram volume has
+successfully captured information about the boundaries in the dataset,
+the user enjoys high-level control over the character of the rendered
+boundaries without having to worry about the exact specification of
+alpha(v)"
+</blockquote>
+
+The first part of the statement is really the important one.  All of
+this research really does rely on the underlying assumption that the
+histogram volume captured the information that matters.  If you don't
+allow yourself to make any kind of assumption about what the shape of
+boundaries are, you have less analytical ground to stand on when
+processing a histogram volume.  Making an assumption about the
+boundary model, as I did, is one way of leveraging the existing
+functionality of something as simple as the histogram volume.
+
+<p>
+
+I believe it always makes sense to make some assumptions about just
+what sort of feature it is that you're looking for, if you're trying
+to automate a feature-detection process; its just that those
+assumptions can't be too outlandish or limiting.  Plus, I don't see
+how to go the final step, beyond creating "guidance" for the human
+specification of a transfer function, to actually
+<b>algorithmically</b> generating an opacity function, if at some
+point you don't make some assumptions about the features that you want
+to see in the final rendering.  <a
+href="http://www.cs.utah.edu/~gk/MS/html/node26.html">This</a> may
+also make for interesting reading.
+
+<p>
+<b><tt>&lt;/digression&gt;</tt></b>
+<p>
+
+Here the options for generating a color-mapped image of p(v,g):
+
+<blockquote><pre>
+usage: bin/gkms pvg [-s &lt;sigma&gt;] [-g &lt;gthresh&gt;] [-b r,g,b]
+       [-z r,g,b] &lt;input&gt; &lt;output&gt;
+Default values are in {}s
+  -s sigma : scaling in position calculation
+             {(automatically calculated)}
+-g gthresh : minimum significant gradient mag
+             {0.04 * maxgrad}
+  -b r,g,b : background color of p(v,g) image
+             {0,0,0}
+  -z r,g,b : color of zero in p(v,g) image
+             {255,255,255}
+     input : 2D histo-info being analyzed
+    output : PPM to be created
+</pre></blockquote>
+
+Note that the required input is a 2-D info file (as generated by
+<tt>gkms info -d 2</tt>).  Setting sigma actually has no real effect on
+the image, since the values are histogram-equalized and then
+colormapped to make the picture.  Setting gthresh is likewise
+unexciting- it will only void out part of the image at low gradient
+magnitudes.  These two settings are here basically for parity with
+<tt>gkms opac</tt>, which actually calculates the same p(v,g) function
+as an intermediate step (in which case sigma and gthresh do matter).
+The other settings are just for cosmetic purposes, depending on what
+color you like your background and zero crossing to be.
+
+<p>
+
+The default output, as well as one with black and white flipped:
+<blockquote><pre>
+gkms pvg engine-info2.nrrd engine-pvg.ppm
+gkms pvg -b 255,255,255 -z 0,0,0 engine-info2.nrrd engine-pvg2.ppm
+</pre></blockquote>
+
+<center>
+<table>
+<tr>
+<td><img width=256 height=256 src="img/engine-pvg.gif">
+<td><img width=256 height=256 src="img/engine-pvg2.gif">
+<tr>
+<td><a href="img/engine-pvg.ppm">engine-pvg.ppm</a>
+<td><a href="img/engine-pvg2.ppm">engine-pvg2.ppm</a>
+</table>
+</center>
+
+<p>
+
+If, for some reason, you are interested in nothing but making these
+p(v,g) colormapped images, you can do it in one shot by piping
+invocations of <tt>gkms</tt> together.  It takes a little while
+to run (since generating histogram volumes is slowish), but its
+easy to do:
+<blockquote><pre>
+gkms hvol engine-crop.nrrd - | gkms info -d 2 - - | gkms pvg - pvg.ppm
+</pre></blockquote>
+
+<p>
+
+The colormap being used is this:
+<center>
+<img width=512 height=66 src="img/dondip.gif">
+</center>
+
+The blue side is for negative values, the orange side is for positive
+values, and the zero crossing is in the middle.  The colors are chosen
+so that people with <a
+href="http://directory.google.com/Top/Health/Conditions_and_Diseases/Eye_Disorders/Color_Blindness/">red-green
+color deficiency</a> can clearly see the variations in color.  That is
+all it makes sense to say about the colormapping of the p(v,g) plots,
+because the position values are histogram equalized prior to being
+colormapped, so the mapping from color to position is going to be
+different for every image.  The justification for doing the histogram
+equalization is that the purpose of these images to build a
+qualitative understanding of the volume structure, and the calculated
+position values often explode to infinity (at low gradient
+magnitudes).
+
+<p>
+
+More examples of p(v,g) plots can be found in Chapter 6 of my MS thesis;
+sections on the 
+<a href="http://www.cs.utah.edu/~gk/MS/html/node23.html">engine block</a>
+and 
+<a href="http://www.cs.utah.edu/~gk/MS/html/node24.html#SECTION00631000000000000000">CT head</a> have examples of p(v,g) colormaps.
+
+<p>
+
+Knowing that the middle of the p(v,g) colormap signifies
+zero-crossings, and knowing that zero-crossings of the position
+function signify boundaries, then looking at the p(v,g) plots above
+makes it quite clear that there are in fact three different boundaries
+in this volume dataset.
+
+
+</blockquote>
+<p>
+<a href="http://validator.w3.org/check/referer"><img border="0"
+src="../../img/valid-html32s.gif"
+alt="Valid HTML 3.2!" height="20" width="58"></a>
+</p>
+
+</body>
+</html>

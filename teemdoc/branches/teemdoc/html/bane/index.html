@@ -1,0 +1,148 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: bane
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="../img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>bane</h1>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td>
+  <td align=center>
+    <img width=256 height=256 alt="Not intended for human consumption"
+      src="../img/bane256.jpg"><br>
+  <td align=left valign=middle><!-- <font size="+1">
+    - <a href=""></a><br>
+       <font size="-2">&nbsp;</font><br>
+    - <a href=""></a><br>
+    </font> -->
+</table>
+
+<h2>GK's Master's Thesis (re-)re-implementation</h2>
+
+
+Having written <a href="../nrrd/index.html"><b>nrrd</b></a> as the basis for
+future work involving N-D raster data, re-implementing my Master's
+thesis code in 2000 turned out to be quite easy, and the result is
+<b>bane</b>.  In 2002, I re-re-implemented it, using <a
+href="../gage/index.html"><b>gage</b></a> as the underlying measure of values
+and derivatives.  It is my hope that future research by others on the
+topic of transfer function generation can benefit from comparisons
+with my technique, as represented by my own implementation.
+
+<p>
+
+I would like to mention that despite this software coming from Utah,
+and despite my Utah affiliation at the time the VolVis '98 paper was
+published (and when the MS thesis was finished in 1999), the great
+majority of this research was completed while I was a student in the
+<a href="http://www.graphics.cornell.edu">Program of Computer
+Graphics</a> (at <a href="http://www.cornell.edu">Cornell
+University</a>) under <a
+href="http://www.graphics.cornell.edu/people/director.html">Don
+Greenberg</a>.  That I didn't finish while at Cornell indicates
+nothing more than that I bit off more than I could chew in two years.
+
+<p>
+
+The basic ideas in this research were the following:
+
+<ol>
+
+<li> Direct volume rendering relies on a complicated multi-dimensional
+parameter called the <i>transfer function</i>, which assigns optical
+properties such as opacity, color, emissivity, etc., based on the data
+values in the volume.
+
+<li> The most important variable in a transfer function is opacity.
+No other variable plays as essential a role in determining how
+intelligible and informative the final rendering will be.  If the
+opacity assignment is botched, the important structures are either
+invisible or hopelessly occluded.  Thus, this research only seeks to
+generate opacity functions: functions which assign opacity to the
+volume data based on data value or some other locally measurable
+quantity.
+
+<li> I'm interested in rendering datasets where the important
+structure is the boundary between relatively homogenous regions.  One
+could also call these features the material interfaces.  This means
+that our task is tantamount to edge detection. Edge detection can be
+done using the first and second directional derivative along the
+gradient direction, in three dimensions as well as two.
+
+<li> The very nature of opacity functions is that their assingment is
+performed everywhere in the volume equally-- there is no spatial
+dimension or axis to the transfer function.
+
+<li> Thus, we need to do edge detection, but with the spatial
+component "projected out".  We want to localize boundaries not 
+in the spatial domain, but in the transfer function domain.
+
+<li> The role of histograms is to record variation and patterns of
+some properties of data, while projecting away the quantities which
+don't matter.  In our case, position doesn't matter.
+
+<li> By creating and analyzing 3-D histogram volumes of data value and
+its first and second directional derivatives, we can extract a 
+description of what boundaries are present in the given volume data.
+
+<li> If the user specifies a high-level description of how boundaries
+are supposed to look, this can be combined with the histogram volume
+analysis to create an opacity function which shows only the boundaries.
+
+<li> The information from the histogram volume analysis can be used
+additionally as a record of the dataset characteristics, independent
+of the specific task of opacity function specification.
+
+</ol>
+
+The interesting parts of the research are the identification of which
+quantities should go into the histogram volume, figuring out how to
+measure them and store them, analyzing the histogram volume, and
+creating a new/improved interface to setting the transfer function.
+The <tt>bane</tt> software implements all the basic operations
+described in my MS thesis and in VolVis '98 paper.  Also, it is this
+software which generated all the results used in the Vis 2000 Transfer
+Function Bake-Off.
+
+<p>
+
+While <tt>bane</tt> is a C library (libbane.a, libbane.so, etc) which
+contains all the functions you need to create opacity functions, it is
+probably easier to just use the single command-line executable, called
+<tt>gkms</tt>, which is built as part of installing <tt>bane</tt>.
+<tt>gkms</tt> does everything needed to go from a dataset to an
+opacity function (either one or two dimensional), and it offers access
+to all the <tt>bane</tt> functionality which has anything to do with
+semi-automatic transfer function generation.
+
+<p>
+
+Please read <a href="intro/index.html">An Introduction <tt>bane</tt>, Using
+<tt>gkms</tt></a> for a demonstration of how the different
+capabilities of <tt>gkms</tt> are used.
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

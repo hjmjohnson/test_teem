@@ -1,0 +1,257 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Visible Female Color Data Processing: Joint Histograms
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="head80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <font size="-1"><a href="./index.html">Visible<br>Female</a></font>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Joint Histograms</b></h2>
+</table>
+<p>
+
+The images of the gray scale strips don't look very different, but the
+changes in brightness became more obvious, and easier to characterize,
+with the help of joint histograms of pairs of grayscale strips.  Also
+called a co-occurance matrix, the joint histogram of two gray-scale
+images records the number of pairs of spatially corresponding pixels
+with a given combination of brightness values; this is useful for
+automatic image registration by mutual information.  For instance, the
+joint histogram between the red channels of <tt>gray235.ppm</tt> and
+<tt>gray236.ppm</tt> can be generated with:
+
+<blockquote><pre>
+unu slice -i gray235.ppm -a 0 -p 0 -o 0.pgm
+unu slice -i gray236.ppm -a 0 -p 0 -o 1.pgm
+unu jhisto -i {0,1}.pgm -b 256 256 -t uchar | topng doc/<a href="2356R.png">2356R.png</a>
+</pre></blockquote>
+<ul>
+
+<li> <tt><a href="../../unrrdu/jhisto.html">unu jhisto</a> ... </tt>
+This creates a nrrd with as many dimensions as there were input nrrds,
+in this case two.  Axis <b>i</b> of the joint histogram corresponds to
+the range of values in the <b>i</b>th input nrrd.
+
+</ul>
+<center>
+<img width=256 height=256 alt="" src="2356R.png">
+</center>
+
+Nearly all the hits are along the diagonal because the brightnesses of
+these two images are very similar.  We can also joint histogram all
+the color components at the same time, because <tt>unu jhisto</tt>
+treats all the input nrrds as basically 1-dimensional lists of values.
+
+<blockquote><pre>
+unu jhisto -i gray235.ppm gray236.ppm -b 256 256 -t uchar | topng doc/<a href="2356.png">2356.png</a>
+</pre></blockquote>
+<center>
+<img width=256 height=256 alt="" src="2356.png">
+</center>
+
+Now for the fun part.  We can visualize the inter-slice brightness
+changes between four slices by putting the joint histograms of
+the gray scales from successive pairs of slices into the red, green,
+and blue channels of a color image.
+
+<blockquote><pre>
+unu jhisto -i gray235.ppm gray236.ppm -b 256 256 -t uchar -o 0.pgm
+unu jhisto -i gray236.ppm gray237.ppm -b 256 256 -t uchar -o 1.pgm
+unu jhisto -i gray237.ppm gray238.ppm -b 256 256 -t uchar -o 2.pgm
+unu join -i {0,1,2}.pgm -a 0 -incr -o grjh23.ppm
+unu jhisto -i gray324.ppm gray325.ppm -b 256 256 -t uchar -o 0.pgm
+unu jhisto -i gray325.ppm gray326.ppm -b 256 256 -t uchar -o 1.pgm
+unu jhisto -i gray326.ppm gray327.ppm -b 256 256 -t uchar -o 2.pgm
+unu join -i {0,1,2}.pgm -a 0 -incr -o grjh32.ppm
+unu jhisto -i gray417.ppm gray418.ppm -b 256 256 -t uchar -o 0.pgm
+unu jhisto -i gray418.ppm gray419.ppm -b 256 256 -t uchar -o 1.pgm
+unu jhisto -i gray419.ppm gray420.ppm -b 256 256 -t uchar -o 2.pgm
+unu join -i {0,1,2}.pgm -a 0 -incr -o grjh41.ppm
+unu jhisto -i gray292.ppm gray293.ppm -b 256 256 -t uchar -o 0.pgm
+unu jhisto -i gray293.ppm gray294.ppm -b 256 256 -t uchar -o 1.pgm
+unu jhisto -i gray294.ppm gray295.ppm -b 256 256 -t uchar -o 2.pgm
+unu join -i {0,1,2}.pgm -a 0 -incr -o grjh29.ppm
+
+convert grjh23.ppm doc/<a href="grjh23.png">grjh23.png</a>
+convert grjh32.ppm doc/<a href="grjh32.png">grjh32.png</a>
+convert grjh41.ppm doc/<a href="grjh41.png">grjh41.png</a>
+convert grjh29.ppm doc/<a href="grjh29.png">grjh29.png</a>
+</pre></blockquote>
+<center>
+<table>
+<tr>
+  <td><img width=256 height=256 alt="" src="grjh23.png">
+  <td><img width=256 height=256 alt="" src="grjh32.png">
+  <td><img width=256 height=256 alt="" src="grjh41.png">
+  <td><img width=256 height=256 alt="" src="grjh29.png">
+<tr>
+  <td align=center><tt>grjh23.png</tt>
+  <td align=center><tt>grjh32.png</tt>
+  <td align=center><tt>grjh41.png</tt>
+  <td align=center><tt>grjh29.png</tt>
+</table>
+</center>
+
+We can use <tt>ilk</tt> to stretch the joint histograms away from the
+diagonal, to get a clearer picture of what changed:
+
+<blockquote><pre>
+ilk -i grjh23.ppm -t rotate:-45 scale:1,4 rotate:45 | topng doc/<a href="grjh23st.png">grjh23st.png</a>
+ilk -i grjh32.ppm -t rotate:-45 scale:1,4 rotate:45 | topng doc/<a href="grjh32st.png">grjh32st.png</a>
+ilk -i grjh41.ppm -t rotate:-45 scale:1,4 rotate:45 | topng doc/<a href="grjh41st.png">grjh41st.png</a>
+ilk -i grjh29.ppm -t rotate:-45 scale:1,4 rotate:45 | topng doc/<a href="grjh29st.png">grjh29st.png</a>
+</pre></blockquote>
+
+<center>
+<table>
+<tr>
+  <td><img width=256 height=256 alt="" src="grjh23st.png">
+  <td><img width=256 height=256 alt="" src="grjh32st.png">
+  <td><img width=256 height=256 alt="" src="grjh41st.png">
+  <td><img width=256 height=256 alt="" src="grjh29st.png">
+<tr>
+  <td align=center><tt>grjh23st.png</tt>
+  <td align=center><tt>grjh32st.png</tt>
+  <td align=center><tt>grjh41st.png</tt>
+  <td align=center><tt>grjh29st.png</tt>
+</table>
+</center>
+
+Well, this is troubling.  The manner in which the brightness changed
+in the first case is diferent than the second case (the second is
+quite non-linear), meaning that the method of brightness correction
+would ideally vary according to Z location, but this is probably
+beyond our means.  Worse yet, in the third case, where there is an
+isolated darker slice, the gray strip joint histograms indicate that
+there is not any obvious brightness change among the four slices, at
+least not significantly more than in the fourth case, where we know
+that there is no brightness variation in the head.  For comparison, we
+can form joint histograms of the head images themselves, and again
+stretch them with <tt>ilk</tt>:
+
+<blockquote><pre>
+unu jhisto -i avf1079{b,c}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 0.pgm
+unu jhisto -i avf10{79c,80a}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 1.pgm
+unu jhisto -i avf1080{a,b}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 2.pgm
+unu join -i {0,1,2}.pgm -a 0 -incr -o hdjh23.ppm
+
+unu jhisto -i avf1109{a,b}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 0.pgm
+unu jhisto -i avf1109{b,c}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 1.pgm
+unu jhisto -i avf11{09c,10a}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 2.pgm
+unu join -i {0,1,2}.pgm -a 0 -incr -o hdjh32.ppm
+
+unu jhisto -i avf1140{a,b}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 0.pgm
+unu jhisto -i avf1140{b,c}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 1.pgm
+unu jhisto -i avf114{0c,1a}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 2.pgm
+unu join -i {0,1,2}.pgm -a 0 -incr -o hdjh41.ppm
+
+unu jhisto -i avf1098{b,c}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 0.pgm
+unu jhisto -i avf109{8c,9a}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 1.pgm
+unu jhisto -i avf1099{a,b}.raw.Z.head.ppm -b 256 256 -t int \
+  | unu quantize -b 8 -max 700 -o 2.pgm
+unu join -i {0,1,2}.pgm -a 0 -incr -o hdjh29.ppm
+
+convert hdjh23.ppm doc/hdjh23.png
+convert hdjh32.ppm doc/hdjh32.png
+convert hdjh41.ppm doc/hdjh41.png
+convert hdjh29.ppm doc/hdjh29.png
+
+ilk -i hdjh23.ppm -t rotate:-45 scale:1,4 rotate:45 | topng doc/<a href="hdjh23st.png">hdjh23st.png</a>
+ilk -i hdjh32.ppm -t rotate:-45 scale:1,4 rotate:45 | topng doc/<a href="hdjh32st.png">hdjh32st.png</a>
+ilk -i hdjh41.ppm -t rotate:-45 scale:1,4 rotate:45 | topng doc/<a href="hdjh41st.png">hdjh41st.png</a>
+ilk -i hdjh29.ppm -t rotate:-45 scale:1,4 rotate:45 | topng doc/<a href="hdjh29st.png">hdjh29st.png</a>
+</pre></blockquote>
+
+<center>
+<table>
+<tr>
+  <td><img width=256 height=256 alt="" src="hdjh23.png">
+  <td><img width=256 height=256 alt="" src="hdjh32.png">
+  <td><img width=256 height=256 alt="" src="hdjh41.png">
+  <td><img width=256 height=256 alt="" src="hdjh29.png">
+<tr>
+  <td align=center><tt>hdjh23.png</tt>
+  <td align=center><tt>hdjh32.png</tt>
+  <td align=center><tt>hdjh41.png</tt>
+  <td align=center><tt>hdjh29.png</tt>
+<tr>
+  <td><img width=256 height=256 alt="" src="hdjh23st.png">
+  <td><img width=256 height=256 alt="" src="hdjh32st.png">
+  <td><img width=256 height=256 alt="" src="hdjh41st.png">
+  <td><img width=256 height=256 alt="" src="hdjh29st.png">
+<tr>
+  <td align=center><tt>hdjh23st.png</tt>
+  <td align=center><tt>hdjh32st.png</tt>
+  <td align=center><tt>hdjh41st.png</tt>
+  <td align=center><tt>hdjh29st.png</tt>
+</table>
+</center>
+
+The joint histograms of the head images in the first two cases look
+very similar to those of the gray scale strips. In these cases, the
+strips seemed to work well to record the brightness variations that
+affected the central region of the images.  The third and fourth cases
+are more troubling.  The joint histograms of the gray scale strips in
+neither of these cases indicated obvious brightness variations, but
+the joint histograms for the head images show otherwise.  There is a
+significant variation recorded in the third histogram, while in the
+fourth case, the histogram confirms that these slices had no variation.
+
+<p>
+
+It seems, then, that the gray scale strips unfortunately did not fully
+do the job of recording brightness variations that affect the data
+inside the body.  Even if the gray scale strips were extracted for
+every single slice, they wouldn't necessarily facilitate automated
+correction of the data.  How we proceed at this point, then, is
+necessarily more ad hoc.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

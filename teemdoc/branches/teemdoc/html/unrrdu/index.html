@@ -1,0 +1,175 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: unrrdu
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="../img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>unrrdu</h1>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td>
+  <td align=center>
+    <img width=256 height=256 alt="The Many Diverse Nrrd Utilities from the Great Nation of Deseret"
+      src="../img/unrrdu256.jpg"><br>
+  <td align=left valign=middle><font size="+1">
+    - <a href="gen.html">General <tt>unu</tt> Info</a><br>
+       <font size="-2">&nbsp;</font></font><br>
+    - <tt>unu</tt> ... <a href="make.html"><tt>make</tt></a>
+    &nbsp; <a href="head.html"><tt>head</tt></a>
+    &nbsp; <a href="data.html"><tt>data</tt></a>
+    &nbsp; <a href="convert.html"><tt>convert</tt></a>
+    &nbsp; <a href="resample.html"><tt>resample</tt></a>
+    &nbsp; <a href="cmedian.html"><tt>cmedian</tt></a>
+    &nbsp; <a href="quantize.html"><tt>quantize</tt></a>
+    &nbsp; <a href="unquantize.html"><tt>unquantize</tt></a>
+    &nbsp; <a href="project.html"><tt>project</tt></a>
+    &nbsp; <a href="slice.html"><tt>slice</tt></a>
+    &nbsp; <a href="dice.html"><tt>dice</tt></a>
+    &nbsp; <a href="join.html"><tt>join</tt></a>
+    &nbsp; <a href="crop.html"><tt>crop</tt></a>
+    &nbsp; <a href="pad.html"><tt>pad</tt></a>
+    &nbsp; <a href="reshape.html"><tt>reshape</tt></a>
+    &nbsp; <a href="permute.html"><tt>permute</tt></a>
+    &nbsp; <a href="swap.html"><tt>swap</tt></a>
+    &nbsp; <a href="shuffle.html"><tt>shuffle</tt></a>
+    &nbsp; <a href="flip.html"><tt>flip</tt></a>
+    &nbsp; <a href="block.html"><tt>block</tt></a>
+    &nbsp; <a href="unblock.html"><tt>unblock</tt></a>
+    &nbsp; <a href="histo.html"><tt>histo</tt></a>
+    &nbsp; <a href="dhisto.html"><tt>dhisto</tt></a>
+    &nbsp; <a href="jhisto.html"><tt>jhisto</tt></a>
+    &nbsp; <a href="histax.html"><tt>histax</tt></a>
+    &nbsp; <a href="heq.html"><tt>heq</tt></a>
+    &nbsp; <a href="gamma.html"><tt>gamma</tt></a>
+    &nbsp; <a href="1op.html"><tt>1op</tt></a>
+    &nbsp; <a href="2op.html"><tt>2op</tt></a>
+    &nbsp; <a href="3op.html"><tt>3op</tt></a>
+    &nbsp; <a href="lut.html"><tt>lut</tt></a>
+    &nbsp; <a href="rmap.html"><tt>rmap</tt></a>
+    &nbsp; <a href="imap.html"><tt>imap</tt></a>
+    &nbsp; <a href="save.html"><tt>save</tt></a>
+</table>
+
+<h2>Utah Nrrd Utilities</h2>
+
+For nearly all the useful functions in the <a
+href="../nrrd/index.html"><b>nrrd</b></a> library, there is a corresponding
+command in the <b>unrrdu</b> library which accesses the function via
+an <tt>argv,argc</tt> interface intended for command-line use.  In
+fact, the <tt>unu</tt> program (<tt>teem/src/bin/unu.c</tt>), does
+little more than link against the <b>unrrdu</b> library, and
+<tt>unu</tt> is by far the fastest and simplest way to enjoy the
+benefits of <b>nrrd</b>.  Strictly speaking, this page describes the
+<tt>unu</tt> program, not the <b>unrrdu</b> library it links with,
+but you'd never know the difference.  Pre-compiled executable versions
+of <tt>unu</tt> are available in the <a href="../download/index.html">
+Download</a> section.
+
+<p>
+
+The capabilities of <tt>unu</tt> are listed simply by typing
+"<tt>unu</tt>" with no command-line options:
+
+<blockquote><pre>
+        --- Utah Nrrd Utilities (unrrdu) command-line interface ---
+      <a href="make.html">unu make</a> ... Create a nrrd (or nrrd header) from scratch
+      <a href="head.html">unu head</a> ... Print header of a nrrd file
+      <a href="data.html">unu data</a> ... Print data segment of a nrrd file
+   <a href="convert.html">unu convert</a> ... Convert nrrd to another type (as if by per-value cast)
+  <a href="resample.html">unu resample</a> ... Filtering and {up,down}sampling with a seperable kernel
+   <a href="cmedian.html">unu cmedian</a> ... Cheap histogram-based median filtering
+  <a href="quantize.html">unu quantize</a> ... Quantize floating-point values to 8, 16, or 32 bits
+<a href="unquantize.html">unu unquantize</a> ... Recover floating point values from quantized data
+   <a href="project.html">unu project</a> ... Collapse scanlines to scalars along some axis
+     <a href="slice.html">unu slice</a> ... Slice at a position along an axis
+      <a href="dice.html">unu dice</a> ... Slice *everywhere* along one axis
+      <a href="join.html">unu join</a> ... Connect slices and/or slabs into a bigger nrrd
+      <a href="crop.html">unu crop</a> ... Crop along each axis to make a smaller nrrd
+       <a href="pad.html">unu pad</a> ... Pad along each axis to make a bigger nrrd
+   <a href="reshape.html">unu reshape</a> ... Superficially change dimension and/or axes sizes
+   <a href="permute.html">unu permute</a> ... Permute scan-line ordering of axes
+      <a href="swap.html">unu swap</a> ... Interchange scan-line ordering of two axes
+   <a href="shuffle.html">unu shuffle</a> ... Permute samples along one axis
+      <a href="flip.html">unu flip</a> ... Reverse order of samples along one axis
+     <a href="block.html">unu block</a> ... Condense axis-0 scanlines into "blocks"
+   <a href="unblock.html">unu unblock</a> ... Expand "blocks" into scanlines on axis 0
+     <a href="histo.html">unu histo</a> ... Create 1-D histogram of values in a nrrd
+    <a href="dhisto.html">unu dhisto</a> ... Create (PGM) image of 1-D value histogram
+    <a href="jhisto.html">unu jhisto</a> ... Create joint histogram of two or more nrrds
+    <a href="histax.html">unu histax</a> ... Replace each scanline along an axis with its histogram
+       <a href="heq.html">unu heq</a> ... Perform histogram equalization
+     <a href="gamma.html">unu gamma</a> ... Brighten or darken values with a gamma
+       <a href="1op.html">unu 1op</a> ... Unary operation on a nrrd
+       <a href="2op.html">unu 2op</a> ... Binary operation on two nrrds, or on a nrrd and a constant
+       <a href="3op.html">unu 3op</a> ... Ternary operation on three nrrds or constants
+       <a href="lut.html">unu lut</a> ... Map nrrd through univariate lookup table
+      <a href="rmap.html">unu rmap</a> ... Map nrrd through *regular* univariate map ("colormap")
+      <a href="imap.html">unu imap</a> ... Map nrrd through *irregular* univariate map ("colormap")
+      <a href="save.html">unu save</a> ... Write nrrd with specific format, encoding, or endianness
+</pre></blockquote>
+
+The links above are to documentation for all the different
+<tt>unu</tt> commands, which includes (and supplements, as time permits) the
+information available by typing "<tt>unu <i>cmd</i></tt>". Also, read
+the <a href="gen.html">General <tt>unu</tt> Info</a>.
+
+<p>
+
+As you can guess from the above, <tt>unu</tt> is a lot like
+<tt>cvs</tt> in that there is exactly one program to remember the name
+of (and to add to your path), but you access the different capabilities
+with different command names following "<tt>unu</tt>".  For example,
+if you run "<tt>unu slice</tt>", you get:
+<blockquote><pre>
+unu slice: Slice at a position along an axis. Output nrrd dimension is one
+less than input nrrd dimension. Per-axis information is preserved.
+
+Usage: unu slice [-i &lt;nin&gt;] -a &lt;axis&gt; -p &lt;pos&gt; [-o &lt;nout&gt;]
+
+ -i &lt;nin&gt; = input nrrd
+-a &lt;axis&gt; = axis to slice along (int)
+ -p &lt;pos&gt; = position to slice at:
+          o &lt;int&gt; gives 0-based index
+          o M-&lt;int&gt; give index relative to the last sample on the axis (M
+            == #samples-1).
+-o &lt;nout&gt; = output nrrd (string)
+</pre></blockquote>
+
+In keeping with the tradition of effective command-line line tools,
+like <a href="http://www.cs.utah.edu/gdc/projects/urt/">Utah Raster
+Toolkit</a> or the very popular <a
+href="http://sourceforge.net/projects/netpbm/">NetPBM</a> set of
+utilities, you can chain <tt>unu</tt> commands together by piping
+("|") from one <tt>unu</tt> invocation to another.  The default input
+and output for <tt>unu</tt> are <tt>stdin</tt> and <tt>stdout</tt>.
+The command-line parsing engine which makes all of this possible,
+and which automatically generates the usage information shown above,
+is <a href="../hest/index.html"><b>hest</b></a>.
+
+<p> The command line is dead, long live the command line.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
+
+

@@ -1,0 +1,128 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Build
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>Build</h1>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="./index.html">teem</a></b>
+  <td>
+  <td>
+  <td>
+</table>
+
+<p>
+
+<h2>Windows users (except Cygwin):</h2>
+
+Windows users should click <a href="windows.html">here</a>.
+
+<h2>Non-Windows users (including Cygwin):</h2>
+
+To build <b>teem</b> you will need <a
+href="http://www.gnu.org/software/make/make.html">GNU make</a>.  I am
+in fact using many GNU-make-specific features, and all my makefiles
+are actually named <tt>GNUmakefile</tt> instead of <tt>Makefile</tt>
+to minimize the chances of someone trying to use a non-GNU make.
+
+<ol>
+
+<li> <a href="download/index.html">Download</a> the <b>teem</b>
+distribution
+
+<li> Untar it.<br>
+Throughout this and all other <b>teem</b> documentation, the directory
+just created will be referred to as "<tt>teem</tt>", even though it
+will actually be called "<tt>teem-1.XblahN</tt>" or something similar.
+
+<li> Go into this directory.
+
+<li> Depending on what architecture you're on, set the <tt>TEEM_ARCH</tt>
+environment variable (however you do that in your favorite shell) to
+one of the following:
+
+<ul>
+<li><tt>linux</tt>: Any kind of GNU/Linux
+<li><tt>cygwin</tt>: A Cygwin shell running on a Windows box
+<li><tt>irix6.n32</tt>: 32-bit Irix
+<li><tt>irix6.64</tt>: 64-bit Irix
+<li><tt>solaris</tt>: Solaris machines running in 32-bit mode.
+<li><tt>darwin</tt>: A Mac running OS X (which runs on top of
+<a href="http://developer.apple.com/darwin/">Darwin</a>).
+</ul>
+
+<li> <tt>cd src; make</tt><br>
+This will build and "install" all the <b>teem</b> libraries, as well
+as all the <a href="bin/index.html">command-line tools</a>.  This
+build will take a little while.  On a multi-processor machine,
+building <tt>teem-1.5betaX</tt> or later, feel free to use
+"<tt>make&nbsp;-j10</tt>" or similar to speed this up.  NOTE: This
+isn't an "install" in the traditional Unix build sense, since no files
+will be created outside the top-level <tt>teem</tt> directory.
+Headers are put in <tt>teem/include</tt>, libraries are created in
+<tt>teem/&lt;arch&gt;/lib</tt>, and the command-line tools in
+<tt>teem/&lt;arch&gt;/bin</tt>, where "<tt>&lt;arch&gt;</tt>" is the
+same as what you set <tt>TEEM_ARCH</tt> to.
+
+<li> <tt>cd ../&lt;arch&gt;/bin</tt>
+
+<li> <tt>./nrrdSanity</tt><br>
+
+This little program calls a <b>nrrd</b> function called
+<tt>nrrdSanity()</tt> which basically makes sure that everything
+hard-coded (or set at compile-time) into <b>nrrd</b> is correct for
+the machine you're on.  For instance, the various assumptions about
+type sizes and representational ranges are checked, as is endianness,
+and the availability of IEEE 754 floating point numbers.  If you get
+anything besides:
+
+<blockquote><pre>
+./nrrdSanity: nrrd sanity check passed.
+</pre></blockquote>
+
+then your <b>teem</b> build will not work correctly.  Either one of
+the default settings in the architecture-specific makefile
+<tt>teem/src/make/&lt;arch&gt;.mk</tt> is wrong, or your machine isn't
+up to snuff.  In either case, email me (gk@cs.utah.edu) with the error
+message from <tt>nrrdSanity</tt>.
+
+</ol>
+
+If you'd rather everything be installed to some other directory (with
+include, lib, and bin subdirectories), then set environment variable
+<tt>TEEM_DEST</tt> to that directory, and make will put headers,
+libraries, and binaries in the corresponding subdirectories of
+<tt>TEEM_DEST</tt>.
+
+<p>
+
+If interested, you can read more about the <a
+href="tree/index.html">directory structure of <b>teem</b></a>.  For
+more specific information about how the GNUmakefiles work, or how to
+use them to do something besides the standard install described above,
+see <a href="gmake/index.html">How <b>teem</b> uses GNU make</a>.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

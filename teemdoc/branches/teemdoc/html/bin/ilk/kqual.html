@@ -1,0 +1,156 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: bin: ilx, kernel quality
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/bin80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">bin</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>ilx, kernel quality</b></h2>
+</table>
+
+The ability to pipe invocations of <tt>ilx</tt> together
+gives the ability to evaluate the quality of different kernels, by
+repeated resampling.  We want to do this on floating point data, so we
+convert to <tt>float</tt>s first with <a
+href="../../unrrdu/convert.html">unu&nbsp;convert</a>, and then pipe
+the same invocation of <tt>ilx</tt> many times, then <a
+href="../../unrrdu/quantize.html">unu&nbsp;quantize</a> back to an
+8-bit color image.  This isn't terribly fast (since <b>moss</b> and
+<tt>ilx</tt> were written in a weekend with functionality more
+important that efficiency), but the results are interesting:
+
+<blockquote><pre>
+alias R "ilx @kernel.txt -t rotate:20 -0 u:0.5,0.5 -b pad"
+alias 180deg "R | R | R | R | R | R | R | R | R "
+
+echo "-k box" &gt; kernel.txt
+unu convert -i init.ppm -t float \
+  | 180deg | 180deg \
+  | unu quantize -b 8 -min 0 -max 255 -o box.ppm
+cjpeg -quality 99 box.ppm &gt; <a href="box.jpg">box.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="box.jpg">
+</center>
+
+<blockquote><pre>
+echo "-k tent" &gt;! kernel.txt
+unu convert -i init.ppm -t float \
+  | 180deg | 180deg \
+  | unu quantize -b 8 -min 0 -max 255 -o tent.ppm
+cjpeg -quality 99 tent.ppm &gt; <a href="tent.jpg">tent.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="tent.jpg">
+</center>
+
+<blockquote><pre>
+echo "-k cubic:0,0.5" &gt;! kernel.txt
+unu convert -i init.ppm -t float \
+  | 180deg | 180deg \
+  | unu quantize -b 8 -min 0 -max 255 -o catr.ppm
+cjpeg -quality 99 catr.ppm &gt; <a href="catr.jpg">catr.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="catr.jpg">
+</center>
+
+<blockquote><pre>
+echo "-k quartic:0.0834" &gt;! kernel.txt
+unu convert -i init.ppm -t float \
+  | 180deg | 180deg \
+  | unu quantize -b 8 -min 0 -max 255 -o qrtc.ppm
+cjpeg -quality 99 qrtc.ppm &gt; <a href="qrtc.jpg">qrtc.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="qrtc.jpg">
+</center>
+
+And to compare them all:
+<blockquote><pre>
+unu crop -i box.ppm -min 0 151 81 -max M m+50 m+50 \
+  | unu resample -k box -s = x4 x4 \
+  | unu save -f pnm | cjpeg -quality 99 &gt; <a href="box-zoom.jpg">box-zoom.jpg</a>
+unu crop -i tent.ppm -min 0 151 81 -max M m+50 m+50 \
+  | unu resample -k box -s = x4 x4 \
+  | unu save -f pnm | cjpeg -quality 99 &gt; <a href="tent-zoom.jpg">tent-zoom.jpg</a>
+unu crop -i catr.ppm -min 0 151 81 -max M m+50 m+50 \
+  | unu resample -k box -s = x4 x4 \
+  | unu save -f pnm | cjpeg -quality 99 &gt; <a href="catr-zoom.jpg">catr-zoom.jpg</a>
+unu crop -i qrtc.ppm -min 0 151 81 -max M m+50 m+50 \
+  | unu resample -k box -s = x4 x4 \
+  | unu save -f pnm | cjpeg -quality 99 &gt; <a href="qrtc-zoom.jpg">qrtc-zoom.jpg</a>
+unu crop -i init.ppm -min 0 151 81 -max M m+50 m+50 \
+  | unu resample -k box -s = x4 x4 \
+  | unu save -f pnm | cjpeg -quality 99 &gt; <a href="init-zoom.jpg">init-zoom.jpg</a>
+</pre></blockquote>
+
+<table>
+<tr>
+<td><img alt="" src="box-zoom.jpg" width=200 height=200>
+<td><img alt="" src="tent-zoom.jpg" width=200 height=200>
+<td><img alt="" src="catr-zoom.jpg" width=200 height=200>
+<td><img alt="" src="qrtc-zoom.jpg" width=200 height=200>
+<tr>
+<td align=center>nearest-neighbor
+<td align=center>bilinear
+<td align=center>Catmull-Rom
+<td align=center>quartic
+</table>
+
+<center>
+<img alt="" src="init-zoom.jpg" width=200 height=200><br>
+original
+</center>
+
+<p>
+
+The difference between Catmull-Rom and the quartic is tiny, but the
+quartic is slightly better at preserving features:
+<blockquote><pre>
+unu 2op - catr.ppm qrtc.ppm -t float \
+  | unu crop -min 0 151 81 -max M m+50 m+50 \
+  | unu resample -k box -s = x4 x4 \
+  | unu quantize -b 8 | unu save -f pnm | cjpeg -quality 99 &gt; <a href="cq-diff.jpg">cq-diff.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" src="cq-diff.jpg" width=200 height=200>
+</center>
+
+The range of pixel value differences shown above is only -9 to 9.
+All this really means is that I need to get my act together and
+implement some much better filters, like windowed sinc.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
+
+
