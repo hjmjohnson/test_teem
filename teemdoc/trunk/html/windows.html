@@ -39,19 +39,21 @@ GK's C code: Teem on Windows
 <h2>Using Teem:</h2>
 
 On Windows all the <b>teem</b> libraries are built into one monolithic
-DLL and an import library that <b>teem</b> users can link against.
-The <b>teem</b> <a href="./bin/index.html">command-line utilities</a> are
-also built together with these libraries.
+mega library, either as a DLL and an import library or as a static
+library that <b>teem</b> users can link against.  The <b>teem</b> <a
+href="./bin/index.html">command-line utilities</a> are also built
+together with these libraries.
 
 <p>
 
-You can download precompiled binaries with the compression encodings
-and PNG support enabled or not.  For both, you'll need to copy
-<tt>lib/teem.dll</tt> to somewhere within the Windows path, typically
+You can download precompiled binaries including DLL and static builds.
+For the DLL version, you'll need to copy <tt>bin/teem.dll</tt> to
+where your binary is or somewhere within the Windows path, typically
 <tt>%SystemRoot%/system32</tt>.  For the compression encodings and png
-support, you'll need to copy the provided DLLs <tt>lib/zlib.dll</tt>,
-<tt>lib/libbz2.dll</tt>, and <tt>lib/libpng.dll</tt> to the same
-directory in case you do not have them yet.
+support, you'll need to copy the provided libraries
+<tt>bin/z.dll</tt>, <tt>bin/bz2.dll</tt>, and <tt>bin/png.dll</tt> to
+the same directory in case you do not have them yet. The import
+libraries are located in <tt>lib/shared</tt>.
 
 <p>
 
@@ -62,6 +64,12 @@ library in your project by setting the appropriate compiler flag
 (<tt>/MD</tt>), which is unfortunately not the default setting in Visual Studio.
 Linking against a different version will result in <b>unexpected
 crashes</b> of your program.
+
+<p>
+
+When using the static version of teem, located in <tt>lib/static</tt>,
+you need to define TEEM_STATIC when you compile your source
+(-DTEEM_STATIC), otherwise your program will <b>crash</b>.
 
 <p>
 <center>
@@ -82,17 +90,16 @@ will actually be called "<tt>teem-1.XblahN</tt>" or something similar.
 
 <li> Go into this directory.
 
-<li> Go into the <tt>win32/make</tt> directory.
+<li> Go into the <tt>win32/build</tt> directory.
 
 </ol>
 
 <h3>Visual Studio 6.0 users</h3>
 <ol> 
-<li> Go into the <tt>vc6</tt> directory.
 <li> Open the Visual Studio 6.0 workspace file <tt>teem.dsw</tt>.
 <li> Select the configuration you want to build using 
 the <tt>"Build"</tt> menu's <tt>"Set Active Configuration"</tt> item.  You
-have four choices: <tt>Release Light</tt>, <tt>Debug Light</tt>, <tt>Release</tt>, and <tt>Debug</tt>.
+have two choices: <tt>Release</tt> and <tt>Debug</tt>.
 <li> Select all projects by shift-clicking on them in the workspace file-view
 window.
 <li> Right click on the selection and hit <tt>"Build"</tt> in the
@@ -101,72 +108,35 @@ pop-up menu.
 
 <h3>Visual Studio .NET users</h3>
 <ol>
-<li> Go into the <tt>vc.net</tt> directory.
-<li> Open the Visual Studio .NET solution file <tt>teem.sln</tt>.
+<li> Open the Visual Studio 6.0 workspace file <tt>teem.dsw</tt>.
+<li> Convert all project files to the .NET format.
 <li> Select the configuration you want to build using 
 the <tt>"Build"</tt> menu's <tt>"Configuration Manager"</tt> item.
-You have four choices: <tt>Release Light</tt>, <tt>Debug Light</tt>, <tt>Release</tt>, and <tt>Debug</tt>.
+You have two choices: <tt>Release</tt> and <tt>Debug</tt>.
 <li> In the solution explorer window right click on <tt>"Solution teem"</tt> and hit
 <tt>"Build Solution"</tt> in the pop-up menu.
 </ol>
 
 The libraries and executables are compiled in the <tt>win32/lib</tt>
-and <tt>win32/bin</tt> subdirectories.  By default these files and the
-public headers are copied into the <tt>bin</tt>, <tt>lib</tt>, and <tt>include</tt>
-subdirectories of the <b>teem</b> root directory during the build.
-Optionally, you can set the <tt>%TEEM_DEST%</tt> environment variable to
-customize the installation.  Note that the installation script will
-create <tt>bin</tt>, <tt>lib</tt>, and <tt>include</tt> subdirectories
-in the directory <tt>%TEEM_DEST%</tt> is set to.
-
-<p>
-For example, if you want to install <b>teem</b> into <tt>c:\teem</tt>,
-open up the <tt>"System Properties"</tt> control panel,
-a.k.a. the <tt>"Control Panel System icon"</tt>, click on the
-<tt>"Advanced"</tt> tab and select <tt>"Environment
-Variables..."</tt>.  Add the <tt>TEEM_DEST</tt> variable with value
-<tt>c:\teem</tt> and add <tt>c:\teem\lib</tt> to the <tt>Path</tt>
-environment variable.
-
-<p>
-Alternatively, you can set the <tt>%TEEM_INSTALL_SYSTEM%</tt>
-environment variable to <tt>1</tt> to tell the script to install <b>teem</b>
-in the Visual Studio directories, which are <tt>%SystemDrive%\Program
-Files\Microsoft Visual Studio\Vc98\{include,lib}</tt> for 6.0 and
-<tt>$(VCInstallDir)\PlatformSDK\{include,lib}</tt> for .NET, and to copy
-<tt>teem.dll</tt> to <tt>%SystemRoot%/system32</tt>.
-
-<p>
-
-You can also copy the DLL and the executables manually to a directory
-in the Windows path <tt>%PATH%</tt>.  In this case, the import library
+and <tt>win32/bin</tt> subdirectories.  To install them, you need to
+copy the DLL and the executables manually to a directory in the
+Windows path <tt>%PATH%</tt>.  In this case, the import library
 <tt>teem.lib</tt> usually goes into one of the Visual Studio library
 directories, e.g. <tt>'path to visual studio'\Vc98\lib</tt>.
 Likewise, the headers can be placed in one of the Visual Studio
 include directories.
-
 <p>
 
 To uninstall <b>teem</b> you have to delete the installed files
-manually.  Note that the Visual Studio .NET project file provides an
-alternative to manual deinstallation.  You simply have to build <b>teem</b>
-after running clean and stop the build after the pre-build script is
-executed.  This script is run to make sure the installation targets
-are cleaned up before the build.
-
+manually.
 <p>
 
-The regular configurations require the <b>zlib</b>, <b>bzip2</b>, and
-<b>libpng</b> libraries, which are available in source or precompiled
-Windows binary form at <a
+The <b>zlib</b>, <b>bzip2</b>, and <b>libpng</b> libraries are also
+available in source form at <a
 href="http://www.gzip.org/zlib/">http://www.gzip.org/zlib/</a>, <a
 href="http://sources.redhat.com/bzip2/">http://sources.redhat.com/bzip2/</a>,
 and <a
-href="http://www.libpng.org/pub/png/libpng.html">http://www.libpng.org/pub/png/libpng.html</a>,
-respectively.  These libraries must be available to the compiler,
-e.g. by copying the import libraries and headers to the Visual Studio
-library and include subdirectories, otherwise the build will fail.
-
+href="http://www.libpng.org/pub/png/libpng.html">http://www.libpng.org/pub/png/libpng.html</a>.
 <p>
 
 No <b>teem</b> development is currently done on Windows.  Using the
