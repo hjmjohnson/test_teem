@@ -1,0 +1,317 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2005  Gordon Kindlmann
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+NRRD Format for Harvard/VA NA-MIC datasets
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<A href="http://sourceforge.net"><IMG 
+ src="http://sourceforge.net/sflogo.php?group_id=85445&amp;type=2"
+ align=right width="125" height="37" border="0" alt="SourceForge.net Logo"></A>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>NRRD Format for Brockton VA/Harvard NA-MIC data</b></h2>
+</table>
+
+This page explains specifics of how the NRRD format is used for the
+headers of the <a href="http://www.na-mic.org/Wiki/index.php/DataRepository#Brockton_VA.2FHarvard_Structural_and_DTI_Images">datasets contributed to NA-MIC</a> by the Brockton VA/Harvard
+<a href="http://splweb.bwh.harvard.edu:8000/">Surgical Planning Laboratory</a>.  <a
+href="format.html">A detailed (and verbose) definition of the file
+format is also available</a>.  
+
+<p>
+
+The easiest way to describe the format usage
+is by example.  Two examples are given here: 
+<ol>
+<li><a href="#morph"><tt>Harvard_VA/morph/HUVA51125252/HUVA51125252_spgr.nhdr</tt></a>: a scalar SPGR (MRI) volume
+<li><a href="#dwi"><tt>Harvard_VA/diffusion/HUVA33202368/HUVA33202368_dwi.nhdr</tt></a>:
+a volume of diffusion-weighted images
+</ol>
+In each case, the ASCII header will be
+given, followed by a line-by-line explanation of what the header is
+saying.  Also discussed is how the same information,
+once read in, is accessible via the <b>nrrd</b>/<b>NrrdIO</b> data
+structures and API, either in the <tt>Nrrd</tt> struct
+ (using variable name <tt>nrrd</tt>) or in the <tt>NrrdIoState</tt> struct
+(variable name <tt>nio</tt>). <a href="lib.html">A separate
+introduction to the <b>nrrd</b> API</a> is also available.
+
+<p>
+<a name="morph"><hr noshade width="30%" align=left></a>
+<p>
+
+Here is "<tt>HUVA51125252_spgr.nhdr</tt>",
+the header for (header-less) data file "<tt>HUVA51125252_spgr.img</tt>".
+Note: the "<tt>.img</tt>" extension was chosen to be compatible with a 
+possible Analyze header.
+
+<blockquote><pre>
+NRRD0004
+content: HUVA51125252
+type: short
+dimension: 3
+space: right-anterior-superior
+sizes: 256 256 124
+thicknesses:  NaN  NaN 1.5
+space directions: (-0.9375,0,0) (0,0,-0.9375) (0,1.5,0)
+centerings: cell cell cell
+kinds: space space space
+endian: big
+encoding: raw
+space units: "mm" "mm" "mm"
+space origin: (117.5,-93,119)
+data file: HUVA51125252_spgr.img
+modality:=SPGR
+</pre></blockquote>
+
+The meaning of the header lines is as follows (some lines have been
+reordered and grouped together for simplicity).  Information specific
+to file IO is saved in the <tt>NrrdIoState</tt>.  This info is
+available to the caller if a <tt>NrrdIoState</tt> has been created
+(via <tt>NrrdIoStateNew()</tt> and its pointer passed as the last
+argument to <tt>nrrdRead()</tt> or <tt>nrrdLoad()</tt>.
+
+<table border=1 cellpadding=3>
+<tr>
+  <td><b>line(s)</b>
+  <td><b>meaning</b>
+  <td><b>API access</b>
+<tr>
+  <td><tt>NRRD0004</tt>
+  <td>This is the "magic", which enables multi-format readers to know that
+  this is NRRD file.  The version of the format being used is 4.
+  <td>After successful return from <tt>nrrdLoad()</tt> or <tt>nrrdRead()</tt>,
+  the format of the file that was read is available 
+  as <tt>nio->format</tt> (type <tt>NrrdFormat*</tt>).
+<tr>
+  <td><tt><a href="format.html#content">content</a>:&nbsp;HUVA51125252</tt>
+  <td>The "content" is just some terse text string description of what is
+      in this dataset.  
+  <td><tt>nrrd->content</tt> (type <tt>char*</tt>).
+<tr>
+  <td><tt>modality:=SPGR</tt>
+  <td>The "<tt>:=</tt>" indicates a key/value pair definition. Both
+      the key and value are strings. 
+  <td>The modality 
+      value (type <tt>char*</tt>) is available as the
+       return from <tt>nrrdKeyValueGet(nrrd,"modality")</tt>
+<tr>
+  <td><tt><a href="format.html#type">type</a>: short<br>
+<a href="format.html#encoding">encoding</a>: raw<br>
+<a href="format.html#endian">endian</a>: big</tt>
+  <td>The value in the volume of type <tt>short</tt> (16-bit signed
+      integers).  They are written on disk in raw format (as with
+<tt>fwrite()</tt>), with big endian byte ordering (opposite of Intel/AMD
+byte ordering).  
+  <td>The type is stored in <tt>nrrd->type</tt>
+   (type <tt>int</tt>, taking values from the <tt>nrrdType...</tt> enum).  The
+   encoding and endian information is available in
+   <tt>nio->encoding</tt> (type <tt>NrrdEncoding*</tt>) 
+   and <tt>nio->endian</tt> (type <tt>int</tt>).
+<tr>
+  <td><tt><a href="format.html#dimension">dimension</a>: 3<br>
+<a href="format.html#sizes">sizes</a>: 256 256 124</tt>
+  <td>The data is a 256-by-256-by-124 3-dimensional array.  The axis
+  with size 124 is the "slowest" axis- the one whose coordinate changes
+  most slowly as all the sample values are sequentially traversed.
+  <td>The dimension is <tt>nrrd->dim</tt> (type <tt>int</tt>).  The
+  axis sizes are <tt>nrrd->axis[i].size</tt> (type <tt>int</tt>).
+<tr>
+  <td><tt><a href="format.html#datafile">data file</a>:&nbsp;HUVA51125252_spgr.img</tt>
+  <td>This is the filename, relative to the NRRD header file, in which
+  the data is stored.  
+  <td><tt>nio->dataFN[0]</tt> 
+  (type <tt>char*</tt>).
+<tr>
+  <td><tt><a href="format.html#thicknesses">thicknesses</a>:&nbsp;NaN&nbsp;NaN&nbsp;1.5</tt>
+  <td>The slice thickness associated with the slowest (third) axis is
+  1.5&nbsp;mm.  The first and second axes have no thickness associated with
+  them, and so the not-a-number value, represented as "<tt>NaN</tt>" is used.
+  <td>Axis thicknesses are available in <tt>nrrd->axis[i].thickness</tt>
+  (type <tt>double</tt>).
+<tr>
+  <td><tt><a href="format.html#space">space</a>:&nbsp;right-anterior-superior</tt>
+  <td>The array "lives" in three-dimensional right-anterior-superior space,
+  or "RAS", space.  The coefficients of the vectors given
+  by the <tt>origin</tt> and <tt>space directions</tt> will be
+  expressed in the RAS coordinate frame.
+  <td>The space is identified by <tt>nrrd->space</tt>
+  (type <tt>int</tt>), which takes values from the <tt>nrrdSpace...</tt> enum.
+<tr>
+  <td><tt><small><a href="format.html#spaceorigin">space origin</a>:&nbsp;(117.5,-93,119)<br>
+<a href="format.html#spacedirections">space directions</a>:<br>(-0.9375,0,0)&nbsp;(0,0,-0.9375)&nbsp;(0,1.5,0)</small></tt>
+  <td>The location of the center of the first pixel is
+  (R,A,S) = (117.5,-93,119).  Incrementing coordinates of the
+  the fastest, medium, and slowest axes corresponds to changing (R,A,S)
+  position by (-0.9375,0,0), (0,0,-0.9375), and (0,1.5,0),
+  respectively.  Thus, if (i,j,k) are the (fast,medium,slow) array
+  indices, then the homogeneous coordinate 
+  matrix transform from array index space to RAS space is:
+<small><pre>[R]   [ -0.9375  0.0     0.0  117.5 ] [i]
+[A] = [  0.0     0.0     1.5  -93.0 ] [j]
+[S]   [  0.0    -0.9375  0.0  119.0 ] [k]
+                                      [1]</pre></small>
+
+  <td>The space origin is <tt>nrrd->spaceOrigin</tt>,
+  and the space directions are <tt>nrrd->axis[i].spaceDirection</tt>.
+  Both of these are arrays (length <tt>NRRD_SPACE_DIM_MAX</tt>) of
+  <tt>double</tt>s, with as many values set as <tt>nrrd->spaceDimension</tt>.
+<tr>
+  <td><tt><a href="format.html#spaceunits">space units</a>: "mm" "mm" "mm"</tt>
+  <td>The units of measure in (R,A,S) space are millimeters
+  <td>The units strings are in <tt>nrrd->spaceUnits[n]</tt>
+  (type <tt>char*</tt>), which as many strings set as 
+  <tt>nrrd->spaceDimension</tt>.
+<tr>
+  <td><tt><a href="format.html#centers">centerings</a>: cell cell cell</tt>
+  <td>Samples on all axes are cell-centered (as opposed to node-centered)
+  <td>The axis centerings are in <tt>nrrd->axis[i].center</tt>
+   (type <tt>int</tt>), which are either <tt>nrrdCenterCell</tt> or
+   <tt>nrrdCenterNode</tt>
+<tr>
+  <td><tt><a href="format.html#kinds">kinds</a>: space space space</tt>
+  <td>The sample along each array axis are sampled in a spatial domain
+  (as opposed to being the components of some non-scalar sample value)
+  <td>The per-axis kinds are in <tt>nrrd->axis[i].kind</tt>
+  (type <tt>int</tt>), which takes values from the <tt>nrrdKind...</tt> enum.
+</table>
+
+
+<p>
+<a name="dwi"><hr noshade width="30%" align=left></a>
+<p>
+
+The header "<tt>HUVA33202368_dwi.nhdr</tt>", for a 
+volume of diffusion-weighted images "<tt>HUVA33202368_dwi.img</tt>", is
+very similar to the scalar volume header above:
+
+<blockquote><pre>
+NRRD0004
+content: HUVA33202368
+type: short
+dimension: 4
+space: right-anterior-superior
+sizes: 256 256 35 7
+thicknesses:  NaN  NaN 4  NaN
+space directions: (-0.859375,0,0) (0,0,-0.859375) (0,5,0) none
+centerings: cell cell cell none
+kinds: space space space list
+endian: big
+encoding: raw
+space units: "mm" "mm" "mm"
+space origin: (117.5,-93,119)
+data file: HUVA33202368_dwi.img
+modality:=DW
+DW_gradient_001:= 0.70710677  0.0         0.70710677
+DW_gradient_002:= 0.70710677  0.70710677  0.0
+DW_gradient_003:= 0.0         0.70710677  0.70710677
+DW_gradient_004:= 0.70710677 -0.70710677  0.0
+DW_gradient_005:=-0.70710677  0.0         0.70710677
+DW_gradient_006:= 0.0         0.70710677 -0.70710677
+</pre></blockquote>
+
+There are 7 3-D volumes in the array, starting with the
+non-diffusion-weighted (<b>B</b>=<b>0</b>) T2 image, and followed by the 6
+diffusion-weighted images (DWIs).  Below is more detailed information
+about the way NRRD fields are used differently in this case:
+
+<table border=1 cellpadding=3>
+<tr>
+  <td><tt><a href="format.html#dimension">dimension</a>: 4<br>
+sizes: 256 256 35 7</tt>
+  <td>The dimension of the <b>array</b> is four, even though
+   the sampling grid is three-dimensional (256-by-256-by-35).
+   The dimension is four because NRRD is primarily concerned with
+   a low-level description of the data's layout.  Along the slowest (fourth)
+   axis is B0 T2 image, and then the 6 DWIs.
+  <td><tt>nrrd->dim<br>
+nrrd->axis[i].size</tt>
+<tr>
+  <td><tt><a href="format.html#datafile">data file</a>: HUVA33202368_dwi.img</tt>
+  <td>This is the name of the datafile.  Both the "<tt>.img</tt>" and the
+  axis ordering are consistent with using an Analyze header to refer to
+  the same file.
+  <td><tt>nio->dataFN[0]</tt>
+<tr>
+  <td><tt><a href="format.html#thicknesses">thicknesses</a>: NaN NaN 4 NaN</tt>
+  <td>The only axis for which a thickness is defined is the third, the
+  slowest spatial axis.  There is no thickness for the DWI axis.
+  <td><tt>nrrd->axis[i].thickness</tt>
+<tr>
+  <td><tt><small><a href="format.html#space">space</a>: right-anterior-superior<br>
+<a href="format.html#spaceorigin">space origin</a>: (117.5,-93,119)<br>
+<a href="format.html#spacedirections">space directions</a>:<br>
+(-0.859375,0,0) (0,0,-0.859375) (0,5,0) none<br>
+<a href="format.html#spaceunits">space units</a>: "mm" "mm" "mm"</small></tt>
+  <td>Although the array is 4-D, it still "lives" in 3-D RAS space,
+  so it has a 3-component origin (location of center of first sample),
+  and for each of the spatial axes, there are 3-component space
+  directions.  The fourth axis has no spatial extent, and so its
+  space direction is "<tt>none</tt>". 
+   Thus, if (i,j,k) are the indices along axes (0,1,2), 
+  the homogeneous coordinate 
+  matrix transform from array index space to RAS space is:
+<small><pre>[R]   [ -0.859375  0.0       0.0  117.5 ] [i]
+[A] = [  0.0       0.0       5.0  -93.0 ] [j]
+[S]   [  0.0      -0.859375  0.0  119.0 ] [k]
+                                          [1]</pre></small>
+As above, measurements in
+  RAS space are expressed in millimeters.
+  <td><tt>nrrd->space<br>
+nrrd->spaceOrigin[]<br>
+nrrd->axis[i].spaceDirection[]</tt>
+<tr>
+  <td><tt><a href="format.html#centers">centerings</a>: cell cell cell none<br>
+<a href="format.html#kinds">kinds</a>: space space space list</tt>
+  <td>The first three axes have spatial extent, with cell-centered sampling.
+  The last axis has no notion of centering, and is instead a "<tt>list</tt>"
+  of scalar attributes for each spatial sample point.
+  <td><tt>nrrd->axis[i].center<br>
+nrrd->axis[i].kind</tt>
+<tr>
+<td><small><small><pre>DW_gradient_001:= 0.70710677  0.0         0.70710677
+DW_gradient_002:= 0.70710677  0.70710677  0.0
+DW_gradient_003:= 0.0         0.70710677  0.70710677
+DW_gradient_004:= 0.70710677 -0.70710677  0.0
+DW_gradient_005:=-0.70710677  0.0         0.70710677
+DW_gradient_006:= 0.0         0.70710677 -0.70710677</pre></small></small>
+<td>These key/value pairs store the diffusion-sensitizing gradient directions,
+<b>as expressed in RAS space</b>, the same space in which the orientation
+information is defined.  There is one gradient direction for each of the
+DWIs along the fourth axis (the first value is not diffusion-weighted).
+<td><tt>nrrdKeyValueGet(nrrd,"DW_gradient_001")<br>
+nrrdKeyValueGet(nrrd,"DW_gradient_002")<br>
+...</tt>
+</table>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
