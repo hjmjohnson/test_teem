@@ -1,0 +1,132 @@
+/*
+  teem: Gordon Kindlmann's research software
+  Copyright (C) 2003, 2002, 2001, 2000, 1999, 1998 University of Utah
+
+  This library is free software; you can redistribute it and/or
+  modify it under the terms of the GNU Lesser General Public
+  License as published by the Free Software Foundation; either
+  version 2.1 of the License, or (at your option) any later version.
+
+  This library is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+  Lesser General Public License for more details.
+
+  You should have received a copy of the GNU Lesser General Public
+  License along with this library; if not, write to the Free Software
+  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+*/
+
+#include "nrrd.h"
+#include "privateNrrd.h"
+
+NrrdIter *
+nrrdIterNew() {
+  NrrdIter *iter;
+
+  if ( (iter = calloc(1, sizeof(NrrdIter))) ) {
+    iter->nrrd = NULL;
+    iter->val = AIR_NAN;
+    iter->size = 0;
+    iter->data = NULL;
+    iter->left = 0;
+    iter->load = NULL;
+  }
+  return iter;
+}
+
+void
+nrrdIterSetValue(NrrdIter *iter, double val) {
+
+  if (iter) {
+    iter->nrrd = NULL;
+    iter->val = val;
+    iter->size = nrrdTypeSize[nrrdTypeDouble];
+    iter->data = (void*)&(iter->val);
+    iter->left = 0;
+    iter->load = nrrdDLoad[nrrdTypeDouble];
+  }
+  return;
+}
+
+void
+nrrdIterSetNrrd(NrrdIter *iter, Nrrd *nrrd) {
+
+  if (iter && nrrd && nrrd->data) {
+    if (nrrdTypeBlock == nrrd->type) {
+      /* we can't deal */
+      nrrdIterSetValue(iter, AIR_NAN);
+      return;
+    }
+    iter->nrrd = nrrd;
+    iter->val = AIR_NAN;
+    iter->size = nrrdTypeSize[nrrd->type];
+    iter->data = nrrd->data;
+    iter->left = nrrdElementNumber(nrrd)-1;
+    iter->load = nrrdDLoad[nrrd->type];
+  }
+  return;
+}
+
+double
+nrrdIterValue(NrrdIter *iter) {
+  double ret = 0.0;
+
+  if (iter) {
+    ret = iter->load(iter->data);
+    if (iter->nrrd) {
+      iter->data += iter->size;
+      iter->left -= 1;
+      if (-1 == iter->left) {
+	iter->data = iter->nrrd->data;
+	iter->left = nrrdElementNumber(iter->nrrd)-1;
+      }
+    }
+  }
+  return ret;
+}
+
+/*
+******** nrrdIterContent()
+**
+** ALLOCATES a string that is either the nrrd's content (or 
+** nrrdStateUnknownContent) or a string version of the value; useful
+** for when you's use the "content" of a nrrd
+*/
+char *
+nrrdIterContent(NrrdIter *iter) {
+  char *ret, buff[AIR_STRLEN_SMALL];
+
+  ret = NULL;
+  if (iter) {
+    if (iter->nrrd) {
+      ret = _nrrdContentGet(iter->nrrd);
+    } else {
+      airSinglePrintf(NULL, buff, "%g", iter->val);
+      ret = airStrdup(buff);
+    }
+  }  
+  return ret;
+}
+
+NrrdIter *
+nrrdIterNix(NrrdIter *iter) {
+
+  if (iter) {
+    free(iter);
+  }
+  return NULL;
+}
+
+NrrdIter *
+nrrdIterNuke(NrrdIter *iter) {
+
+  if (iter) {
+    if (iter->nrrd) {
+      iter->nrrd = nrrdNuke(iter->nrrd);
+    }
+    free(iter);
+  }
+  return NULL;
+}
+
