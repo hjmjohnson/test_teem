@@ -1,0 +1,190 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2005  Gordon Kindlmann
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+NRRD meets NA-MIC
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<A href="http://sourceforge.net"><IMG 
+ src="http://sourceforge.net/sflogo.php?group_id=85445&amp;type=2"
+ align=right width="125" height="37" border="0" alt="SourceForge.net Logo"></A>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>NRRD meets NA-MIC</b></h2>
+</table>
+
+Thanks to the help and encouragement of Steve Pieper, Sylvain Bouix,
+and Carl-Fredrik Westin, NRRD is the format chosen for the <a
+href="http://www.na-mic.org/Wiki/index.php/DataRepository#Brockton_VA.2FHarvard_Structural_and_DTI_Images">datasets
+contributed to NA-MIC</a> by the Brockton VA/Harvard <a
+href="http://splweb.bwh.harvard.edu:8000/">Surgical Planning
+Laboratory</a>.  Coincidentally, an up-to-date reader for the NRRD
+format can be found in the NrrdIO utility of ITK, which provides all the
+function necessary to read and write NRRD files.
+The information on this page should be helpful to people
+interested in learning more about the format, programmers dealing with
+<b>NrrdIO</b> API, and prospective users of the
+<tt>unu</tt>, <tt>ninspect</tt>, or <tt>tend</tt> command-line tools.
+
+<pre>
+
+</pre>
+<p>
+<b>LINKS</b>:
+<ul>
+
+<li> A good starting point:
+<a href="namic-format.html">How the NRRD format is used</a> for the
+contributed datasets.
+<li> High-level information about NRRD is available in the
+<a href="intro.html">Introduction to NRRD</a> and the
+<a href="descformat.html">General description of the NRRD format</a>.
+These pages are somewhat redundant and need re-organizing
+<!--
+<li> The full <a href="format.html">Definition of the NRRD format</a> is
+rather long and detailed.
+-->
+<li> From the API side, this page gives <a href="lib.html">an overview
+of programming with the <b>nrrd</b> API</a>.  <b>Note</b>: the NrrdIO
+utility in ITK offers the input/output-related subset
+of the <b>nrrd</b> API, with no other modifications, so the library
+overview applies to programming with NrrdIO just as well.
+
+</ul>
+
+<pre>
+
+</pre>
+<p>
+<b>EXECUTABLES</b>:
+
+Three Teem command-line tools that are especially useful for dealing
+with NRRD files are:
+
+<ul>
+<li><tt>unu</tt>: (the workhorse) many array manipulation tasks
+<li><tt>ninspect</tt>: puts 3-axis aligned projections into one image,
+good for verifying contents of a 3-D volume
+<li><tt>tend</tt>: diffusion tensor estimation and processing
+</ul>
+
+Pre-compiled stand-alone binaries (chmod 755 after downloading):
+<ul>
+<li> 32-bit Darwin (Mac):
+<a href="http://www.sci.utah.edu/~gk/darwin.32/unu"><tt>unu</tt></a>
+<a href="http://www.sci.utah.edu/~gk/darwin.32/ninspect"><tt>ninspect</tt></a>
+<a href="http://www.sci.utah.edu/~gk/darwin.32/tend"><tt>tend</tt></a>
+<li> 32-bit Linux:
+<a href="http://www.sci.utah.edu/~gk/linux.32/unu"><tt>unu</tt></a>
+<a href="http://www.sci.utah.edu/~gk/linux.32/ninspect"><tt>ninspect</tt></a>
+<a href="http://www.sci.utah.edu/~gk/linux.32/tend"><tt>tend</tt></a>
+<li> 32-bit Solaris:
+<a href="http://www.sci.utah.edu/~gk/solaris.32/unu"><tt>unu</tt></a>
+<a href="http://www.sci.utah.edu/~gk/solaris.32/ninspect"><tt>ninspect</tt></a>
+<a href="http://www.sci.utah.edu/~gk/solaris.32/tend"><tt>tend</tt></a>
+</ul>
+
+There will be a new release of Teem soon (in a week or so), at which 
+point there will be Windows binaries.
+
+<pre>
+
+</pre>
+<p>
+<b>HELPFUL COMMANDS (using command-line tools)</b>:
+
+<ol>
+<li> Getting started with "<tt>unu</tt>": just type:
+<blockquote><pre>
+unu
+</pre></blockquote>
+to get a listing of available commands.  Read "<tt>unu about</tt>".
+Type the command name with no other options to get usage information, as with:
+<blockquote><pre>
+unu make
+</pre></blockquote>
+This describes in painful detail how to generate in one command-line
+invocation a NRRD header for a given datafile or set of datafiles.
+All the <tt>.nhdr</tt> files contributed to NA-MIC came from <tt>unu make</tt>
+(with sometimes additional perl-script improvements).
+
+<li> To get a scalar NRRD volume <tt>volume.nrrd</tt> into the
+currently released version of Slicer, run:
+<blockquote><pre>
+unu dice -i volume.nrrd -a 2 -o ./
+</pre></blockquote>
+This will generate a series of slice files (each in NRRD format), and then
+you can manually load these into Slicer, perhaps using:
+<blockquote><pre>
+unu head volume.nrrd
+</pre></blockquote>
+to see the NRRD header of <tt>volume.nrrd</tt> in order to set image
+size, type, and slice ordering.
+
+<li> To visually inspect a 3-D volume
+with orientation defined in (R,A,S) space, use the <tt>ninspect</tt> tool.
+A color image of
+three axis-aligned projections is composed of histogram-equalized and quantized
+images of the summation (red), variance (green), and maximum (blue) intensity
+projections.  For example:
+<blockquote><pre>
+ninspect -i HUVA01084678_spgr.nhdr -o <a href="namic/HUVA01084678_spgr.png">HUVA01084678_spgr.png</a>
+</pre></blockquote>
+These images are most helpful for verifying the correct anatomical orientation
+of the volume, and for detecting any data corruption.
+</ol>
+
+
+<pre>
+
+</pre>
+<p>
+<b>SOURCE</b>:
+
+NrrdIO is a stand-alone library for reading and writing the NRRD format.
+An up-to-date version of NrrdIO is 
+<b>currently</b> in ITK's CVS tree.  Outside of ITK, the source for NrrdIO
+is also available via:
+<blockquote><pre>
+cvs -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/teem co NrrdIO
+</pre></blockquote>
+
+<p>
+
+NrrdIO is generated automatically from the source for Teem, a larger
+set of libraries and utilties.  Teem includes the command-line tools
+"<tt>unu</tt>" and "<tt>ninspect</tt>".  The source for all of Teem
+is available via:
+<blockquote><pre>
+cvs -d :pserver:anonymous@cvs.sourceforge.net:/cvsroot/teem co teem
+</pre></blockquote>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
