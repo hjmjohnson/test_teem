@@ -1,0 +1,58 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: unu join
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h1>&nbsp;&nbsp;<b><tt>unu join</tt></b></h1>
+</table>
+
+<blockquote><pre>
+unu join: Connect slices and/or slabs into a bigger nrrd. Can stich images
+into volumes, or tile images side by side, or attach images onto volumes.
+
+Usage: unu join -i &lt;nin0 ...&gt; -a &lt;axis&gt; [-incr] [-o &lt;nout&gt;]
+
+-i &lt;nin0 ...&gt; = everything to be joined together (1 or more nrrds)
+    -a &lt;axis&gt; = axis to join along (int)
+        -incr = in situations where the join axis is among the axes of the
+                input nrrds, then this flag signifies that the join axis
+                should be *inserted*, and the output dimension should be one
+                greater than input dimension. Without this flag, the nrrds are
+                joined side-by-side, along an existing axis.
+    -o &lt;nout&gt; = output nrrd (string); default: "-"
+</pre></blockquote>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

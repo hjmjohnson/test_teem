@@ -1,0 +1,189 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Visible Female Color Data Processing: Cube of Brain
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="head80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <font size="-1"><a href="./index.html">Visible<br>Female</a></font>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Cube of Brain</b></h2>
+</table>
+<p>
+
+One should wonder at this point if these discontinuities in intensity
+will ever be evident in later stages of visualization or processing.
+The Visible Female RGB color brain data is higher resolution (0.33
+mm/pixel) than than the CT (0.48 mm/pixel) or the MRI (0.86 mm/pixel),
+so it would be a pity if the inter-slice brightness variations caused
+difficulties.
+
+<p>
+
+To test this, we select (from the full-resolution head images) a small
+cubical region inside the brain, which contains some of the
+discontinuities.  The region to process was selected based on
+inspecting the <tt>xsum.png</tt> and <tt>ysum.png</tt> images above to
+find which Z slices were contained the brain (as aided by a <a
+href="slicelist.txt">mapping from Z index to slice name
+(slicelist.txt)</a>, created by a <a href="slicelist.c">little C
+program (slicelist.c)</a>), as well as inspecting the cropped head PPM
+images themselves.  Once the cropped volume is created, we can
+do summed projections along X, Y, and Z to get a sense of what's inside.
+
+<blockquote><pre>
+unu join -i avf10{44,45,46,47,48,49}?.raw.Z.head.ppm \
+      avf10{5,6,7,8,9}??.raw.Z.head.ppm avf110??.raw.Z.head.ppm \
+      avf1110a.raw.Z.head.ppm avf1110b.raw.Z.head.ppm -a 3 \
+  | unu crop -min 0 157 234 0 -max M m+199 m+199 M -o brcube.nrrd
+unu project -i brcube.nrrd -a <b>1</b> -m sum \
+  | unu quantize -b 8 | topng doc/<a href="brcubeYZ.png">brcubeYZ.png</a>
+unu project -i brcube.nrrd -a <b>2</b> -m sum \
+  | unu quantize -b 8 | topng doc/<a href="brcubeXZ.png">brcubeXZ.png</a>
+unu project -i brcube.nrrd -a <b>3</b> -m sum \
+  | unu quantize -b 8 | topng doc/<a href="brcubeXY.png">brcubeXY.png</a>
+</pre></blockquote>
+<ul>
+
+<li> <tt>unu join ... </tt> The long complicated argument is just a
+way of specifying to the Unix shell that we want all head images for
+slices starting with <tt>avf1044a.raw.Z</tt> and ending with
+<tt>avf1110b.raw.Z</tt>.  This is 200 slices.
+
+<li> <tt>unu crop ... </tt> We want a 200x200 window on each slice.
+The lower corner of the window is at (X,Y)=(157,234), so the lower
+corner of the 4-dimensional cropping is "<tt>-min 0 157 234 0</tt>",
+because the axis ordering is (RGB,X,Y,Z).  We want to include all the
+colors and Z coordinates (signified by "<tt>M</tt>" with the
+"<tt>-max</tt>" flag), but we want to go 199 samples above the minimum
+in X and Y (signified by "<tt>m+199</tt>").
+
+</ul>
+
+<center>
+<table>
+<tr>
+  <td align=center><img alt="" width=200 height=200 src="brcubeYZ.png"><br>
+    <tt>brcubeYZ.png</tt>
+  <td align=center><img alt="" width=200 height=200 src="brcubeXZ.png"><br>
+    <tt>brcubeXZ.png</tt>
+  <td align=center><img alt="" width=200 height=200 src="brcubeXY.png"><br>
+    <tt>brcubeXY.png</tt>
+</table>
+</center>
+
+The region selected contains nearly all of the corpus callosum, as
+well as a significant portion of the lateral ventricles. The banding
+is very visible in the YZ and XZ projections, and there is clearly a
+sudden change (about halfway down in XZ and YZ projections) which
+causes the white matter to appear with two distinct brightnesses.
+
+<p>
+
+Another way to see the effect of the inter-slice brightness variations
+is to create a derivative volume from the color volume.  At each
+location in the RGB volume we can measure a kind of first derivative
+which is a 3x3 matrix.  It is the sum of the outer products of the
+color component gradient vectors.  The L2 norm of this matrix is a
+good indicator of the amount of local change; this metric has been
+used by computer vision researchers doing feature detection in color
+images.  Teem comes with a program for doing just this, called <a
+href="../../bin/vprobe/index.html"><tt>vprobe</tt></a>.  Actually,
+<tt>vprobe</tt> can measure various kind of values and derivatives in
+both scalar and vector volumes, but we only need it for a specific
+derivative measure in 3-vector data.
+
+<blockquote><pre>
+vprobe -i brcube.nrrd -k vector -q l2mg -k00 cubic:0,0.5 -k11 cubicd:1,0 -o mgbr.nrrd
+unu project -i mgbr.nrrd -a <b>0</b> -m sum \
+  | unu quantize -b 8 -min 6000 -max 100000 | topng doc/<a href="mgbrYZ.png">mgbrYZ.png</a>
+unu project -i mgbr.nrrd -a <b>1</b> -m sum \
+  | unu quantize -b 8 -min 6000 -max 100000 | topng doc/<a href="mgbrXZ.png">mgbrXZ.png</a>
+unu project -i mgbr.nrrd -a <b>2</b> -m sum \
+  | unu quantize -b 8 -min 6000 -max 100000 | topng doc/<a href="mgbrXY.png">mgbrXY.png</a>
+</pre></blockquote>
+
+<ul>
+
+<li> <tt>unu quantize ... </tt> Giving explicit min and max bounds for
+the quantization over-rides the default action of using the min and
+max floating point value found in the input.  Using the same
+quantization ranges for all three images makes their visual comparison
+more meaningful.
+
+</ul>
+
+<center>
+<table>
+<tr>
+  <td align=center><img alt="" width=200 height=200 src="mgbrYZ.png"><br>
+    <tt>mgbrYZ.png</tt>
+  <td align=center><img alt="" width=200 height=200 src="mgbrXZ.png"><br>
+    <tt>mgbrXZ.png</tt>
+  <td align=center><img alt="" width=200 height=200 src="mgbrXY.png"><br>
+    <tt>mgbrXY.png</tt>
+</table>
+</center>
+
+The streaks caused by the brightness variations are clear here too,
+especially the one about halfway down the YZ and XZ images.  The
+problem is that these streaks are just as bright or brighter than the
+gradients caused by real anatomical features, such as the boundary
+between white and gray matter.  One could argue, though, that these
+axis aligned summation projections artificially accentuate the streaks
+caused by inter-slice brightness variations, because the streaks
+themselves are axis aligned.  But they are clear on a single slice as
+well (shown alongside the projection of the same axis):
+
+<blockquote><pre>
+unu slice -i mgbr.nrrd -a 0 -p 43 \
+  | unu quantize -b 8 -min 0 -max 800 | topng doc/<a href="mgbrX043.png">mgbrX043.png</a>
+</pre></blockquote>
+
+<center>
+<table>
+<tr>
+  <td align=center><img alt="" width=200 height=200 src="mgbrYZ.png"><br>
+    <tt>mgbrYZ.png</tt>
+  <td align=center><img alt="" width=200 height=200 src="mgbrX043.png"><br>
+    <tt>mgbrX043.png</tt>
+</table>
+</center>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

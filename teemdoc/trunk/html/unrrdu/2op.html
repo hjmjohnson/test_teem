@@ -1,0 +1,68 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: unu 2op
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h1>&nbsp;&nbsp;<b><tt>unu 2op</tt></b></h1>
+</table>
+
+<blockquote><pre>
+unu 2op: Binary operation on two nrrds, or on a nrrd and a constant. Either
+the first or second operand can be a float, but not both. Use "-" for an
+operand to signify a nrrd to be read from stdin (a pipe). Note, however, that
+"-" can probably only be used once (reliably).
+
+Usage: unu 2op &lt;operator&gt; &lt;in1&gt; &lt;in2&gt; [-t &lt;type&gt;] [-o &lt;nout&gt;]
+
+&lt;operator&gt; = Binary operator. Possibilities include:
+           o "+", "-", "x", "/": add, subtract, multiply, divide
+           o "^": exponentiation
+           o "%": integer modulo
+           o "fmod": same as fmod() in C
+           o "atan2": same as atan2() in C
+           o "min", "max": minimum, maximum
+           o "lt": 1 if 1st value less than 2nd value, otherwise 0
+           o "comp": -1, 0, or 1 if 1st value is less than,equal to, or
+             greater than 2nd value
+     &lt;in1&gt; = First input. Can be float or nrrd.
+     &lt;in2&gt; = Second input. Can be float or nrrd.
+ -t &lt;type&gt; = type to convert all nrrd inputs to, prior to doing operation.
+             This also determines output type. By default (not using this
+             option), the types of the input nrrds are left unchanged.
+ -o &lt;nout&gt; = output nrrd (string); default: "-"
+</pre></blockquote>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: bin: ilk: Translations, Shear
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/bin80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">bin</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>ilk: Translations, Shear</b></h2>
+</table>
+<p>
+
+<h3>Translations</h3>
+
+Translations are also sensitive to how the boundaries are handled.
+
+<blockquote><pre>
+ilk -i init.ppm -t translate:180,130 -b wrap | tojpg &gt; <a href="tlw.jpg">tlw.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="tlw.jpg">
+</center>
+
+<h3>Shear</h3>
+
+The shear specification takes an angle and a ratio. The angle is the
+direction along which the shear moves things; the line through the
+origin in this direction is the fixed point of the transformation.
+The ratio tells how much to slide things along this direction, as
+a function of distance from the fixed point.  A ratio of 1 means
+that the shear produces a 45-degree angle.
+
+<blockquote><pre>
+ilk -i init.ppm -0 u:0.5,0.5 -t shear:0,1 -b pad | tojpg &gt; <a href="shx.jpg">shx.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="shx.jpg">
+</center>
+
+<blockquote><pre>
+ilk -i init.ppm -0 u:0.5,0.5 -t shear:90,0.5 -b pad | tojpg &gt; <a href="shy.jpg">shy.jpg</a>
+</pre></blockquote>
+<center>
+<img alt="" width=366 height=275 src="shy.jpg">
+</center>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
