@@ -45,12 +45,13 @@ text editor), this is a good example of the kind of swiss-army knife that
 <tt>unu</tt> is.  Following each command example are some points about
 what is going on.  Note that in the following "X", "Y", and "Z" are
 simply synonyms for "fastest axis", "medium axis", and "slowest axis":
-<b>nrrd</b> supplies gives no intrinsic names to the axes.
+<b>nrrd</b> supplies or enforces no specific names to the axes.
 
 <p>
 
-We start with a 64x64x64 volume (<tt>x.nrrd</tt>) which varies from -1.3
-to 1.3 along the X axis, and is constant along Y and Z:
+We start with a 64x64x64 volume of (single-precision) floats
+(<tt>x.nrrd</tt>), which varies from -1.3 to 1.3 along the X axis, and
+is constant along Y and Z:
 
 <blockquote><pre>
 echo "-1.3 1.3   -1.3 1.3   -1.3 1.3   -1.3 1.3" \
@@ -62,6 +63,8 @@ echo "-1.3 1.3   -1.3 1.3   -1.3 1.3   -1.3 1.3" \
 <li> Because <b>nrrd</b> can read plain text data, we can use something
 as simple as "<tt>echo</tt>" to get data into nrrd.  The output of
 "<tt>echo</tt>" will actually be a 1-by-8 2-dimensional nrrd.
+<li> Whenever <b>nrrd</b> reads from a plain text file (as it is doing
+here), the type of the values is taken to be <tt>float</tt>
 <li> "<tt>unu reshape</tt>" imposes new dimensions on the data, making
 it into a 2x2x2 volume.  Because this does not change the memory
 ordering of the samples, it remains the same as indicated by the
@@ -95,7 +98,7 @@ in <tt>x.nrrd</tt> to the power 2.
 </ul>
 
 We need to create similar arrays in which the value varies along
-the Y and Z axes (<tt>y.nrrd</tt>, <tt>z.nrrd</tt>):
+the Y and Z axes (<tt>yy.nrrd</tt>, <tt>zz.nrrd</tt>):
 <blockquote><pre>
 unu swap -i xx.nrrd -a 0 1 -o yy.nrrd
 unu swap -i xx.nrrd -a 0 2 -o zz.nrrd
@@ -108,8 +111,8 @@ unu 2op + xx.nrrd yy.nrrd \
  | unu 2op + - zz.nrrd -o sph.nrrd
 </pre></blockquote>
 <ul>
-<li> Although there is a "<tt>unu 3op</tt>", currently addition is
-not one of the availble ternary operators. so we string together
+<li> Although there is a "<tt>unu 3op</tt>" command, addition is
+currently not one of the available ternary operators. So, we string together
 two "<tt>unu 2op</tt>" invocations.
 <li> Because "<tt>unu 2op</tt>" always requires two arguments after
 the operator ("<tt>+</tt>"), we have to identify standard input somehow,
@@ -120,7 +123,8 @@ significance, but this is not the case.
 
 We can inspect what we have so far, to make sure that the data
 looks as we expect.  One way of inspecting a volume in one image 
-is to make a mosaic of its slices:
+is to make a mosaic of its slices.  In this image, there is a 2-D
+array of sub-images, each of which is a slice of the dataset.
 
 <blockquote><pre>
 unu pad -i sph.nrrd -min -1 -1 0 -max M+1 M+1 M -b pad -v 0 \
@@ -244,11 +248,15 @@ an 3-D volume of colors is represented as a 4-D volume of scalars.
 
 Finally, we'll modify the sphere dataset <tt>sph.nrrd</tt> so that its
 zero isosurface is at about the same position as that of
-<tt>pin.nrrd</tt>.  Considering that the original coordinates were from
+<tt>pin.nrrd</tt>.   Considering that the original coordinates were from
 -1.3 to 1.3, we'll subtract 1.0 from the the values in <tt>sph.nrrd</tt>,
-over-writing the old volume in the process:
+over-writing the old volume in the process.  Also, we have to reverse
+the sense of the data, so that high values are in the inside instead
+of the outside, so that we can use the same transfer function for
+both volumes:
 <blockquote><pre>
-unu 2op - sph.nrrd 1 -o sph.nrrd
+unu 2op - sph.nrrd 1 \
+ | unu 2op x -1 - -o sph.nrrd
 </pre></blockquote>
 
 At this point we can clean up the little temporary files from
@@ -257,8 +265,17 @@ creating <tt>sph.nrrd</tt> and <tt>pin.nrrd</tt>:
 rm -f x.nrrd {xx,yy,zz}.nrrd {xxxx,yyyy,zzzz}.nrrd
 </pre></blockquote>
 
-Now we can <a href="">make a volume renderings</a> of 
-the <tt>sph.nrrd</tt> and <tt>pin.nrrd</tt> volumes.
+<p>
+
+A transcript of all the commands on this page is also available: <a
+href="make-sph-pin.txt"><tt>make-sph-pin.txt</tt></a>.  You can run
+all the commands by simply saying "<tt>source make-sph-pin.txt</tt>"
+inside any useful shell.
+
+<p>
+
+Now we can <a href="../../mite/demo0/index.html">make volume
+renderings</a> of the <tt>sph.nrrd</tt> and <tt>pin.nrrd</tt> volumes.
 
 <p>
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>

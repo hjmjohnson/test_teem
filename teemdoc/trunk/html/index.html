@@ -75,20 +75,47 @@ the most egregiously out-of-date part is the documentation for
 </table>
 </center>
 
-<h2>GK's C code, now <a href="http://www.sourceforge.net/projects/teem">on Sourceforge</a></h2>
+<h2>GK's C code</h2>
 
-This is the software that I write to do my research.  I distribute it
-because others have found it useful.  The code is written in C, and
-organized as a set of libraries, each of which with some coarsely
-defined functionality.  Whatever exists in the way of documentation
-for each of the libraries is below.  The libraries heavily depend on
-each other (in a non-circular way), so they are built and distributed
-as a group.  The only other library that is required is the math
-library ("<tt>-lm</tt>"), although <b>nrrd</b> can optionally use
-zlib, bzip2, and PNG.  The <b>teem</b> libraries populate a common
-directory structure (under CVS control), collectively they are called
-<b>teem</b>.  There are also assorted command-line programs, see
-below.
+This is the software that I write to do my research.  Anything that I
+develop as part of trying out new ideas, or to better understand previous
+work, is here.  Because other people have increasingly found this software
+to be useful, I distribute it, and try to support it.  
+
+<p>
+
+The core code is written in C (about 75,000 lines), and organized as a
+set of libraries, each with some coarsely defined functionality. The
+libraries depend heavily on each other in a non-circular way, so they
+are built and distributed as a group, collectively called <b>teem</b>.
+The only required external library is the C math library
+("<tt>-lm</tt>"), although <b>teem</b> can optionally use the pthread,
+zlib, bzip2, and PNG libraries.  The most popular <b>teem</b> library
+is <a href="./nrrd/index.html"><b>nrrd</b></a>, which supports
+N-dimensional image processing, and a flexible file format for
+N-dimensional raster data.
+
+<p>
+
+Along with the <b>teem</b> libraries, I've written some command-line
+tools.
+These programs demonstrate the functionality of
+the libraries, as well as providing a simple and easy way to get work
+done with <b>teem</b>, without having to write C/C++ code.  
+The most popular is <a href="./unrrdu/index.html"><tt>unu</tt></a>, a
+convenient and concise interface to <b>nrrd</b>.  Also, 
+<tt>qbert</tt> is a stand-alone program based on <b>gage</b>
+which can generate volumes of a format used by <a
+href="http://www.cs.utah.edu/~jmk/simian/">Simian</a>, the volume
+renderer used in our <a
+href="http://www.cs.utah.edu/~jmk/papers/vis01/">Vis '01</a> paper.
+
+<p>
+
+Because I also use
+<a href="http://www.vtk.org">VTK</a> for some of my work, I distribute
+some of my VTK/tcl/tk programs.  Information about <b>teem</b>, the
+binaries, and the VTK programs, are below.
 
 <ul>
 
@@ -96,6 +123,13 @@ below.
   <a href="download/index.html">Download</a>
   the software.  You can get either source, documentation, or pre-built
   libraries and executables.
+
+<li>
+  <a href="general.html">General infomation</a> about <b>teem</b>.
+  
+<li>
+  <a href="names.html">Naming scheme</a>.
+  Why all the libraries have such curious names.
 
 <li>
   <a href="build.html">Building <b>teem</b></a>, the basics.
@@ -120,13 +154,6 @@ below.
   about building teem, including how to enable optional external libraries.
   Documents the various environment variables that control the build process.
 
-<li>
-  <a href="general.html">General infomation</a> about <b>teem</b>.
-  
-<li>
-  <a href="names.html">Naming scheme</a>.
-  Why all the libraries have such curious names.
-
 </ul>
 
 <p>
@@ -145,21 +172,21 @@ below.
      border=0 width=80 height=80 src="img/hest80.jpg" alt=""></a>
   <td><a href="./hest/index.html"><big><b>hest</b></big></a> :
   Command-line parsing
-<tr>
+
   <td align=center width=100><a href="./biff/index.html"><img
      border=0 width=80 height=80 src="img/biff80.jpg" alt=""></a>
   <td><a href="./biff/index.html"><big><b>biff</b></big></a> :
   Error message collection
-
+<tr>
   <td align=center width=100><a href="./ell/index.html"><img
      border=0 width=80 height=80 src="img/ell80.jpg" alt=""></a>
   <td><a href="./ell/index.html"><big><b>ell</b></big></a> :
   Linear algebra functions and macros.
-<tr>
+
   <td align=center width=100><a href="./nrrd/index.html"><img
      border=0 width=80 height=80 src="img/nrrd80.jpg" alt=""></a>
   <td><a href="./nrrd/index.html"><big><b>nrrd</b></big></a> :
-  N-dimensional array representation and manipulation
+  N-dimensional image processing
 
   <td align=center width=100><a href="./unrrdu/index.html"><img
      border=0 width=80 height=80 src="img/unrrdu80.jpg" alt=""></a>
@@ -175,12 +202,12 @@ below.
      border=0 width=80 height=80 src="img/moss80.jpg" alt=""></a>
   <td><a href="./moss/index.html"><big><b>moss</b></big></a> :
   Geometric transforms and sampling of images
-<tr>
+
   <td align=center width=100><a href="./gage/index.html"><img
      border=0 width=80 height=80 src="img/gage80.jpg" alt=""></a>
   <td><a href="./gage/index.html"><big><b>gage</b></big></a> :
   Filtered point-sampling in volumes
-
+<tr>
   <td align=center width=100><a href="./bane/index.html"><img
      border=0 width=80 height=80 src="img/bane80.jpg" alt=""></a>
   <td><a href="./bane/index.html"><big><b>bane</b></big></a> :
@@ -188,7 +215,7 @@ below.
      <a href="http://www.cs.utah.edu/~gk/MS">MS thesis</a> 
      (and&nbsp;<a href="http://www.cs.utah.edu/~gk/papers/vv98">VolVis98
      paper</a>)
-<tr>
+
   <td align=center width=100><a href="./limn/index.html"><img
      border=0 width=80 height=80 src="img/limn80.jpg" alt=""></a>
   <td><a href="./limn/index.html"><big><b>limn</b></big></a> :
@@ -204,37 +231,24 @@ below.
   <td><a href="./mite/index.html"><big><b>mite</b></big></a> :
   Simple scalar volume renderer
 
-  <td align=center width=100><a href="./ten/index.html"><img
-     border=0 width=80 height=80 src="img/ten80.jpg" alt=""></a>
-  <td><a href="./ten/index.html"><big><b>ten</b></big></a> :
-  Diffusion tensor analysis and visualization
-<tr>
   <td align=center width=100><a href="./echo/index.html"><img
      border=0 width=80 height=80 src="img/echo80.jpg" alt=""></a>
   <td><a href="./echo/index.html"><big><b>echo</b></big></a> :
   Ray-tracer
+
+  <td align=center width=100><a href="./ten/index.html"><img
+     border=0 width=80 height=80 src="img/ten80.jpg" alt=""></a>
+  <td><a href="./ten/index.html"><big><b>ten</b></big></a> :
+  Diffusion tensor analysis and visualization
 
 </table>
 </center>
 
 </blockquote>
 
-<b>Teem</b> also comes with some command-line programs which link with
-the libraries above.  These programs demonstrate the functionality of
-the libraries, as well as providing a simple and easy way to get work
-done with <b>teem</b>, without having to write C/C++ code.  For
-instance, <tt>qbert</tt> is a stand-alone program based on <b>gage</b>
-which can generate volumes of a format used by <a
-href="http://www.cs.utah.edu/~jmk/simian/">Simian</a>, the volume
-renderer used in our <a
-href="http://www.cs.utah.edu/~jmk/papers/vis01/">Vis '01</a> paper.
-More information here:
-
-<p>
+The bins:
 
 <blockquote>
-
-<center>
 <table width="90%" border=0 cellpadding=0 cellspacing=0>
 <tr>
   <td align=center width=100><a href="./bin/index.html"><img
@@ -242,7 +256,6 @@ More information here:
   <td><a href="./bin/index.html"><big>bins</big></a> :
   <tt>qbert</tt>, <tt>mrender</tt>, <tt>vprobe</tt>, and others.
 </table>
-</center>
 
 </blockquote>
 

@@ -38,16 +38,18 @@ GK's C code: nrrd: Introduction
     <h2>&nbsp;&nbsp;<b>Introduction</b></h2>
 </table>
 
-Nrrd is for representing and operating on N-dimensional raster data,
-specifically, data sampled on a regular rectangular lattice.  This
-means the grid has mutually orthogonal axes, and while the sample
-spacing may vary between axes, it does not vary along any one axis.
-Histograms, grayscale images, color images, and scalar volume data
-like CT and MRI scans, are typical examples.  Rectilinear grids, with
-mutually orthogonal axes but spatially varying sample spacing, are
-represented in logical structure but not in geometry.  Curvilinear
-grids, tetrahedral meshes, scattered point data, and polygonal data
-are not supported, nor are multi-resolution grids.
+<h3> What Nrrd Is </h3>
+
+Nrrd is a tool for representing and processing N-dimensional raster
+data.  It offers an efficient and general way to manipulate scientific
+and medical images and volumes.  Nrrd facilitates the pre-processing
+tasks that often precede visualization or segmentation (cropping,
+quantizing, resampling), as well as the basic analysis tasks which
+help to understand the structure of a dataset (histograms, maximum
+intensity projections, connected components).  Nrrd has a persistent
+habit of replacing the throw-away one-time code that people often
+write to transform datasets, while also offering a convenient,
+flexible, and portable file format for storing the data.
 
 <p>
 
@@ -55,12 +57,15 @@ In memory and on disk, the scanline ordering of the data on a regular
 lattice imposes a strict linear ordering of all the samples.  A basic
 capability of nrrd is managing the relationship between the
 multi-dimensional logical structure of raster data, and its
-one-dimensional physical layout.  There are three fundamental aspects
-of this sort of data: the dimension of the grid, the different axes
-for each dimension, and the type of data associated with each sample
-point.  These three aspects are now considered in more detail.
+one-dimensional physical layout.  There are four fundamental aspects
+of this sort of data: the dimension of the grid, the raster order of
+the samples, additional information about each axis, and the type of
+data associated with each sample point.  These four aspects are now
+considered in more detail.
 
 <p>
+
+<h3> Data Dimension </h3>
 
 Nrrd is intended to represent raster data of any dimension greater
 than zero.  Ideally there would be no run-time limit on the
@@ -68,7 +73,7 @@ representable dimension.  The current implementation (the <b>nrrd</b>
 library) has put a <tt>#define</tt> limit on the dimension;
 <tt>NRRD_DIM_MAX</tt> is currently set to 16.  One subtle aspect of
 dimension involves the handling of non-scalar data.  A simplifying
-design decision in nrrd is essentially that "everything is a scalar".
+design decision in nrrd is that "everything is a scalar".
 Thus, in order to represent a 3-dimensional field of vectors, a
 <b>4</b>-dimensional nrrd is used, usually with the (X,Y,Z) components
 of the vector interleaved between sample points.  In this case, the
@@ -91,17 +96,22 @@ used strictly to refer to the dimensionality of the grid itself (1 for
 histograms, 2 for grayscale images, 3 for color images, etc.), and
 "dimensions" (plural) could refer to the number of samples along the
 axes, this seems risky.  In the context of nrrd, "dimension" is used
-solely in in the former sense, and "size" is always used in the latter
-sense.  Thus, an NTSC color image represented in nrrd would have
-dimension 3, with sizes 3, 640, and 480.  The ordering of axes is
-fundamental.  In nrrd, whenever the axes are represented or identified
-in sequence, the ordering is always from "fastest" to "slowest".  If
-we assign coordinates to each axis, and traverse the physical layout
-of the raster data from the first sample (with all zero coordinates)
-to the last sample, the fastest axis corresponds to that coordinate
-which increments fastest as we traverse the samples.  Thus, nrrd's
-axis ordering for typical color image data is color, horizontal, and
-vertical.
+solely in in the former sense (how many dimensions are there), and
+"size" is always used in the latter sense (how many samples are
+there).  Another possibility would have to use "dimensions" and "rank"
+for the two terms.  Thus, an NTSC color image represented in nrrd
+would have dimension 3, with sizes 3, 640, and 480.  
+
+<h3> Raster Order</h3>
+
+The ordering of axes is fundamental.  In nrrd, whenever the axes are
+represented or identified in sequence, the ordering is always from
+"fastest" to "slowest".  If we assign coordinates to each axis, and
+traverse the physical layout of the raster data from the first sample
+(with all zero coordinates) to the last sample, the fastest axis
+corresponds to that coordinate which increments fastest as we traverse
+the samples.  Thus, nrrd's axis ordering for typical color image data
+is color, horizontal, and vertical.
 
 <p>
 
@@ -119,44 +129,47 @@ methods.  Axes are identified in <b>nrrd</b> only by their integral
 index into the axis ordering.  For the color data example mentioned
 above, the color axis is 0, horizontal is 1, and vertical is 2.
 
-<p>
+
+<h3> Data Axes </h3>
 
 There are many aspects of an axis that nrrd can represent.  The number
-of samples is the only required information.  There is also a
+of samples is the only required information.  There is a
 dynamically allocated <tt>char*</tt> string which can be used to give
-a name to each axis (but nrrd can't use the name to identify the
-axis).  Whether the samples along an axis are cell or node centered
-can also be indicated.  This plays an important role in representing
-histograms (necessarily cell-centered) and image data (probably
-cell-centered if you're talking about mipmaps, but node-centered in
-many other signal-processing contexts).  The spacing between samples
-is also represented, and if there is a known extent to the axis in
-some "world" space, the min and max position of the axis can also be
-represented.  Univariate histograms and joint histograms naturally
-have a min and max along their axes; many volume datasets have only a
-notion of spacing.
+a name to each axis.  The spacing
+between samples is also represented, and if there is a known extent to
+the axis in some "world" space, the min and max position of the axis
+can also be represented.  Univariate histograms and joint histograms
+naturally have a min and max along their axes; many volume datasets
+have only a notion of spacing.  Whether the samples along an axis are cell or
+node centered can also be indicated.  This plays an important role in
+representing histograms (necessarily cell-centered) and image data
+(probably cell-centered if you're talking about mipmaps, but
+node-centered in many other signal-processing contexts).  
 
 <p>
 
-All this peripheral information describing each axis is saved to file
-with <tt>nrrdSave()</tt> and <tt>nrrdWrite()</tt>.  Also, the axis
-information follows each axis through all the basic <b>nrrd</b>
-operations.  For example, if you have a volume with axis labels "x",
-"y", and "z", and you use <tt>nrrdSlice()</tt> to cut the volume along
-axis 0, the resulting 2-dimensional nrrd will have axis labels "y" and
-"z".  If you use <tt>nrrdSpatialResample()</tt> to downsample a
-640x480 cell-centered grayscale image, with spacings 1.0 and 1.0, to a
-256x256 image, the resulting spacings will be 2.5 and 1.875 (but
-2.50588 and 1.87843 if it was node-centered).  The proper and
-intelligent handling of peripheral information, such as cell-vs-node
-centering and axis-specific sample spacing, is the central difference
-between "nearly raw" and "raw" raster data.  The absence of flexible
-and powerful tools for operating on nearly raw raster data with
-complete dimensional generality was the primary motivation for
-starting <b>nrrd</b> development in 1998.  The rest of the <b>teem</b>
-libraries grew out of <b>nrrd</b>.
+All this peripheral information describing each axis is saved to the
+NRRD file with <tt>nrrdSave()</tt> and <tt>nrrdWrite()</tt>, and 
+read in with <tt>nrrdLoad()</tt> and <tt>nrrdRead()</tt>.  Also,
+the axis information follows each axis through all the basic
+<b>nrrd</b> operations.  For example, if you have a volume with axis
+labels "x", "y", and "z", and you use <tt>nrrdSlice()</tt> to cut the
+volume along axis 0, the resulting 2-dimensional nrrd will have axis
+labels "y" and "z".  If you use <tt>nrrdSpatialResample()</tt> to
+downsample a 640x480 cell-centered grayscale image, with spacings 1.0
+and 1.0, to a 256x256 image, the resulting spacings will be 2.5 and
+1.875 (but 2.50588 and 1.87843 if it was node-centered).  The proper
+and intelligent handling of peripheral information, such as
+cell-vs-node centering, and axis-specific sample spacing, is the
+central difference between "nearly raw" and "raw" raster data.  The
+absence of flexible and powerful tools for operating on nearly raw
+raster data with complete dimensional generality was the primary
+motivation for starting <b>nrrd</b> development in 1998.  The rest of
+the <b>teem</b> libraries grew out of <b>nrrd</b>.
 
 <p>
+
+<h3> Data Type </h3>
 
 Nrrd can handle ten different types of scalar data.  There are 8
 integral types (1-, 2-, 4-, and 8-byte integers, signed and unsigned),

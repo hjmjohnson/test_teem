@@ -45,139 +45,19 @@ Not-A-Number, and +/-Infinity.  The <b>air</b> library has a number of
 macros and functions which are intended to make working with these
 quantities easier.
 
-<p>
+<hr noshadow width="70%">
 
-<h3>Not-A-Number</h3>
+<h2>"Existant" values</h2>
 
-Not-A-Number, or "NaN", doesn't represent a real value, but rather the
-fact that there is no value to be represented.  Various <b>teem</b>
-libraries, especially <a href="../nrrd/index.html"><b>nrrd</b></a>,
-use NaN as a flag to mean "don't know".  This use is completely in
-keeping with the 754 spec.  However, the special semantics of NaN mean
-that it is not trivial to create a <tt>#define</tt> or a compile-time
-constant to hold this value (as is possible with say, <tt>M_PI</tt>),
-and it is not trivial to test to see if a value is NaN.  This may be
-why more people don't use NaN as a flag, but <b>air</b> is useful
-here.
-
-<p>
-
-One thing to keep in mind: Section 6.2 of IEEE 754 guarantees that a
-NaN stored in a <tt>float</tt> will stay a NaN when stored in a
-<tt>double</tt>, and vice versa.  Thus, you need not be cautious about
-the "precision" of your NaN.  The same doesn't exactly hold for
-infinity, though.
-
-<p>
-
-<b>How to get NaN</b>: If you want a NaN, so that you can save it into
-a floating point variable, perhaps as an indicator for "don't know",
-or "uninitialized", you have a few options.
-
-<ol>
-
-<li> (fastest) Use <tt>AIR_NAN</tt>, as in "<tt>float
-nan=AIR_NAN;</tt>".  <tt>AIR_NAN</tt> is a #define for
-<tt>airFloatNaN.f</tt>, which is the <tt>float</tt> field of the
-<tt>airFloatNaN</tt> union, which is itself a compile-time constant,
-defined in <tt>teem/src/754.c</tt>
-
-<li> (slower) Use <tt>airFPGen_f(airFP_QNAN)</tt>, which tells
-the <tt>airFPGen_f()</tt> function to generate a <tt>float</tt> of the
-class <tt>airFP_QNAN</tt>.  Calling <tt>airNaN()</tt> is a wrapper around
-this.
-
-<li> Do it yourself.  Store 0.0 in some <tt>float</tt> variable
-<tt>nan</tt>, and then <tt>"nan /= nan"</tt>.  You have to create a
-seperate variable in order to avoid compiler warnings about the
-division by zero.
-
-</ol>
-
-<b>How to test for NaN</b>: If you want to see if a variable
-<tt>x</tt> of type <tt>float</tt> is NaN, you can do one of the
-following.  Both of these return non-zero when the passed value
-is a NaN, and zero when it is not.
-
-<ol>
-
-<li> (fastest) Use <tt>AIR_ISNAN_F(x)</tt>, a macro which does bit-masking
-to look at the exponent and fraction fields of the <tt>float</tt>
-
-<li> (slower) Use <tt>airIsNaN(x)</tt>.  Same as macro, but uses a
-union to access the exponent and fraction fields.
-
-<li> See if return from <tt>int airFPClass_f(float val)</tt> is
-<tt>airFP_SNAN</tt> or <tt>airFP_QNAN</tt>.
-
-</ol>
-
-If you have a variable that is of type <tt>double</tt>, you must use
-the second option, because the value will be cast to <tt>float</tt> as
-part of the function call <tt>airIsNaN</tt>, but NOT as part of macro
-invocation <tt>AIR_ISNAN_F</tt>.
-
-<p>
-
-There are in fact two kinds of NaNs, the signaling NaN and the quiet
-NaN.  Nothing in <b>teem</b> attempts to use the floating point
-exception handler to work with signaling NaNs, because there isn't a
-cross-platform C-language API to the floating point hardware.  Also,
-nothing in <b>teem</b> attempts to use the integer value stored in the
-fraction field of the NaN to represent different kinds of conditions
-of NaN, so effectively, a NaN is a NaN is a NaN.  However, an effort
-is made to make <tt>AIR_NAN</tt> be what the local architecture
-considers a quiet NaN, in case using a signalling NaN could have an
-impact on performace.
-
-<h3>Infinities</h3>
-
-A <tt>float</tt> infinity, when assigned to <tt>double</tt>, stays
-infinity (with the same sign), and vice versa.  But if a
-<tt>double</tt> holds a large value (larger than <tt>FLT_MAX</tt>) and
-this is assigned to a <tt>float</tt>, an infinity will result.  Thus,
-detecting an infinity has to be done either with functions specific to
-the type of the value, or (being conservative), with functions which
-take a <tt>double</tt> argument.
-
-<p>
-
-<b>To generate an infinity:</b>
-
-<ol>
-
-<li>Use <tt>AIR_POS_INF</tt> or <tt>AIR_NEG_INF</tt>, a
-<tt>#define</tt> for the float component of <tt>airFloatPosInf</tt>
-or <tt>airFloatNegInf</tt>; these are compile-time constant unions.
-
-<li>Use <tt>airFPGen_f(airFP_POS_INF)</tt> or
-<tt>airFPGen_f(airFP_NEG_INF)</tt>
-
-</ol>
-
-<b>To test if something is infinity:</b>
-
-<ol>
-
-<li>Use <tt>int airIsInf_f(float f)</tt> (or <tt>int airIsInf_d(double
-d)</tt>).  These return 1 when given a positive infinity, -1 when
-given a negative infinity, and 0 otherwise.
-
-<li> See if return from <tt>int airFPClass_f(float val)</tt> (or
-<tt>int airFPClass_d(double val)</tt>) is
-<tt>airFP_POS_INF</tt> or <tt>airFP_NEG_INF</tt>.
-
-</ol>
-
-<h3>"Existant" values</h3>
-
-Parts of teem, especially <a href="../nrrd/index.html"><b>nrrd</b></a>,
-rely on the notion of a floating point value "existing" or not.  A
-value "exists" if it is not a 754 special value, that is, its not
-infinity, and not NaN. In <b>nrrd</b>, for instance, many operations
-are defined to only operate on the existant values.  The average of
-1000 numbers, containing one NaN and one infinity, will actually be
-the average of the 998 "existant" numbers.  Some way of determine if a
+Parts of teem, especially <a
+href="../nrrd/index.html"><b>nrrd</b></a>, rely on the notion of a
+floating point value "existing" or not.  A value "exists" if it is not
+a 754 special value, that is, its not infinity, and not NaN. In
+<b>nrrd</b>, for instance, many operations are defined to only operate
+on the existant values.  Nrrd's average of 1000 numbers, containing
+one NaN and one infinity, will actually be the average of the 998
+"existant" numbers.  However, any naive C or C++ implementation will
+result in the final answer being NaN.  Some way of determine if a
 value exists is required.
 
 <p>
@@ -231,7 +111,141 @@ the optimization levels that the makefiles supply (generally -O2).
 A function called <tt>airSanity()</tt> makes sure that all IEEE 754-related 
 macros (such as <tt>AIR_EXISTS()</tt>) work correctly.
 
-<h3>Determining/generating floating point classes</h3>
+<hr noshadow width="70%">
+
+<h2>Not-A-Number</h2>
+
+Not-A-Number, or "NaN", doesn't represent a real value, but rather the
+fact that there is no value to be represented.  Various <b>teem</b>
+libraries, especially <a href="../nrrd/index.html"><b>nrrd</b></a>,
+use NaN as a flag to mean "don't know".  This use is completely in
+keeping with the 754 spec.  However, the special semantics of NaN mean
+that it is not trivial to create a <tt>#define</tt> or a compile-time
+constant to hold this value (as is possible with say, <tt>M_PI</tt>),
+and it is not trivial to test to see if a value is NaN.  This may be
+why more people don't use NaN as a flag, but <b>air</b> is useful
+here.
+
+<p>
+
+One thing to keep in mind: Section 6.2 of IEEE 754 guarantees that a
+NaN stored in a <tt>float</tt> will stay a NaN when stored in a
+<tt>double</tt>, and vice versa.  Thus, you need not be cautious about
+the "precision" of your NaN.  The same doesn't exactly hold for
+infinity, though.
+
+<p>
+
+<b>How to get NaN</b>: If you want a NaN, so that you can save it into
+a floating point variable, perhaps as an indicator for "don't know",
+or "uninitialized", you have a few options.
+
+<ol>
+
+<li> (fastest) Use <tt>AIR_NAN</tt>, as in "<tt>float
+nan=AIR_NAN;</tt>".  <tt>AIR_NAN</tt> is a #define for
+<tt>airFloatNaN.f</tt>, which is the <tt>float</tt> field of the
+<tt>airFloatNaN</tt> union, which is itself a compile-time constant,
+defined in <tt>teem/src/754.c</tt>
+
+<li> (slower) Use <tt>airFPGen_f(airFP_QNAN)</tt>, which tells
+the <tt>airFPGen_f()</tt> function to generate a <tt>float</tt> of the
+class <tt>airFP_QNAN</tt>.  Calling <tt>airNaN()</tt> is a wrapper around
+this.
+
+<li> Do it yourself.  Store 0.0 in some <tt>float</tt> variable
+<tt>nan</tt>, and then <tt>"nan /= nan"</tt>.  You have to create a
+seperate variable in order to avoid compiler warnings about the
+division by zero.
+
+</ol>
+
+<b>How to test for NaN</b>: If you want to see if a variable
+<tt>x</tt> of type <tt>float</tt> is NaN, you can do one of the
+following.  Both of these return non-zero when the passed value
+is a NaN, and zero when it is not.
+
+<ol>
+
+<li> (easiest to remember) Use <tt>AIR_EXISTS(x)</tt>, described
+above.  Will be false for NaNs and infinities.
+
+<li> (fastest) Use <tt>AIR_ISNAN_F(x)</tt>, a macro which does bit-masking
+to look at the exponent and fraction fields of the <tt>float</tt>
+
+<li> (slower) Use <tt>airIsNaN(x)</tt>.  Same as macro, but uses a
+union to access the exponent and fraction fields.
+
+<li> See if return from <tt>int airFPClass_f(float val)</tt> is
+<tt>airFP_SNAN</tt> or <tt>airFP_QNAN</tt>.
+
+</ol>
+
+If you have a variable that is of type <tt>double</tt>, you must use
+the second option, because the value will be cast to <tt>float</tt> as
+part of the function call <tt>airIsNaN</tt>, but NOT as part of macro
+invocation <tt>AIR_ISNAN_F</tt>.
+
+<p>
+
+There are in fact two kinds of NaNs, the signaling NaN and the quiet
+NaN.  Nothing in <b>teem</b> attempts to use the floating point
+exception handler to work with signaling NaNs, because there isn't a
+cross-platform C-language API to the floating point hardware.  Also,
+nothing in <b>teem</b> attempts to use the integer value stored in the
+fraction field of the NaN to represent different kinds of conditions
+of NaN, so effectively, a NaN is a NaN is a NaN.  However, an effort
+is made to make <tt>AIR_NAN</tt> be what the local architecture
+considers a quiet NaN, in case using a signalling NaN could have an
+impact on performace.
+
+<hr noshadow width="70%">
+
+<h2>Infinities</h2>
+
+A <tt>float</tt> infinity, when assigned to <tt>double</tt>, stays
+infinity (with the same sign), and vice versa.  But if a
+<tt>double</tt> holds a large value (larger than <tt>FLT_MAX</tt>) and
+this is assigned to a <tt>float</tt>, an infinity will result.  Thus,
+detecting an infinity has to be done either with functions specific to
+the type of the value, or (being conservative), with functions which
+take a <tt>double</tt> argument.
+
+<p>
+
+<b>To generate an infinity:</b>
+
+<ol>
+
+<li>Use <tt>AIR_POS_INF</tt> or <tt>AIR_NEG_INF</tt>, a
+<tt>#define</tt> for the float component of <tt>airFloatPosInf</tt>
+or <tt>airFloatNegInf</tt>; these are compile-time constant unions.
+
+<li>Use <tt>airFPGen_f(airFP_POS_INF)</tt> or
+<tt>airFPGen_f(airFP_NEG_INF)</tt>
+
+</ol>
+
+<b>To test if something is infinity:</b>
+
+<ol>
+
+<li> (easiest to remember) Use <tt>AIR_EXISTS(x)</tt>, described
+above.  Will be false for NaNs and infinities.
+
+<li>Use <tt>int airIsInf_f(float f)</tt> (or <tt>int airIsInf_d(double
+d)</tt>).  These return 1 when given a positive infinity, -1 when
+given a negative infinity, and 0 otherwise.
+
+<li> See if return from <tt>int airFPClass_f(float val)</tt> (or
+<tt>int airFPClass_d(double val)</tt>) is
+<tt>airFP_POS_INF</tt> or <tt>airFP_NEG_INF</tt>.
+
+</ol>
+
+<hr noshadow width="70%">
+
+<h2>Determining/generating floating point classes</h2>
 
 <tt>air.h</tt> has an enum for the different classes that a floating
 point number can belong to:
@@ -278,7 +292,8 @@ are found, different enum names for the different classes, and even
 different corresponding numeric values.
 
 
-<h3>Converting between floating-point values and integer triples</h3>
+<hr noshadow width="70%">
+<h2>Converting between floating-point values and integer triples</h2>
 
 There are a number of functions for creating and querying floating
 point values, written largely for the sake of learning about 754.
@@ -305,7 +320,8 @@ another name for <tt>unsigned long long</tt>, which Microsoft calls an
 11-bit exponent, 52-bit fraction.
 </ul>
 
-<h3>Printing individual bits</h3>
+<hr noshadow width="70%">
+<h2>Printing individual bits</h2>
 
 In case you don't trust yourself to read the hex output from the
 "<tt>%x</tt>" printf() conversion sequence, you can look at all
@@ -332,7 +348,7 @@ S<...Exp...><.......................Frac.......................>
 0100000001000101000000000000000000000000000000000000000000000000
 </pre></blockquote>
 
-Command-line demos are "tests" <tt>teem/src/air/test/floatprint.c</tt> 
+Command-line demos are <tt>teem/src/air/test/floatprint.c</tt> 
 and <tt>teem/src/air/test/doubleprint.c</tt> 
 
 
