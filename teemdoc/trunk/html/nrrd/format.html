@@ -40,54 +40,38 @@ GK's C code: nrrd: Definition of NRRD File Format
 
 This document defines the NRRD file format.  It gives requirements and
 recommendations of readers and writers of this format.  Because the
-<b>nrrd</b> library also supports PNG, PPM, PGM, and plain text files, see
-also <a href="otherformat.html">NRRD-Compatible File Formats</a> to
-see how comments embedded in these files can be used to losslessly
-encode the information normally found in a NRRD header.  Since this
+<b>nrrd</b> library also supports PNG, PPM, PGM, and plain text files,
+see also <a href="otherformat.html">NRRD-Compatible File Formats</a>
+to see how comments embedded in these files can be used to store the
+field definitions that normally comprise the NRRD header.  Since this
 document aims to be a self-contained reference for the NRRD file
 format, some of the material here repeats ideas found elsewhere in the
 <a href="index.html"><b>nrrd</b></a> documentation.  Besides defining
-the format, this document also seeks to supply some rationale.  I have
-no prior experience in writing file format definitions; please feel
-free to email me questions and/or suggestions:
-<tt>gk@cs.utah.edu</tt>.  This page has been written with a view
-towards keeping it useful upon printing.
+the format, this document also seeks to supply some rationale.  This
+page has been written with a view towards keeping it useful upon
+printing.
 
 <p>
 
 When saved, the filenames for NRRD files should end in
 "<tt>.nrrd</tt>".  Detached headers, discussed in <a
-href="#sect3">Section 3</a>, should end in "<tt>.nhdr</tt>".  Standard
-suffixes for data files associated with detached headers are listed in
-the <a href="#encoding"><tt>encoding</tt></a> part of <a
-href="#sect4">Section 4</a>.
+href="#sect3">Section 3</a>, should end in "<tt>.nhdr</tt>".
+Suggested suffixes for data files associated with detached headers
+("<tt>.raw</tt>", "<tt>.txt</tt>", etc) are listed in the <a
+href="#encoding"><tt>encoding</tt></a> part of <a
+href="#sect5">Section 5</a>.
 
 <p>
 
-The <tt>nrrdRead()</tt> and <tt>nrrdWrite()</tt> functions of the <a
+The <tt>nrrdRead()</tt>/<tt>nrrdLoad()</tt> and
+<tt>nrrdWrite()</tt>/<tt>nrrdSave()</tt> functions of the <a
 href="index.html"><b>nrrd</b></a> library are intended to completely
-support the format as described here, but there is currently no test
-suite or validation program.
+support the format as described here, but as yet there is no test
+suite.
 
 <h2><a name="sect1">1. General information</a></h2>
 
-Because the NRRD format uses a multi-line text header, some mention
-should be made of what exactly a line is.  When Windows (and sometimes
-Cygwin) create a text file, each line is terminated by a pair of
-characters, "<tt>\r\n</tt>".  When everyone else creates a text file,
-each line is terminated by just "<tt>\n</tt>".  NRRD readers must be
-able to handle both types of line terminations; NRRD writers can use
-one or the other or both.  The line termination is
-ignored once the line has been read from file, so when the description
-below says "the line contains ...", it is referring to everything
-prior to the character(s) comprising the line termination.  In the current
-definition of the format, there is <b>no</b> limit to how long a line
-can be.  If a reader can't handle a given line in a file, it should
-die with an error message to that effect.  The <tt>content</tt>,
-<tt>labels</tt>, and comment fields (described below) allow for
-arbitrarily long strings.  ASCII encoding is assumed.
-
-<p>
+<h3><a name="sect1.1">1.1 Format versions and magics</a></h3>
 
 NRRD files come in two forms: with an attached header (in which the
 header and the data are in the same file), and with a detached header
@@ -98,25 +82,9 @@ must be able to support attached and detached headers.
 
 <p>
 
-The general format of a NRRD file (with attached header) is either
+The general format of a NRRD file (with attached header) is:
 <blockquote><pre>
-NRRD0001
-&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
-&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
-# &lt;<i>comment</i>&gt;
-...
-&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
-&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
-# &lt;<i>comment</i>&gt;
-
-&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;...
-</pre></blockquote> 
-
-<p>
-
-Or, in the newer format:
-<blockquote><pre>
-NRRD0002
+NRRD000<b>X</b>
 &lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
 &lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
 # &lt;<i>comment</i>&gt;
@@ -135,23 +103,53 @@ NRRD0002
 The very first line contains nothing but the NRRD "magic".  The magic
 is what identifies the file as a NRRD file, for the benefit of readers
 that have to handle multiple file formats.  For NRRD files, the first
-four characters are always "<tt>NRRD</tt>", and the remaining characters
-give information about the file format version.  Currently, there are
-two possible magics: <tt>NRRD0001</tt> and <tt>NRRD0002</tt>, although readers
-should also recognize a magic used in early implementations:
-<tt>NRRD00.01</tt>.  The only difference among these is that in
-<tt>NRRD0002</tt> files, key/value pairs of strings can be stored.
-Readers encountering a magic starting with "<tt>NRRD</tt>" but ending
-with something besides "<tt>0001</tt>", "<tt>0002</tt>", or
-"<tt>00.01</tt>" need not make any effort to continue parsing the
-file.
+four characters are always "<tt>NRRD</tt>", and the remaining
+characters give information about the file format version.  The
+"<tt><b>X</b></tt>" in "<tt>NRRD000<b>X</b></tt>" identifies which
+version of the file format is being used.  As new features have been
+added to the format, the <tt><b>X</b></tt> as been incremented to
+ensure that readers in old binaries don't try to parse newer headers.  Briefly,
+the different magics are:
+<ul> 
+
+<li><tt>NRRD0001</tt>: (and <tt>NRRD00.01</tt> for circa 1998 files)
+original and most basic version
+
+<li><tt>NRRD0002</tt>: added key/value pairs
+
+<li><tt>NRRD0003</tt>: added "<tt>kinds:</tt>" field,
+
+<li><tt>NRRD0004</tt>: added "<tt>thicknesses:</tt>" and "<tt>sample
+units</tt>" fields, general space and orientation information
+("<tt>space:</tt>", "<tt>space dimension:</tt>", "<tt>space
+directions:</tt>", "<tt>space origin:</tt>", and "<tt>space
+units:</tt>" fields) , and the ability for the "<tt>data file:</tt>"
+field to identify multiple data files.
+
+</ul>
+
+<h3><a name="sect1.2">1.2 Basic header structure</a></h3>
+
+Because the NRRD format uses a multi-line text header, some mention
+should be made of what exactly a line is.  When Windows (and sometimes
+Cygwin) creates a text file, each line is terminated by a pair of
+characters, "<tt>\r\n</tt>".  When everyone else creates a text file,
+each line is terminated by just "<tt>\n</tt>".  NRRD readers must be
+able to handle both types of line terminations; NRRD writers can use
+one or the other or both.  The line termination is ignored once the
+line has been read from file, so when the description herein says "the
+line contains ...", it is referring to everything prior to the
+character(s) comprising the line termination.  In the current
+definition of the format, there is <b>no</b> limit to how long a line
+can be.  The <tt>content</tt>, <tt>labels</tt>, key/value pairs, and
+comment fields (described below) allow for arbitrarily long strings.
+ASCII encoding is assumed for the NRRD header.
 
 <p>
-
 Each of the "&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;" lines
 specifies information about one of the fields in the nrrd.  Each of
 these lines is called a "field specification", or more loosely, a
-"field".  Each field specification is contained in one line.  
+"field".  Each field specification is contained in exactly one line.
 Each field specification may appear no more than once in the nrrd
 header; repetitions of a field is sufficient cause for a reader to
 exit with an error message.
@@ -160,23 +158,21 @@ exit with an error message.
 
 Each of the "&lt;<i>key</i>&gt;:=&lt;<i>value</i>&gt;" lines specifies
 a key/value pair in the nrrd.  These can appear in <tt>NRRD0002</tt>
-files, but not <tt>NRRD0001</tt> files.  The key and value strings are
-delimited by the first "<tt>:=</tt>" to appear on the line: any spaces
-before or after "<tt>:=</tt>" are assumed part of the key or value,
-respectively.  The length of the key string must be at least one
-character, the value string can be zero-length.  Because both the
-key and value must appear on exactly one line, a minimal escaping scheme
-is required, which readers must interpret and writers must generate:
-<ul>
-<li> "<tt>\n</tt>" signifies a new line, as defined by the 
-<tt>'\n'</tt> character constant in C
-<li> "<tt>\\</tt>" signifies the backslash character, the 
-<tt>'\\'</tt> character constant in C.
-</ul>
-If a key is repeated more than once, the value in the last key/value
-pair is the only one stored.  The substring "<tt>:=</tt>" is not
-allowed in the key string.  Key/value pair specifications can be
-interspersed in any order among the comments and field specifications.
+(and higher version) files, but not <tt>NRRD0001</tt> files.  The key
+and value strings are delimited by the first "<tt>:=</tt>" to appear
+on the line: any spaces before or after "<tt>:=</tt>" are assumed part
+of the key or value, respectively.  The length of the key string must
+be at least one character, the value string can be zero-length.
+Because both the key and value must appear on exactly one line, a
+minimal escaping scheme is required, which readers must interpret and
+writers must generate: <ul> <li> "<tt>\n</tt>" signifies a new line,
+as defined by the <tt>'\n'</tt> character constant in C <li>
+"<tt>\\</tt>" signifies the backslash character, the <tt>'\\'</tt>
+character constant in C.  </ul> If a key is repeated more than once,
+the value in the last key/value pair is the only one stored.  The
+substring "<tt>:=</tt>" is not allowed in the key string.  Key/value
+pair specifications can be interspersed in any order among the
+comments and field specifications.
 
 <p>
 
@@ -211,11 +207,11 @@ and then the information describing the field "&lt;<i>desc</i>&gt;"
 (called the field descriptor).  All field identifiers are case
 insensitive.  Nearly all the field descriptors are also case
 insensitive, the exceptions are the field descriptors containing
-strings: the <tt>content</tt>,
-<tt>labels</tt>, and <tt>units</tt> fields.  Whitespace (that is not
-part of the previous line's termination) is not allowed before
-a field identifier. Extra whitespace after the field descriptor and
-before the line termination should be ignored.
+strings: the <tt>content</tt>, <tt>labels</tt>, <tt>units</tt>, and
+<tt>sample units</tt> fields.  Whitespace (that is not part of the
+previous line's termination) is not allowed before a field
+identifier. Extra whitespace after the field descriptor and before the
+line termination should be ignored.
 
 <p>
 
@@ -227,12 +223,12 @@ previous information in the header.  This is why there is no standard
 template for all NRRD headers, or a context-free grammar for NRRD
 headers.
 
-<p>
+<h3><a name="sect1.3">1.3 "Per-axis" versus "basic" fields, and axis ordering</a></h3>
 
 Some field specifications give a piece of
 information about each and every axis in a nrrd; these are called
 "per-axis field specifications".  An example is the <tt>sizes</tt>
-field that identifyies how many samples there are
+field that identifies how many samples there are
 along each dimension of the array.  Per-axis
 specifications must have as many components as there are dimensions in
 the array, so that they can identify information for every axis.
@@ -264,7 +260,8 @@ of information need to be parsed (the same as the dimension).  This
 also avoids any attempts at cleverness in the form of guessing the
 nrrd dimension based on the first per-axis specification.  Other than
 this one constraint, field specifications may appear in <b>any</b>
-order within the header (after the magic).
+order within the header after the magic, with the exception of one
+form of the "<tt>data file: LIST</tt>" form of the <tt>data file</tt> field.
 
 <!-- 
 <p>
@@ -277,8 +274,8 @@ href="#sect2">Section 2</a> will define how NRRD readers and writers
 must handle ascii encoding of floating point data.  <a
 href="#sect3">Section 3</a> describes how NRRD handles detached
 headers.  Finally, careful definition of all the different field
-specifications are found in <a href="#sect4">Section 4</a> and <a
-href="#sect5">Section 5</a>.
+specifications are found in <a href="#sect5">Section 5</a> and <a
+href="#sect6">Section 6</a>.
 -->
 
 <p>
@@ -332,7 +329,7 @@ point, and so on.  Useful variants like "<tt>uchar</tt>" (same as
 "<tt>unsigned char</tt>") are allowed.  There is also the
 <tt>block</tt> type, which is used to represent some chunk of opaque
 memory, of user-specified size; see the <a href="#type"><tt>type</tt>
-specification</a> in <a href="#sect4">Section 4</a> for all the
+specification</a> in <a href="#sect5">Section 5</a> for all the
 details.  
 
 <p>
@@ -342,7 +339,7 @@ header) is written out; "<tt>ascii</tt>" and "<tt>raw</tt>" are common
 values, but "<tt>hex</tt>" allows extraction of images from some
 PostScript files, and compression is also supported; see the <a
 href="#encoding"><tt>encoding</tt> specification</a> (<a
-href="#sect4">Section 4</a>).  NRRD readers must be able to support
+href="#sect5">Section 5</a>).  NRRD readers must be able to support
 raw and ASCII encoding, everything else is optional.  See the 
 <a href="descformat.html">general description of NRRD format</a>
 for more information about how optional encodings are handled.
@@ -378,10 +375,10 @@ specifications become necessary as a function of other fields: if the
 <tt>type</tt> was "<tt>float</tt>", and the <tt>encoding</tt> is
 something other than "<tt>ascii</tt>", then the <tt>endian</tt> of the
 data would have to be recorded.  The details of which fields require
-which other fields are spelled out in <a href="#sect4">Section 4</a>
-and <a href="#sect5">Section 5</a>.
+which other fields are spelled out in <a href="#sect5">Section 5</a>
+and <a href="#sect6">Section 6</a>.
 
-<p>
+<h3><a name="sect1.4">1.4 Optional information and its representation</a></h3>
 
 One of the things that makes reading a NRRD header complicated is that
 the absence of optional information is just as important to record
@@ -444,7 +441,7 @@ encoding of the the IEEE 754 special values.
 
 <p>
 
-In <a href="#sect4">Section 4</a> and <a href="#sect5">Section 5</a>,
+In <a href="#sect5">Section 5</a> and <a href="#sect6">Section 6</a>,
 when a field specification is described as harmless, it means that the
 field specification probably shouldn't be in the header, because its
 information is either irrelevant or meaningless in that context.
@@ -455,7 +452,7 @@ complain if the field specification is malformed and unparsable.
 
 <p>
 
-In <a href="#sect4">Section 4</a> and <a href="#sect5">Section 5</a>,
+In <a href="#sect5">Section 5</a> and <a href="#sect6">Section 6</a>,
 numeric field specification descriptions include a "Type", which
 identifies the minimum precision with which the information must be
 represented by the NRRD reader.  In this context, "<tt>int</tt>" means
@@ -472,15 +469,16 @@ href="#labels"><tt>labels</tt></a> and <a
 href="#units"><tt>units</tt></a> specifications, in which the
 descriptors (strings) are delimited by quotes).
 
+<!--
 <p>
-
 No other fields are allowed in a "<tt>NRRD0001</tt>" or
 "<tt>NRRD00.01</tt>" magic file other than those defined in <a
-href="#sect4">Section 4</a> and <a href="#sect5">Section 5</a>.  NRRD
+href="#sect5">Section 5</a> and <a href="#sect6">Section 6</a>.  NRRD
 readers are not expected to make any efforts to deal with
 non-conformant files (in contrast to PNM recommendations), but
 specific and intelligent human-readable error messages are of course
 encouraged.
+-->
 
 <h2><a name="sect2">2. ASCII encoding of floating point</a></h2>
 
@@ -498,7 +496,7 @@ strings which are used to represent these values:
 <li>If the string contains the substring "<tt>nan</tt>"
 (case-insensitive), the value must be parsed as NaN, either signaling
 or quiet. There is no restriction on the
-specific bit pattern used in the fraction field of the value.
+specific bit pattern used in the mantissa field of the value.
 <li>Otherwise, if the string contains "<tt>-inf</tt>" (case-insensitive),
 the value must be parsed as negative infinity.
 <li>Otherwise, if the string contains "<tt>inf</tt>" (case-insensitive),
@@ -539,7 +537,7 @@ handlers which can interact with signaling NaNs.
 Given this, in the NRRD file format (and in the <a
 href="index.html"><b>nrrd</b></a> library), a NaN is a NaN is a NaN,
 with no difference between signaling and quiet, and no recognition of
-the integer value in the fraction field of the NaN.  If the
+the integer value in the mantissa field of the NaN.  If the
 signaling/quiet distinction mattered, then when writing raw floating
 point data, not only would endianness have to be recorded, but also
 the convention for representing quiet NaN, and if the data came from a
@@ -557,21 +555,21 @@ in accordance with these rules.
 
 <h2><a name="sect3">3. Detached headers</a></h2>
 
-The ability to have detached headers is one of the most useful
-features of the NRRD format.  Detached headers allow data stored in
-another file format to be accessed by <b>nrrd</b> functions, while
-leaving the original file intact.  The <tt>line&nbsp;skip</tt> and
-<tt>byte&nbsp;skip</tt> fields are especially useful for these
-cases. Detached headers are also very useful in situations where very
-large amounts of data are to be read or written with direct IO, a very
-fast method of IO in which the device driver transfers data directly
-between blocks on disk and user-space memory (<a
-href="index.html"><b>nrrd</b></a> currently supports direct IO on
-SGIs, via the <a href="../air/index.html"><b>air</b></a> library).
-Direct IO requires special alignment between the data segment
-beginning and the block boundaries on disk, which makes using attached
-headers nearly impossible.  Detached headers are also the simplest way
-to deal with NRRD readers which do not support the optional encodings,
+Detached headers allow data stored in one or more separate files,
+with or without headers of another format, to be accessed by a NRRD
+header, leaving the original file(s) intact.  The
+<tt>line&nbsp;skip</tt> and <tt>byte&nbsp;skip</tt> fields are
+especially useful for these cases. Detached headers are also very
+useful in situations where very large amounts of data are to be read
+or written with direct IO, a very fast method of IO in which the
+device driver transfers data directly between blocks on disk and
+user-space memory (<a href="index.html"><b>nrrd</b></a> currently
+supports direct IO on SGIs, via the <a
+href="../air/index.html"><b>air</b></a> library).  Direct IO requires
+special alignment between the data segment beginning and the block
+boundaries on disk, which makes using attached headers rather
+inconvenient.  Detached headers are also the simplest way to deal with
+NRRD readers which do not support the optional compressed encodings,
 since a stand-alone program (such as "<tt>gzip/gunzip</tt>" or
 "<tt>bzip2/bunzip2</tt>") will be able to process the separate data
 file.
@@ -579,63 +577,361 @@ file.
 <p>
 
 There is one new field specification which is required in detached
-headers. The format is:
+headers, using the "<tt>data file</tt>" identifier.  This field specification
+can take one of three possible forms:
 
-<blockquote><pre>
-data file: &lt;<i>filename</i>&gt;
-</pre></blockquote>
+<blockquote>
+<ol>
+<li><tt>data file: &lt;<i>filename</i>&gt;</tt>
+<li><tt>data file: &lt;<i>format</i>&gt; &lt;<i>min</i>&gt; &lt;<i>max</i>&gt; &lt;<i>step</i>&gt; [&lt;<i>subdim</i>&gt;]</tt>
+<li><tt>data file: LIST [&lt;<i>subdim</i>&gt;]</tt>
+</ol>
+</blockquote>
 
-"<tt>datafile:</tt>" is also valid.  "<tt><i>filename</i></tt>"
-identifies the file that contains the data. The addition of this field
-is the only difference between attached headers and detached headers.
-The magic at the beginning of the header is the same, so there is
-currently no way to immediately detect if the header being parsed is
-attached or detached.  The rest the field specifications are the same,
-and because the <tt>data file</tt> field specification is a
-basic specification, it may appear anywhere in the header.
-Detached headers may end with the the last field specification, or
-with a single blank line following the last field specification (in
-which case anything following the blank line is ignored).
+"<tt>datafile:</tt>" is also valid as the field identifier.  The three
+forms of the field descriptor are described below. The addition of
+this field is the only difference between attached headers and
+detached headers.  The magic at the beginning of the header is the
+same, so there is currently no way to immediately detect if the header
+being parsed is attached or detached.  Detached headers may end with
+the the last field specification, or with a single blank line
+following the last field specification (in which case anything
+following the blank line is ignored).
+
+<ol>
+
+<li> There is a single detached data file, and its filename is 
+"<tt><i>filename</i></tt>".  This field specification can appear anywhere
+in the header.  
+
+<li> There are multiple detached data files, and their filenames
+include integral values which can be generated by something akin to
+<tt>sprintf()</tt>.  This field specification can appear anywhere
+in the header.  The "<tt><i>format</i></tt>" string must contain
+a single format specification for an integral value, for example
+"<tt>%d.raw</tt>" or "<tt>I.%03d</tt>".  This format string is passed
+directly to <tt>sprintf()</tt>, supplying as the sole variable
+parameter an <tt>int</tt> value, which ranges according to
+<tt>&lt;<i>min</i>&gt;</tt>, <tt>&lt;<i>max</i>&gt;</tt>, and
+<tt>&lt;<i>step</i>&gt;</tt>.  <tt>&lt;<i>step</i>&gt;</tt> must be
+non-zero. If <tt>&lt;<i>step</i>&gt;</tt> is positive,
+<tt>&lt;<i>min</i>&gt;</tt> must be less than or equal to
+<tt>&lt;<i>max</i>&gt;</tt>, otherwise <tt>&lt;<i>max</i>&gt;</tt>
+must be less than or equal to <tt>&lt;<i>min</i>&gt;</tt>.  The first
+filename uses value <tt>&lt;<i>min</i>&gt;</tt>, the next is
+<tt>&lt;<i>min</i>&gt</tt>+<tt>&lt;<i>step</i>&gt</tt>, on through all values
+of <tt>&lt;<i>min</i>&gt</tt>+N*<tt>&lt;<i>step</i>&gt</tt>, 
+which are between <tt>&lt;<i>min</i>&gt</tt> and
+<tt>&lt;<i>max</i>&gt;</tt> inclusive.  Note that
+<tt>&lt;<i>max</i>&gt;</tt> need not be one of these values.
+
+<li> There are multiple detached data files, and their filenames are
+given explicitly, in the NRRD header, one filename per line, in the 
+line starting after data file field specification, until the end 
+of file.  Thus, this form of the field specification <b>must</b> be
+the last specification of the header.
+
+</ol>
+
+(The second and third forms were copied from the MetaImage format.)
 
 <p>
 
-<a name="headerel">Breaking</a> the dataset into two files raises new
-concerns, namely that the header file can't know if the data file has
-been erased, renamed, or moved.  NRRD provides no means to overcome
-these problems once they've been created.  On the other hand, moving
-the header and data files together to a new place is a common
-operation, and is supported by the special semantics associated with
-the data filename descriptor:
+When there are multiple separate datafiles (second and third forms
+above), the amount of data in each file has to be determined somehow.
+By default, each file is assumed to contain one slice along the 
+<b>slowest</b> axis of the nrrd.  That is, the dimension of data in
+each file is D-1, where D is the dimension of the full array (given by
+the <tt>dimension:</tt> field).  A different datafile dimension
+(besides D-1) can be communicated with the optional
+<tt>&lt;<i>subdim</i>&gt;</tt> value.  This value can be between 1 and D.
+When <tt>&lt;<i>subdim</i>&gt;</tt> is less than D-1 (for example, giving
+a 4-D volume one 2-D slice at a time), the number of data files can be
+determined by the product of one or more of the slowest axes.  When
+<tt>&lt;<i>subdim</i>&gt;</tt> is equal to D, the data is assumed to be a
+set of equal-sized "slabs", based on cuts along the slowest axis.  The
+number of "slabs" must divide into the number of samples along the
+slowest axis.
+
+<p>
+
+<a name="headerel">Breaking</a> the dataset into a header and one or
+more data files raises a new concerns, namely that the header file
+can't know if the data file has been erased, renamed, or moved.  NRRD
+provides no means to overcome these problems once they've been
+created.  On the other hand, moving the header and data files together
+to a new place is a common operation, and is supported by the special
+semantics associated with the data filename descriptor.  
 
 <ul>
 
-<li> If "<tt><i>filename</i></tt>" begins with "<tt>./</tt>", the
-remainder after "<tt>./</tt>" is taken to be the filename of the data
-file, <i>relative to the location of the detached header file</i>.
-The NRRD reader is responsible for constructing the data filename from
-the filename of the detached header, and the remainder of
-"<tt><i>filename</i></tt>" after "<tt>./</tt>".  Obviously, if the
-detached header has been passed to the reader not as a file name, but
-as a <tt>FILE*</tt> (such as <tt>stdin</tt>), this filename
-construction is impossible, and the reader should abort with an error
-message.
+<li> If the filename (given either directly from
+"<tt><i>filename</i></tt>", or generated from
+"<tt><i>format</i></tt>", or listed in a "<tt>LIST</tt>") does
+<b>not</b> begins with "<tt>/</tt>", it is taken to be the filename of
+the data file, <i>relative to the location of the detached header
+file</i>.  The NRRD reader is responsible for constructing the data
+filename from the filename of the detached header and
+"<tt><i>filename</i></tt>".  Obviously, if the detached header has
+been passed to the reader not as a file name, but as a <tt>FILE*</tt>
+(such as <tt>stdin</tt>), this filename construction is impossible.
 
-<li> Otherwise, "<tt><i>filename</i></tt>" gives the name of the data
-file.  It is passed directly to <tt>fopen()</tt> without any
-interpretation.  Filenames which do not start with a  full path are
-therefore interpreted as being relative to the current working
-directory of the reader, where ever that is.
+
+<li> Otherwise, if "<tt><i>filename</i></tt>" does start with
+"<tt>/</tt>", then <tt><i>filename</i></tt> gives the full path of the
+data file.  It is passed directly to <tt>fopen()</tt> without any
+interpretation.  
 
 </ul>
 
+<b>Note</b>: as of <tt>NRRD0004</tt>, the signifier of a
+header-relative file changed from the presence (at the beginning of the
+filename) of "<tt>./</tt>", to the absence of
+"<tt>/</tt>".  Since essentially all uses of detached headers assumed
+header-relative data files, the explicit "<tt>./</tt>" flag was deemed
+unnecessary.  With this change, it becomes impossible for a header
+to refer to the data file relative to the current working directory
+of the reader (which may be different that the directory of the header),
+but that's probably a good thing.
+
+<p>
+
+When using multiple data files, the <tt>line skip</tt> and <tt>byte
+skip</tt> fields describe how to data is to be accessed in all the
+files (separately): within every file, line skipping and byte skipping
+is used to get at the data.  The <tt>encoding</tt> and <tt>endian</tt>
+fields must hold for all data files.
+
+<!--
 By using "<tt>./</tt>", a reader invoked in a directory different than
 the detached header can know how to find the data file.  Without it,
 the detached header would either have to know where the reader is
 invoked from, or the header would have to specify the full path to the
 datafile, at which point it becomes annoying to move the header and
 data together to a different directory.
+-->
 
-<h2><a name="sect4">4. Basic Field specifications</a></h2>
+<h2><a name="sect4">4. Space and Orientation information</a></h2>
+
+Staring with <tt>NRRD0004</tt> files, NRRD headers can describe the
+orientation of the raster grid relative to some surrounding "space".
+This allows, for example, a NRRD file to specify how an MRI-scanned
+volume is oriented relative to a patient-based coordinate system such
+as right-anterior-superior.  The orientation information in a NRRD
+header defines a relationship between the individual axes of the
+array, and the basis vectors of the (single) space in which the array
+conceptually lives.  Because orientation information is a self-contained
+topic, all the related field specifications are described here, instead
+of in <a href="#sect5">Section 5</a> and <a href="#sect6">Section 6</a>.
+
+<p>
+
+Orientation information is defined by a combination of basic and
+per-axis field specifications, which accomplish three things:
+<ol>
+<li> Name the space around array (or at least its dimension). Done
+with basic field specifications "<tt>space:</tt>"
+and "<tt>space dimensions:</tt>", and per-axis field specification
+"<tt>space units:</tt>".
+<li> Determine the translation (or position) of the array.  Done with
+basic field specification "<tt>origin:</tt>", which locates the "first"
+sample (the value for which appears first in the data file, or at the 
+lowest memory address).
+<li> Determine the direction of each axis of the array relative to the space.
+Done with per-axis field specifications "<tt>space directions:</tt>".
+</ol>
+
+The logic behind the break-down between basic and per-axis field
+specifications this is that if the raster ordering of the axes of the
+image data is permuted (for example the fastest and slowest axes are
+interchanged), items 1 and 2 are unchanged, while the elements of item
+3 have to be correspondingly permuted.
+
+<p>
+
+When orientation information is defined by the fields below, some of
+the other per-axis fields may not be used.  Specifically, <b>on a per-axis
+basis</b>, there is mutual exclusion between setting a <tt>space direction</tt>
+and using a non-NaN value for "<tt>mins</tt>",
+"<tt>maxs</tt>", and "<tt>spacings</tt>", or a non-empty string
+in the and "<tt>units</tt>" field.  However, there is no such exclusion
+with the "<tt>thicknesses</tt>", "<tt>centers</tt>", "<tt>kinds</tt>",
+and "<tt>labels</tt>" fields.
+
+<p>
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="space">space: &lt;<i>space</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always optional, but either this or "<tt>space dimension</tt>"
+(but not both) is necessary for defining orientation
+</ul>
+
+This names a particular space in which the array lives, which implies
+the dimension of the space.  This (or "<tt>space dimension</tt>") has to 
+precede the other orientation-related fields, because it determines how
+many components there are in the vectors of the <tt>origin</tt>
+and <tt>space directions</tt> fields.
+The possible values are:
+
+<table border=1>
+<tr>
+  <td><b>&lt;<i>space</i>&gt;</b>
+  <td><b>Space<br>dimension</b>
+  <td><b>Description</b>
+<tr>
+  <td>"<tt>right-anterior-superior</tt>" or "<tt>RAS</tt>"
+  <td>3
+  <td>For medical data, a <b>patient</b>-based right-handed 
+    coordinate frame, with ordered
+    basis vectors pointing <b>towards</b> right, anterior, and superior,
+    respectively.  This space is used in the
+    <a href="http://nifti.nimh.nih.gov/old/dfwg/">NIFTI-1</a> extension to the
+    Analyze format.
+<tr>
+  <td>"<tt>left-anterior-superior</tt>" or "<tt>LAS</tt>"
+  <td>3
+  <td>For medical data, a <b>patient</b>-based left-handed 
+     coordinate frame, with ordered
+     basis vectors pointing <b>towards</b> left, anterior, and superior,
+     respectively.  This space is used in the Analyze 7.5 format.
+<tr>
+  <td>"<tt>left-posterior-superior</tt>" or "<tt>LPS</tt>"
+  <td>3
+  <td>For medical data, a <b>patient</b>-based right-handed 
+     coordinate frame, with ordered
+     basis vectors pointing <b>towards</b> left, posterior, and superior,
+     respectively.  This space is used in DICOM 3.
+<tr>
+  <td>"<tt>right-anterior-superior-time</tt>" or "<tt>RAST</tt>"
+  <td>4
+  <td>Like <tt>RAS</tt>, but the time along the fourth axis.
+<tr>
+  <td>"<tt>left-anterior-superior-time</tt>" or "<tt>LAST</tt>"
+  <td>4
+  <td>Like <tt>LAS</tt>, but with time along the fourth axis.
+<tr>
+  <td>"<tt>left-posterior-superior-time</tt>" or "<tt>LPST</tt>"
+  <td>4
+  <td>Like <tt>LPS</tt>, but with time along the fourth axis.
+<tr>
+  <td>"<tt>scanner-xyz</tt>"
+  <td>3
+  <td>For medical data, a <b>scanner</b>-based right-handed coordinate
+    frame, used in ACR/NEMA 2.0 (pre-DICOM 3).  If a patient lies parallel
+   to the ground, face-up on the table, with his feet-to-head direction
+ same as the front-to-back direction of the imaging equipment, the axes of
+ this scanner-based coordinate frame and the patient-based
+ left-posterior-superior frame coincide.
+<tr>
+  <td>"<tt>scanner-xyz-time</tt>"
+  <td>4
+  <td>Like <tt>scanner-xyz</tt>, but with time along the fourth axis.
+<tr>
+  <td>"<tt>3D-right-handed</tt>"
+  <td>3
+  <td>Any right-handed three-dimensional space
+<tr>
+  <td>"<tt>3D-left-handed</tt>"
+  <td>3
+  <td>Any left-handed three-dimensional space
+<tr>
+  <td>"<tt>3D-right-handed-time</tt>"
+  <td>4
+  <td>Like <tt>3D-right-handed</tt>, but with time along the fourth axis.
+<tr>
+  <td>"<tt>3D-left-handed-time</tt>"
+  <td>4
+  <td>Like <tt>3D-left-handed</tt>, but with time along the fourth axis.
+</table>
+
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="spacedimension">space dimension: &lt;<i>int</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always optional, but either this or "<tt>space</tt>"
+(but not both) is necessary for defining orientation
+</ul>
+
+If the space surrounding the array is not available as an explicitly
+named space with the <tt>space</tt> field specification, the dimension
+of the space is given with this.  The integral dimension determines how
+many components there are in the vectors given in the <tt>origin</tt>
+and <tt>space directions</tt> vectors.  This (or <tt>space</tt>) has
+to precede the other orientation-related fields.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="spaceunits">space units: "&lt;<i>unit[0]</i>&gt;" "&lt;<i>unit[1]</i>&gt;" ... "&lt;<i>unit[dim-1]</i>&gt;"</a>
+</pre></blockquote>
+<ul>
+<li> Always optional, and is an optional part of defining orientation
+</ul>
+
+Allows naming of units with which the components of the space vectors
+are measured.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="origin">origin: &lt;<i>vector</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always optional, and is an optional part of defining orientation
+</ul>
+
+This single vector gives the location of the <b>center</b> of the
+first sample in the array (the one whose value is given first in the
+data file, or with the lowest memory address).  This allows the
+translational position of the image to be defined.  If homogeneous
+coordinates are used to map from the index space of the array, to the
+surrounding space location, this vector would be the last column
+vector of the matrix transform.  By being specific to the center of
+the sample, this is independent of the cell- versus node-centering of
+the data.  This field conveys the same information as the "Image
+Position" (0020,0032) field of a DICOM file, except the space in which
+the vector coordinates are given need not by the DICOM-specific
+LPS space.
+
+<p>
+
+The format of the <tt>&lt;<i>vector</i>&gt;</tt> is as follows.
+The vector is delimited by "<tt>(</tt>" and "<tt>)</tt>", and the
+individual components are comma-separated.  This is an example of
+a three-dimensional origin specification:
+<blockquote><pre>
+origin: (0.0,1.0,0.3)
+</pre></blockquote>
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="">space directions: "&lt;<i>vector[0]</i>&gt;" "&lt;<i>vector[1]</i>&gt;" ... "&lt;<i>vector[dim-1]</i>&gt;"</a>
+</pre></blockquote>
+<ul>
+<li> Always optional, but is a necessary part of defining orientation
+</ul>
+
+For each of the axes of the array, this vector gives the difference in
+position associated with incrementing (by one) the corresponding
+coordinate in the array.  Thus, each "space direction" gives both the
+direction and spacing associated with each axis of the array.  Unlike
+the "direction cosines" given in the "Image Orientation" (0020,0037)
+field of a DICOM file, these vectors are not unit-length: the spacing
+between samples is recovered as the magnitude of the vector.
+format of these vectors is the same as that of the "<tt>origin</tt>"
+specification.  For axes whose samples are not distributed in space
+(such as three samples of an axis giving RGB colors), the vector may
+be given as "<tt>none</tt>".  This is an example of how the
+orientation of a volume of RGB colors (with colors on the fastest
+axis) may be specified:
+<blockquote><pre>
+space directions: none (1,0,0) (0,1,0) (0,0,3)
+</pre></blockquote>
+
+<h2><a name="sect5">5. Basic Field specifications</a></h2>
 
 <hr noshade width="30%" align=left>
 <blockquote><pre>
@@ -780,7 +1076,7 @@ structures in a portable way, you shouldn't be using NRRD files.  Use
 blocksize: &lt;<i>int</i>&gt;
 </pre></blockquote>
 <ul>
-<li> Necessary for <tt>block</tt> type nrrds; harmless for all other types.
+<li> Necessary for <tt>block</tt> type nrrds; invalid for all other types.
 <li> Type: <tt>int</tt>
 </ul>
 
@@ -788,14 +1084,14 @@ Blocks are opaque chunks of memory of user-specified size.  The
 <tt>block size</tt> specification gives the size of that chunk, it
 must be greater than zero.  Specifically, it identifies the number of
 bytes between the beginning of one block and the beginning of the
-next.  Perhaps confusingly, it says nothing about the block size of
-the file system in use.  Knowing the block size allows the NRRD reader
-to know how many bytes of non-ascii data should be read from file.  The
-block size is exactly the return from <tt>sizeof()</tt> operator applied
-to a C struct or a C++ object, but as usual, this may not be the same
-as the sum of the sizes of the constituent members.  See the <a
-href="#block">points regarding the block type</a> (above) for the
-restrictions and warnings on encoding of blocks.
+next.  <!-- Perhaps confusingly, it says nothing about the block size
+of the file system in use.  --> Knowing the block size allows the NRRD
+reader to know how many bytes of non-ascii data should be read from
+file.  The block size is exactly the return from <tt>sizeof()</tt>
+operator applied to a C struct or a C++ object, but as usual, this may
+not be the same as the sum of the sizes of the constituent members.
+See the <a href="#block">points regarding the block type</a> (above)
+for the restrictions and warnings on encoding of blocks.
 
 <hr noshade width="30%" align=left>
 <blockquote><pre>
@@ -1057,8 +1353,12 @@ integral value.
 
 <hr noshade width="30%" align=left>
 <blockquote><pre>
-<a name="datafile">data file: &lt;<i>file</i>&gt;</a>
-datafile: &lt;<i>file</i>&gt;
+<a name="datafile">data file: &lt;<i>filename</i>&gt;</a>
+datafile: &lt;<i>filename</i>&gt;
+data file: &lt;<i>format</i>&gt; &lt;<i>min</i>&gt; &lt;<i>max</i>&gt; &lt;<i>step</i>&gt; [&lt;<i>subdim</i>&gt;]
+datafile: &lt;<i>format</i>&gt; &lt;<i>min</i>&gt; &lt;<i>max</i>&gt; &lt;<i>step</i>&gt; [&lt;<i>subdim</i>&gt;]
+data file: LIST [&lt;<i>subdim</i>&gt;]
+datafile: LIST [&lt;<i>subdim</i>&gt;]
 </pre></blockquote>
 <ul>
 <li> Always optional
@@ -1069,7 +1369,7 @@ from an attached or a detached NRRD header.  When it is present, it is
 interpreted according to <a href="#sect3">Section 3</a>, and the
 header is considered finished at the EOF, or at the blank line
 following the last field, whichever comes first.  If the header ends
-with a blank line, and any data after the blank line is ignored.  If
+with a blank line, any data after the blank line is ignored.  If
 this field is not present, the data is assumed to be in the same file
 as the header, following the blank line marking the end of the header.
 
@@ -1085,14 +1385,12 @@ lineskip: &lt;<i>skip</i>&gt;
 
 This is most useful in a detached header.  It tells the NRRD reader to
 skip some number of lines (greater than or equal to zero) in the data
-file in order to get to the where the data actually begins.  This
-enables detached NRRD headers to access data in VTK files, for
-instance.  If this is used in an attached NRRD header, then the lines
-are skipped after the blank line at the end of the NRRD header.  The
-definition of a "line" in this context is the same as given at the
-beginning of <a href="#sect1">Section 1</a>.  When this field does not
-appear, <i>skip</i> is taken to be zero.  Negative values are not
-valid.
+file in order to get to the where the data actually begins.  If this
+is used in an attached NRRD header, then the lines are skipped after
+the blank line at the end of the NRRD header.  The definition of a
+"line" in this context is the same as given at the beginning of <a
+href="#sect1">Section 1</a>.  When this field does not appear,
+<i>skip</i> is taken to be zero.
 
 <p>
 
@@ -1127,13 +1425,28 @@ data.  By definition, the bytes are skipped according to the action of
 <tt>fgetc()</tt>.  When used in combination with <a
 href="#byteskip"><tt>line&nbsp;skip</tt></a>, the byte skipping is
 done <b>after</b> the line skipping.  When this field does not appear,
-<i>skip</i> is taken to be zero.  Negative values are not valid.
+<i>skip</i> is taken to be zero.
+
+As an idiom copied from the MetaImage
+file format, the value of <i>skip</i> can be -1.  This is valid only
+with raw encoding.  The action of this byte skip is to <tt>fseek()</tt>
+backwards from the end of the data file, to the beginning of the data.
+The distance to seek is calculated from the nrrd type and axis sizes.
+This is a useful trick for getting at binary data in other formats
+with unknown (or variable) length binary headers, such as DICOM, TIFF,
+and BMP, but only if the data is uncompressed, and only if the end of
+the data is contiguous with the end of the file (which can fail to be
+the case in DICOM and TIFF).
+
+<p>
+
+If <i>skip</i> is -1, the action of <tt>lineskip</tt> is entirely moot.
 
 <p>
 
 The interpretation of <tt>byte skip</tt> changes according to whether
 or not the <tt>encoding</tt> used is a form of compression or not.
-The only compressions supported in <tt>NRRD0001</tt> are gzip and
+The only compressions currently supported gzip and
 bzip2.  In uncompressed encodings, the byte skipping is done just like
 the line skipping: within the data file, so as to locate the beginning
 of the data, and prior to the decoding of any data.  In compressed
@@ -1157,23 +1470,6 @@ data are compressed together, the beginning of the data can be easily
 found via a <tt>byte skip</tt> offset.  This also applies to large
 datasets written by FORTRAN programs, for which even "raw" data can be
 proceeded by a four-byte representation of the data length.
-
-<p>
-
-As a special trick copied from the <a
-href="http://tolkien.rad.unc.edu/technologies/MetaImage/">MetaImage</a>
-file format, the value of <i>skip</i> can be -1.  This is valid only
-with raw encoding, and on a data file which isn't standard input
-(<tt>stdin</tt>).  The action of this byte skip is to <tt>fseek()</tt>
-backwards from the end of the data file, to the beginning of the data.
-The distance to seek is calculated from the nrrd type and axis sizes.
-This is a useful trick for getting at binary data in other formats
-with unknown (or variable) length binary headers, such as DICOM, TIFF,
-and BMP, but only if the data is uncompressed.
-
-<p>
-
-If <i>skip</i> is -1, the action of <tt>lineskip</tt> is entirely moot.
 
 <!-- 
 <hr noshade width="30%" align=left>
@@ -1208,7 +1504,25 @@ principle of making NRRD headers as concise as possible, the
 <tt>number</tt> field should never be written, and always ignored on
 reading, without even an attempt to parse the field as an integer.
 
-<h2><a name="sect5">5. Per-Axis Specifications</a></h2>
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="sampleunits">sample units: &lt;<i>string</i>&gt;</a>
+sampleunits: &lt;<i>string</i>&gt;
+</pre></blockquote>
+<ul>
+<li> Always optional
+</ul>
+
+This provides a way of storing the units of measurement associated
+with the scalar values stored in the array itself.  A volume of
+density measurements might use "<tt>sample units: PPM</tt>" for parts
+per million.  Note that these units describe the individual scalar
+values, and not some non-scalar value stored along an axis of the
+array.  However, all coordinates of a vector (such as a velocity
+vector) are apt to have the same units, so this field is still useful
+in that case.
+
+<h2><a name="sect6">6. Per-Axis Specifications</a></h2>
 
 The individual field descriptors in these specifications are delimited
 by one or more spaces ("<tt> </tt>") or tabs ("<tt>\t</tt>"), or some
@@ -1261,6 +1575,30 @@ The meaning and interpretation of the <tt>spacings</tt> field is
 independent of the <tt>centers</tt>, <tt>axis min</tt> and <tt>axis
 maxs</tt> fields, even though mutually incompatible settings are
 possible.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="thicknesses">thicknesses: &lt;<i>thickness[0]</i>&gt; &lt;<i>thickness[1]</i>&gt; ... &lt;<i>thickness[dim-1]</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always optional
+<li> Type: <tt>double</tt>
+</ul>
+
+This allows one to store information about the thickness of the region of
+space that is measured to determine a sample value.  The most probably use
+of this field is in conjuction with CT and MRI scanned volumes, which is
+inherently collected one slice at a time, and for which the slice thickness
+can be separate from the slice spacing.  
+
+<p>
+
+It is likely the case that only one axis has this information
+associated with it, so "<tt>nan</tt>" should be used for the other
+axes.  The compelling reason to make thickness a per-axis field is
+that if it were a basic field, one would need a separate basic field
+to identify which axis is the slice axis, and this information would
+become invalid if the array axes were permuted.
 
 <hr noshade width="30%" align=left>
 <blockquote><pre>
@@ -1436,6 +1774,147 @@ Having separate units for all axes is more compelling in the case of
 multi-dimensional scatterplots, spectral image data, and what
 <b>nrrd</b> calls "axis histograms", which are histograms along one
 axis but spatially varying along all other axes.
+
+<hr noshade width="30%" align=left>
+<blockquote><pre>
+<a name="kinds">kinds: &lt;<i>kind[0]</i>&gt; &lt;<i>kind[1]</i>&gt; ... &lt;<i>kind[dim-1]</i>&gt;</a>
+</pre></blockquote>
+<ul>
+<li> Always optional
+</ul>
+
+The idea of this field is to identify what "kind" of information is
+represented by the samples along each axis.  This is especially important
+given nrrd's "everything is a scalar" mentality: if a 3-vector is being
+stored along an axis, there should be a way of identifying that axis as
+separate from the other (spatial) axes of the nrrd.
+
+<p>
+
+The possible values for <tt>&lt;<i>kind[i]</i>&gt;</tt> are as follows.
+With time, more different kind values are apt to be added.
+
+<table border=1>
+<tr>
+  <td><b>&lt;<i>kind[i]</i>&gt;</b>
+  <td><b>Required<br>axis<br>size</b>
+  <td><b>Meaning</b>
+<tr>
+  <td><tt>domain</tt>
+  <td>(none)
+  <td>The samples along this axis are positioned along some domain,
+      as opposed to being the components of coordinates of non-scalar
+      quantities.  Basically: "it makes sense to resample or blur
+      along this axis".
+<tr>
+  <td><tt>space</tt>
+  <td>(none)
+  <td>Like <tt>domain</tt>, but this is a spatial domain
+<tr>
+  <td><tt>time</tt>
+  <td>(none)
+  <td>Like <tt>domain</tt>, but this is a temporal domain
+<tr>
+  <td><tt>list</tt>
+  <td>(none)
+  <td>The sample along this axis are components of coordinates of non-scalar
+      quantities, such as a 20-dimensional vector.  Basically: "it makes
+      <b>no</b> sense to resample or blur along this axis".
+<tr>
+  <td><tt>stub</tt>
+  <td>1
+  <td>The single sample on this axis is just a stub.
+<tr>
+  <td><tt>scalar</tt>
+  <td>1
+  <td>The single sample on this axis is explicitly indicated as a scalar value.
+<tr>
+  <td><tt>complex</tt>
+  <td>2
+  <td>The two samples along this axis are the 2 components
+      of a complex value:<br>
+      real imag
+<tr>
+  <td><tt>2-vector</tt>
+  <td>2
+  <td>Any 2-vector
+<tr>
+  <td><tt>3-color</tt>
+  <td>3
+  <td>A 3-vector whose components are color values
+<tr>
+  <td><tt>4-color</tt>
+  <td>4
+  <td>Any 4-vector of colors (ordering of R, G, B, and A are not imposed)
+<tr>
+  <td><tt>3-vector</tt>
+  <td>3
+  <td>Any 3-vector
+<tr>
+  <td><tt>3-normal</tt>
+  <td>3
+  <td>A 3-vector which is assumed to have unit L2 norm
+<tr>
+  <td><tt>4-vector</tt>
+  <td>4
+  <td>Any 4-vector
+<tr>
+  <td><tt>2D-symmetric-matrix</tt>
+  <td>3
+  <td>Unique components of 2D symmetric matrix, in order:<br>
+      Mxx Mxy Myy
+<tr>
+  <td><tt>2D-masked-symmetric-matrix</tt>
+  <td>4
+  <td>Unique components of 2D symmetric matrix, preceeded by a mask value
+      to indicate validity of the matrix:<br>
+      mask Mxx Mxy Myy
+<tr>
+  <td><tt>2D-matrix</tt>
+  <td>4
+  <td>Components of a 2D matrix:<br>
+      Mxx Mxy Myx Myy
+<tr>
+  <td><tt>2D-masked-matrix</tt>
+  <td>4
+  <td>Mask value with components of 2D matrix:<br>
+      mask Mxx Mxy Myx Myy
+<tr>
+  <td><tt>3D-symmetric-matrix</tt>
+  <td>6
+  <td>Unique components of a 3D symmetric matrix:<br>
+      Mxx Mxy Mxz Myy Myz Mzz
+<tr>
+  <td><tt>3D-masked-symmetric-matrix</tt>
+  <td>7
+  <td>Mask value with unique components of 3D symmetric matrix:<br>
+      mask Mxx Mxy Mxz Myy Myz Mzz
+<tr>
+  <td><tt>3D-matrix</tt>
+  <td>9
+  <td>Components of 3D matrix:<br>
+      Mxx Mxy Mxz Myx Myy Myz Mzx Mzy Mzz
+<tr>
+  <td><tt>3D-masked-matrix</tt>
+  <td>10
+  <td>Mask value with components of 3D matrix:<br>
+      mask Mxx Mxy Mxz Myx Myy Myz Mzx Mzy Mzz
+<tr>
+  <td><tt>???</tt>
+  <td>(none)
+  <td>Kind information for this axis is unknown or not representable
+</table>
+
+<p>
+
+Vectors and matrices can be stored in NRRDs with space and
+orientation information (using the <tt>space direction</tt> and
+<tt>space origin</tt> fields).  The question then arises, is the
+coordinate frame of the orientation information the same as the
+coordinate frame in which the components of the vector or matrix are
+measured?  Unfortunately, because it is impossible for a mere file
+format to ensure agreement between these two coordinate frames,
+readers should not assume that they are the same.
 
 <p>
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>
