@@ -178,7 +178,7 @@ supply the input volume filename and the output image filename:
 <blockquote><pre>
 foreach DATA ( BostonTeapot aneurism bonsai foot ) 
   echo $DATA
-  echo ./ninspect ${DATA}.nhdr ${DATA}.png
+  ./ninspect ${DATA}.nhdr ${DATA}.png
   unu resample -i ${DATA}.png -s = x0.4 x0.4 -o _${DATA}.png
 end
 </pre></blockquote>
