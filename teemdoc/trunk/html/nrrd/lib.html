@@ -344,9 +344,19 @@ customLoad(char *filename) {
   
   /* we're done with the nrrdIoState, this sets it to NULL */
   nios = nrrdIoStateNix(nios);
+
+  /* 1) YOU, the nrrd user, look at things like nin->dim,
+     nrrdElementNumber(nin), nrrdElementSize(nin), 
+     nin-&gt;axis[0].size, nin-&gt;axis[1].size, etc in order allocate the data
+     for the nrrd.  Make sure that the data is allocated as one single
+     contiguous address range, or else nrrd will not operate correctly on
+     the values stored there. */
+
+  /* 2) YOU now set nin-&gt;data to the beginning of your allocated memory */
+  nin-&gt;data = YOUR POINTER HERE;
   
-  /* load the nrrd again, this time the data will be read, but 
-     the existing nin-&gt;data memory will be used, because nrrdRead
+  /* 3) Now load the nrrd again, this time actually reading the data.
+     The existing nin-&gt;data memory will be used, because nrrdRead
      (called by nrrdLoad) remembers the address and size of incoming
      allocated data, and eventually it will get used, instead of
      nrrd allocating new memory */
