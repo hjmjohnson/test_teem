@@ -171,8 +171,7 @@ big-endian).
 <li> Store data of of any dimension, and any C scalar type.
 <li> Encode data in more than just ascii and binary, including gzip
 and bzip2 compression.  
-<li> Store more peripheral information, such as axis labels and units,
-old min and max (range of values pre-quantization)
+<li> Store more peripheral information, such as axis labels and units.
 </ul>
 
 <a name="MetaImage"><h2>NRRD compared to MetaImage format</h2></a>
@@ -315,7 +314,7 @@ This sort of information would be stored as key/value pairs in NRRD:
 Some NRRD fields that MetaImage doesn't seem to have analogs for:
 <ul>
 
-<li> <tt>centers</tt>: cell-vs-node centering.  This is fundamental to
+<li> <tt>centerings</tt>: cell-vs-node centering.  This is fundamental to
 properly representing the difference between histograms and other types
 of sampled signals.
 
