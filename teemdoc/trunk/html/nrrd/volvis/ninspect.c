@@ -46,7 +46,7 @@
 ** management routines, which you won't need if you wrap nrrd in smart
 ** pointers or something like that.  All you need to know is that the
 ** third argument to airMopAdd() is the function that must be called to
-** "clean up" the pointer which is passed as the first argument to
+** "clean up" the pointer which is passed as the second argument to
 *** airMopAdd().
 **
 ** How to compile:
