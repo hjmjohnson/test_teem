@@ -63,7 +63,7 @@ plays well with other file formats.
 <p>
 
 <b>Portability</b>: <b>nrrd</b> has been compiled on Windows,
-Macintosh (OS X), Cygwin, Linux, Solaris, and Irix (both 32 and 64
+Macintosh (OS X), Cygwin, GNU/Linux, Solaris, and Irix (both 32 and 64
 bit).  Big-versus-Little endianness is explicitly recorded in the NRRD
 header when necessary, and <b>nrrd</b> can convert between the two as
 needed.  <b>nrrd</b> makes some assumptions about type sizes, which
@@ -96,13 +96,14 @@ original min and max values prior to quantization.
 
 <b>Flexibility in file formats</b>: The data in NRRD files can be raw,
 ascii, or compressed.  The <b>nrrd</b> library can read and write more
-than just NRRD files.  PPM and PGM image files (both ascii and raw)
-can be used to save nrrds of the appropriate type and dimension, and
-comments in the header losslessly encode all other peripheral
-information represented by <b>nrrd</b>.  For one and two dimensional
-data, plain text files with no header whatsoever (such as produced by
-Excel when exporting to plain text) are read and written with the same
-functions used for all the other formats.
+than just NRRD files.  PNG, PPM, and PGM image files can be used to
+save nrrds of the appropriate type and dimension, and comments in the
+header losslessly encode all other peripheral information represented
+by <b>nrrd</b>.  For one and two dimensional data, plain text files
+with no header whatsoever (such as produced by Excel when exporting to
+plain text) are read and written with the same functions used for all
+the other formats.  VTK datasets defining scalars, vectors and tensors
+on STRUCTURED_POINTS geometries can also be read and written.
 
 <p>
 
