@@ -45,14 +45,13 @@ synthetic dataset, with conical isosurfaces.
 <p>
 
 The cone starts with the function z - 2*sqrt(x*x + y*y) + 0.5, sampled
-from -1 to 1 on each axis.  First start by sampling x*x, y*y, and z:
+from -1 to 1 on each axis.  First start by sampling x, y, and z:
 
 <blockquote><pre>
 echo "-1 1   -1 1   -1 1   -1 1" \
  | unu reshape -s 2 2 2 \
- | unu resample -s 100 100 90 -k tent \
- | unu 2op pow - 2 -o xx.nrrd
-unu swap -a 0 1 -i xx.nrrd -o yy.nrrd
+ | unu resample -s 100 100 90 -k tent -o x.nrrd
+unu swap -a 0 1 -i x.nrrd -o y.nrrd
 echo "-1 -1   -1 -1   1 1    1 1" \
  | unu reshape -s 2 2 2 \
  | unu resample -s 100 100 90 -k tent -o z.nrrd
@@ -62,8 +61,8 @@ Then combine them, and pad out the z axis to 100 samples, to make an
 initial version, <tt>cone0.nrrd</tt>, which is Gaussian blurred
 to make <tt>cone1.nrrd</tt>:
 <blockquote><pre>
-unu 2op + xx.nrrd yy.nrrd \
- | unu 1op sqrt \
+unu join -i x.nrrd y.nrrd -a 0 -incr \
+ | unu project -a 0 -m l2 \
  | unu 2op x - -2 \
  | unu 2op + - z.nrrd \
  | unu 2op + - 0.5 \

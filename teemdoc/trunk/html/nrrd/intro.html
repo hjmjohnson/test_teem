@@ -38,7 +38,8 @@ GK's C code: nrrd: Introduction
     <h2>&nbsp;&nbsp;<b>Introduction</b></h2>
 </table>
 
-<h3> What Nrrd Is </h3>
+<a name="what"><h3> What Nrrd Is </h3></a>
+
 
 Nrrd is a tool for representing and processing N-dimensional raster
 data.  It offers an efficient and general way to manipulate scientific
@@ -65,7 +66,7 @@ considered in more detail.
 
 <p>
 
-<h3> Data Dimension </h3>
+<a name="dimension"><h3> Data Dimension </h3></a>
 
 Nrrd is intended to represent raster data of any dimension greater
 than zero.  Ideally there would be no run-time limit on the
@@ -102,7 +103,7 @@ there).  Another possibility would have to use "dimensions" and "rank"
 for the two terms.  Thus, an NTSC color image represented in nrrd
 would have dimension 3, with sizes 3, 640, and 480.  
 
-<h3> Raster Order</h3>
+<a name="order"><h3> Raster Order</h3></a>
 
 The ordering of axes is fundamental.  In nrrd, whenever the axes are
 represented or identified in sequence, the ordering is always from
@@ -130,7 +131,7 @@ index into the axis ordering.  For the color data example mentioned
 above, the color axis is 0, horizontal is 1, and vertical is 2.
 
 
-<h3> Data Axes </h3>
+<a name="axes"><h3> Data Axes </h3></a>
 
 There are many aspects of an axis that nrrd can represent.  The number
 of samples is the only required information.  There is a
@@ -169,7 +170,7 @@ the <b>teem</b> libraries grew out of <b>nrrd</b>.
 
 <p>
 
-<h3> Data Type </h3>
+<a name="type"><h3> Data Type </h3></a>
 
 Nrrd can handle ten different types of scalar data.  There are 8
 integral types (1-, 2-, 4-, and 8-byte integers, signed and unsigned),
@@ -216,3 +217,4 @@ permuting, and some kinds of padding.
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>
 </body>
 </html>
+
