@@ -40,19 +40,14 @@ GK's C code: nrrd: General Description of the NRRD format
 
 <h2>General Description of the NRRD format</h2>
 
-The NRRD format was primarily designed to be easy to write, rather
-than easy to read.  The NRRD header is simple ASCII text, one field
+Like the <b>nrrd</b> library, the main virtue of the NRRD file
+format is stark simplicity. The NRRD header is simple ASCII text, one field
 per line.  The fields in the header do not have a strict ordering, and
 most of them are optional.  Most strings are case insensitive, and
 alternate forms of many of the identifiers and descriptors are
-allowed.  Writing NRRD headers by hand, from scratch, is entirely
-feasible (although the <a href="../unrrdu/index.html">Utah Nrrd
-Utilities</a> program "<tt>unu make -h</tt>" is probably a better
-solution).  When writing non-ASCII data, the byte ordering is
-recorded, but not altered to match one particular endianness.  The format
-flexibility greatly increases the complexity and responsibilities of a
-NRRD reader, but the compelling benefit is having a simple portable
-format that is general with respect to dimension and type.
+allowed.  When writing non-ASCII data, the byte ordering is
+recorded, but not altered to match one particular endianness. 
+Key/value pairs (of strings) are stored in plain text, one pair per line.
 
 <p>
 
@@ -75,7 +70,7 @@ href="http://hdf.ncsa.uiuc.edu/">HDF
 
 </ol>
 
-Various aspects of the NRRD format borrow heavily from the PCGV volume
+Many aspects of the NRRD format borrow heavily from the PCGV volume
 dataset format developed by James Durkin at the Cornell Program of
 Computer Graphics.  
 
@@ -148,9 +143,9 @@ optional encodings.
 
 The <a href="http://public.kitware.com/VTK/pdf/file-formats.pdf">VTK
 (<tt>http://public.kitware.com/VTK/pdf/file-formats.pdf</tt>)</a> file
-format is more general than NRRD in the types of information
-represented, and slightly less general that NRRD when it comes to
-raster data.
+formats (non-XML versions) are more general than NRRD in the types of
+information represented, and slightly less general that NRRD when it
+comes to raster data.
 
 <p>
 
@@ -311,25 +306,7 @@ Some NRRD fields that MetaImage doesn't seem to have analogs for:
 
 <h2>Future Extensions</h2>
 
-There are at least two things which will be added to the next
-version of the NRRD format.  These changes will probably be implemented
-within a year.  The magic for this new and improved
-format has not yet been established.
-
-<ol>
-
-<li> New field: "<tt>gamma: </tt>".  This is to have parity with the
-PNG's gamma chunk.  Like "<tt>min: </tt>", "<tt>max: </tt>", and
-"<tt>axis mins: </tt>", this will be an optional field, which is
-sensible to use for only some nrrds.
-
-<li> General facility for key/value pairs.  This would be a more
-structured way of storing non-nrrd optional information than comments
-provide.
-
-</ol>
-
-I have some other ideas on how the NRRD file format may be extended in
+I have some ideas on how the NRRD file format may be extended in
 the future, but these are not likely to happen within the next year.
 
 <ul>

@@ -98,7 +98,7 @@ must be able to support attached and detached headers.
 
 <p>
 
-The general format of a NRRD file (with attached header) is:
+The general format of a NRRD file (with attached header) is either
 <blockquote><pre>
 NRRD0001
 &lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
@@ -114,18 +114,37 @@ NRRD0001
 
 <p>
 
+Or, in the newer format:
+<blockquote><pre>
+NRRD0002
+&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
+&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
+# &lt;<i>comment</i>&gt;
+...
+&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;
+&lt;<i>key</i>&gt;:=&lt;<i>value</i>&gt;
+&lt;<i>key</i>&gt;:=&lt;<i>value</i>&gt;
+&lt;<i>key</i>&gt;:=&lt;<i>value</i>&gt;
+# &lt;<i>comment</i>&gt;
+
+&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;&lt;<i>data</i>&gt;...
+</pre></blockquote> 
+
+<p>
+
 The very first line contains nothing but the NRRD "magic".  The magic
-is what identifies the file as a NRRD file.  For NRRD files, the first
-four characters are always "<tt>NRRD</tt>".  The idea is that
-the next four numbers give the version number of the file format, but
-this may or may not be developed in the future.  The only current
-magic for NRRD files is "<tt>NRRD0001</tt>".  For the time being, this
-is the magic to use when writing all NRRD files.  NRRD readers should
-obviously recognize "<tt>NRRD0001</tt>", as well as a magic used in
-early implementations, "<tt>NRRD00.01</tt>".  Readers encountering a
-magic starting with "<tt>NRRD</tt>" but ending with something besides
-"<tt>0001</tt>" or "<tt>00.01</tt>" need not make any effort to
-continue parsing the file.
+is what identifies the file as a NRRD file, for the benefit of readers
+that have to handle multiple file formats.  For NRRD files, the first
+four characters are always "<tt>NRRD</tt>", and the remaining characters
+give information about the file format version.  Currently, there are
+two possible magics: <tt>NRRD0001</tt> and <tt>NRRD0002</tt>, although readers
+should also recognize a magic used in early implementations:
+<tt>NRRD00.01</tt>.  The only difference among these is that in
+<tt>NRRD0002</tt> files, key/value pairs of strings can be stored.
+Readers encountering a magic starting with "<tt>NRRD</tt>" but ending
+with something besides "<tt>0001</tt>", "<tt>0002</tt>", or
+"<tt>00.01</tt>" need not make any effort to continue parsing the
+file.
 
 <p>
 
@@ -139,29 +158,49 @@ exit with an error message.
 
 <p>
 
+Each of the "&lt;<i>key</i>&gt;:=&lt;<i>value</i>&gt;" lines specifies
+a key/value pair in the nrrd.  These can appear in <tt>NRRD0002</tt>
+files, but not <tt>NRRD0001</tt> files.  The key and value strings are
+delimited by the first "<tt>:=</tt>" to appear on the line: any spaces
+before or after "<tt>:=</tt>" are assumed part of the key or value,
+respectively.  The length of the key string must be at least one
+character, the value string can be zero-length.  Because both the
+key and value must appear on exactly one line, a minimal escaping scheme
+is required, which readers must interpret and writers must generate:
+<ul>
+<li> "<tt>\n</tt>" signifies a new line, as defined by the 
+<tt>'\n'</tt> character constant in C
+<li> "<tt>\\</tt>" signifies the backslash character, the 
+<tt>'\\'</tt> character constant in C.
+</ul>
+If a key is repeated more than once, the value in the last key/value
+pair is the only one stored.  The substring "<tt>:=</tt>" is not
+allowed in the key string.  Key/value pair specifications can be
+interspersed in any order among the comments and field specifications.
+
+<p>
+
 Comment lines start with a pound, "<tt>#</tt>", with no proceeding
 whitespace.  The comment string itself starts with the first character
 which is a not a pound or a space ("<tt> </tt>").  Comment lines with
 a zero-length comment string should be ignored.  Comment lines may be
 interspersed with field specifications in any order. This allows field
-specifications to be commented out and commented upon easily.  Since
-comments are effectively a catch-all for peripheral information which
-doesn't otherwise fit in nrrd, gracious NRRD readers should store all
-the comments seen in the header, but this is not a requirement.
-Comments are intended to be case sensitive.
+specifications to be commented out and commented upon easily.
+Gracious NRRD readers should store all the comments seen in the
+header, but this is not a requirement.  Comments are case sensitive.
 
 <p>
 
-The magic, field specifications, and comments comprise the NRRD
-header.  After the header, there is a single blank line containing
-zero characters.  This separates the header from the data, which
-follows.  Unlike the header, the data segment is not structured in
-ASCII lines. The encoding of the data (raw, ASCII, compressed, or
-other) is specified by the <tt>encoding</tt> field in the header.  The
-header, the blank line, and the data comprise the NRRD file.  A single
-NRRD file can store the information and data for a single array.
-There is currently no facility for storing multiple arrays in a single
-NRRD file.
+The magic, field specifications, key/value pairs, and comments
+comprise the NRRD header.  After the header, there is a single blank
+line containing zero characters.  This separates the header from the
+data, which follows.  Unlike the header, the data segment is not
+structured in ASCII lines. The encoding of the data (raw, ASCII,
+compressed, or other) is specified by the <tt>encoding</tt> field in
+the header.  The header, the blank line, and the data comprise the
+NRRD file.  A single NRRD file can store the information and data for
+a single array.  There is currently no facility for storing multiple
+arrays in a single NRRD file.
 
 <p>
 
