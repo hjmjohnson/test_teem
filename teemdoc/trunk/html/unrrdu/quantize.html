@@ -36,9 +36,12 @@ GK's C code: Unrrdu: unu quantize
 </table>
 
 <blockquote><pre>
-unu quantize: Quantize floating-point values to 8, 16, or 32 bits. Values are
+unu quantize: Quantize values to 8, 16, or 32 bits. Input values can be fixed
+point (e.g. quantizing ushorts down to uchars) or floating point. Values are
 clamped to the min and max before they are quantized, so there is no risk of
-getting 255 where you expect 0 (with unsigned char output, for example)
+getting 255 where you expect 0 (with unsigned char output, for example). This
+does not do any non-linear quantization. See also "unu convert", "unu 2op x",
+and "unu 3op clamp".
 
 Usage: unu quantize -b &lt;bits&gt; [-min &lt;value&gt;] [-max &lt;value&gt;] [-i &lt;nin&gt;] \
        [-o &lt;nout&gt;]

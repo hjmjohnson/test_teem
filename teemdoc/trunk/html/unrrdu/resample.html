@@ -48,10 +48,13 @@ Usage: unu resample -s &lt;s0  ...&gt; [-k &lt;kern&gt;] [-b &lt;behavior&gt;] [
        [-t &lt;type&gt;] [-i &lt;nin&gt;] [-o &lt;nout&gt;]
 
   -s &lt;s0 ...&gt; = For each axis, information about how many samples in output:
-              o "=": leave this axis untouched: no resampling whatsoever
-              o "x&lt;float&gt;": number of output samples is some scaling of
-                the number samples in input, multiplied by &lt;float&gt;
-              o "&lt;int&gt;": exact number of samples
+              o "=": leave this axis completely untouched: no resampling
+                whatsoever
+              o "x&lt;float&gt;": multiply the number of input samples by
+                &lt;float&gt;, and round to the nearest integer, to get the number
+                of output samples. Use "x1" to resample the axis but leave the
+                number of samples unchanged
+              o "&lt;int&gt;": exact number of output samples
                 (1 or more sampling specifications)
     -k &lt;kern&gt; = The kernel to use for resampling. Possibilities include:
               o "box": nearest neighbor interpolation

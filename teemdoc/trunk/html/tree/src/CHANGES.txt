@@ -1,7 +1,30 @@
 (this is only a high-level description, see CHANGES.txt in
 the individual library directories)
 
-Changes from 1.4:
+Changes from 1.5beta0 ----------------------------------------------
+
+The complete HTML documentation is now in a seperate CVS tree, called
+"teemdoc", because it was getting too big.
+
+Added the "moss" library for image manipulation, and the command-line
+"ilk" program for doing geometric transforms on images.
+
+"gkms" has been hest-ified.
+
+"unu save" can now take arguments controlling the compression
+encodings: level and strategy.
+
+Various "unu" commands' usage information expanded.
+
+New measures have been added to gage's gageVec kind, enabling
+multi-gradient measures in volumes of RGB, for instance.  These are
+accessible from the "vprobe" binary as well.
+
+The "usable" notion in the GNUmakefiles, described below, is still
+broken, but the broken functionality is not invoked unless TEEM_USABLE
+is set.  This hasn't been a problem.
+
+Changes from 1.4 ---------------------------------------------------
 
 The complete HTML documentation for teem is now included with the
 distribution.  What is online at <http://www.cs.utah.edu/~gk/teem/>
