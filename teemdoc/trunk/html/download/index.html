@@ -38,9 +38,7 @@ GK's C code: Download
 
 My software is made available under the terms of the LGPL.  <a
 href="../lgpl.html">A careful explanation of what this means for
-you</a> has been written.  This HTML documentation is included in the
-distribution, but the documentation is currently not licensed for any
-form of modification or redistribution.
+you</a> has been written.
 
 <p>
 
@@ -80,7 +78,7 @@ architectures.
 
 <p>
 
-The "pre-built" files do not include the source or the documentation.
+The "pre-built" files do not include the source.
 They contain only <tt>bin</tt>, <tt>lib</tt>, and <tt>include</tt>
 directories into which all the required teem files have been
 copied/compiled.  On all architectures (including Windows), all the
@@ -118,6 +116,42 @@ href="http://lists.sourceforge.net/lists/listinfo/teem-coders"><tt>teem-coders</
 <tr>
   <td colspan=3>
     <hr noshade>
+
+<!--  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+
+<tr>
+  <td align=left valign=middle>
+    <font size="+1">teem-1.7.0</font><br>
+    <small>(Planned released: Jan 12, 2003)</small><br>
+
+  <td>
+  <td align=left>
+<ul>
+
+<li> <a href="../nrrd/index.html"><b>nrrd</b></a>/:
+<tt>nrrdRead/nrrdLoad</tt> will now use existing memory in the given nrrd
+for storing the data, if it happens to be exactly the right size.
+
+<li> <tt>unu tile</tt>, <tt>unu untile</tt>: convenient generation of tiled
+images (2-D arrays of 2-D images)
+
+<li> <tt>tend helix</tt>: makes <a
+    href="http://www.sci.utah.edu/~gk/DTI-data/index.html#helix">twisting
+    helical</a> diffusion tensor datasets
+
+<li> Ability to volume rendering diffusion tensor fields
+
+<li> <b>NrrdIO</b>: new stand-alone library for doing basic nrrd
+operations and for reading and writing the <a
+href="http://teem.sourceforge.net/nrrd/format.html">NRRD file
+format</a>.
+
+</ul>
+
+<tr><td><hr noshade><td><td>
+
+<!--  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+
 <tr>
   <td align=left valign=middle>
     <font size="+1">teem-1.6.0</font><br>
@@ -134,6 +168,7 @@ Pre-built:
 <a href="http://prdownloads.sourceforge.net/teem/teem-1.6.0-win32.zip?download">Windows</a> |
 <a href="http://prdownloads.sourceforge.net/teem/teem-1.6.0-cygwin.tar.gz?download">Cygwin</a> |
 <a href="http://prdownloads.sourceforge.net/teem/teem-1.6.0-darwin.32.tar.gz?download">32-bit Darwin</a> |
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.6.0-darwin.64.tar.gz?download">64-bit Darwin</a> |
 Solaris |
 <a href="http://prdownloads.sourceforge.net/teem/teem-1.6.0-irix6.n32.tar.gz?download">Irix6.n32</a> |
 <a href="http://prdownloads.sourceforge.net/teem/teem-1.6.0-irix6.64.tar.gz?download">Irix6.64</a>
@@ -154,6 +189,9 @@ Solaris |
 </ul>
 
 <tr><td><hr noshade><td><td>
+
+<!--  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+
 <tr>
   <td align=left valign=middle>
     <font size="+1">teem-1.5.0</font><br>
@@ -202,6 +240,9 @@ Solaris |
 </ul>
 
 <tr><td><hr noshade><td><td>
+
+<!--  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+
 <tr>
   <td align=left valign=middle>
     <font size="+1">teem-1.5beta1</font><br>

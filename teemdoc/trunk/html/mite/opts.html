@@ -95,7 +95,8 @@ space around the cube is of course independent from voxel spacings.
 
 <tt>Miter</tt> uses the same set of command-line options for camera
 information as other <b>teem</b> programs.  There are unfortunately
-many different variables that have to set for the camera.  All
+many different variables that must be set in order to completely
+define the camera.  All of them use two letter flags.  All
 (&lt;<i>X</i>&gt; &lt;<i>Y</i>&gt; &lt;<i>Z</i>&gt;</tt>) coordinates
 are in world coordinates.
 
@@ -314,19 +315,18 @@ here.
 
 <p>
 
-The first axis in the nrrd always encodes the <b>range</b> of the transfer
-function.  Whether the range of the transfer function is a single
-scalar (such as opacity), or a list of scalars (such as RGB color), one axis
-of the nrrd is reserved for describing the
-transfer function range.  
-Thus, the dimension of the nrrd is always one greater than the
-dimension of the transfer function.  A transfer
+The first axis in the nrrd always encodes the <b>range</b> of the
+transfer function.  Whether the range of the transfer function is a
+single scalar (such as opacity), or a list of scalars (such as RGB
+color), the first axis of the nrrd is reserved for describing the
+transfer function range.  Thus, the dimension of the nrrd is always
+one greater than the dimension of the transfer function.  A transfer
 function which assigns opacity as a function of one quantity (data
-value) is a one-dimensional transfer function, but it is
-represented with a two-dimensional nrrd.
-The quantities
-in the range of the transfer function are specified in the <b>label</b>
-of axis zero, according to a set of single-letter codes:
+value) is a one-dimensional transfer function, but it is represented
+with a two-dimensional nrrd, for which the size of the first axis
+(axis 0) is 1.  The quantities in the range of the transfer
+function are specified in the <b>label</b> of axis zero, according to
+a cryptic set of single-letter codes:
 
 <ul>
 <li> "<tt>A</tt>" : opacity
