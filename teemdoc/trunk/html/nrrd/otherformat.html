@@ -36,10 +36,98 @@ GK's C code: nrrd: NRRD-Compatible File Formats
 </table>
 
 The <b>nrrd</b> library knows how to read NRRD files, as well as three
-other formats of data: plain text files, PGM/PPM images, and PNG
-images.  This page describes how the <b>nrrd</b> library interprets
-and uses these formats.
+other formats of data: <a href="#plain">plain text files</a>, <a
+href="#pnm">PGM/PPM images</a>, and <a href="#png">PNG images</a>.
+There is also limited support for the <a href="#vtk">VTK file
+format</a>.  This page describes how the <b>nrrd</b> library
+interprets and uses these formats.
 
+<h3>Reading and Writing non-NRRD files</h3>
+
+NRRD-compatible files are <b>read</b> with the same <tt>nrrdRead()</tt> and
+<tt>nrrdLoad()</tt> functions as used for NRRD files.  The type of the
+file is detected by <tt>nrrdRead()</tt>, which then calls the
+appropriate format-specific reader.  There is currently no way to
+learn or store the format of a file once the reading is finished.
+
+<p>
+
+NRRD-compatible files are <b>written</b> with the same <tt>nrrdWrite()</tt>
+and <tt>nrrdSave()</tt> functions as used for NRRD files.
+<tt>nrrdWrite()</tt> relies on the <tt>NrrdIO</tt> struct for
+IO-specific state, and will write the data in whatever format is
+indicated by the <tt>format</tt> field of the <tt>NrrdIO</tt>.
+<tt>nrrdSave()</tt> also uses the <tt>NrrdIO</tt> in this capacity,
+but if a <tt>NrrdIO</tt> was not given, or if it does not specify a
+format, then <tt>nrrdSave()</tt> will try guess the format based on
+the given filename.  Currently, this functionality is implemented by
+<tt>_nrrdGuessFormat()</tt>, and works according to the following
+table.  The filename extension (1st column) determines the format (2nd
+column), but subject to the constraints on the <tt>Nrrd</tt> struct
+containing the array (3rd column) and the requested encoding (4rth
+column).  
+
+<p> If the constraints are not met (as determined by
+<tt>nrrdFitsInFormat</tt>), the <tt>Nrrd</tt> is saved in NRRD format,
+using the given (and thereby misleading) filename. A warning message
+is printed telling that the implied requested format won't be used.
+
+<table border=1>
+<tr>
+<td>extension (case sensitive)
+<td>format (<tt>nrrdFormat*</tt> enum value)
+<td><tt>Nrrd</tt> constraint
+<td>encoding constraint
+
+<tr>
+<td>"<tt>.txt</tt>"
+<td>plain text file (<tt>nrrdFormatTable</tt>)
+<td>dimensions must be 1 or 2; type can be anything except <tt>block</tt>.
+On reading, the dimension will be 2 (except if "<tt># dimension: 1</tt>"
+appears before the data), and type will be <tt>float</tt>
+<td>encoding ignored; <tt>nrrdEncodingAscii</tt> always used.
+
+<tr>
+<td>"<tt>.pgm</tt>"
+<td>PGM image file (<tt>nrrdFormatPNM</tt>)
+<td>dimension must be 2; type must be <tt>uchar</tt>
+<td>can be <tt>nrrdEncodingAscii</tt> or <tt>nrrdEncodingRaw</tt>;
+the output magic will be "<tt>P2</tt>" or "<tt>P5</tt>", respectively.
+
+<tr>
+<td>"<tt>.ppm</tt>"
+<td>PPM image file (<tt>nrrdFormatPNM</tt>)
+<td>dimensions must be 3, with first axis 3 samples long; 
+ type must be <tt>uchar</tt>
+<td>can be <tt>nrrdEncodingAscii</tt> or <tt>nrrdEncodingRaw</tt>;
+the output magic will be "<tt>P3</tt>" or "<tt>P6</tt>", respectively.
+
+<tr>
+<td>"<tt>.png</tt>" <td>PNG image file (<tt>nrrdFormatPNG</tt>)
+<td>dimensions must be 2 or 3, for 3 with first axis
+1-4 samples long; type must be <tt>uchar</tt> or <tt>ushort</tt>
+<td>encoding ingored, <tt>nrrdEncodingGzip</tt> always used; output magic
+will be "<tt>\211PNG</tt>".
+
+<tr>
+<td>"<tt>.vtk</tt>" <td>VTK STRUCTURED_POINTS file (<tt>nrrdFormatVTK</tt>)
+<td>dimensions must be 3 (for scalars), or 4, with first axis
+being 3 (for vectors) or 9 (for tensors) samples long.  Type must
+be <tt>uchar</tt>, <tt>short</tt>, <tt>int</tt>, <tt>float</tt>, or
+<tt>double</tt>.   <td>can be <tt>nrrdEncodingRaw</tt> or 
+<tt>nrrdEncodingAscii</tt>.
+
+<tr>
+<td>"<tt>.nhdr</tt>"
+<td colspan=3>NRRD file (<tt>nrrdFormatNRRD</tt>) with
+<a href="format.html#sect3">detached header</a>.
+Seperate data file will be written with requested encoding, with
+filename suffix defined in <a href="format.html#encoding">NRRD
+file format definition</a>
+
+</table>
+
+<a name="plain">&nbsp;</a>
 <h3>Plain text files</h3>
 
 Plain, headerless ASCII text files can be read in as 2-D arrays of
@@ -269,83 +357,120 @@ unu convert -i - -t uchar -o hi.png
 
 This creates a small image: <img src="hi.png">
 
-<a name="readwrite">&nbsp;</a>
-<h3>Reading and Writing non-NRRD files</h3>
+<a name="vtk">&nbsp;</a>
+<h3>VTK datasets</h3>
 
-NRRD-compatible files are read with the same <tt>nrrdRead()</tt> and
-<tt>nrrdLoad()</tt> functions as used for NRRD files.  The type of the
-file is detected by <tt>nrrdRead()</tt>, which then calls the
-appropriate format-specific reader.  There is currently no way to
-learn or store the format of a file once the read is finished.
+As of version 1.5beta2, <b>nrrd</b> can read and write VTK datasets on
+STRUCTURED_POINTS geometries (the dataset structure starts with the
+line "<tt>DATASET&nbsp;STRUCTURED_POINTS</tt>"), with the SCALAR,
+VECTOR, and TENSOR attributes, with either ascii or binary encoding.
+Only one attribute per file is supported.  A description of the VTK
+file format is <a
+href="http://public.kitware.com/VTK/pdf/file-formats.pdf">available
+from Kitware</a>.
 
 <p>
 
-NRRD-compatible files are written with the same <tt>nrrdWrite()</tt>
-and <tt>nrrdSave()</tt> functions as used for NRRD files.
-<tt>nrrdWrite()</tt> relies on the <tt>NrrdIO</tt> struct for
-IO-specific state, and will write the data in whatever format is
-indicated by the <tt>format</tt> field of the <tt>NrrdIO</tt>.
-<tt>nrrdSave()</tt> also uses the <tt>NrrdIO</tt> in this capacity,
-but if a <tt>NrrdIO</tt> was not given, or if it does not specify a
-format, then <tt>nrrdSave()</tt> will try guess the format based on
-the given filename.  Currently, this functionality is implemented by
-<tt>_nrrdGuessFormat()</tt>, and works according to the following
-table.  The filename extension (1st column) determines the format (2nd
-column), but subject to the constraints on the <tt>Nrrd</tt> struct
-containing the array (3rd column) and the requested encoding (4rth
-column).  
-
-<p> If the constraints are not met (as determined by
-<tt>nrrdFitsInFormat</tt>), the <tt>Nrrd</tt> is saved in NRRD format,
-using the given (and thereby misleading) filename. A warning message
-is printed telling that the implied requested format won't be used.
-
-<table border=1>
+The VTK format is somewhat less flexible that NRRD in the peripheral
+information that can be associated with raster data.  Because there is
+no means of saving an arbitrary number of comments, there isn't a way
+of saving the NRRD information that can be saved into plain text
+files, and PNG/PPM/PGM images.  Here are the correspondances between
+VTK and NRRD, whereby information in one is saved as the other:
+<center>
+<table>
 <tr>
-<td>extension (case sensitive)
-<td>format (<tt>nrrdFormat*</tt> enum value)
-<td><tt>Nrrd</tt> constraint
-<td>encoding constraint
+<td align=right><b>VTK format</b>
+<td>&nbsp;&nbsp;
+<td align=left><b>NRRD format</b>
 
 <tr>
-<td>"<tt>.txt</tt>"
-<td>plain text file (<tt>nrrdFormatTable</tt>)
-<td>dimensions must be 1 or 2; type can be anything except <tt>block</tt>.
-On reading, the dimension will be 2 (except if "<tt># dimension: 1</tt>"
-appears before the data), and type will be <tt>float</tt>
-<td>encoding ignored; <tt>nrrdEncodingAscii</tt> always used.
+<td align=right>"header" (2nd line of file)
+<td>&nbsp;&nbsp;
+<td align=left><tt>content</tt>
 
 <tr>
-<td>"<tt>.pgm</tt>"
-<td>PGM image file (<tt>nrrdFormatPNM</tt>)
-<td>dimension must be 2; type must be <tt>uchar</tt>
-<td>can be <tt>nrrdEncodingAscii</tt> or <tt>nrrdEncodingRaw</tt>;
-the output magic will be <tt>P2</tt> or <tt>P5</tt>, respectively.
+<td align=right><tt>ASCII</tt>
+<td>&nbsp;&nbsp;
+<td align=left><tt>encoding: ascii</tt>
 
 <tr>
-<td>"<tt>.ppm</tt>"
-<td>PPM image file (<tt>nrrdFormatPNM</tt>)
-<td>dimensions must be 3, with first axis 3 samples long; 
- type must be <tt>uchar</tt>
-<td>can be <tt>nrrdEncodingAscii</tt> or <tt>nrrdEncodingRaw</tt>;
-the output magic will be <tt>P3</tt> or <tt>P6</tt>, respectively.
+<td align=right><tt>BINARY</tt>
+<td>&nbsp;&nbsp;
+<td align=left><tt>encoding: raw</tt>
 
 <tr>
-<td>"<tt>.png</tt>" <td>PNG image file (<tt>nrrdFormatPNG</tt>)
-<td>dimensions must be 2 or 3, for 3 with first axis
-1-4 samples long; type must be <tt>uchar</tt> or <tt>ushort</tt> <td>can
-be <tt>nrrdEncodingRaw</tt>; the output magic will be
-<tt>\211PNG</tt>.
+<td align=right><tt>DIMENSIONS <i>nx</i> <i>ny</i> <i>nz</i></tt>
+<td>&nbsp;&nbsp;
+<td align=left><tt>sizes: <i>nx</i> <i>ny</i> <i>nz</i></tt>
+&nbsp;&nbsp;<small>(scalars)</small><br>
+<tt>sizes: 3 <i>nx</i> <i>ny</i> <i>nz</i></tt>
+&nbsp;&nbsp;<small>(vectors)</small><br>
+<tt>sizes: 9 <i>nx</i> <i>ny</i> <i>nz</i></tt>
+&nbsp;&nbsp;<small>(tensors)</small><br>
 
 <tr>
-<td>"<tt>.nhdr</tt>"
-<td colspan=3>NRRD file (<tt>nrrdFormatNRRD</tt>) with
-<a href="format.html#sect3">detached header</a>.
-Seperate data file will be written with requested encoding, with
-filename suffix defined in <a href="format.html#encoding">NRRD
-file format definition</a>
+<td align=right><tt>ORIGIN <i>x</i> <i>y</i> <i>z</i></tt>
+<td>&nbsp;&nbsp;
+<td align=left><tt>axis mins: <i>x</i> <i>y</i> <i>z</i></tt>
+&nbsp;&nbsp;<small>(scalars)</small><br>
+<tt>axis mins: NaN <i>x</i> <i>y</i> <i>z</i></tt>
+&nbsp;&nbsp;<small>(vectors+tensors)</small>
+
+<tr>
+<td align=right><tt>SPACING <i>sx</i> <i>sy</i> <i>sz</i></tt>
+<td>&nbsp;&nbsp;
+<td align=left><tt>spacings: <i>sx</i> <i>sy</i> <i>sz</i></tt>
+&nbsp;&nbsp;<small>(scalars)</small><br>
+<tt>spacings: NaN <i>sx</i> <i>sy</i> <i>sz</i></tt>
+&nbsp;&nbsp;<small>(vectors+tensors)</small>
+
+<tr>
+<td align=right><tt>SCALARS <i>dataName</i> <i>dataType</i></tt><br>
+<tt>VECTORS <i>dataName</i> <i>dataType</i></tt><br>
+<tt>TENSORS <i>dataName</i> <i>dataType</i></tt><br>
+<td>&nbsp;&nbsp;
+<td align=left><tt>type: <i>dataType</i></tt>
+
+<tr>
 
 </table>
+</center>
+
+<p>
+
+The types allowed in VTK are "<tt>bit</tt>", "<tt>unsigned_char</tt>",
+"<tt>short</tt>", "<tt>int</tt>", "<tt>float</tt>", and
+"<tt>double</tt>".  The "<tt>bit</tt>" VTK type is read in as unsigned
+char (as long as the encoding is <tt>ASCII</tt>); the other mappings
+from VTK to NRRD type are as expected.  NRRD types which don't fit in
+VTK will trigger an error in <tt>nrrdWrite()</tt>.
+
+<p>
+
+With <tt>SCALARS</tt> attributes, only
+"<tt>LOOKUP_TABLE&nbsp;default</tt>" is allowed, and that is the only
+lookup table description that <b>nrrd</b> generates.
+
+<p>
+
+While the VTK file format description says that only symmetric tensors
+are supported, all nine elements of the tensor are required.  On
+writing tensors, there is no restriction that the 9 numbers along axis
+0 represent a symmetric tensor.
+
+<p>
+
+The <tt><i>dataName</i></tt> field in the attribute declaration is
+ignored on reading.  On writing, a <tt><i>dataName</i></tt> of the
+form "<tt>nrrdNNNNN</tt>" is generated, where <tt>NNNNN</tt> is a
+random 5-digit integer.
+
+<p>
+
+Raw ("<tt>BINARY</tt>") data in a VTK file is always stored
+big-endian.  As usual, nrrd will switch endianness in the data as
+necessary, depending on the endianness of current platform.
 
 <p>
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>
