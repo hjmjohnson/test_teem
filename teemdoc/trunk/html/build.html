@@ -63,20 +63,21 @@ environment variable (however you do that in your favorite shell) to
 one of the following:
 
 <ul>
-<li><tt>linux</tt>: Any kind of GNU/Linux
+<li><tt>linux.32</tt>: 32-bit GNU/Linux
+<li><tt>linux.64</tt>: 64-bit GNU/Linux
 <li><tt>cygwin</tt>: A Cygwin shell running on a Windows box
 <li><tt>irix6.n32</tt>: 32-bit Irix
 <li><tt>irix6.64</tt>: 64-bit Irix
 <li><tt>solaris</tt>: Solaris machines running in 32-bit mode.
-<li><tt>darwin</tt>: A Mac running OS X (which runs on top of
-<a href="http://developer.apple.com/darwin/">Darwin</a>).
+<li><tt>darwin.32</tt>: 32-bit Mac OS X.
+<li><tt>darwin.64</tt>: 64-bit Mac OS X.
 </ul>
 
 <li> (Optional) If you want the teem headers, libraries, and
 command-line tools to be installed in a particular location, you need
 to set the <tt>TEEM_DEST</tt> environment variable to the directory
-<b>containing</b> the <tt>include</tt>, <tt>lib</tt>, and <tt>bin</tt>
-directories into which the various files will be copied.
+in which the <tt>include</tt>, <tt>lib</tt>, and <tt>bin</tt>
+directories will be the final locations the teem files.
 
 <li> <tt>cd src; make</tt><br>
 This will build and "install" all the <b>teem</b> libraries, as well
@@ -87,10 +88,9 @@ assuming <tt>TEEM_DEST</tt> was not set:
 <li> All libraries will be copied into <tt>teem/$TEEM_ARCH/lib</tt>
 <li> All command-line tools be copied into <tt>teem/$TEEM_ARCH/bin</tt>
 </ul>
-If <tt>TEEM_DEST</tt> was set:
+If <tt>TEEM_DEST</tt> was set, these directories will be created if needed:
 <ul>
 <li> All include files will be copied into <tt>$TEEM_DEST/include/teem</tt>.
-(The <tt>teem</tt> subdirectory will be created if it doesn't already exist.)
 <li> All libraries will be copied into <tt>$TEEM_DEST/lib</tt>
 <li> All command-line tools be copied into <tt>$TEEM_DEST/bin</tt>
 </ul>
