@@ -108,12 +108,12 @@ argument to <tt>nrrdRead()</tt> or <tt>nrrdLoad()</tt>.
   this is NRRD file.  The version of the format being used is 4.
   <td>After successful return from <tt>nrrdLoad()</tt> or <tt>nrrdRead()</tt>,
   the format of the file that was read is available 
-  as <tt>nio->format</tt> (type <tt>NrrdFormat*</tt>).
+  as <tt>nio-&gt;format</tt> (type <tt>NrrdFormat*</tt>).
 <tr>
   <td><tt><a href="format.html#content">content</a>:&nbsp;HUVA51125252</tt>
   <td>The "content" is just some terse text string description of what is
       in this dataset.  
-  <td><tt>nrrd->content</tt> (type <tt>char*</tt>).
+  <td><tt>nrrd-&gt;content</tt> (type <tt>char*</tt>).
 <tr>
   <td><tt>modality:=SPGR</tt>
   <td>The "<tt>:=</tt>" indicates a key/value pair definition. Both
@@ -129,31 +129,31 @@ argument to <tt>nrrdRead()</tt> or <tt>nrrdLoad()</tt>.
       integers).  They are written on disk in raw format (as with
 <tt>fwrite()</tt>), with big endian byte ordering (opposite of Intel/AMD
 byte ordering).  
-  <td>The type is stored in <tt>nrrd->type</tt>
+  <td>The type is stored in <tt>nrrd-&gt;type</tt>
    (type <tt>int</tt>, taking values from the <tt>nrrdType...</tt> enum).  The
    encoding and endian information is available in
-   <tt>nio->encoding</tt> (type <tt>NrrdEncoding*</tt>) 
-   and <tt>nio->endian</tt> (type <tt>int</tt>).
+   <tt>nio-&gt;encoding</tt> (type <tt>NrrdEncoding*</tt>) 
+   and <tt>nio-&gt;endian</tt> (type <tt>int</tt>).
 <tr>
   <td><tt><a href="format.html#dimension">dimension</a>: 3<br>
 <a href="format.html#sizes">sizes</a>: 256 256 124</tt>
   <td>The data is a 256-by-256-by-124 3-dimensional array.  The axis
   with size 124 is the "slowest" axis- the one whose coordinate changes
   most slowly as all the sample values are sequentially traversed.
-  <td>The dimension is <tt>nrrd->dim</tt> (type <tt>int</tt>).  The
-  axis sizes are <tt>nrrd->axis[i].size</tt> (type <tt>int</tt>).
+  <td>The dimension is <tt>nrrd-&gt;dim</tt> (type <tt>int</tt>).  The
+  axis sizes are <tt>nrrd-&gt;axis[i].size</tt> (type <tt>int</tt>).
 <tr>
   <td><tt><a href="format.html#datafile">data file</a>:&nbsp;HUVA51125252_spgr.img</tt>
   <td>This is the filename, relative to the NRRD header file, in which
   the data is stored.  
-  <td><tt>nio->dataFN[0]</tt> 
+  <td><tt>nio-&gt;dataFN[0]</tt> 
   (type <tt>char*</tt>).
 <tr>
   <td><tt><a href="format.html#thicknesses">thicknesses</a>:&nbsp;NaN&nbsp;NaN&nbsp;1.5</tt>
   <td>The slice thickness associated with the slowest (third) axis is
   1.5&nbsp;mm.  The first and second axes have no thickness associated with
   them, and so the not-a-number value, represented as "<tt>NaN</tt>" is used.
-  <td>Axis thicknesses are available in <tt>nrrd->axis[i].thickness</tt>
+  <td>Axis thicknesses are available in <tt>nrrd-&gt;axis[i].thickness</tt>
   (type <tt>double</tt>).
 <tr>
   <td><tt><a href="format.html#space">space</a>:&nbsp;right-anterior-superior</tt>
@@ -161,7 +161,7 @@ byte ordering).
   or "RAS", space.  The coefficients of the vectors given
   by the <tt>origin</tt> and <tt>space directions</tt> will be
   expressed in the RAS coordinate frame.
-  <td>The space is identified by <tt>nrrd->space</tt>
+  <td>The space is identified by <tt>nrrd-&gt;space</tt>
   (type <tt>int</tt>), which takes values from the <tt>nrrdSpace...</tt> enum.
 <tr>
   <td><tt><small><a href="format.html#spaceorigin">space origin</a>:&nbsp;(117.5,-93,119)<br>
@@ -178,27 +178,27 @@ byte ordering).
 [S]   [  0.0    -0.9375  0.0  119.0 ] [k]
                                       [1]</pre></small>
 
-  <td>The space origin is <tt>nrrd->spaceOrigin</tt>,
-  and the space directions are <tt>nrrd->axis[i].spaceDirection</tt>.
+  <td>The space origin is <tt>nrrd-&gt;spaceOrigin</tt>,
+  and the space directions are <tt>nrrd-&gt;axis[i].spaceDirection</tt>.
   Both of these are arrays (length <tt>NRRD_SPACE_DIM_MAX</tt>) of
-  <tt>double</tt>s, with as many values set as <tt>nrrd->spaceDimension</tt>.
+  <tt>double</tt>s, with as many values set as <tt>nrrd-&gt;spaceDimension</tt>.
 <tr>
   <td><tt><a href="format.html#spaceunits">space units</a>: "mm" "mm" "mm"</tt>
   <td>The units of measure in (R,A,S) space are millimeters
-  <td>The units strings are in <tt>nrrd->spaceUnits[n]</tt>
+  <td>The units strings are in <tt>nrrd-&gt;spaceUnits[n]</tt>
   (type <tt>char*</tt>), which as many strings set as 
-  <tt>nrrd->spaceDimension</tt>.
+  <tt>nrrd-&gt;spaceDimension</tt>.
 <tr>
   <td><tt><a href="format.html#centers">centerings</a>: cell cell cell</tt>
   <td>Samples on all axes are cell-centered (as opposed to node-centered)
-  <td>The axis centerings are in <tt>nrrd->axis[i].center</tt>
+  <td>The axis centerings are in <tt>nrrd-&gt;axis[i].center</tt>
    (type <tt>int</tt>), which are either <tt>nrrdCenterCell</tt> or
    <tt>nrrdCenterNode</tt>
 <tr>
   <td><tt><a href="format.html#kinds">kinds</a>: space space space</tt>
   <td>The sample along each array axis are sampled in a spatial domain
   (as opposed to being the components of some non-scalar sample value)
-  <td>The per-axis kinds are in <tt>nrrd->axis[i].kind</tt>
+  <td>The per-axis kinds are in <tt>nrrd-&gt;axis[i].kind</tt>
   (type <tt>int</tt>), which takes values from the <tt>nrrdKind...</tt> enum.
 </table>
 
@@ -250,19 +250,19 @@ sizes: 256 256 35 7</tt>
    The dimension is four because NRRD is primarily concerned with
    a low-level description of the data's layout.  Along the slowest (fourth)
    axis is B0 T2 image, and then the 6 DWIs.
-  <td><tt>nrrd->dim<br>
-nrrd->axis[i].size</tt>
+  <td><tt>nrrd-&gt;dim<br>
+nrrd-&gt;axis[i].size</tt>
 <tr>
   <td><tt><a href="format.html#datafile">data file</a>: HUVA33202368_dwi.img</tt>
   <td>This is the name of the datafile.  Both the "<tt>.img</tt>" and the
   axis ordering are consistent with using an Analyze header to refer to
   the same file.
-  <td><tt>nio->dataFN[0]</tt>
+  <td><tt>nio-&gt;dataFN[0]</tt>
 <tr>
   <td><tt><a href="format.html#thicknesses">thicknesses</a>: NaN NaN 4 NaN</tt>
   <td>The only axis for which a thickness is defined is the third, the
   slowest spatial axis.  There is no thickness for the DWI axis.
-  <td><tt>nrrd->axis[i].thickness</tt>
+  <td><tt>nrrd-&gt;axis[i].thickness</tt>
 <tr>
   <td><tt><small><a href="format.html#space">space</a>: right-anterior-superior<br>
 <a href="format.html#spaceorigin">space origin</a>: (117.5,-93,119)<br>
@@ -283,17 +283,17 @@ nrrd->axis[i].size</tt>
                                           [1]</pre></small>
 As above, measurements in
   RAS space are expressed in millimeters.
-  <td><tt>nrrd->space<br>
-nrrd->spaceOrigin[]<br>
-nrrd->axis[i].spaceDirection[]</tt>
+  <td><tt>nrrd-&gt;space<br>
+nrrd-&gt;spaceOrigin[]<br>
+nrrd-&gt;axis[i].spaceDirection[]</tt>
 <tr>
   <td><tt><a href="format.html#centers">centerings</a>: cell cell cell none<br>
 <a href="format.html#kinds">kinds</a>: space space space list</tt>
   <td>The first three axes have spatial extent, with cell-centered sampling.
   The last axis has no notion of centering, and is instead a "<tt>list</tt>"
   of scalar attributes for each spatial sample point.
-  <td><tt>nrrd->axis[i].center<br>
-nrrd->axis[i].kind</tt>
+  <td><tt>nrrd-&gt;axis[i].center<br>
+nrrd-&gt;axis[i].kind</tt>
 <tr>
 <td><small><small><pre>DW_gradient_001:= 0.70710677  0.0         0.70710677
 DW_gradient_002:= 0.70710677  0.70710677  0.0
