@@ -43,10 +43,11 @@ GK's C code: hoover
 <h2>Volume Rendering Framework</h2>
 
 <b>Hoover</b> is a minimalist library that facilitates the
-construction of simple ray-casting volume renderers.
-Basically, you tell <b>hoover</b> information about the camera, image,
-and volume, and then provide it with seven callback functions,
-implementing the behavior you want:
+construction of simple multi-threaded ray-casting volume renderers.
+The multi-threading capability (which is optional) is from the
+pthread library.  Basically, you tell <b>hoover</b> information about
+the camera, image, and volume, and then provide it with seven callback
+functions, implementing the behavior you want:
 <ul>
 <li> At the beginning and ending of the rendering
 <li> At the beginning and ending of a thread
@@ -54,16 +55,15 @@ implementing the behavior you want:
 <li> At each sample point along the ray
 </ul>
 
-After all has been set up, you call <tt>hoovRender()</tt> and let your
+After all has been set up, you call <tt>hooverRender()</tt> and let your
 callbacks do the work.  <b>Hoover</b> is the basis of the simple
 pseudo-volume renderer <a
 href="../bin/mrender/index.html"><tt>mrender</tt></a> as well as the <a
 href="../mite/index.html"><b>mite</b></a> volume renderer.  <b>Mite</b>, for
 instance, is basically just a different set of seven callbacks to plug
 into <b>hoover</b>.  By itself, <b>hoover</b> doesn't actually know
-the first thing about volume rendering.  Multi-threading support is
-actually not implemented yet, but as soon as it is, any
-<b>hoover</b>-based renderer will be multi-threaded.  <b>Hoover</b> is
+the first thing about volume rendering, it only knows enough geometry
+to shoot rays through a volume.  <b>Hoover</b> is
 also not very flexible: there is no concept of reflection or shadow
 rays, and only a simplistic load-sharing scheme.  However, it gets the
 job done, and is a useful framework for implementing a

@@ -170,12 +170,17 @@ All of the field specifications have the same structure: a string
 identifier), then a colon followed by a single space "<tt>: </tt>",
 and then the information describing the field "&lt;<i>desc</i>&gt;"
 (called the field descriptor).  All field identifiers are case
-insensitive.  The only field descriptors which are not case
-insensitive are the one which contain strings (the <tt>content</tt>,
-<tt>labels</tt>, and <tt>units</tt> fields).  Whitespace (which does
-not constitute the previous line's termination) is not allowed before
+insensitive.  Nearly all the field descriptors are also case
+insensitive, the exceptions are the field descriptors containing
+strings: the <tt>content</tt>,
+<tt>labels</tt>, and <tt>units</tt> fields.  Whitespace (that is not
+part of the previous line's termination) is not allowed before
 a field identifier. Extra whitespace after the field descriptor and
-before the line termination should be ignored.  The NRRD format is
+before the line termination should be ignored.
+
+<p>
+
+The NRRD format is
 complicated by the fact that some fields are always necessary, while
 some fields are always optional, and some fields are necessary only
 some of the time.  Whether or not a field is necessary depends on
@@ -187,17 +192,18 @@ headers.
 
 Some field specifications give a piece of
 information about each and every axis in a nrrd; these are called
-"per-axis specifications".  Identifying how many samples there are
-along each dimension of the array is an example of this.  Per-axis
+"per-axis field specifications".  An example is the <tt>sizes</tt>
+field that identifyies how many samples there are
+along each dimension of the array.  Per-axis
 specifications must have as many components as there are dimensions in
 the array, so that they can identify information for every axis.
 There is no partial or implied per-axis information.  Other field
 specifications are general with respect to array dimension, such as
-the type of the array; these are called "non-per-axis specifications".
+the type of the array; these are called "basic field specifications".
 
 <p>
 
-An important, and always necessary, non-per-axis field specification
+An important, and always necessary, basic field specification
 is the one giving the dimension of the nrrd.  The format is:
 
 <blockquote><pre>
@@ -211,7 +217,7 @@ what the current <b>nrrd</b> implementation can do.
 
 <p>
 
-Non-per-axis specifications can appear <b>both before and after</b>
+Basic specifications can appear <b>both before and after</b>
 the dimension field.  Per-axis specifications can only appear
 <b>after</b> the dimension field specification.  This simplifies the
 task of parsing per-axis specifications, since we know how many pieces
@@ -225,7 +231,7 @@ order within the header (after the magic).
 <p>
 In the remainder of this section, the other specifications which are
 always necessary will be introduced and discussed briefly. The general
-characteristics of the per-axis and non-per-axis specifications will
+characteristics of the per-axis and basic specifications will
 be described.  The importance of NaN as an indicator of "don't know"
 will be described.  The following sections expand on these points.  <a
 href="#sect2">Section 2</a> will define how NRRD readers and writers
@@ -272,7 +278,7 @@ to slowest.
 <p>
 
 Besides <tt>dimension</tt>, there are two other always-necessary
-non-per-axis specifications: the type and the encoding specifications.
+basic specifications: the type and the encoding specifications.
 Their format is:
 
 <blockquote><pre>
@@ -338,15 +344,14 @@ and <a href="#sect5">Section 5</a>.
 
 <p>
 
-One of the things that makes reading a NRRD header complicated is the
-idea that the absence of an optional piece of information is just as
-important to record as the information when it is explicitly given.
-Whatever data structure is created or updated as the result of reading
+One of the things that makes reading a NRRD header complicated is that
+the absence of optional information is just as important to record
+as the information itself when it is present.  That is,
+whatever data structure is created or updated as the result of reading
 a NRRD header must enable the writer to write the exact same NRRD
-header, up to field ordering.  If you generate a nrrd at run-time, and
-you don't have specific values for an optional field, or, if values
+header, up to field ordering.  If values
 for an optional field were never specified by an input NRRD header,
-then specific values for this field must not be invented in an output
+then specific values for this field <b>must not</b> be invented in an output
 NRRD header, and the field should not be saved at all.  Keeping
 headers as concise as possible makes them easier to understand when
 read by humans, and eliminates the risk that misleading information is
@@ -392,11 +397,11 @@ in reading and writing a NRRD file.  Because of NaN's important role
 as signifier of "don't know", the NRRD reader must be able to
 interpret the case-insensitive string "<tt>nan</tt>" as a NaN, even if
 this is not already the behavior of <tt>sscanf()</tt> on a given
-platform.  Writing a small wrapper function around <tt>sscanf()</tt>
-is a very small price to pay for the representational convenience of
-NaN.  <a href="#sect2">Section 2</a> gives the details for how NRRD
-readers and writers should handle ASCII encoding of the the IEEE 754
-special values.
+platform (it probably isn't).  Writing a small wrapper function
+around <tt>sscanf()</tt> is a very small price to pay for the
+representational convenience of NaN.  <a href="#sect2">Section 2</a>
+gives the details for how NRRD readers and writers should handle ASCII
+encoding of the the IEEE 754 special values.
 
 <p>
 
@@ -548,7 +553,7 @@ The magic at the beginning of the header is the same, so there is
 currently no way to immediately detect if the header being parsed is
 attached or detached.  The rest the field specifications are the same,
 and because the <tt>data file</tt> field specification is a
-non-per-axis specification, it may appear anywhere in the header.
+basic specification, it may appear anywhere in the header.
 Detached headers may end with the the last field specification, or
 with a single blank line following the last field specification (in
 which case anything following the blank line is ignored).
@@ -578,7 +583,7 @@ message.
 
 <li> Otherwise, "<tt><i>filename</i></tt>" gives the name of the data
 file.  It is passed directly to <tt>fopen()</tt> without any
-interpretation.  Filenames which are not include full paths are
+interpretation.  Filenames which do not start with a  full path are
 therefore interpreted as being relative to the current working
 directory of the reader, where ever that is.
 
@@ -591,7 +596,7 @@ invoked from, or the header would have to specify the full path to the
 datafile, at which point it becomes annoying to move the header and
 data together to a different directory.
 
-<h2><a name="sect4">4. Non-Per-Axis Field specifications</a></h2>
+<h2><a name="sect4">4. Basic Field specifications</a></h2>
 
 <hr noshade width="30%" align=left>
 <blockquote><pre>
@@ -693,8 +698,8 @@ in which case NRRD will either have to be expanded to allow types with
 unaddressable values (in which case a <tt>bit</tt> type might as well
 be added), or, some rules will have to be defined for converting a
 smaller type into an addressable type during data read.  Having
-addressable samples vastly simplifies the task of implementing array
-operations.
+individually addressable data samples vastly simplifies the task of
+implementing array operations.
 
 <p>
 
@@ -747,7 +752,7 @@ bytes between the beginning of one block and the beginning of the
 next.  Perhaps confusingly, it says nothing about the block size of
 the file system in use.  Knowing the block size allows the NRRD reader
 to know how many bytes of non-ascii data should be read from file.  The
-block size is often the return from <tt>sizeof()</tt> operator applied
+block size is exactly the return from <tt>sizeof()</tt> operator applied
 to a C struct or a C++ object, but as usual, this may not be the same
 as the sum of the sizes of the constituent members.  See the <a
 href="#block">points regarding the block type</a> (above) for the

@@ -58,6 +58,17 @@ their own customized C++ wrappers around <b>nrrd</b>.
 
 <p>
 
+<b>Functionality</b>: the <b>nrrd</b> library supports about two dozen
+operations on nrrds, nearly all of which are general with respect to
+the type and dimension of the nrrd.  Operations include: slicing,
+joining, cropping, padding, projecting, histogramming, histogram
+equalization, quantizing, axis permuting, color mapping, gamma correction,
+component-wise arithmetic operations like adding and multiplying, as
+well as filtered resampling (up and down) with arbitrary seperable
+kernels.
+
+<p>
+
 <b>Detached headers</b>: The ability to have the NRRD header in a
 seperate file than the data file, and the ability to skip past lines
 or bytes of another format's ascii or binary header, means that nrrd
@@ -107,17 +118,6 @@ with no header whatsoever (such as produced by Excel when exporting to
 plain text) are read and written with the same functions used for all
 the other formats.  VTK datasets defining scalars, vectors and tensors
 on STRUCTURED_POINTS geometries can also be read and written.
-
-<p>
-
-<b>Functionality</b>: the <b>nrrd</b> library supports about two dozen
-operations on nrrds, nearly all of which are general with respect to
-the type and dimension of the nrrd.  Operations include: slicing,
-joining, cropping, padding, projecting, histogramming, histogram
-equalization, quantizing, axis permuting, color mapping, gamma correction,
-component-wise arithmetic operations like adding and multiplying, as
-well as filtered resampling (up and down) with arbitrary seperable
-kernels.
 
 </blockquote>
 

@@ -36,11 +36,9 @@ GK's C code: Build
 
 <p>
 
-<h2>Windows users (except Cygwin):</h2>
+<h2>Windows users (except Cygwin): <a href="windows.html">Go here</a></h2>
 
-Windows users should click <a href="windows.html">here</a>.
-
-<h2>Non-Windows users (including Cygwin):</h2>
+<h2>The basic steps</h2>
 
 To build <b>teem</b> you will need <a
 href="http://www.gnu.org/software/make/make.html">GNU make</a>.  I am
@@ -74,20 +72,34 @@ one of the following:
 <a href="http://developer.apple.com/darwin/">Darwin</a>).
 </ul>
 
+<li> (Optional) If you want the teem headers, libraries, and
+command-line tools to be installed in a particular location, you need
+to set the <tt>TEEM_DEST</tt> environment variable to the directory
+<b>containing</b> the <tt>include</tt>, <tt>lib</tt>, and <tt>bin</tt>
+directories into which the various files will be copied.
+
 <li> <tt>cd src; make</tt><br>
 This will build and "install" all the <b>teem</b> libraries, as well
-as all the <a href="bin/index.html">command-line tools</a>.  This
-build will take a little while.  On a multi-processor machine,
-building <tt>teem-1.5betaX</tt> or later, feel free to use
-"<tt>make&nbsp;-j10</tt>" or similar to speed this up.  NOTE: This
-isn't an "install" in the traditional Unix build sense, since no files
-will be created outside the top-level <tt>teem</tt> directory.
-Headers are put in <tt>teem/include</tt>, libraries are created in
-<tt>teem/&lt;arch&gt;/lib</tt>, and the command-line tools in
-<tt>teem/&lt;arch&gt;/bin</tt>, where "<tt>&lt;arch&gt;</tt>" is the
-same as what you set <tt>TEEM_ARCH</tt> to.
+as all the <a href="bin/index.html">command-line tools</a>.  Specifically,
+assuming <tt>TEEM_DEST</tt> was not set:
+<ul>
+<li> All include files will be copied into <tt>teem/include/teem</tt>
+<li> All libraries will be copied into <tt>teem/$TEEM_ARCH/lib</tt>
+<li> All command-line tools be copied into <tt>teem/$TEEM_ARCH/bin</tt>
+</ul>
+If <tt>TEEM_DEST</tt> was set:
+<ul>
+<li> All include files will be copied into <tt>$TEEM_DEST/include/teem</tt>.
+(The <tt>teem</tt> subdirectory will be created if it doesn't already exist.)
+<li> All libraries will be copied into <tt>$TEEM_DEST/lib</tt>
+<li> All command-line tools be copied into <tt>$TEEM_DEST/bin</tt>
+</ul>
 
-<li> <tt>cd ../&lt;arch&gt;/bin</tt>
+On a multi-processor machine,
+building <tt>teem-1.5beta0</tt> or later, feel free to use
+"<tt>make&nbsp;-j10</tt>" or similar to speed this up.
+
+<li> <tt>cd ../$TEEM_ARCH/bin</tt> (or <tt>cd $TEEM_DEST/bin</tt>)
 
 <li> <tt>./nrrdSanity</tt><br>
 
@@ -111,53 +123,42 @@ message from <tt>nrrdSanity</tt>.
 
 </ol>
 
-The compilation process is controlled by an assortment of environment
-variables, all starting with <tt>TEEM_</tt>.  The <tt>TEEM_ZLIB</tt>,
-<tt>TEEM_BZIP2</tt>, and <tt>TEEM_PNG</tt> variables only need to be
-set; they don't need to be set to any particular string.  If they are
-set, then the <b>nrrd</b> library is compiled with something optional
-turned on; either the zlib or bzip2 compression encodings, or the PNG
-image file format.  More on these below.  The other environment
-variables need to be set to a particular string.
+<h2>Making a better teem: zlib, bzip2, png, and pthread</h2>
+
+If you want <b>hoover</b> to be multi-threaded, or
+if you want <b>nrrd</b> to support zlib/gzip or bzip2
+compression, or allow <b>nrrd</b> to read and write PNG images, you
+need to set additional environment variables, as well as have compiled
+version of the associated libraries.  The following three variables
+need simply to be set (as with "<tt>setenv&nbsp;TEEM_ZLIB</tt>"), as
+opposed to set to a specific string (as with
+"<tt>setenv&nbsp;TEEM_ZLIB&nbsp;true</tt>"):
+
+<p>
 
 <table border=1>
 
 <tr>
-<td><tt>TEEM_ARCH</tt>
-<td>The architecture you're building on and for; described above.
+<td><tt>TEEM_PTHREAD</tt><td> Allows <b>hoover</b> to run multiple
+threads, so that hoover-based volume renderers are multi-threaded.
 
 <tr>
-<td><tt>TEEM_DEST</tt>
-<td>If you'd rather everything be installed to some other directory (with
-include, lib, and bin subdirectories), then set environment variable
-<tt>TEEM_DEST</tt> to that directory, and make will put headers,
-libraries, and binaries in the corresponding subdirectories of
-<tt>TEEM_DEST</tt>.
+<td><tt>TEEM_ZLIB</tt><td> Allows <b>nrrd</b> to read and write raw
+data compressed with zlib compression, for instance with the "<tt>-e
+gzip</tt>" encoding flag in <tt>unu save</tt>.  The compressed data is
+compatible with the gzip and gunzip command-line tools.
 
 <tr>
-<td><tt>TEEM_ZLIB</tt> <td>If this is set (but it doesn't need to be
-set to anything in particular), <b>nrrd</b> will do zlib compression
-and decompression of data. It also enables the "<tt>-e gzip</tt>"
-encoding flag in <tt>unu save</tt>.  Gzip/gunzip are command-line
-tools which uses zlib compression; the format <b>nrrd</b> uses for
-zlib-compressed data is always compatible with the gzip command-line
-tool.  Enabling zlib also enables PNG images, since these are always
-zlib-compressed.
+<td><tt>TEEM_BZIP2</tt><td> Allows <b>nrrd</b> to read and write raw
+data compressed with bzip2, for instance with the "<tt>-e bzip2</tt>"
+encoding flag in <tt>unu save</tt>. The compressed data is compatible
+with the bzip2 and bunzip2 command-line tools.
 
 <tr>
-<td><tt>TEEM_BZIP2</tt> <td>This allows <b>nrrd</b> to do bzip2
-compression and decompression, enabling the "<tt>-e bzip2</tt>"
-encoding flag in <tt>unu save</tt>.  The data compressed this way is
-compatible with the bzip2/bunzip2 command-line tools.
+<td><tt>TEEM_PNG</tt><td> Allows <b>nrrd</b> to read and write PNG images,
+for instance with the "<tt>-f png</tt>" format flag in <tt>unu save</tt>.
+This requires <tt>TEEM_ZLIB</tt>.  
 
-<tr>
-<td><tt>TEEM_PNG</tt> <td>This enables <b>nrrd</b> to read and write
-PNG images.  Because the key/value chunk in PNG is used to store NRRD
-headers (such as axis labels, mins, and maxs) this means PNG is a
-a completely lossless format to store NRRDs, as long as they are 8 or
-16 bit unsigned, either 2-dimensional, or 3-dimensional with 1, 2, 3,
-or 4 samples along axis 0.  PNGs can be viewed with most browsers, and
-can even be imported into Powerpoint!
 </table>
 
 <p>
@@ -177,7 +178,7 @@ instead of just the associated command-line tools and their documentation.
 In case you do not have the workable versions of zlib, bzip2, and png
 installed in <tt>/usr/local/</tt> on your system (or wherever the C
 compiler looks for headers and libraries by default), you can teach
-the teem makefiles where to find them by setting more environment
+the teem makefiles where to find them by setting yet more environment
 variables.  In the following, "<tt>XXX</tt>" stands for either
 "<tt>ZLIB</tt>", "<tt>BZIP2</tt>", or "<tt>PNG</tt>".
 
@@ -195,11 +196,10 @@ thing <tt>XXX</tt>.  It should be of the form
 the linker, to tell it where to find the library for optional thing
 <tt>XXX</tt>. It should be of the form "<tt>-L&lt;<i>path</i>&gt;</tt>",
 such as "<tt>-L/home/gk/lib</tt>".  The makefiles know the name of
-the library; you do need to (nor can you) supply the library link
+the library; you do not need to (nor can you) supply the library link
 flag itself (e.g. "<tt>-lzlib</tt>"); this is done by the makefiles for you.
 
 </table>
-
 
 <p>
 

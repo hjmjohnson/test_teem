@@ -36,58 +36,108 @@ GK's C code: General Information
 
 <p>
 
-<h3>THIS IS UNFINISHED</h3>
+<h3>Library inter-dependencies</h3>
 
 The inter-dependencies of the <b>teem</b> libraries has slowly
 converged according to my notion of what functionality is
 "fundamental" versus "specialized".  This is not a clear-cut
 distinction, but the present arrangement has proven successful.
-It is graphed here:
+It is graphed here, with the fundamental stuff at the top left,
+and the specialized stuff at the bottom right:
+<blockquote>
 <center>
-<img width=409 height=306 src="img/teemmap.png"
+<img width=489 height=366 src="img/teemmap2.png"
 alt="teem lib dependency graph">
 </center>
+</blockquote>
 <b>air</b> is at the top because it depends on no other library
-(besides the system's math library).  Each edge represents a
+(besides the system's math library).  <b>ten</b> is at the bottom
+because, being my PhD work, it depends on nearly all the other
+software I've written.  Each edge represents a
 dependency, either from using data or functions provided by the higher
 library, or from requiring a data structure definition or
-<tt>#define</tt> from its header file.  Going from top to bottom, the
-libraries appear in exactly the same order that they are built.
-
-<ul>
-
-<li><b>Names of things</b>: Every library has a header (.h) file with
-the same name as the library.  <b>air</b> has <tt>air.h</tt>, and so
-forth.  Libraries may have additional header files; <b>nrrd</b> has
-both <tt>nrrd.h</tt> and <tt>nrrdDefines.h</tt>.  However, the only
-header file which needs to be explicitly <tt>#include</tt>d in other
-source code using the library is the primary header file (such as
-<tt>air.h</tt> or <tt>nrrd.h</tt>).  Within those header files, there
-will be some <tt>#define</tt>s; every one of them starts with the
-library name in upper case, followed by an underscore.  For instance,
-<tt>air.h</tt> defines a macro called <tt>AIR_INDEX</tt> for
-generating linear array indices from floating point numbers.
-
-<p>
-
-Every symbol (function, global variable) in a library starts with a
-fixed "symbol prefix", or some number of underscores followed by the
-"symbol prefix".  Currently, (for <b>air</b>, <b>biff</b>,
-<b>nrrd</b>, <b>bane</b>, and <b>limn</b>), the symbol prefix is
-identical to the library name.  For instance, all "public"
-<b>nrrd</b> function names start with <b>nrrd</b>.  There may be a
-library in the future with a shortened version of the library as the
-symbol prefix.
-
-</ul>
+<tt>#define</tt> from its header file.  The edges are colored
+according to the library being depeneded upon.  For visual clarity,
+edges are drawn both above and below the diagonal, but this doesn't
+signify anything in itself.  Also, this only shows the immediate
+dependencies and not their recursive expansion (<b>ten</b> depends on
+<b>limn</b> depends on <b>hest</b>, but there is no edge from
+<b>ten</b> to <b>hest</b>). Going from top to bottom, the libraries
+appear in exactly the same order that they are built.
 
 <hr width="70%" noshade>
 
-<ul>
-<li><b>Return codes</b>: Nearly all functions in <b>teem</b> return
-an <tt>int</tt>.  This value is the error code; it is non-zero when
-there has been an error.  This means that code to check for errors 
-will generally look like:
+<h3>Naming and C namespace considerations</h3>
+
+<b>Teem</b> is extremely careful to minimize the chances of namespace
+clashes with other existing libraries, and is very consistent in how
+parts elements in the library are named.   All the <b>teem</b> source
+complies fully with the policies described here.
+
+<p>
+
+The library names in <b>teem</b> are mostly words, and I go to great
+lengths to find library names that are both meaningful, yet not
+already used as library names (as determined by <a
+href="http://www.google.com">google</a> searches).  The library
+names are <a href="names.html">explained elsewhere</a>.
+
+<p>
+
+Every library has a primary header file with the same name as the
+library.  <b>air</b> has <tt>air.h</tt>, <b>hest</b> has
+<tt>hest.h</tt>, and so forth.  Libraries may have additional header
+files; <b>nrrd</b> has <tt>nrrd.h</tt>, <tt>nrrdDefines.h</tt>,
+<tt>nrrdEnums.h</tt>, and <tt>nrrdMacros.h</tt>.  However, the only
+header file which needs to be explicitly <tt>#include</tt>d in other
+source files is the primary header file (such as
+<tt>air.h</tt> or <tt>nrrd.h</tt>).  The <b>teem</b> directory structure
+is set up so that these header files are themselves in a subdirectory
+of "<tt>include</tt>" called "<tt>teem</tt>", so that including 
+<b>teem</b> headers in other headers is apt to look something like this
+(taken from <tt>hoover.h</tt>):
+
+<blockquote><pre>
+#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+#include &lt;math.h&gt;
+
+#include &lt;teem/air.h&gt;
+#include &lt;teem/biff.h&gt;
+#include &lt;teem/ell.h&gt;
+#include &lt;teem/nrrd.h&gt;
+#include &lt;teem/limn.h&gt;
+</pre></blockquote>
+
+Any <tt>#define</tt>s within the library headers will start with
+either the library name (in upper case), or an underscore followed by
+the library name.  For instance, <tt>air.h</tt> defines a macro called
+<tt>AIR_INDEX</tt>, and <tt>nrrdDefines.h</tt> defines an integer
+<tt>NRRD_DIM_MAX</tt>.
+
+<p>
+
+Every symbol (functions, global variables, and enum values) in a
+<b>teem</b> library starts with the library name (in lower case), or
+one or more understores followed by the library name.  For example,
+the <b>nrrd</b> library supplies functions named <tt>nrrdNew</tt>,
+<tt>nrrdCopy</tt>, and <tt>nrrdNuke</tt>, as well as global variables
+<tt>nrrdDefSpacing</tt> and <tt>nrrdStateVerboseIO</tt>, and 
+enum value names starting with <tt>nrrdFormat</tt>, <tt>nrrdEncoding</tt>,
+and <tt>nrrdType</tt>.
+
+
+<hr width="70%" noshade>
+
+<h3>Function return values</h3>
+
+Nearly all <b>teem</b> functions return either an <tt>int</tt> or a
+pointer.  The ones that return pointers are pseudo-constructors or
+pseudo-destructors.  The <tt>int</tt> return values are interpreted as
+an error value: zero means "no error, everything ran okay", and
+non-zero means "there were problems".  This means that code to check
+for errors will generally look like:
+
 <blockquote><pre>
 if (teemFunction(arg1, arg2)) {
   do error handling;
@@ -96,12 +146,14 @@ if (teemFunction(arg1, arg2)) {
 /* else no problem ... */
 </pre></blockquote>
 
-
-Were I to get fancy, the exacty value would be some indicator of what
-sort of error happened.  This practice has not been adopted.  For the
-most part, textual descriptions (in English) of the errors accumulate
-with <a href="biff/index.html"><b>biff</b></a>.  For instance, in
-<tt>nrrdSwapAxes()</tt>, we find the code
+In general, I am not a big believer in returning different integral error
+codes to indicate different kinds of errors.  These are often
+frustrating because they tell a little bit about what happened, but
+don't tell you everything that might be helpful in isolating and
+fixing the problem.  Rather, I accumulate textual descriptions (in
+English) of the errors in the <a
+href="biff/index.html"><b>biff</b></a> library.  For instance, in
+<tt>nrrdSwapAxes()</tt>, we find:
 
 <blockquote><pre>
 if (nrrdPermuteAxes(nout, nin, axes)) {
@@ -113,34 +165,23 @@ if (nrrdPermuteAxes(nout, nin, axes)) {
 The use of <tt>biffAdd()</tt> insures that the current error string is
 added to list of previous errors, with the assumption that
 <tt>nrrdPermuteAxes()</tt> also left some errors with <b>biff</b>.
+This allows you to see the call stack at the time of the error,
+with each function giving contextual information (if any) describing
+what it was trying to do.  Here's an example of a nrrd reading failing
+for the <tt>unu</tt> program:
+<blockquote><pre>
+unu minmax: error parsing "vol.nhdr" as nrrd for <nin> option:
+[nrrd] nrrdLoad:
+[nrrd] nrrdRead: trouble reading NRRD file
+[nrrd] _nrrdReadNrrd:
+[nrrd] _nrrdReadDataRaw: fread() got only 262144 4-byte things, not 266240
+</pre></blockquote>
+
 See the <a href="biff/index.html"><b>biff</b> page</a> for more specific 
 information on <b>biff</b> usage.
 
-<p>
-
-Exceptions to the above are functions which have "Valid" in their
-name, like <tt>baneValidHVol</tt>, as well as some other functions
-like <tt>nrrdFitsInFormat</tt>.  These should be read more as
-predicates in a logical statement, not as function calls.  So,
-<tt>baneValidHVol(hvol)</tt> returns non-zero when <tt>hvol</tt>
-<b>is</b> as valid histogram volume, and it returns zero when
-<tt>hvol</tt> is <b>not</b> a valid histogram volume.  Code might look
-like:
-
-<blockquote><pre>
-if (!baneValidHVol(hvol)) {
-  sprintf(err, "%s: given nrrd isn't a histogram volume", me);
-  biffAdd(BANE, err); return 1;
-}
-/* else no problem ... */
-</pre></blockquote>
-
-</ul>
-
-<hr width="70%" noshade>
 
 <p>
-
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>
 
 </body>
