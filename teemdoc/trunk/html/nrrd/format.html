@@ -38,8 +38,61 @@ GK's C code: nrrd: Definition of NRRD File Format
     <h2>&nbsp;&nbsp;<b>Definition of NRRD File Format</b></h2>
 </table>
 
-This document defines the NRRD file format.  It gives requirements and
-recommendations of readers and writers of this format.  Because the
+<table border=1>
+<tr><td>
+<ol>
+<li><a href="#sect1">General Information</a>
+  <ol>
+  <li><a href="#sect1.1">Format versions and magics</a>
+  <li><a href="#sect1.2">Basic header structure</a>
+  <li><a href="#sect1.3">"Per-axis" versus "basic" fields, and field specification ordering</a>
+  <li><a href="#sect1.4">Axis ordering, and a minimalist header</a>
+  <li><a href="#sect1.5">Optional information and its representation</a>
+  <li><a href="#sect1.6">Miscellaneous info</a>
+  </ol>
+<li><a href="#sect2">ASCII encoding of floating point values</a>
+<li><a href="#sect3">Detached headers</a>
+<li><a href="#sect4">Space and orientation information</a><br>
+<a href="#space"><tt>space</tt></a>, 
+<a href="#spacedimension"><tt>space dimension</tt></a>,
+<a href="#spaceunits"><tt>space units</tt></a>,
+<a href="#origin"><tt>origin</tt></a>,
+<a href="#spacedirections"><tt>space directions</tt>
+
+<li><a href="#sect5">Basic field specifications </a><br>
+<a href="#dimension"><tt>dimension</tt></a>,
+<a href="#type"><tt>type</tt></a>,
+<a href="#blocksize"><tt>block size</tt></a>,
+<a href="#encoding"><tt>encoding</tt></a>,
+<a href="#endian"><tt>endian</tt></a>,
+<a href="#content"><tt>content</tt></a>,
+<a href="#min"><tt>min</tt></a>,
+<a href="#max"><tt>max</tt></a>,<br>
+<a href="#oldmin"><tt>old min</tt></a>,
+<a href="#oldmax"><tt>old max</tt></a>,
+<a href="#datafile"><tt>data file</tt></a>,
+<a href="#lineskip"><tt>line skip</tt></a>,
+<a href="#byteskip"><tt>byte skip</tt></a>,
+<a href="#number"><tt>number</tt></a>,
+<a href="#sampleunits"><tt>sample units</tt></a>
+
+<li><a href="#sect6">Per-axis field specifications</a><br>
+<a href="#sizes"><tt>sizes</tt></a>,
+<a href="#spacings"><tt>spacings</tt></a>,
+<a href="#thicknesses"><tt>thicknesses</tt></a>,
+<a href="#axismins"><tt>axis mins</tt></a>,
+<a href="#axismaxs"><tt>axis maxs</tt></a>,
+<a href="#centers"><tt>centers</tt></a>,
+<a href="#labels"><tt>labels</tt></a>,
+<a href="#units"><tt>units</tt></a>,
+<a href="#kinds"><tt>kinds</tt></a>
+</ol>
+</table>
+
+<p>
+
+This document defines the NRRD file format.  <!-- It gives requirements and
+recommendations of readers and writers of this format.  --> Because the
 <b>nrrd</b> library also supports PNG, PPM, PGM, and plain text files,
 see also <a href="otherformat.html">NRRD-Compatible File Formats</a>
 to see how comments embedded in these files can be used to store the
@@ -69,7 +122,7 @@ href="index.html"><b>nrrd</b></a> library are intended to completely
 support the format as described here, but as yet there is no test
 suite.
 
-<h2><a name="sect1">1. General information</a></h2>
+<h2><a name="sect1">1. General Information</a></h2>
 
 <h3><a name="sect1.1">1.1 Format versions and magics</a></h3>
 
@@ -151,8 +204,19 @@ specifies information about one of the fields in the nrrd.  Each of
 these lines is called a "field specification", or more loosely, a
 "field".  Each field specification is contained in exactly one line.
 Each field specification may appear no more than once in the nrrd
-header; repetitions of a field is sufficient cause for a reader to
-exit with an error message.
+header.
+All the field specifications have the same structure: a string
+"&lt;<i>field</i>&gt;" identifying the field (called the field
+identifier), then a colon followed by a single space "<tt>: </tt>",
+and then the information describing the field "&lt;<i>desc</i>&gt;"
+(called the field descriptor).  All field identifiers are case
+insensitive.  Many of the field descriptors are also case
+insensitive, the exceptions are the field descriptors containing
+strings: the <tt>content</tt>, <tt>labels</tt>, <tt>units</tt>, and
+<tt>sample units</tt> fields.  Whitespace (that is not part of the
+previous line's termination) is not allowed before a field
+identifier. Extra whitespace after the field descriptor and before the
+line termination is ignored.
 
 <p>
 
@@ -190,28 +254,13 @@ header, but this is not a requirement.  Comments are case sensitive.
 The magic, field specifications, key/value pairs, and comments
 comprise the NRRD header.  After the header, there is a single blank
 line containing zero characters.  This separates the header from the
-data, which follows.  Unlike the header, the data segment is not
+data, which follows.  <!-- Unlike the header, the data segment is not
 structured in ASCII lines. The encoding of the data (raw, ASCII,
 compressed, or other) is specified by the <tt>encoding</tt> field in
-the header.  The header, the blank line, and the data comprise the
+the header.  --> The header, the blank line, and the data comprise the
 NRRD file.  A single NRRD file can store the information and data for
 a single array.  There is currently no facility for storing multiple
 arrays in a single NRRD file.
-
-<p>
-
-All of the field specifications have the same structure: a string
-"&lt;<i>field</i>&gt;" identifying the field (called the field
-identifier), then a colon followed by a single space "<tt>: </tt>",
-and then the information describing the field "&lt;<i>desc</i>&gt;"
-(called the field descriptor).  All field identifiers are case
-insensitive.  Nearly all the field descriptors are also case
-insensitive, the exceptions are the field descriptors containing
-strings: the <tt>content</tt>, <tt>labels</tt>, <tt>units</tt>, and
-<tt>sample units</tt> fields.  Whitespace (that is not part of the
-previous line's termination) is not allowed before a field
-identifier. Extra whitespace after the field descriptor and before the
-line termination should be ignored.
 
 <p>
 
@@ -223,7 +272,7 @@ previous information in the header.  This is why there is no standard
 template for all NRRD headers, or a context-free grammar for NRRD
 headers.
 
-<h3><a name="sect1.3">1.3 "Per-axis" versus "basic" fields, and axis ordering</a></h3>
+<h3><a name="sect1.3">1.3 "Per-axis" versus "basic" fields, and field specification ordering</a></h3>
 
 Some field specifications give a piece of
 information about each and every axis in a nrrd; these are called
@@ -238,7 +287,7 @@ the type of the array; these are called "basic field specifications".
 
 <p>
 
-An important, and always necessary, basic field specification
+An important and necessary basic field specification
 is the one giving the dimension of the nrrd.  The format is:
 
 <blockquote><pre>
@@ -252,16 +301,37 @@ what the current <b>nrrd</b> implementation can do.
 
 <p>
 
+The number of samples along each axis is the only necessary
+per-axis specification.  The format is:
+
+<blockquote><pre>
+sizes: &lt;<i>size[0]</i>&gt; &lt;<i>size[1]</i>&gt; ... &lt;<i>size[dim-1]</i>&gt;
+</pre></blockquote>
+
+&lt;<i>size[i]</i>&gt; is the number of samples along axis <i>i</i>,
+with axis ordering going from fastest to slowest.  As with all the
+other per-axis field identifiers, <tt>sizes</tt> ends with "s" to
+emphasize the plurality of the field it specifies.  The field
+identifiers do not change, however, for one-dimensional nrrds.
+
+<p>
+
 Basic specifications can appear <b>both before and after</b>
-the dimension field.  Per-axis specifications can only appear
-<b>after</b> the dimension field specification.  This simplifies the
+the <tt>dimension</tt> field.  Per-axis specifications can only appear
+<b>after</b> the <tt>dimension</tt> field specification.  This simplifies the
 task of parsing per-axis specifications, since we know how many pieces
-of information need to be parsed (the same as the dimension).  This
-also avoids any attempts at cleverness in the form of guessing the
-nrrd dimension based on the first per-axis specification.  Other than
-this one constraint, field specifications may appear in <b>any</b>
-order within the header after the magic, with the exception of one
-form of the "<tt>data file: LIST</tt>" form of the <tt>data file</tt> field.
+of information need to be parsed (the same as the dimension), as well
+as avoiding attempts at cleverness in the form of guessing the
+dimension from the first per-axis specification.  There is a similar
+field specification ordering constraint associated with the orientation
+information described in <a href="#sect4">Section 4</a>: the space in
+which the array conceptually "lives" has to be identified (or at least
+its dimension given) prior to parsing all the other orientation-related
+fields which have one piece of information per space coordinate.  A 
+final constraint on field specification ordering is that the 
+"<tt>data file:&nbsp;LIST</tt>" form of the <tt>data&nbsp;file</tt> field.
+must be the last field specification in the header.  Within these 
+constraints, the field specification may appear in any order.
 
 <!-- 
 <p>
@@ -278,38 +348,25 @@ specifications are found in <a href="#sect5">Section 5</a> and <a
 href="#sect6">Section 6</a>.
 -->
 
-<p>
-
-The number of samples along each axis is the only always-necessary
-per-axis specification.  The format is:
-
-<blockquote><pre>
-sizes: &lt;<i>size[0]</i>&gt; &lt;<i>size[1]</i>&gt; ... &lt;<i>size[dim-1]</i>&gt;
-</pre></blockquote>
-
-&lt;<i>size[i]</i>&gt; is the number of samples along axis <i>i</i>,
-with axis ordering going from fastest to slowest.  As with all the
-other per-axis field identifiers, <tt>sizes</tt> ends with "s" to
-emphasize the plurality of the field it specifies.  The field
-identifiers do not change, however, for one-dimensional nrrds.
-
+<h3><a name="sect1.4">1.4 Axis ordering, and a minimalist header</a></h3>
 <p>
 
 The issue of axis ordering is fundamental.  In memory and on disk,
-there is a strict linear order of all the values in an array.
-Logically, however, each sample has one or more coordinates which
-identify its position-- as many coordinates as there are dimensions in
-the array.  The "fastest" axis is the one associated with the
-coordinate which increments fastest as the samples are traversed in
-memory order.  Typical raster ordering of interleaved RGB data is
-logically a three-dimensional array.  The fastest axis is the
-color axis (only three samples long), followed by the horizontal axis, with
-the vertical axis being the slowest.  All the per-axis field
-specifications identify information for each axis, and the axis
-ordering is always (reading left to right) fastest to slowest.  NRRD
-makes no attempt to "name" the axes, such as "X", "Y", and "Z": they
-are identified solely by their location in the ordering from fastest
-to slowest.
+there is a strict linear order of all the values in an array, so that
+each value has a single integer address.  Conceptually, however, each
+value has one or more integer coordinates which identify its position
+within the array (as many coordinates as there are dimensions in the
+array).  The "fastest" axis is the one associated with the coordinate
+which increments fastest as the samples are traversed in linear order.
+For example, the typical raster ordering of interleaved RGB
+2-dimensional image data is actually a three-dimensional array.  The
+fastest axis is the color axis (only three samples long), followed by
+the horizontal axis, with the vertical axis being the slowest.  All
+the per-axis field specifications identify information for each axis,
+and the axis ordering is always (reading left to right) fastest to
+slowest.  NRRD does not assume any names for the axes, such as "X",
+"Y", "Z" or "I", "J", "K": they are identified solely by their
+location in the ordering from fastest to slowest.
 
 <p>
 
@@ -364,8 +421,10 @@ P6
 255
 </pre></blockquote>
 
+<!--
 If "<tt>encoding: ascii</tt>" had appeared instead in the NRRD header,
 the PPM magic would be "<tt>P3</tt>" instead of "<tt>P6</tt>".
+-->
 
 <p>
 
@@ -378,14 +437,14 @@ data would have to be recorded.  The details of which fields require
 which other fields are spelled out in <a href="#sect5">Section 5</a>
 and <a href="#sect6">Section 6</a>.
 
-<h3><a name="sect1.4">1.4 Optional information and its representation</a></h3>
+<h3><a name="sect1.5">1.5 Optional information and its representation</a></h3>
 
 One of the things that makes reading a NRRD header complicated is that
 the absence of optional information is just as important to record
 as the information itself when it is present.  That is,
 whatever data structure is created or updated as the result of reading
 a NRRD header must enable the writer to write the exact same NRRD
-header, up to field ordering.  If values
+header, up to field specification ordering.  If values
 for an optional field were never specified by an input NRRD header,
 then specific values for this field <b>must not</b> be invented in an output
 NRRD header, and the field should not be saved at all.  Keeping
@@ -406,8 +465,10 @@ href="#content"><tt>content</tt></a>, <a
 href="#labels"><tt>labels</tt></a>, and <a
 href="#units"><tt>units</tt></a>), the empty string (<tt>""</tt>) is
 the obvious choice for "don't know".  For <a
-href="#centers"><tt>centers</tt></a>, the string "<tt>???</tt>" (and
-the value used to represent it) means "don't know".
+href="#centers"><tt>centers</tt></a> and
+<a href="#kinds"><tt>kinds</tt></a>, the strings "<tt>???</tt>"
+and "<tt>none</tt>" (and
+the value used to represent them) means "don't know".
 In contrast, the optional fields
 with integer values (<a href="#lineskip"><tt>line skip</tt></a> and <a
 href="#byteskip"><tt>byte skip</tt></a>) actually have sensible a
@@ -439,7 +500,7 @@ representational convenience of NaN.  <a href="#sect2">Section 2</a>
 gives the details for how NRRD readers and writers should handle ASCII
 encoding of the the IEEE 754 special values.
 
-<p>
+<h3><a name="sect1.6">1.6 Miscellaneous info</a></h3>
 
 In <a href="#sect5">Section 5</a> and <a href="#sect6">Section 6</a>,
 when a field specification is described as harmless, it means that the
@@ -480,7 +541,7 @@ specific and intelligent human-readable error messages are of course
 encouraged.
 -->
 
-<h2><a name="sect2">2. ASCII encoding of floating point</a></h2>
+<h2><a name="sect2">2. ASCII Encoding of Floating Point Values</a></h2>
 
 Float point field descriptors in the NRRD header, and floating point
 data written with ASCII encoding, have some special rules regarding
@@ -553,7 +614,7 @@ patterns for positive and negative infinity.
 NRRD writers should verify that their <tt>printf()</tt> function behaves
 in accordance with these rules.
 
-<h2><a name="sect3">3. Detached headers</a></h2>
+<h2><a name="sect3">3. Detached Headers</a></h2>
 
 Detached headers allow data stored in one or more separate files,
 with or without headers of another format, to be accessed by a NRRD
@@ -578,7 +639,8 @@ file.
 
 There is one new field specification which is required in detached
 headers, using the "<tt>data file</tt>" identifier.  This field specification
-can take one of three possible forms:
+can take one of three possible forms (the second and third were copied
+from the MetaImage format).
 
 <blockquote>
 <ol>
@@ -588,15 +650,15 @@ can take one of three possible forms:
 </ol>
 </blockquote>
 
-"<tt>datafile:</tt>" is also valid as the field identifier.  The three
-forms of the field descriptor are described below. The addition of
+"<tt>datafile:</tt>" is also valid as the field identifier.  The addition of
 this field is the only difference between attached headers and
 detached headers.  The magic at the beginning of the header is the
 same, so there is currently no way to immediately detect if the header
 being parsed is attached or detached.  Detached headers may end with
 the the last field specification, or with a single blank line
 following the last field specification (in which case anything
-following the blank line is ignored).
+following the blank line is ignored). The meaning of the three
+forms of the field descriptor are:
 
 <ol>
 
@@ -629,11 +691,11 @@ which are between <tt>&lt;<i>min</i>&gt</tt> and
 given explicitly, in the NRRD header, one filename per line, in the 
 line starting after data file field specification, until the end 
 of file.  Thus, this form of the field specification <b>must</b> be
-the last specification of the header.
+the last specification of the header.  If you have a single detached
+datafile whose name is unfortunate to be "<tt>LIST</tt>", you can
+still refer to it by "<tt>data file: ./LIST</tt>".
 
 </ol>
-
-(The second and third forms were copied from the MetaImage format.)
 
 <p>
 
@@ -661,7 +723,7 @@ can't know if the data file has been erased, renamed, or moved.  NRRD
 provides no means to overcome these problems once they've been
 created.  On the other hand, moving the header and data files together
 to a new place is a common operation, and is supported by the special
-semantics associated with the data filename descriptor.  
+semantics associated with the data filename:
 
 <ul>
 
@@ -670,7 +732,7 @@ semantics associated with the data filename descriptor.
 "<tt><i>format</i></tt>", or listed in a "<tt>LIST</tt>") does
 <b>not</b> begins with "<tt>/</tt>", it is taken to be the filename of
 the data file, <i>relative to the location of the detached header
-file</i>.  The NRRD reader is responsible for constructing the data
+file</i>.  The NRRD reader is responsible for constructing the full data
 filename from the filename of the detached header and
 "<tt><i>filename</i></tt>".  Obviously, if the detached header has
 been passed to the reader not as a file name, but as a <tt>FILE*</tt>
@@ -711,7 +773,7 @@ datafile, at which point it becomes annoying to move the header and
 data together to a different directory.
 -->
 
-<h2><a name="sect4">4. Space and Orientation information</a></h2>
+<h2><a name="sect4">4. Space and Orientation Information</a></h2>
 
 Staring with <tt>NRRD0004</tt> files, NRRD headers can describe the
 orientation of the raster grid relative to some surrounding "space".
@@ -729,14 +791,13 @@ of in <a href="#sect5">Section 5</a> and <a href="#sect6">Section 6</a>.
 Orientation information is defined by a combination of basic and
 per-axis field specifications, which accomplish three things:
 <ol>
-<li> Name the space around array (or at least its dimension). Done
+<li> Identify the space around array (or at least its dimension). Done
 with basic field specifications "<tt>space:</tt>"
 and "<tt>space dimensions:</tt>", and per-axis field specification
 "<tt>space units:</tt>".
 <li> Determine the translation (or position) of the array.  Done with
 basic field specification "<tt>origin:</tt>", which locates the "first"
-sample (the value for which appears first in the data file, or at the 
-lowest memory address).
+sample.
 <li> Determine the direction of each axis of the array relative to the space.
 Done with per-axis field specifications "<tt>space directions:</tt>".
 </ol>
@@ -760,9 +821,9 @@ and "<tt>labels</tt>" fields.
 
 <p>
 
-<hr noshade width="30%" align=left>
+<a name="space"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="space">space: &lt;<i>space</i>&gt;</a>
+space: &lt;<i>space</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional, but either this or "<tt>space dimension</tt>"
@@ -807,7 +868,7 @@ The possible values are:
 <tr>
   <td>"<tt>right-anterior-superior-time</tt>" or "<tt>RAST</tt>"
   <td>4
-  <td>Like <tt>RAS</tt>, but the time along the fourth axis.
+  <td>Like <tt>RAS</tt>, but with time along the fourth axis.
 <tr>
   <td>"<tt>left-anterior-superior-time</tt>" or "<tt>LAST</tt>"
   <td>4
@@ -821,9 +882,9 @@ The possible values are:
   <td>3
   <td>For medical data, a <b>scanner</b>-based right-handed coordinate
     frame, used in ACR/NEMA 2.0 (pre-DICOM 3).  If a patient lies parallel
-   to the ground, face-up on the table, with his feet-to-head direction
+   to the ground, face-up on the table, with their feet-to-head direction
  same as the front-to-back direction of the imaging equipment, the axes of
- this scanner-based coordinate frame and the patient-based
+ this scanner-based coordinate frame and the (patient-based)
  left-posterior-superior frame coincide.
 <tr>
   <td>"<tt>scanner-xyz-time</tt>"
@@ -847,10 +908,21 @@ The possible values are:
   <td>Like <tt>3D-left-handed</tt>, but with time along the fourth axis.
 </table>
 
+<p>
 
-<hr noshade width="30%" align=left>
+It is important to recognize that the identification of the space (or
+rather its basis vectors) is <b>not</b> the same as identifying which
+axes of the array are aligned with which space basis vectors.  That
+is, in some other formats, "RAS" implies something about axis
+ordering: that the coordinates along the fastest axis increase in the
+left to right direction, and that the second and third array
+coordinates increase along the anterior and superior directions.  The
+NRRD format, in contrast, is very careful to separate the issue of axis
+ordering with the issue of array orientation.  
+
+<a name="spacedimension"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="spacedimension">space dimension: &lt;<i>int</i>&gt;</a>
+space dimension: &lt;<i>int</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional, but either this or "<tt>space</tt>"
@@ -864,20 +936,23 @@ many components there are in the vectors given in the <tt>origin</tt>
 and <tt>space directions</tt> vectors.  This (or <tt>space</tt>) has
 to precede the other orientation-related fields.
 
-<hr noshade width="30%" align=left>
+<a name="spaceunits"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="spaceunits">space units: "&lt;<i>unit[0]</i>&gt;" "&lt;<i>unit[1]</i>&gt;" ... "&lt;<i>unit[dim-1]</i>&gt;"</a>
+space units: "&lt;<i>unit[0]</i>&gt;" "&lt;<i>unit[1]</i>&gt;" ... "&lt;<i>unit[dim-1]</i>&gt;"
 </pre></blockquote>
 <ul>
 <li> Always optional, and is an optional part of defining orientation
 </ul>
 
-Allows naming of units with which the components of the space vectors
-are measured.
-
-<hr noshade width="30%" align=left>
+Allows naming of units (as strings) with which the components of the
+space vectors are measured.  For example:
 <blockquote><pre>
-<a name="origin">origin: &lt;<i>vector</i>&gt;</a>
+space units: "mm" "mm" "mm"
+</pre></blockquote>
+
+<a name="origin"><hr noshade width="30%" align=left></a>
+<blockquote><pre>
+origin: &lt;<i>vector</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional, and is an optional part of defining orientation
@@ -906,9 +981,9 @@ a three-dimensional origin specification:
 origin: (0.0,1.0,0.3)
 </pre></blockquote>
 
-<hr noshade width="30%" align=left>
+<a name="spacedirections"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="">space directions: "&lt;<i>vector[0]</i>&gt;" "&lt;<i>vector[1]</i>&gt;" ... "&lt;<i>vector[dim-1]</i>&gt;"</a>
+space directions: "&lt;<i>vector[0]</i>&gt;" "&lt;<i>vector[1]</i>&gt;" ... "&lt;<i>vector[dim-1]</i>&gt;"
 </pre></blockquote>
 <ul>
 <li> Always optional, but is a necessary part of defining orientation
@@ -931,11 +1006,11 @@ axis) may be specified:
 space directions: none (1,0,0) (0,1,0) (0,0,3)
 </pre></blockquote>
 
-<h2><a name="sect5">5. Basic Field specifications</a></h2>
+<h2><a name="sect5">5. Basic Field Specifications</a></h2>
 
-<hr noshade width="30%" align=left>
+<a name="dimension"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="dimension">dimension: &lt;<i>int</i>&gt;</a>
+dimension: &lt;<i>int</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always necessary
@@ -950,9 +1025,9 @@ large.  On the other hand, dynamic allocation of all the per-axis
 information is pretty annoying, so currently, NRRD readers are only
 required to handle dimensions of 16 or less.
 
-<hr noshade width="30%" align=left>
+<a name="type"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="type">type: &lt;<i>type</i>&gt;</a>
+type: &lt;<i>type</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always necessary
@@ -1070,9 +1145,9 @@ structures in a portable way, you shouldn't be using NRRD files.  Use
 <a href="http://www.faqs.org/rfcs/rfc1014.html">XDR
 (<tt>http://www.faqs.org/rfcs/rfc1014.html</tt>)</a> instead.
 
-<hr noshade width="30%" align=left>
+<a name="blocksize"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="blocksize">block size: &lt;<i>int</i>&gt;</a>
+block size: &lt;<i>int</i>&gt;
 blocksize: &lt;<i>int</i>&gt;
 </pre></blockquote>
 <ul>
@@ -1093,9 +1168,9 @@ not be the same as the sum of the sizes of the constituent members.
 See the <a href="#block">points regarding the block type</a> (above)
 for the restrictions and warnings on encoding of blocks.
 
-<hr noshade width="30%" align=left>
+<a name="encoding"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="encoding">encoding: &lt;<i>encoding</i>&gt;</a>
+encoding: &lt;<i>encoding</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always necessary
@@ -1212,9 +1287,9 @@ There is complete orthogonality between the encoding of the data, and
 whether the header is attached or detached.  The header is never
 compressed- it is necessarily straight ASCII text.
 
-<hr noshade width="30%" align=left>
+<a name="endian"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="endian">endian: &lt;<i>endian</i>&gt;</a>
+endian: &lt;<i>endian</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Necessary for non-<tt>block</tt> type nrrds if and only if the size
@@ -1250,9 +1325,9 @@ one platform never pay the overhead of fixing endianness.  That
 overhead should only be incurred when going between platforms with
 different endiannesses.
 
-<hr noshade width="30%" align=left>
+<a name="content"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="content">content: &lt;<i>string</i>&gt;</a>
+content: &lt;<i>string</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional
@@ -1279,9 +1354,9 @@ along axis 0 at position 50, then the content of the result will be
 
 
 
-<hr noshade width="30%" align=left>
+<a name="min"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="min">min: &lt;<i>min</i>&gt;</a>
+min: &lt;<i>min</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional
@@ -1295,9 +1370,9 @@ value, infinite or not, NaN or not, is valid.  "<tt>nan</tt>" means
 header anyway.  Of course, the NRRD header has no way of insuring that
 the information here is correct.
 
-<hr noshade width="30%" align=left>
+<a name="max"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="max">max: &lt;<i>max</i>&gt;</a>
+max: &lt;<i>max</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional
@@ -1307,9 +1382,9 @@ the information here is correct.
 Same the <a href="#min"><tt>min</tt></a> field, but represents the
 maximum value in the array.
 
-<hr noshade width="30%" align=left>
+<a name="oldmin"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="oldmin">old min: &lt;<i>min</i>&gt;</a>
+old min: &lt;<i>min</i>&gt;
 oldmin: &lt;<i>min</i>&gt;
 </pre></blockquote>
 <ul>
@@ -1336,9 +1411,9 @@ lowest output integer, but the lowest of those values.
 
 Infinite values are not valid, "<tt>nan</tt>" means "don't know".
 
-<hr noshade width="30%" align=left>
+<a name="oldmax"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="oldmax">old max: &lt;<i>max</i>&gt;</a>
+old max: &lt;<i>max</i>&gt;
 oldmax: &lt;<i>max</i>&gt;
 </pre></blockquote>
 <ul>
@@ -1351,9 +1426,9 @@ Same as <a href="#oldmin"><tt>old min</tt></a>, but represents the
 highest of the input values that were mapped to the highest output
 integral value.
 
-<hr noshade width="30%" align=left>
+<a name="datafile"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="datafile">data file: &lt;<i>filename</i>&gt;</a>
+data file: &lt;<i>filename</i>&gt;
 datafile: &lt;<i>filename</i>&gt;
 data file: &lt;<i>format</i>&gt; &lt;<i>min</i>&gt; &lt;<i>max</i>&gt; &lt;<i>step</i>&gt; [&lt;<i>subdim</i>&gt;]
 datafile: &lt;<i>format</i>&gt; &lt;<i>min</i>&gt; &lt;<i>max</i>&gt; &lt;<i>step</i>&gt; [&lt;<i>subdim</i>&gt;]
@@ -1373,9 +1448,9 @@ with a blank line, any data after the blank line is ignored.  If
 this field is not present, the data is assumed to be in the same file
 as the header, following the blank line marking the end of the header.
 
-<hr noshade width="30%" align=left>
+<a name="lineskip"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="lineskip">line skip: &lt;<i>skip</i>&gt;</a>
+line skip: &lt;<i>skip</i>&gt;
 lineskip: &lt;<i>skip</i>&gt;
 </pre></blockquote>
 <ul>
@@ -1388,8 +1463,8 @@ skip some number of lines (greater than or equal to zero) in the data
 file in order to get to the where the data actually begins.  If this
 is used in an attached NRRD header, then the lines are skipped after
 the blank line at the end of the NRRD header.  The definition of a
-"line" in this context is the same as given at the beginning of <a
-href="#sect1">Section 1</a>.  When this field does not appear,
+"line" in this context is the same as given in <a
+href="#sect1.2">Section 1.2</a>.  When this field does not appear,
 <i>skip</i> is taken to be zero.
 
 <p>
@@ -1401,10 +1476,9 @@ skip</tt> is not affected by the <tt>encoding</tt> field.
 
 <p>
 
-
-<hr noshade width="30%" align=left>
+<a name="byteskip"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="byteskip">byte skip: &lt;<i>skip</i>&gt;</a>
+byte skip: &lt;<i>skip</i>&gt;
 byteskip: &lt;<i>skip</i>&gt;
 </pre></blockquote>
 <ul>
@@ -1483,9 +1557,9 @@ proceeded by a four-byte representation of the data length.
 </ul>
 -->
 
-<hr noshade width="30%" align=left>
+<a name="number"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="number">number: &lt;<i>string</i>&gt;</a>
+number: &lt;<i>string</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always harmless
@@ -1504,9 +1578,9 @@ principle of making NRRD headers as concise as possible, the
 <tt>number</tt> field should never be written, and always ignored on
 reading, without even an attempt to parse the field as an integer.
 
-<hr noshade width="30%" align=left>
+<a name="sampleunits"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="sampleunits">sample units: &lt;<i>string</i>&gt;</a>
+sample units: &lt;<i>string</i>&gt;
 sampleunits: &lt;<i>string</i>&gt;
 </pre></blockquote>
 <ul>
@@ -1522,16 +1596,16 @@ array.  However, all coordinates of a vector (such as a velocity
 vector) are apt to have the same units, so this field is still useful
 in that case.
 
-<h2><a name="sect6">6. Per-Axis Specifications</a></h2>
+<h2><a name="sect6">6. Per-axis Field Specifications</a></h2>
 
 The individual field descriptors in these specifications are delimited
 by one or more spaces ("<tt> </tt>") or tabs ("<tt>\t</tt>"), or some
 combination of the two, but no other kinds of white space delimiters
 are valid.
 
-<hr noshade width="30%" align=left>
+<a name="sizes"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="sizes">sizes: &lt;<i>size[0]</i>&gt; &lt;<i>size[1]</i>&gt; ... &lt;<i>size[dim-1]</i>&gt;</a>
+sizes: &lt;<i>size[0]</i>&gt; &lt;<i>size[1]</i>&gt; ... &lt;<i>size[dim-1]</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always necessary
@@ -1542,9 +1616,9 @@ All the &lt;<i>size[i]</i>&gt; are integers greater than 0.
 &lt;<i>size[i]</i>&gt; is the number of samples along axis i in the
 array.
 
-<hr noshade width="30%" align=left>
+<a name="spacings"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="spacings">spacings: &lt;<i>space[0]</i>&gt; &lt;<i>space[1]</i>&gt; ... &lt;<i>space[dim-1]</i>&gt;</a>
+spacings: &lt;<i>space[0]</i>&gt; &lt;<i>space[1]</i>&gt; ... &lt;<i>space[dim-1]</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional
@@ -1576,9 +1650,9 @@ independent of the <tt>centers</tt>, <tt>axis min</tt> and <tt>axis
 maxs</tt> fields, even though mutually incompatible settings are
 possible.
 
-<hr noshade width="30%" align=left>
+<a name="thicknesses"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="thicknesses">thicknesses: &lt;<i>thickness[0]</i>&gt; &lt;<i>thickness[1]</i>&gt; ... &lt;<i>thickness[dim-1]</i>&gt;</a>
+thicknesses: &lt;<i>thickness[0]</i>&gt; &lt;<i>thickness[1]</i>&gt; ... &lt;<i>thickness[dim-1]</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional
@@ -1600,9 +1674,9 @@ that if it were a basic field, one would need a separate basic field
 to identify which axis is the slice axis, and this information would
 become invalid if the array axes were permuted.
 
-<hr noshade width="30%" align=left>
+<a name="axismins"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="axismins">axis mins: &lt;<i>min[0]</i>&gt; &lt;<i>min[1]</i>&gt; ... &lt;<i>min[dim-1]</i>&gt;</a>
+axis mins: &lt;<i>min[0]</i>&gt; &lt;<i>min[1]</i>&gt; ... &lt;<i>min[dim-1]</i>&gt;
 axismins: &lt;<i>min[0]</i>&gt; &lt;<i>min[1]</i>&gt; ... &lt;<i>min[dim-1]</i>&gt;
 </pre></blockquote>
 <ul>
@@ -1634,9 +1708,9 @@ the <tt>axis maxs</tt> field, although it is often useful for these to
 appear together.  However, using the <tt>axis mins</tt> field alone
 can emulate the <tt>ORIGIN</tt> field of the VTK file format header.
 
-<hr noshade width="30%" align=left>
+<a name="axismaxs"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="axismaxs">axis maxs: &lt;<i>max[0]</i>&gt; &lt;<i>max[1]</i>&gt; ... &lt;<i>max[dim-1]</i>&gt;</a>
+axis maxs: &lt;<i>max[0]</i>&gt; &lt;<i>max[1]</i>&gt; ... &lt;<i>max[dim-1]</i>&gt;
 axismaxs: &lt;<i>max[0]</i>&gt; &lt;<i>max[1]</i>&gt; ... &lt;<i>max[dim-1]</i>&gt;
 </pre></blockquote>
 <ul>
@@ -1662,9 +1736,9 @@ of the NRRD reader to ensure their consistency, only to check that the
 individual values in isolation are sensible (for instance, an axis max
 can't be infinite).
 
-<hr noshade width="30%" align=left>
+<a name="centers"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="centers">centers: &lt;<i>center[0]</i>&gt; &lt;<i>center[1]</i>&gt; ... &lt;<i>center[dim-1]</i>&gt;</a>
+centers: &lt;<i>center[0]</i>&gt; &lt;<i>center[1]</i>&gt; ... &lt;<i>center[dim-1]</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional
@@ -1692,7 +1766,7 @@ node centered, or if neither is known.
   <td>Volumes as a grid of "voxels", in which the logical element is a 
   cube with a value at each of its eight corners.
 <tr>
-  <td>"<tt>???</tt>"
+  <td>"<tt>???</tt>" or "<tt>none</tt>"
   <td>Centering information for this axis is either meaningless or unknown
   <td>Any non-spatial axis, such as a short axis for vector or tensor 
   components, preceding all the spatial axes.
@@ -1707,9 +1781,9 @@ positions 0.10, 0.30, 0.50, 0.70, and 0.90, for a spacing of 0.20.
 
 <p>
 
-<hr noshade width="30%" align=left>
+<a name="labels"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="labels">labels: "&lt;<i>label[0]</i>&gt;" "&lt;<i>label[1]</i>&gt;" ... "&lt;<i>label[dim-1]</i>&gt;"</a>
+labels: "&lt;<i>label[0]</i>&gt;" "&lt;<i>label[1]</i>&gt;" ... "&lt;<i>label[dim-1]</i>&gt;"
 </pre></blockquote>
 <ul>
 <li> Always optional
@@ -1753,9 +1827,9 @@ There is no fixed limit on how long the line containing the
 <tt>labels</tt> field can be.
 
 
-<hr noshade width="30%" align=left>
+<a name="units"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="units">units: "&lt;<i>unit[0]</i>&gt;" "&lt;<i>unit[1]</i>&gt;" ... "&lt;<i>unit[dim-1]</i>&gt;"</a>
+units: "&lt;<i>unit[0]</i>&gt;" "&lt;<i>unit[1]</i>&gt;" ... "&lt;<i>unit[dim-1]</i>&gt;"
 </pre></blockquote>
 <ul>
 <li> Always optional
@@ -1775,9 +1849,9 @@ multi-dimensional scatterplots, spectral image data, and what
 <b>nrrd</b> calls "axis histograms", which are histograms along one
 axis but spatially varying along all other axes.
 
-<hr noshade width="30%" align=left>
+<a name="kinds"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-<a name="kinds">kinds: &lt;<i>kind[0]</i>&gt; &lt;<i>kind[1]</i>&gt; ... &lt;<i>kind[dim-1]</i>&gt;</a>
+kinds: &lt;<i>kind[0]</i>&gt; &lt;<i>kind[1]</i>&gt; ... &lt;<i>kind[dim-1]</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional
@@ -1800,58 +1874,58 @@ With time, more different kind values are apt to be added.
   <td><b>Required<br>axis<br>size</b>
   <td><b>Meaning</b>
 <tr>
-  <td><tt>domain</tt>
+  <td>"<tt>domain</tt>"
   <td>(none)
   <td>The samples along this axis are positioned along some domain,
       as opposed to being the components of coordinates of non-scalar
       quantities.  Basically: "it makes sense to resample or blur
       along this axis".
 <tr>
-  <td><tt>space</tt>
+  <td>"<tt>space</tt>"
   <td>(none)
   <td>Like <tt>domain</tt>, but this is a spatial domain
 <tr>
-  <td><tt>time</tt>
+  <td>"<tt>time</tt>"
   <td>(none)
   <td>Like <tt>domain</tt>, but this is a temporal domain
 <tr>
-  <td><tt>list</tt>
+  <td>"<tt>list</tt>"
   <td>(none)
   <td>The sample along this axis are components of coordinates of non-scalar
       quantities, such as a 20-dimensional vector.  Basically: "it makes
       <b>no</b> sense to resample or blur along this axis".
 <tr>
-  <td><tt>stub</tt>
+  <td>"<tt>stub</tt>"
   <td>1
   <td>The single sample on this axis is just a stub.
 <tr>
-  <td><tt>scalar</tt>
+  <td>"<tt>scalar</tt>"
   <td>1
   <td>The single sample on this axis is explicitly indicated as a scalar value.
 <tr>
-  <td><tt>complex</tt>
+  <td>"<tt>complex</tt>"
   <td>2
   <td>The two samples along this axis are the 2 components
       of a complex value:<br>
       real imag
 <tr>
-  <td><tt>2-vector</tt>
+  <td>"<tt>2-vector</tt>"
   <td>2
   <td>Any 2-vector
 <tr>
-  <td><tt>3-color</tt>
+  <td>"<tt>3-color</tt>"
   <td>3
   <td>A 3-vector whose components are color values
 <tr>
-  <td><tt>4-color</tt>
+  <td>"<tt>4-color</tt>"
   <td>4
   <td>Any 4-vector of colors (ordering of R, G, B, and A are not imposed)
 <tr>
-  <td><tt>3-vector</tt>
+  <td>"<tt>3-vector</tt>"
   <td>3
   <td>Any 3-vector
 <tr>
-  <td><tt>3-normal</tt>
+  <td>"<tt>3-normal</tt>"
   <td>3
   <td>A 3-vector which is assumed to have unit L2 norm
 <tr>
@@ -1859,48 +1933,48 @@ With time, more different kind values are apt to be added.
   <td>4
   <td>Any 4-vector
 <tr>
-  <td><tt>2D-symmetric-matrix</tt>
+  <td>"<tt>2D-symmetric-matrix</tt>"
   <td>3
   <td>Unique components of 2D symmetric matrix, in order:<br>
       Mxx Mxy Myy
 <tr>
-  <td><tt>2D-masked-symmetric-matrix</tt>
+  <td>"<tt>2D-masked-symmetric-matrix</tt>"
   <td>4
   <td>Unique components of 2D symmetric matrix, preceeded by a mask value
       to indicate validity of the matrix:<br>
       mask Mxx Mxy Myy
 <tr>
-  <td><tt>2D-matrix</tt>
+  <td>"<tt>2D-matrix</tt>"
   <td>4
   <td>Components of a 2D matrix:<br>
       Mxx Mxy Myx Myy
 <tr>
-  <td><tt>2D-masked-matrix</tt>
+  <td>"<tt>2D-masked-matrix</tt>"
   <td>4
   <td>Mask value with components of 2D matrix:<br>
       mask Mxx Mxy Myx Myy
 <tr>
-  <td><tt>3D-symmetric-matrix</tt>
+  <td>"<tt>3D-symmetric-matrix</tt>"
   <td>6
   <td>Unique components of a 3D symmetric matrix:<br>
       Mxx Mxy Mxz Myy Myz Mzz
 <tr>
-  <td><tt>3D-masked-symmetric-matrix</tt>
+  <td>"<tt>3D-masked-symmetric-matrix</tt>"
   <td>7
   <td>Mask value with unique components of 3D symmetric matrix:<br>
       mask Mxx Mxy Mxz Myy Myz Mzz
 <tr>
-  <td><tt>3D-matrix</tt>
+  <td>"<tt>3D-matrix</tt>"
   <td>9
   <td>Components of 3D matrix:<br>
       Mxx Mxy Mxz Myx Myy Myz Mzx Mzy Mzz
 <tr>
-  <td><tt>3D-masked-matrix</tt>
+  <td>"<tt>3D-masked-matrix</tt>"
   <td>10
   <td>Mask value with components of 3D matrix:<br>
       mask Mxx Mxy Mxz Myx Myy Myz Mzx Mzy Mzz
 <tr>
-  <td><tt>???</tt>
+  <td>"<tt>???</tt>" or "<tt>none</tt>"
   <td>(none)
   <td>Kind information for this axis is unknown or not representable
 </table>
