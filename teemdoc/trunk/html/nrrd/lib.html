@@ -38,10 +38,1100 @@ GK's C code: nrrd: Library Description
     <h2>&nbsp;&nbsp;Library Description</h2>
 </table>
 
-<!--
+This page is intended to be a basic introduction to programming with
+the <b>nrrd</b> API.  This will make the most sense if you already
+know what sort of data and meta-data can be represented in a nrrd.
+The <a href="intro.html">Introduction</a> to nrrd is useful in this
+respect; the <a href="format.html">Definition of NRRD File Format</a>
+is a more detailed and "bottom-up" view of what can go into a nrrd,
+from the standpoint of the written file.  This will do the same thing,
+from the standpoint of what is available as data structures in memory.
 
+<h2>Data Structures</h2>
+
+We start with the <tt>Nrrd</tt> data structure.  This comes in two
+parts: the struct for per-axis information (<tt>NrrdAxis</tt>), and the main 
+<tt>Nrrd</tt> struct which includes an array of <tt>NrrdAxis</tt>s.  These
+are extracted from <tt>nrrd.h</tt> in <tt>teem/src/nrrd/nrrd.h</tt>,
+from teem version 1.6.0.  With the introduction of key/value pairs, 
+the <tt>Nrrd</tt> struct has probably converged to something that will
+not change for a few years.
+
+<blockquote><pre>
+/*
+******** NrrdAxis struct
+**
+** all the information which can sensibly be associated with
+** one axis of a nrrd.  The only member which MUST be explicitly
+** set to something meaningful is "size".
+**
+** The min and max values give the range of positions "represented"
+** by the samples along this axis.  In node-centering, "min" IS the
+** position at the lowest index.  In cell-centering, the position at
+** the lowest index is between min and max (a touch bigger than min,
+** assuming min < max).
+*/
+typedef struct {
+  int size;                      /* number of elements along each axis */
+  double spacing;                /* if non-NaN, distance between samples */
+  double min, max;               /* if non-NaN, range of positions spanned
+				    by the samples on this axis.  Obviously,
+				    one can set "spacing" to something
+				    incompatible with min and max: the idea
+				    is that only one (min and max, or
+				    spacing) should be taken to be significant
+				    at any time. */
+  int center;                    /* cell vs. node centering */
+  char *label;                   /* short info string for each axis */
+  char *unit;                    /* short string for identifying units */
+} NrrdAxis;
+
+/*
+******** Nrrd struct
+**
+** The struct used to wrap around the raw data array
+*/
+typedef struct {
+  /* 
+  ** NECESSARY information describing the main array.  This is
+  ** generally set at the same time that either the nrrd is created,
+  ** or at the time that the nrrd is wrapped around an existing array 
+  */
+  void *data;                    /* the data in memory */
+  int type;                      /* a value from the nrrdType enum */
+  int dim;                       /* what is dimension of data */
+
+  /* 
+  ** All per-axis specific information
+  */
+  NrrdAxis axis[NRRD_DIM_MAX];   /* axis[0] is the fastest axis in the scan-
+				    line ordering, the one who's coordinates
+				    change the fastest as the elements are
+				    accessed in the order in which they appear
+				    in memory */
+
+  /* 
+  ** Information of dubious standing- descriptive of whole array, but
+  ** not necessary (meaningful only for some uses of a nrrd), but basic
+  ** enough to be part of the basic nrrd type
+  */
+  char *content;                 /* briefly, just what the hell is this data */
+  int blockSize;                 /* for nrrdTypeBlock array, block byte size */
+  double oldMin, oldMax;         /* if non-NaN, and if nrrd is of integral
+				    type, extremal values for the array
+				    BEFORE it was quantized */
+  void *ptr;                     /* never read or set by nrrd; use/abuse
+				    as you see fit */
+
+  /* 
+  ** Comments.  Read from, and written to, header.
+  ** The comment array "cmt" is NOT NULL-terminated.
+  ** The number of comments is cmtArr->len.
+  */
+  char **cmt;
+  airArray *cmtArr;
+
+  /*
+  ** Key-value pairs.
+  */
+  char **kvp;
+  airArray *kvpArr;
+} Nrrd;
+</pre></blockquote>
+
+<p>
+
+In general, you do not directly set the struct members- you set this
+information via functions in the <b>nrrd</b> API.  As a matter of
+convenience, however, it is common and okay to read value directly
+from the <tt>Nrrd</tt> struct.  The value of looking at the struct
+definitions is to understand what information can be represented.
+There is one <tt>NrrdAxis</tt> struct for each axis (or dimension) in
+the dataset, and the only necessary piece of information is the
+<tt>size</tt>; everything else is optional meta-information.
+<tt>spacing</tt>, <tt>min</tt>, and <tt>max</tt> are all doubles which
+follow the convention that if no useful value is known, then the value
+is set to <tt>AIR_NAN</tt>, which represents
+Not-A-Number. <tt>label</tt> and <tt>unit</tt> are standard C char*
+strings.  The <tt>center</tt> field takes on values from a C enum
+defined in <tt>nrrdEnums.h</tt>; useful values are
+<tt>nrrdCenterUnknown</tt>, <tt>nrrdCenterNode</tt>, and
+<tt>nrrdCenterCell</tt>; using <tt>nrrdCenterUnknown</tt> when
+sample-centering is unknown or irrelevant.
+
+<p>
+
+In the <tt>Nrrd</tt> struct, the basic information describing the
+array are given in <tt>data</tt>, <tt>type</tt>, and <tt>dim</tt>.
+<tt>type</tt> takes values from a C enum (again in
+<tt>nrrdEnums.h</tt>); sample values include <tt>nrrdTypeUChar</tt>,
+<tt>nrrdTypeUShort</tt>, <tt>nrrdTypeFloat</tt>, and
+<tt>nrrdTypeDouble</tt>, for C types <tt>unsigned char</tt>,
+<tt>unsigned short</tt>, <tt>float</tt>, and <tt>double</tt>,
+respectively.  Any and all information about the array that is
+specific to each axis is in the <tt>axis</tt> array of
+<tt>NrrdAxis</tt> structs (note that this is an array of structs, not
+an array of pointers to structs).  The rest of the <tt>Nrrd</tt>
+struct is for optional meta-information about the array.  Of
+particular note is the <tt>kvp</tt> key/value pair array; this becomes
+the catch-all for other meta-information that you wish to associated
+with an array in a way that will be saved out to a NRRD file, and
+recovered upon reading in the file.
+
+<h2>Input/Output functions and error handling</h2>
+
+There are four main I/O functions; two functions for reading, and two
+for writing, and you choose depending on whether you giving a
+<tt>char*</tt> filename or a <tt>FILE*</tt> file pointer:
+<center>
+<table border=1 cellpadding=4>
+<tr>
+  <td>way to specify I/O
+  <td>Input
+  <td>Output
+<tr>
+  <td align=right><tt>char*</tt> filename
+  <td><tt>nrrdLoad()</tt>
+  <td><tt>nrrdSave()</tt>
+<tr>
+  <td align=right><tt>FILE*</tt> file pointer
+  <td><tt>nrrdRead()</tt>
+  <td><tt>nrrdWrite()</tt>
+</table>
+</center>
+<tt>nrrdLoad()</tt> and <tt>nrrdSave()</tt> are more commonly used.
+
+<p>
+
+As with most functions in <b>teem</b> libraries, these functions
+return an <tt>int</tt> to signify an error condition or successful
+completion.  <b>Teem</b> uses verbose, detailed, textual error messages
+in favor of cryptic, integer error codes.  The error messages
+accumulate in a seperate library devoted to error handling, called
+<b>biff</b>.  Thus, handling errors in <b>nrrd</b> (or any other
+<b>teem</b> library) involves making <b>biff</b> calls to get the
+error messages.  Here is a fairly complete/pedantic example of using
+<tt>nrrdLoad</tt> and <tt>nrrdSave</tt> with error handling:
+
+<blockquote><pre>
+#include &lt;teem/nrrd.h&gt;
+
+void
+demoIO(char *filename) {
+  char me[]="demoIO", newname[]="foo.nrrd", *err;
+  Nrrd *nin;
+
+  /* create a nrrd; at this point this is just an empty container */
+  nin = nrrdNew();
+
+  /* read in the nrrd from file */
+  if (nrrdLoad(nin, filename, NULL)) {
+    err = biffGetDone(NRRD);
+    fprintf(stderr, "%s: trouble reading \"%s\":\n%s", me, filename, err);
+    free(err);
+    return;
+  }
+
+  /* say something about the array */
+  printf("%s: \"%s\" is a %d-dimensional nrrd of type %d (%s)\n", 
+         me, filename, nin-&gt;dim, nin-&gt;type,
+         airEnumStr(nrrdType, nin-&gt;type));
+  printf("%s: the array contains %d elements, each %d bytes in size\n",
+         me, (int)nrrdElementNumber(nin), (int)nrrdElementSize(nin));
+
+  /* write out the nrrd to a different file */
+  if (nrrdSave(newname, nin, NULL)) {
+    err = biffGetDone(NRRD);
+    fprintf(stderr, "%s: trouble writing \"%s\":\n%s", me, newname, err);
+    free(err);
+    return;
+  }
+
+  /* blow away both the Nrrd struct *and* the memory at nin-&gt;data
+     (nrrdNix() frees the struct but not the data,
+     nrrdEmpty() frees the data but not the struct) */
+  nrrdNuke(nin);
+
+  return;
+}
+</pre></blockquote>
+
+Things to note here:
+<ul>
+<li> With <tt>nrrdLoad()</tt> and <tt>nrrdSave()</tt>, a non-zero return
+means "there were problems"; a return of zero means "everything is okay".
+<li> The <tt>NULL</tt> argument to <tt>nrrdLoad()</tt> and <tt>nrrdSave()</tt>
+is a place-holder for a <tt>NrrdIO</tt> struct, which is used whenever 
+you want to over-ride the default behavior of the I/O functions.  
+Experience has shown that the defaults probably do what you want.
+<li> You pass "<tt>NRRD</tt>" to <tt>biffGetDone()</tt> because you know
+that the function that just died is in the <b>nrrd</b> library.
+To be pedantic, you do have to free the <tt>char*</tt> that you get here.
+<li> <tt>nrrdType</tt> is a thing called an <tt>airEnum</tt>, which 
+facilitates mapping between strings and integral enum values.
+<tt>airEnumStr</tt> maps from the enum value to a string
+(<tt>airEnumVal</tt> goes the other way).
+<li> <tt>nrrdElementNumber()</tt> and <tt>nrrdElementSize()</tt> both
+return type <tt>size_t</tt>, thus the cast to <tt>int</tt> for printing.
+</ul>
+
+This code snippet is available as a stand-alone program <a
+href="demoIO.c"><tt>demoIO.c</tt></a>.  When invoked on the <a
+href="hi.png"><tt>hi.png</tt></a> file created on the <a
+href="otherformat.html">Other Formats</a> page:
+<blockquote><pre>
+<b>&gt;</b><b>&gt;</b> demoIO hi.png
+demoIO: "hi.png" is a 2-dimensional nrrd of type 2 (unsigned char)
+demoIO: the array contains 35 elements, each 1 bytes in size
+
+<b>&gt;</b><b>&gt;</b> demoIO foo.nrrd
+demoIO: "foo.nrrd" is a 2-dimensional nrrd of type 2 (unsigned char)
+demoIO: the array contains 35 elements, each 1 bytes in size
+
+<b>&gt;</b><b>&gt;</b> unu head foo.nrrd
+NRRD0001
+content: (unsigned char)(???)
+type: unsigned char
+dimension: 2
+sizes: 7 5
+encoding: raw
+
+<b>&gt;</b><b>&gt;</b> rm -f foo.nrrd
+
+<b>&gt;</b><b>&gt;</b> demoIO foo.nrrd
+demoIO: trouble reading "foo.nrrd":
+[nrrd] nrrdLoad: fopen("foo.nrrd","rb") failed: No such file or directory
+</pre></blockquote>
+
+<ul>
+<li> <tt><a href="../unrrdu/index.html">unu</a> head</tt> is being demonstrated as an easy way to inspect
+the header of a NRRD file (much easier than using <tt>more</tt> or
+<tt>less</tt>!)
+</ul>
+
+<h2>Getting data into and out of nrrds</h2>
+
+Suppose that you have a 128-by-128-by-64 3-D array of <tt>double</tt>s
+in memory (pointed to by the variable <tt>val</tt>) that you've
+generated as part of some computation, and you want to save this array
+out to disk in NRRD format.  Forgetting about error checking, this can
+be done in four steps:
+
+<blockquote><pre>
+Nrrd *nval;
+...
+nval = nrrdNew();
+nrrdWrap(nval, val, nrrdTypeDouble, 3, 128, 128, 64);
+nrrdSave("val.nrrd", nval, NULL);
+nrrdNix(nval);
+</pre></blockquote>
+
+<tt>nrrdWrap()</tt> uses var-args based on the dimension of the array
+(3 in the example above) to know how many integer axis size arguments
+to expect.  Calling <tt>nrrdNix()</tt> and not <tt>nrrdNuke()</tt> here
+is important: we just want to get rid of the struct around the data,
+not the data itself.  One thing to keep in mind is that currently,
+<b>nrrd</b> has no notion of data ownership.  The <tt>Nrrd</tt> struct
+doesn't know anything about whether or not its okay to delete the
+array inside when you called <tt>nrrdNuke()</tt> on it.
+
+<p>
+
+The raster ordering of the data determines whether the last arguments
+to <tt>nrrdWrap()</tt> should be (128, 128, 64) or (64, 128, 128).
+In <b>nrrd</b>, axis-related things are <b>always</b> listed from
+<b>fast</b> to <b>slow</b>.  See the <a href="intro.html">Introduction</a>
+for an explanation of fast and slow axes.
+
+<p>
+
+Adding error checking is not too hard:
+
+<blockquote><pre>
+Nrrd *nval;
+char *err;
+...
+nval = nrrdNew();
+if (nrrdWrap(nval, val, nrrdTypeDouble, 3, 128, 128, 64)
+    || nrrdSave("val.nrrd", nval, NULL)) {
+  err = biffGetDone(NRRD); 
+  ...
+}
+nrrdNix(nval);
+</pre></blockquote>
+
+The idiom here is that a long sequence of <b>nrrd</b> calls, all
+of which return <tt>int</tt>s, can be chained together as a single
+boolean expression, so that as soon as one fails, none of the following
+ones will be called.
+
+<p>
+
+If you want <b>nrrd</b> to allocate the memory for you, then
+you would use <tt>nrrdAlloc()</tt> and <tt>nrrdNuke()</tt>:
+
+<blockquote><pre>
+Nrrd *nval;
+double *val;
+int sx=128, sy=128, sz=64;
+...
+nval = nrrdNew();
+nrrdAlloc(nval, nrrdTypeDouble, 3, sx, sy, sz);
+val = (double*)nval->data;
+val[10 + sx*(20 + sy*30)] = 42;     /* val[x=10,y=20,z=30] = 42 */
+...
+nrrdNuke(nval);
+</pre></blockquote>
+
+Calling <tt>nrrdNuke()</tt> is appropriate here because <b>nrrd</b>
+allocated the memory for you in <tt>nrrdAlloc()</tt>, and
+<tt>nrrdNuke()</tt> will free that memory.  The "<tt>val[10 + sx*(20 +
+sy*30)] = 42</tt>" is just one example of how to access values in a
+multi-dimensional array, but many others are possible and preferable.
+<b>Nrrd</b> is so agnostic about multi-dimensional data access that it
+provides no direct facilities for setting and getting values based on
+a coordinate vector; there are only minimal facilities for
+setting/getting values based on a one-dimensional index.
+
+<p>
+
+Remember this pairing: <tt>nrrdWrap()</tt> with <tt>nrrdNix()</tt>,
+and <tt>nrrdAlloc()</tt> with <tt>nrrdNuke()</tt>.
+
+<h2>Setting/Getting per-axis information</h2>
+
+The ability to store meta-information descriptive of each axis of a
+multi-dimensional array is one of the main differences between "raw"
+data, and the "nearly raw" data that <b>nrrd</b> supports.  The API
+has a few functions, all starting with <tt>nrrdAxisInfo...</tt>, which
+are used to set and get axis information, but there are only two which
+are commonly used: <tt>nrrdAxisInfoGet()</tt> and
+<tt>nrrdAxisInfoSet()</tt>.  The way to communicate <b>which</b> field
+of the <tt>NrrdAxis</tt> struct that you wish to set/get is via
+a C enum, which includes these self-descriptive values:
+<ul>
+<li> <tt>nrrdAxisInfoSize</tt>
+<li> <tt>nrrdAxisInfoSpacing</tt>
+<li> <tt>nrrdAxisInfoMin</tt>
+<li> <tt>nrrdAxisInfoMax</tt>
+<li> <tt>nrrdAxisInfoCenter</tt>
+<li> <tt>nrrdAxisInfoLabel</tt>
+<li> <tt>nrrdAxisInfoUnit</tt>
+</ul>
+
+Note the one-to-one correspondence between these enum values and the
+individual fields in the <tt>NrrdAxis</tt> struct defined above.  For
+example, if you want to set labels ("x", "y", "z") for each of the
+three axes in <tt>nval</tt>:
+
+<blockquote><pre>
+nrrdAxisInfoSet(nval, nrrdAxisInfoLabel, "x", "y", "z");
+</pre></blockquote>
+
+Because <b>nrrd</b> has the mentality that "everything is a scalar",
+you'll need a 4-D array to represent a volume in which each voxel
+has multiple values associated with it, such as with a 3-D vector
+field.  There is no <b>nrrd</b>-imposed convention on how to do
+this, but you probably want to use the axis labels to document
+what values are appearing along each axis, for example:
+
+<blockquote><pre>
+nrrdAxisInfoSet(nvec, nrrdAxisInfoLabel, "Vx;Vy;Vz", "x", "y", "z");
+</pre></blockquote>
+
+Recovering these strings from a given nrrd can be done this way
+if you know exactly what the dimension of the nrrd is:
+
+<blockquote><pre>
+char *lab0, *lab1, *lab2, *lab3;
+...
+nrrdAxisInfoGet(nvec, nrrdAxisInfoLabel, &lab0, &lab1, &lab2, &lab3);
+printf("labels were: %s, %s, %s, %s\n", lab0, lab1, lab2, lab3);
+</pre></blockquote>
+
+It may be easier to use the dimensionally general version of the
+function (although the <tt>printf()</tt> statement does again assume
+a 4-D nrrd, which could be checked at run-time):
+
+<blockquote><pre>
+char *lab[NRRD_DIM_MAX];
+...
+nrrdAxisInfoGet_nva(nvec, nrrdAxisInfoLabel, lab);
+printf("labels were: %s, %s, %s, %s\n", lab[0], lab[1], lab[2], lab[3]);
+</pre></blockquote>
+
+<ul>
+
+<li> <tt>NRRD_DIM_MAX</tt> is a compile-time limit on the dimension
+of the nrrd that can be handled.  This is currently set to 10.
+Having a compile-time max <b>greatly</b> simplifies many things that would
+otherwise have to be handled dynamically.
+
+<li> Note that the function name ends with "<tt>_nva</tt>" to signify
+"no variable arguments"; all var-arg <b>nrrd</b> functions have an
+analagous non-var-arg version that ends with <tt>_nva</tt>.  
+
+<li> Rule of thumb for string allocation and the <b>nrrd</b> API:
+<b>every string is copied</b>.  That means that internally,
+<tt>nrrdAxisInfoSet()</tt> copies the strings passed to it (so it is
+not reliant on the long-term existance of the strings passed to it),
+and <tt>nrrdAxisInfoGet()</tt> gives you copies of the strings stored
+inside (so that you can free these strings without worrying about
+invalidating the internal pointers,
+e.g. <tt>nval-&gt;axis[0].label</tt>).
+
+</ul>
+
+<p>
+
+Using <tt>nrrdAxisInfoGet()</tt> is always harmless, and
+<tt>nrrdAxisInfoSet()</tt> is usually harmless, but you can really
+confuse things by calling <tt>nrrdAxisInfoSet(nrrd, nrrdAxisInfoSize,...)</tt>
+and giving an inconsistent set of axis sizes.  Currently, not even a
+warning message is printed in this case!
+
+<p>
+
+Here is a more typical example of setting axis labels, centerings, and
+spacings:
+
+<blockquote><pre>
+nrrdAxisInfoSet(nvec, nrrdAxisInfoLabel, "Vx;Vy;Vz", "x", "y", "z");
+nrrdAxisInfoSet(nvec, nrrdAxisInfoCenter,
+                nrrdCenterUnknown,
+                nrrdCenterNode, nrrdCenterNode, nrrdCenterNode);
+nrrdAxisInfoSet(nvec, nrrdAxisInfoSpacing, AIR_NAN, 1.0, 1.0, 2.0);
+</pre></blockquote>
+
+<tt>nrrdCenterUnknown</tt> means "I don't know the centering" or
+"Centering is moot for this axis".  Using <tt>AIR_NAN</tt> for any
+<tt>double</tt>-type per-axis field (spacing, min, or max) similiarly
+means "don't know", "don't care".
+
+<h2>Key/Value Pairs</h2>
+
+This is the simple but flexible way to store extra fields of
+information in a <tt>Nrrd</tt>.  These will be preserved exactly when
+saved to, and read from, a NRRD file.  For example, if you want to
+save some rendering parameters with a floating point rendered image,
+you might save pairs like ("camera", "4, 5, 0"), ("look-at", "0, 0,
+0"), ("U range", "-1, 1"), and so forth.  Both the key and the value
+are just <tt>char*</tt> strings, but hopefully packing and unpacking
+between strings and useful values is probably the least of your
+problems.  Here are the calls to add the key/value pairs listed above:
+
+<blockquote><pre>
+nrrdKeyValueAdd(nrend, "camera", "4, 5, 0");
+nrrdKeyValueAdd(nrend, "look-at", "0, 0, 0");
+nrrdKeyValueAdd(nrend, "U range", "-1, 1");
+</pre></blockquote>
+
+To retrieve values:
+<blockquote><pre>
+char *cam, *at;
+...
+cam = nrrdKeyValueGet(nrend, "camera");
+at = nrrdKeyValueGet(nrend, "look-at");
+printf("camera = %s, look-at = %s\n", cam, at);
+</pre></blockquote>
+
+You can also iterate over all key/value pairs:
+
+<blockquote><pre>
+int ki, nk;
+char *key, *val;
+...
+nk = nrrdKeyValueSize(nrend);
+for (ki=0; ki$lt;nk; ki++) {
+  nrrdKeyValueIndex(nrend, &key, &val, ki);
+  printf("%s = %s\n", key, val);
+}
+</pre></blockquote>
+
+<p>
+
+Individual pairs are erased with <tt>nrrdKeyValueErase()</tt>,
+all pairs are erased with <tt>nrrdKeyValueClear()</tt>.
+
+<h2>Overview of rest of API</h2>
+
+The following aims to give a brief description of the important
+<b>nrrd</b> library calls.  See <tt>teem/src/nrrd/nrrd.h</tt> for
+a complete list.
+
+<h3>Basic "methods"</h3>
+
+These handle the basic operations for creating and destroying
+nrrds and the data inside
+
+<center>
+<table border=0 cellpadding=2>
+<tr>
+<td align=right><tt>nrrdNew</tt>
+<td><b>-</b>
+<td align=left>Create an emtpy nrrd (a container)
+<tr>
+<td align=right><tt>nrrdNix</tt>
+<td><b>-</b>
+<td align=left>Delete the nrrd struct, but not the data
+<tr>
+<td align=right><tt>nrrdEmpty</tt>
+<td><b>-</b>
+<td align=left>Free the data, keep the struct
+<tr>
+<td align=right><tt>nrrdNuke</tt>
+<td><b>-</b>
+<td align=left>Free both the data and the struct
+<tr>
+<td align=right><tt>nrrdCopy</tt>
+<td><b>-</b>
+<td align=left>Replicate a struct and the data inside
+<tr>
+<td align=right><tt>nrrdAlloc</tt>
+<td><b>-</b>
+<td align=left>allocate the data segment of a nrrd
+<tr>
+<td align=right><tt>nrrdMaybeAlloc</tt>
+<td><b>-</b>
+<td align=left>allocate the data segment if the requested size<br>
+is different than the current one
+</table>
+</center>
+
+<h3>Manipulation of per-axis meta-information</h3>
+
+<center>
+<table border=0 cellpadding=2>
+<tr>
+<td align=right><tt>nrrdAxisInfoCopy</tt>
+<td><b>-</b>
+<td align=left>Copy per-axis info from one nrrd to another
+<tr>
+<td align=right><tt>nrrdAxisInfoSet{_nva}</tt>
+<td><b>-</b>
+<td align=left>Set one field of axis, for all axes
+<tr>
+<td align=right><tt>nrrdAxisInfoGet{_nva}</tt>
+<td><b>-</b>
+<td align=left>Get one field of axis, for all axes
+<tr>
+<td align=right><tt>nrrdAxisPos</tt>
+<td><b>-</b>
+<td align=left>Map from axis "index space" to "world space"
+<tr>
+<td align=right><tt>nrrdAxisIdx</tt>
+<td><b>-</b>
+<td align=left>Map from axis "world space" to "index space"
+<tr>
+<td align=right><tt>nrrdAxisSpacingSet</tt>
+<td><b>-</b>
+<td align=left>Set spacing, based on current min/max
+<tr>
+<td align=right><tt>nrrdAxisMinMaxSet</tt>
+<td><b>-</b>
+<td align=left>Set min and max, based on current spacing
+</table>
+</center>
+
+<h3>Utility functions</h3>
+
+<tt>nrrdSanity()</tt> should be called on a new <b>teem</b> build
+to make sure things are all okay.  There is in fact a <b>teem</b>
+stand-alone binary called <tt>nrrdSanity</tt> which is really
+just a wrapper around <tt>nrrdSanity()</tt>.
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdSanity</tt>
+<td><b>-</b>
+<td align=left>checks that all compile-time assumptions are true
+<tr>
+<td align=right><tt>nrrdContentSet</tt>
+<td><b>-</b>
+<td align=left>printf-style setting of the nrrd->content field
+<tr>
+<td align=right><tt>nrrdCheck</tt>
+<td><b>-</b>
+<td align=left>make sure a given nrrd's fields are valid and consistent
+<tr>
+<td align=right><tt>nrrdElementNumber</tt>
+<td><b>-</b>
+<td align=left>number of samples in a nrrd
+<tr>
+<td align=right><tt>nrrdElementSize</tt>
+<td><b>-</b>
+<td align=left>number of bytes in each sample
+</table>
+</center>
+
+<h3>Comments in nrrd</h3>
+
+Comments used to be the only way to extend the nrrd header with
+other kinds of meta-information, but this is strongly discouraged
+now that (as of version 1.6.0) we have key/value pairs.
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdCommentAdd</tt>
+<td><b>-</b>
+<td align=left>add a comment to a nrrd
+<tr>
+<td align=right><tt>nrrdCommentClear</tt>
+<td><b>-</b>
+<td align=left>clear all comments in a nrrd
+<tr>
+<td align=right><tt>nrrdCommentCopy</tt>
+<td><b>-</b>
+<td align=left>copy all comments from one nrrd to another
+</table>
+</center>
+
+<h3>Key/value pairs</h3>
+
+Described above.
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdKeyValueAdd</tt>
+<td><b>-</b>
+<td align=left>add a key/value pair to a nrrd
+<tr>
+<td align=right><tt>nrrdKeyValueGet</tt>
+<td><b>-</b>
+<td align=left>look up a value for a given key
+<tr>
+<td align=right><tt>nrrdKeyValueErase</tt>
+<td><b>-</b>
+<td align=left>erase a key/value pair, given the key
+<tr>
+<td align=right><tt>nrrdKeyValueClear</tt>
+<td><b>-</b>
+<td align=left>clear all key/value pairs in a nrrd
+<tr>
+<td align=right><tt>nrrdKeyValueSize</tt>
+<td><b>-</b>
+<td align=left>number of key/value pairs in a nrrd
+<tr>
+<td align=right><tt>nrrdKeyValueIndex</tt>
+<td><b>-</b>
+<td align=left>lookup a key/value pair, indexed by integer
+</table>
+</center>
+
+<h3>Endianness (byte ordering)</h3>
+
+<b>Nrrd</b> is designed so that you don't have to worry about
+endianness.  Whenever the byte ordering of an array matters
+(when the element size is larger than one byte), and the array
+is written out with an encoding which exposes endianness (anything
+besides ASCII), then the endianness is explicitly recorded,
+in the header.  On read, the endianness if flipped automatically
+(by <tt>nrrdRead()</tt>) if it is deemed necessary.  If, for some
+twisted reason, you want to change endianness again, this function
+allows you to do so.
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdSwapEndian</tt>
+<td><b>-</b>
+<td align=left>reverses the byte-ordering of the data in memory
+<tr>
+<td align=right><tt></tt>
+<td><b>-</b>
+<td align=left>
+</table>
+</center>
+
+<h3>Getting/Setting values (crude!)</h3>
+
+These functions provide a primitive means of setting/getting values
+in an array of type known only at run-time.  Here's an example of
+their use, to add <tt>incr</tt> to all the values in a nrrd:
+
+<blockquote><pre>
+void
+demoIncr(Nrrd *nrrd, double incr) {
+  double (*lup)(const void *, size_t I);
+  double (*ins)(const void *, size_t I, double v);
+  double val;
+  size_t I, N;
+  
+  lup = nrrdDLookup[nrrd->type];
+  ins = nrrdDInsert[nrrd->type];
+  N = nrrdElementNumber(nrrd);
+  for (I=0; I&lt;N; I++) {
+    val = lup(nrrd-&gt;data, I);
+    val += incr;
+    ins(nrrd-&gt;data, I, val);
+  }
+  return;
+}
+</pre></blockquote>
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrd{I,F,D}Load[]</tt>
+<td><b>-</b>
+<td align=left>dereference a pointer (of indexed type), and cast to
+<tt>int</tt>, <tt>float</tt>, or <tt>double</tt>
+<tr>
+<td align=right><tt>nrrd{I,F,D}Store[]</tt>
+<td><b>-</b>
+<td align=left>save a given <tt>int</tt>, <tt>float</tt>, or <tt>double</tt>
+to the given pointer (which is of indexed type)
+<tr>
+<td align=right><tt>nrrd{I,F,D}Lookup[]</tt>
+<td><b>-</b>
+<td align=left>lookup a value in a given array (of indexed type), and 
+cast to <tt>int</tt>, <tt>float</tt>, or <tt>double</tt>
+<tr>
+<td align=right><tt>nrrd{I,F,D}Insert[]</tt>
+<td><b>-</b>
+<td align=left>insert the given <tt>int</tt>, <tt>float</tt>, or
+<tt>double</tt> of a particular element of a given array
+(which is of indexed type)
+</table>
+</center>
+
+<h3>Input from, Output to files</h3>
+
+Described above.
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdLoad</tt>
+<td><b>-</b>
+<td align=left>load a nrrd from a given <tt>char*</tt> filename
+<tr>
+<td align=right><tt>nrrdRead</tt>
+<td><b>-</b>
+<td align=left>read a nrrd from a given <tt>FILE*</tt> file pointer
+<tr>
+<td align=right><tt>nrrdSave</tt>
+<td><b>-</b>
+<td align=left>save a nrrd to a given <tt>char*</tt> filename
+<tr>
+<td align=right><tt>nrrdWrite</tt>
+<td><b>-</b>
+<td align=left>write a nrrd to a given <tt>FILE*</tt> file pointer
+</table>
+</center>
+
+<h3>Representing ranges of values</h3>
+
+The <tt>NrrdRange</tt> is a very simple struct who's only job
+is to represent (you guessed!) a range of scalar values, either as
+a description of what was seen in a given nrrd, or as input to
+a function like <tt>nrrdQuantize</tt> which uses a value range as
+part of its operation.  The introduction of the <tt>NrrdRange</tt> was
+the chosen means of making <b>nrrd</b> const-correct.
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdRangeNew</tt>
+<td><b>-</b>
+<td align=left>create a new <tt>NrrdRange</tt> based on the given
+min and max
+<tr>
+<td align=right><tt>nrrdRangeNix</tt>
+<td><b>-</b>
+<td align=left>delete a <tt>NrrdRange</tt>
+<tr>
+<td align=right><tt>nrrdRangeCopy</tt>
+<td><b>-</b>
+<td align=left>allocate and produce a replicate of the given nrrd
+<tr>
+<td align=right><tt>nrrdRangeReset</tt>
+<td><b>-</b>
+<td align=left>reset a <tt>NrrdRange</tt> to base state
+<tr>
+<td align=right><tt>nrrdRangeSet</tt>
+<td><b>-</b>
+<td align=left>Go through the given nrrd and find its min and max.
+<tr>
+<td align=right><tt>nrrdRangeSafeSet</tt>
+<td><b>-</b>
+<td align=left>Like nrrdRangeSet, but only over-write non-NaN values
+in the given <tt>NrrdRange</tt>
+<tr>
+<td align=right><tt>nrrdRangeNewSet</tt>
+<td><b>-</b>
+<td align=left>combines <tt>nrrdRangeNew()</tt> and <tt>nrrdRangeSet</tt>
+</table>
+</center>
+
+<h3>Simple transforms and warpings of values</h3>
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdConvert</tt>
+<td><b>-</b>
+<td align=left>make a new nrrd which is the result of doing a
+per-value cast on the old values
+<tr>
+<td align=right><tt>nrrdQuantize</tt>
+<td><b>-</b>
+<td align=left>reduce the values in a nrrd down to unsigned 8, 16, or 32 bits.a
+<tr>
+<td align=right><tt>nrrdUnquantize</tt>
+<td><b>-</b>
+<td align=left>try to recover original floating-point values from
+a quantized nrrd based on the <tt>oldMin</tt> and <tt>oldMax</tt> fields.
+<tr>
+<td align=right><tt>nrrdHistoEq</tt>
+<td><b>-</b>
+<td align=left>perform histogram equalization on the values in a nrrd
+</table>
+</center>
+
+<h3>Functional mapping of values</h3>
+
+In all of the following, the values produced at the output of
+the mapping can either be scalar (output is same dimension as
+in input) or multi-scalar, e.g. color (output is one greater
+dimension than input).
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdApply1DLut</tt>
+<td><b>-</b>
+<td align=left>send values in a nrrd through a lookup-table
+<tr>
+<td align=right><tt>nrrdApply1DRegMap</tt>
+<td><b>-</b>
+<td align=left>send values in a nrrd through a map of linear ramps
+with uniformly spaced control points
+<tr>
+<td align=right><tt>nrrdApply1DIrregMap</tt>
+<td><b>-</b>
+<td align=left>send values in a nrrd through a map of linear ramps
+with irregularly located control points
+</table>
+</center>
+
+<h3>Subset/Superset operations</h3>
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdSlice</tt>
+<td><b>-</b>
+<td align=left>slice an array along some axis at some position
+(decreases dimension by one)
+<tr>
+<td align=right><tt>nrrdSplice</tt>
+<td><b>-</b>
+<td align=left>put a given slice into a gived nrrd (logical opposite of
+<tt>nrrdSlice</tt>)
+<tr>
+<td align=right><tt>nrrdCrop</tt>
+<td><b>-</b>
+<td align=left>extract a sub-array of the same dimension
+<tr>
+<td align=right><tt>nrrdPad</tt>
+<td><b>-</b>
+<td align=left>pad an array out to be bigger (same dimension)
+<tr>
+<td align=right><tt>nrrdInset</tt>
+<td><b>-</b>
+<td align=left>drop some sub-volume into a larger one (logical 
+opposite of <tt>nrrdCrop</tt>)
+</table>
+</center>
+
+<h3>Axis-based value re-ordering</h3>
+
+Unlike the functions about axis meta-information (starting with
+<tt>nrrdAxisInfo...</tt>), the functions relating to transforms
+on the scan-line ordering of the samples themselves all start
+with <tt>nrrdAxes...</tt>.  This may not have been the wisest choice,
+but its here now.
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdAxesPermute</tt>
+<td><b>-</b>
+<td align=left>re-order axes in the scan-line ordering of samples
+<tr>
+<td align=right><tt>nrrdAxesSwap</tt>
+<td><b>-</b>
+<td align=left>re-order two specific axes
+(special case of <tt>nrrdAxesPermute</tt>)
+<tr>
+<td align=right><tt>nrrdShuffle</tt>
+<td><b>-</b>
+<td align=left>re-order slices along some axis
+<tr>
+<td align=right><tt>nrrdFlip</tt>
+<td><b>-</b>
+<td align=left>changes ordering of slices along some axis
+(special case of <tt>nrrdShuffle</tt>)
+<tr>
+<td align=right><tt>nrrdJoin</tt>
+<td><b>-</b>
+<td align=left>join multiple input nrrds along some existing
+axis or a new one
+<tr>
+<td align=right><tt>nrrdReshape</tt>
+<td><b>-</b>
+<td align=left>(like Matlab's command) impose some new
+raster dimensions on an existing array
+<tr>
+<td align=right><tt>nrrdAxesInsert</tt>
+<td><b>-</b>
+<td align=left>insert a new stub (size=1) axis amongst some existing ones
+<tr>
+<td align=right><tt>nrrdAxesDelete</tt>
+<td><b>-</b>
+<td align=left>remove a stub axis from a nrrd
+<tr>
+<td align=right><tt>nrrdAxesSplit</tt>
+<td><b>-</b>
+<td align=left>split one axis into two adjacent axes (a fast and a slow)
+<tr>
+<td align=right><tt>nrrdAxesMerge</tt>
+<td><b>-</b>
+<td align=left>Join two adjacent axes into a single axis
+</table>
+</center>
+
+<h3>"Measuring" an array</h3>
+
+This is one of the more powerful function calls in <b>nrrd</b>: it
+allows you to do axis-aligned maximum intensity projections, find the
+L2-norm of each of a volume of vectors, find the median/mean/mode
+value of each scanline of a multi-dimensional scatterplot.
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdProject</tt>
+<td><b>-</b>
+<td align=left>reduce all samples along scanlines (along the given axis)
+to a single scalar, according to the given measure.
+</table>
+</center>
+
+<h3>All things histogram-related</h3>
+
+Because <b>nrrd</b> grew out of ideas on array representation that I
+had when writing my <a href="http://www.cs.utah.edu/~gk/MS">Master's
+thesis</a>, histograms have always been a key part.
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdHisto</tt>
+<td><b>-</b>
+<td align=left>generate a histogram of the values in a nrrd
+<tr>
+<td align=right><tt>nrrdHistoDraw</tt>
+<td><b>-</b>
+<td align=left>draws a uni-variate histogram in a helpful way.
+<tr>
+<td align=right><tt>nrrdHistoAxis</tt>
+<td><b>-</b>
+<td align=left>replace every scanline with its histogram
+(takes a while to wrap head around this)
+<tr>
+<td align=right><tt>nrrdHistoJoint</tt>
+<td><b>-</b>
+<td align=left>create multi-dimensional joint histogram of a 
+list of nrrds.
+</table>
+</center>
+
+<h3>Arithmetic operations on one or more nrrds</h3>
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdArithGamma</tt>
+<td><b>-</b>
+<td align=left>"gamma correct" all values in a nrrd
+<tr>
+<td align=right><tt>nrrdArithUnaryOp</tt>
+<td><b>-</b>
+<td align=left>Send all values in a nrrd through some unary
+function, e.g. sin(), log(), abs(), etc.
+<tr>
+<td align=right><tt>nrrdArithBinaryOp</tt>
+<td><b>-</b>
+<td align=left>do some binary function (takes two arguments) on
+two nrrds, or on a nrrd and a constant
+<tr>
+<td align=right><tt>nrrdArithTernaryOp</tt>
+<td><b>-</b>
+<td align=left>so some ternary function (takes three arguments) on
+nrrds and constants (any possibility barring three constants)
+</table>
+</center>
+
+<h3>Filtering and Resampling</h3>
+
+The median filtering is cheap and slow.  The spatial resampling, on
+the other hand, is a ridiculously complex and multi-purpose function,
+but with an aim towards fast computation.  It allows cropping and
+padding as part of resampling, using different kernels on different
+axes, resampling some axes while leaving others untouched, drawing
+from the very large vocabulary of kernels that <b>nrrd</b> is 
+compiled with.  See <tt>nrrd.h</tt> and <tt>resampleNrrd.c</tt>
+for details, and look at <tt>teem/src/unrrdu/resample.c</tt> for
+an example of a simplified interface to the resampler.
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdCheapMedian</tt>
+<td><b>-</b>
+<td align=left>perform simple histogram-based median filtering
+in 1-D, 2-D or 3-D
+<tr>
+<td align=right><tt>nrrdSpatialResample</tt>
+<td><b>-</b>
+<td align=left>perform filtered up-sampling or down-sampling
+with arbitrary (seperable) kernels
+</table>
+</center>
+
+<h3>Connected components</h3>
+
+These are pretty slow and stupid for the time being.  They will
+be optimized later, but the API should stay put.
+
+<center>
+<table>
+<tr>
+<td align=right><tt>nrrdCCFind</tt>
+<td><b>-</b>
+<td align=left>find connected components in 1-D, 2-D or 3-D
+<tr>
+<td align=right><tt>nrrdCCMerge</tt>
+<td><b>-</b>
+<td align=left>merge some components into others, based on
+a variety of criteria
+<tr>
+<td align=right><tt>nrrdCCSettle</tt>
+<td><b>-</b>
+<td align=left>assign set of lowest-valued possible component IDs
+</table>
+</center>
+
+<!--
 Currently, the <b>nrrd</b> library, as with all the <b>teem</b>
-libraries, is implemented completely in C.  There are various aspects
+libraries, is implemented completely in C.  
+
+There are various aspects
 of <b>nrrd</b> that smack of C++ templates, and some that cry out for
 templates, but these are the exceptions.  I program in C because its a
 simple little language, and I know what I'm doing.  Plus, sticking to
