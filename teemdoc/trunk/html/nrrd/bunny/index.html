@@ -147,10 +147,10 @@ rm -rf bunny-ctscan.tar.gz bunny/
 
 <p>
 
-And do a test rendering with <tt>mrender</tt>, which is like a volume
+Finally, do a test rendering with <tt>mrender</tt>, which is like a volume
 renderer without transfer functions.  Here's its used to make a depth
 image of a down-sampled version of the data, using a <a href="bbody.txt">
-black-body colormap</a>:
+green-body colormap</a>:
 <blockquote><pre>
 unu resample -i bunny.nhdr -s x0.3 x0.3 x0.4 \
  | unu 2op - - 1500 -t float \
