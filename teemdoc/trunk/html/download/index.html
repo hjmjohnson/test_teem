@@ -84,14 +84,16 @@ directories into which all the required teem files have been
 copied/compiled.  On all architectures (including Windows), all the
 programs have been statically linked, and <b>nrrd</b> has been
 compiled with gzip/zlib and bzip2 compression, as well as PNG support.
-<b>Hoover</b>, however, is not pre-compiled with pthread support.
+Pthreads were compiled in where I felt like it.
 
 <p>
 
+<!--
 As of version 1.5.0, downloads are coming from the
 <a href="http://sourceforge.net/project/showfiles.php?group_id=85445">
 "Project: Teem: File List"</a> at <a
 href="http://sourceforge.net">Sourceforge</a>.
+-->
 
 <p>
 
@@ -122,20 +124,30 @@ href="http://lists.sourceforge.net/lists/listinfo/teem-coders"><tt>teem-coders</
 <tr>
   <td align=left valign=middle>
     <font size="+1">teem-1.7.0</font><br>
-    <small>(Planned released: real soon now)</small><br>
+    <small>(Released: May 17, 2004)</small><br>
+
+Source:
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.7.0-src.tar.gz?download">Unix</a> | 
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.7.0-win32.zip?download">Windows</a>
+
+<br>
+
+Pre-built: 
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.7.0-linux.32.tar.gz?download">32-bit GNU/Linux</a> |
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.7.0-win32.zip?download">Windows</a> |
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.7.0-cygwin.tar.gz?download">Cygwin</a> |
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.7.0-darwin.32.tar.gz?download">32-bit Darwin</a> |
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.7.0-darwin.64.tar.gz?download">64-bit Darwin</a> 
 
   <td>
   <td align=left>
+<a href="http://sourceforge.net/project/shownotes.php?release_id=238101">Lots of stuff</a>:
 <ul>
-
 <li> <a href="../nrrd/index.html"><b>nrrd</b></a>/:
 <tt>nrrdRead/nrrdLoad</tt> will now use existing memory in the given nrrd
 for storing the data, if it happens to be exactly the right size.
 
 <li> <tt>overrgb</tt> can now composite against a given background image
-
-<li> <tt>unu tile</tt>, <tt>unu untile</tt>: convenient generation of tiled
-images (2-D arrays of 2-D images)
 
 <li> <tt>tend helix</tt>: makes <a
     href="http://www.sci.utah.edu/~gk/DTI-data/index.html#helix">twisting
@@ -153,8 +165,6 @@ versions of talks</a>
 operations and for reading and writing the <a
 href="http://teem.sourceforge.net/nrrd/format.html">NRRD file
 format</a>.
-
-<li> Ability to build teem via CMake
 
 </ul>
 
