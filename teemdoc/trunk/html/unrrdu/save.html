@@ -52,10 +52,17 @@ Usage: unu save -f &lt;format&gt; [-e &lt;encoding&gt;] [-en &lt;endian&gt;] [-i
               o "hex": two hex digits per byte
               o "gzip", "gz": gzip compressed raw data
               o "bzip2", "bz2": bzip2 compressed raw data
-                default: "raw"
+                The specifiers for compressions may be followed by a colon
+                ":", followed by an optional digit giving compression "level"
+                (for gzip) or "block size" (for bzip2). For gzip, this can be
+                followed by an optional character for a compression strategy:
+              o "d": default, Huffman with string match
+              o "h": Huffman alone
+              o "f": specialized for filtered data
+                For example, "gz", "gz:9", "gz:9f" are all valid
  -en &lt;endian&gt; = Endianness of to save data out as; "little" for Intel and
                 friends; "big" for everyone else. Defaults to endianness of
-                this machine; default: "little"
+                this machine; default: "big"
      -i &lt;nin&gt; = input nrrd
     -o &lt;nout&gt; = output nrrd (string); default: "-"
 </pre></blockquote>
