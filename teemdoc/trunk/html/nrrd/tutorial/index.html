@@ -1,0 +1,362 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2003, 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Basic 3D volume inspection with unu
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<A href="http://sourceforge.net"><IMG 
+ src="http://sourceforge.net/sflogo.php?group_id=85445&amp;type=2"
+ align=right width="125" height="37" border="0" alt="SourceForge.net Logo"></A>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../demo.html"><img border=0 width=80 height=80 alt=""
+    src="../demo80.png"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../demo.html">demo</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Basic 3D volume inspection with unu</b></h2>
+</table>
+
+This page covers the basics of using <tt>unu</tt> to look at a 3D
+scalar dataset.  One trick which simplifies command-line data inspection is to make an
+alias for an image viewing program.  On Windows, there is a
+"<tt>pv</tt>" program as part of the <a
+href="http://teem.sourceforge.net/download">Windows binary build of
+teem</a> that can view PNG images easily.  Windows users should be
+using <a href="http://www.cygwin.com/">Cygwin</a> in order to get
+anything useful done here.  Everyone else has the "<tt><a
+href="http://www.trilon.com/xv/">xv</a></tt>" program for looking at
+PPM/PGM images (among other formats).
+
+<p>
+
+Thus, Windows/Cygwin users should make this alias:
+
+<blockquote><pre>
+alias XV "unu quantize -b 8 | unu save -f png | pv -"
+</pre></blockquote>
+
+and everyone else should make this alias:
+<blockquote><pre>
+alias XV "unu quantize -b 8 | unu save -f pnm | xv -"
+</pre></blockquote>
+
+The "<tt>XV</tt>" alias will be used repeatedly below.
+
+<p>
+
+The examples below will use the <tt>vfrhand.nhdr</tt> dataset
+created <a href="../vfhand/index.html">in another nrrd demonstration page</a>.
+
+<h2>Histograms</h2>
+
+To get a sense of the value distribution in a volume, you make a
+histogram with "<tt>unu histo</tt>", and then display this histogram
+in a meaningful way with "<tt>unu dhisto</tt>".  
+
+<p>
+
+For integral data values (as result from most scans), its best for
+each bin in the histogram to have the same number of values mapping to
+it, or to have exactly one value mapping to each bin.  Currently,
+"<tt>unu histo</tt>" doesn't have an easy way of doing this automatically,
+so you first have to learn the value range by using "<tt>unu minmax</tt>":
+
+<blockquote><pre>
+unu minmax vfrhand.nhdr
+</pre></blockquote>
+
+Which returns:
+<blockquote><pre>
+min: 0.000000
+max: 2632.000000
+</pre></blockquote>
+
+That means if we make a histogram with 878 bins, we have a nearly
+perfect mapping of three values per bin (878 * 3 == 2634 == one more
+than # unique values).  We can constrain the range of values that
+are histogrammed with the "<tt>-min</tt>" and "<tt>-max</tt>" options
+of "<tt>unu histo</tt>", but it will probably suffice to use its default
+behavior of histogramming the exact full range of values it sees in the 
+input nrrd.  Once we have formed the histogram, it can be displayed
+with "<tt>unu dhisto</tt>", which has to be told (via "<tt>-h</tt>") how
+high to make the image:
+
+<blockquote><pre>
+unu histo -i vfrhand.nhdr -b 878 | unu dhisto -h 600 | XV
+</pre></blockquote>
+<center>
+<a href="img/histo.png"><img alt="" src="img/_histo.png"></a>
+</center>
+
+<p>
+
+The bin counts in the histogram are linearly scaled and plotted in the
+<b>white</b> part of the image.  The <b>gray</b> plot shows a base-10
+logarithm of the histogram, which is very useful for seeing variations
+in small bin counts.  The horizontal lines are the powers of 10 for
+the logarithm-scaled histogram: the first line marks 10 hits, second
+line marks 100 hits, and so on.
+
+<p>
+
+This particular histogram has two clear peaks, the low one for the
+background value, and the middle one for soft tissue.  Notice that
+there isn't really a peak for bone- its values are spread over a wide
+range of high values.
+
+<h2>Slices</h2>
+
+The easiest way to reduce the dimensionality of data from three to two
+is by taking a slice, with <tt>unu slice</tt>.  The two things you
+need to know are the axis along which to slice, and the coordinate to
+slice at.  These are given with the "<tt>-a</tt>" and "<tt>-p</tt>"
+options, respectively:
+
+<blockquote><pre>
+unu slice -i vfrhand.nhdr -a 0 -p 100 | XV
+unu slice -i vfrhand.nhdr -a 1 -p 100 | XV
+unu slice -i vfrhand.nhdr -a 2 -p 100 | XV
+</pre></blockquote>
+<center>
+<table>
+<tr>
+<td><img alt="" src="img/x100.png">
+<td><img alt="" src="img/y100.png">
+<td><img alt="" src="img/z100.png">
+<tr>
+<td><tt>"-a 0"</tt>
+<td><tt>"-a 1"</tt>
+<td><tt>"-a 2"</tt>
+</table>
+</center>
+
+<p>
+
+If you want to save the image out to disk instead of displaying it,
+you might say something like:
+<blockquote><pre>
+unu slice -i vfrhand.nhdr -a 2 -p 100 | unu quantize -b 8 -o z100.png
+</pre></blockquote>
+
+The pre-built versions of <tt>unu</tt> know how to read and write PNG
+images.  Because it has lossless compression of gray scale and color
+images, as well representing images with 8-bit or 16-bit channels, and
+because it is supported in nearly every browser and office application,
+PNG is the only format anyone should ever think about using.  No kidding.
+
+
+<h2>Projections</h2>
+
+The other way to reduce the dimension of a dataset is to project each
+scanline along some axis to a single scalar quantity by "measuring"
+all the values in the scanline.  This is done with "<tt>unu
+project</tt>".  Nrrd knows about a dozen different measurements, but
+there are only three that are especially useful for dataset
+inspection: max (or maybe min), sum, and variance:
+
+<blockquote><pre>
+unu project -i vfrhand.nhdr -a 1 -m max | XV
+unu project -i vfrhand.nhdr -a 1 -m sum | XV
+unu project -i vfrhand.nhdr -a 1 -m var | XV
+</pre></blockquote>
+<center>
+<table>
+<tr>
+<td><img alt="" src="img/ymax.png">
+<td><img alt="" src="img/ysum.png">
+<td><img alt="" src="img/yvar.png">
+<tr>
+<td><tt>"-m max"</tt>
+<td><tt>"-m sum"</tt>
+<td><tt>"-m var"</tt>
+</table>
+</center>
+
+<p>
+
+Notice that the variance image has the useful effect of clarifying
+where there are large changes in the value, and this helps delimit
+features of interest, like the hand.  In this kind of CT dataset, the
+more "interesting" things tend to be at higher data values, so doing a
+max projection helps show them.  There are some kinds of datasets
+where the interesting values are lower, so the analogous measure would
+be min (with "<tt>-m min</tt>") instead of max.
+
+<p>
+
+<b>NOTE</b>: As currently implemented, "<tt>unu project</tt>" is
+pretty stupid about how it traverses memory.  Thus "<tt>unu project -a
+0</tt>" will run faster than will "<tt>unu project -a 1</tt>", which
+will run faster than "<tt>unu project -a 2</tt>".  This will probably
+be fixed in later version of <b>nrrd</b>.
+
+<p>
+
+In projection images (and often in slice images) the contrast can be
+improved to show more image detail.  One method of automatic contrast
+adjustment is histogram equalization, which is available as "<tt>unu
+heq</tt>".  This needs to know how many bins to put in the histogram
+(via the "<tt>-b</tt>" option), and how much of the equalization to
+apply (via the "<tt>-a</tt>").  The examples below demonstrate
+usefully reliable values for both of these:
+
+<blockquote><pre>
+unu project -i vfrhand.nhdr -a 1 -m max | unu heq -b 3000 -a 0.8 | XV
+unu project -i vfrhand.nhdr -a 1 -m sum | unu heq -b 3000 -a 0.8 | XV
+unu project -i vfrhand.nhdr -a 1 -m var | unu heq -b 3000 -a 0.8 | XV
+</pre></blockquote>
+<center>
+<table>
+<tr>
+<td><img alt="" src="img/ymaxh.png">
+<td><img alt="" src="img/ysumh.png">
+<td><img alt="" src="img/yvarh.png">
+<tr>
+<td><tt>"-m max"</tt>
+<td><tt>"-m sum"</tt>
+<td><tt>"-m var"</tt>
+</table>
+</center>
+
+<p>
+
+If you want to better see small variations in the values in a projection,
+you can use a colormap.  Nrrd knows how to read unadorned text files,
+so a file like <a href="darkhue.txt">darkhue.txt</a> is the simplest
+way to store a colormap.  When the colormap control points are
+regularly spaced (and hence not explicitly represented), the command
+to do the colormapping is "<tt>unu rmap</tt>".  The result of the
+mapping will have the same type as the colormap itself, and because
+plain text files are always read in as floating point values, the
+result has to be quantized again before display (but "<tt>XV</tt>"
+does that for us):
+
+<blockquote><pre>
+unu project -i vfrhand.nhdr -a 1 -m max \
+ | unu heq -b 3000 -a 0.8 | unu rmap -m darkhue.txt | XV
+unu project -i vfrhand.nhdr -a 1 -m sum \
+ | unu heq -b 3000 -a 0.8 | unu rmap -m darkhue.txt | XV
+unu project -i vfrhand.nhdr -a 1 -m var \
+ | unu heq -b 3000 -a 0.8 | unu rmap -m darkhue.txt | XV
+</pre></blockquote>
+<center>
+<table>
+<tr>
+<td><img alt="" src="img/ymaxhc.png">
+<td><img alt="" src="img/ysumhc.png">
+<td><img alt="" src="img/yvarhc.png">
+<tr>
+<td><tt>"-m max"</tt>
+<td><tt>"-m sum"</tt>
+<td><tt>"-m var"</tt>
+</table>
+</center>
+
+There is one final type of projection that function as a crude kind of
+isosurface visualization, "<tt>-m histo-min</tt>".  This treats each
+scanline as a histogram, and looks for the first non-zero value, and
+returns its bin index.  Similarly, "<tt>-m histo-max</tt>" returns the
+highest non-zero bin index.  In order to usefully apply these measures,
+however, the values in the dataset have to be shifted downward by an
+amount corresponding to the isovalue of interest.  
+
+<p>
+
+From looking at the histogram above, and knowing the value range, we
+can guess that an isosurface for the air/soft-tissue boundary is about
+at value 500, and an isosurface for the soft-tissue boundary is about 
+at value 1200. The first two steps here clamp the values to be no lower
+than 500, and the subtracts 500 from all the values.  The last step
+("<tt>unu 2op exists</tt>") is a trick to deal with the fact that some
+scanlines had no values greater than 500, so there is no sensible
+depth value for the isosurface.  
+
+<blockquote><pre>
+unu 2op max 500 vfrhand.nhdr | unu 2op - - 500 \
+ | unu project -a 1 -m histo-min | unu 2op exists - 0 | XV
+unu 2op max 1300 vfrhand.nhdr | unu 2op - - 1300 \
+ | unu project -a 1 -m histo-min | unu 2op exists - 0 | XV
+</pre></blockquote>
+<center>
+<table>
+<tr>
+<td><img alt="" src="img/smin.png">
+<td><img alt="" src="img/bmin.png">
+<tr>
+<td><tt>500</tt>
+<td><tt>1300</tt>
+</table>
+</center>
+
+<p>
+
+To look at the "far side" of the object, use "<tt>-m histo-max</tt>".
+Histogram equalization and colormapping are useful here as well:
+<blockquote><pre>
+alias IMG "unu 2op exists - 0 | unu heq -b 3000 -a 0.8 -s 1 | unu rmap -m darkhue.txt"
+unu 2op max 500 vfrhand.nhdr | unu 2op - - 500 \
+ | unu project -a 1 -m histo-min | IMG | XV
+unu 2op max 1300 vfrhand.nhdr | unu 2op - - 1300 \
+ | unu project -a 1 -m histo-min | IMG | XV
+unu 2op max 500 vfrhand.nhdr | unu 2op - - 500 \
+ | unu project -a 1 -m histo-max | IMG | XV
+unu 2op max 1300 vfrhand.nhdr | unu 2op - - 1300 \
+ | unu project -a 1 -m histo-max | IMG | XV
+</pre></blockquote>
+<center>
+<table>
+<tr>
+<td><img alt="" src="img/sminc.png">
+<td><img alt="" src="img/bminc.png">
+<td><img alt="" src="img/smaxc.png">
+<td><img alt="" src="img/bmaxc.png">
+<tr>
+<td><tt>500, "-m histo-min"</tt>
+<td><tt>1300, "-m histo-min"</tt>
+<td><tt>500, "-m histo-max"</tt>
+<td><tt>1300, "-m histo-max"</tt>
+</table>
+</center>
+
+<p>
+
+An "<tt>IMG</tt>" alias was set up for some repetitious steps.  Notice
+the "<tt>-s 1</tt>" option to "<tt>unu heq</tt>": this turns on
+"smart" processing, so that the value warping based on the value
+histogram is not at all affected by a constant background value,
+which is necessary for this particular kind of projection.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
