@@ -154,14 +154,13 @@ ilk -i grjh29.ppm -t rotate:-45 scale:1,4 rotate:45 | topng doc/<a href="grjh29s
 Well, this is troubling.  The manner in which the brightness changed
 in the first case is diferent than the second case (the second is
 quite non-linear), meaning that the method of brightness correction
-would ideally vary according to Z location, but this is probably
-beyond our means.  Worse yet, in the third case, where there is an
-isolated darker slice, the gray strip joint histograms indicate that
-there is not any obvious brightness change among the four slices, at
-least not significantly more than in the fourth case, where we know
-that there is no brightness variation in the head.  For comparison, we
-can form joint histograms of the head images themselves, and again
-stretch them with <tt>ilk</tt>:
+would ideally vary according to Z location.  Worse yet, in the third
+case, where there is an isolated darker slice, the gray strip joint
+histograms indicate that there is not any obvious brightness change
+among the four slices, at least not significantly more than in the
+fourth case, where we know that there is no brightness variation in
+the head.  For comparison, we can form joint histograms of the head
+images themselves, and again stretch them with <tt>ilk</tt>:
 
 <blockquote><pre>
 unu jhisto -i avf1079{b,c}.raw.Z.head.ppm -b 256 256 -t int \
