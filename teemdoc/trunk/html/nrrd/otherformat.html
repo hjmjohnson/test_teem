@@ -239,6 +239,31 @@ specifications, and store the information in the <tt>Nrrd</tt> struct.
 In this sense, the encoding of nrrd fields in PNM image comments can
 be said to be "lossless".
 
+<a name="png">&nbsp;</a>
+<h3>PNG images</h3>
+
+<b>Nrrd</b> also supports PNG images via the <a
+href="http://www.libpng.org/pub/png/libpng.html">libpng</a> library.
+<b>Nrrd</b> can read any PNG file, including 1,2,4,8,16 bit grayscale (G),
+grayscale-alpha (GA), RGB, RGBA, and paletted images, and can write 8 and 16
+bit G, GA, RGB, and RGBA formats.  Nrrd field specifications are stored
+as special PNG comments. The valid field specifications are the same
+as for PNM images.
+
+<p>
+
+For example, here is an example to say HI in PNG land:
+
+<blockquote><pre>
+unu convert -i - -t uchar -o hi.png
+0 0 0 0 0 0 0
+0 255 0 255 0 255 0
+0 255 255 255 0 255 0
+0 255 0 255 0 255 0
+0 0 0 0 0 0 0
+^D
+</pre></blockquote>
+
 <a name="readwrite">&nbsp;</a>
 <h3>Reading and Writing non-NRRD files</h3>
 
@@ -299,6 +324,13 @@ the output magic will be <tt>P2</tt> or <tt>P5</tt>, respectively.
  type must be <tt>uchar</tt>
 <td>can be <tt>nrrdEncodingAscii</tt> or <tt>nrrdEncodingRaw</tt>;
 the output magic will be <tt>P3</tt> or <tt>P6</tt>, respectively.
+
+<tr>
+<td>"<tt>.png</tt>" <td>PNG image file (<tt>nrrdFormatPNG</tt>)
+<td>dimensions must be 2 or 3, for 3 with first axis
+1-4 samples long; type must be <tt>uchar</tt> or <tt>uint</tt> <td>can
+be <tt>nrrdEncodingRaw</tt>; the output magic will be
+<tt>\211PNG</tt>.
 
 <tr>
 <td>"<tt>.nhdr</tt>"
