@@ -33,9 +33,11 @@ GK's C code: nrrd
   <td align=left valign=middle><font size="+1">
     - <a href="intro.html">Introduction</a><br>
        <font size="-2">&nbsp;</font><br>
-    - <a href="format.html">File format</a><br>
+    - <a href="descformat.html">General NRRD format description</a><br>
        <font size="-2">&nbsp;</font><br>
-    - <a href="files/index.html">Example <tt>NRRD</tt> files</a><br>
+    - <a href="format.html">NRRD format definition</a><br>
+       <font size="-2">&nbsp;</font><br>
+    - <a href="files/index.html">Example NRRD files</a><br>
        <font size="-2">&nbsp;</font><br>
     - <a href="otherformat.html">Compatible file formats</a><br>
        <font size="-2">&nbsp;</font><br>
@@ -62,7 +64,7 @@ floating point types), encoding of written files (raw, ascii, hex, or
 gzip or bzip2 compression), and endianness (the byte order of data is
 explicitly recorded when the type or encoding expose it).  About two
 dozen operations are implemented, including simple things like
-quantizing, slicing, and cropping, and fancier things like projection,
+quantizing, slicing, and cropping, as well as fancier things like projection,
 histogram equalization, and filtered resampling (up and down) with
 arbitrary seperable kernels.
 
@@ -90,17 +92,21 @@ is a general term for all of these.
 nrrd can represent, with a discussion of dimension, axes, and scalar
 types.
 
-<li><a href="format.html"><b>File format</b></a>: How to get data into
-and out of nrrd.  Definition of the NRRD file format.
+<li><a href="descformat.html"><b>Description of NRRD file
+format</b></a>: General information about the format, and comparisons
+with other similar formats.
+
+<li><a href="format.html"><b>Definition of NRRD file format</b></a>:
+How to get data into and out of nrrd.
 
 <li><a href="files/index.html"><b>Example NRRD files</b></a>: A
 variety of NRRD file format examples, as well as PPM, PGM, and text
 files which encode nrrd information.
 
 <li><a href="otherformat.html"><b>NRRD-Compatible file
-formats</b></a>: How NRRD plays well with PPM, PGM, and plain text
-files.  Information normally found in the NRRD header can be 
-losslessly encoded in these formats.
+formats</b></a>: How NRRD plays well with PPM, PGM, and PNG images,
+as well as plain text files.  Information normally found in the NRRD
+header can be losslessly encoded in these formats.
 
 <li><!-- <a href="struct.html"> --><b><tt>Nrrd</tt> Data structure</b><!-- </a> -->:
 Basic information about the <tt>Nrrd</tt> data structure, and

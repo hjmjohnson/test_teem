@@ -9,7 +9,7 @@
 <html>
 <head>
 <title>
-GK's C code: nrrd: NRRD File Format
+GK's C code: nrrd: Definition of NRRD File Format
 </title>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
 </head>
@@ -32,7 +32,7 @@ GK's C code: nrrd: NRRD File Format
   <td width=80 align=center valign=top>
     <b><a href="./index.html">nrrd</a></b>
   <td>
-    <h2>&nbsp;&nbsp;<b>File Format</b></h2>
+    <h2>&nbsp;&nbsp;<b>Definition of NRRD File Format</b></h2>
 </table>
 
 This document defines the NRRD file format.  It gives requirements and
@@ -50,70 +50,7 @@ free to email me questions and/or suggestions:
 <tt>gk@cs.utah.edu</tt>.  This page has been written with a view
 towards keeping it useful upon printing.
 
-<h2><a name="sect0">0. Description of format</a></h2>
-
-The NRRD format was primarily designed to be easy to write, rather
-than easy to read.  The NRRD header is simple ASCII text, one field
-per line.  The fields in the header do not have a strict ordering, and
-most of them are optional.  Most strings are case insensitive, and
-alternate forms of many of the identifiers and descriptors are
-allowed.  Writing NRRD headers by hand, from scratch, is entirely
-feasible (although the <a href="../unrrdu/index.html">Utah Nrrd
-Utilities</a> program "<tt>unu make -h</tt>" is probably a better
-solution).  When writing non-ASCII data, the byte ordering is
-recorded, but not altered to match one particular endianness.  The format
-flexibility greatly increases the complexity and responsibilities of a
-NRRD reader, but the compelling benefit is having a simple portable
-format that is general with respect to dimension and type.
-
 <p>
-
-The NRRD file format was also conceived as being somewhat analogous to
-the PPM format for color images: straight-forward, friendly to
-programmers, and descriptive of a sufficiently large class of data to
-be useful in research.  Time and experience with the NRRD format has
-gradually increased its complexity (such as with the introduction of
-node- versus cell-centered samples), but the feature set has very
-nearly converged.  As a general representation of raster data, NRRD is
-intended to occupy the very large but sparsely populated niche between
-<ol>
-
-<li> Raw, headerless data, hopefully with some nearby README file 
-explaining the type and dimensions.
-
-<li> Very sophisticated, powerful (complicated) formats such as <a
-href="http://hdf.ncsa.uiuc.edu/">HDF
-(<tt>http://hdf.ncsa.uiuc.edu/</tt>)</a>.
-
-</ol>
-
-<p>
-
-The <a href="http://public.kitware.com/VTK/pdf/file-formats.pdf">VTK
-(<tt>http://public.kitware.com/VTK/pdf/file-formats.pdf</tt>)</a> file
-format is the closest to NRRD, but there are many differences.  In
-NRRD:
-<ul>
-<li> The dimension of the array is general.
-<li> Compression encodings are supported.
-<li> More scalar types are supported.<br>
-However,
-<li> Only rectilinear data is supported; no point, polygonal, or mesh types.
-<li> Only one array per file.
-<li> Vector and tensor types are not explicitly supported; these are
-represented by using a short non-spatial axis prior to the spatial axes
-</ul>
-
-<p>
-
-Various aspects of the NRRD format borrow heavily from the PCGV volume
-dataset format developed by James Durkin at the Cornell Program of
-Computer Graphics.  The <tt>nrrdRead()</tt> and <tt>nrrdWrite()</tt>
-functions of the <a href="index.html"><b>nrrd</b></a> library are
-intended to completely support the format as described here, but there
-is currently no test suite or validation program.
-
-<h2><a name="sect1">1. General information</a></h2>
 
 When saved, the filenames for NRRD files should end in
 "<tt>.nrrd</tt>".  Detached headers, discussed in <a
@@ -123,6 +60,13 @@ the <a href="#encoding"><tt>encoding</tt></a> part of <a
 href="#sect4">Section 4</a>.
 
 <p>
+
+The <tt>nrrdRead()</tt> and <tt>nrrdWrite()</tt> functions of the <a
+href="index.html"><b>nrrd</b></a> library are intended to completely
+support the format as described here, but there is currently no test
+suite or validation program.
+
+<h2><a name="sect1">1. General information</a></h2>
 
 Because the NRRD format uses a multi-line text header, some mention
 should be made of what exactly a line is.  When Windows (and sometimes
@@ -189,6 +133,9 @@ Each of the "&lt;<i>field</i>&gt;: &lt;<i>desc</i>&gt;" lines
 specifies information about one of the fields in the nrrd.  Each of
 these lines is called a "field specification", or more loosely, a
 "field".  Each field specification is contained in one line.  
+Each field specification may appear no more than once in the nrrd
+header; repetitions of a field is sufficient cause for a reader to
+exit with an error message.
 
 <p>
 
@@ -1126,10 +1073,16 @@ byteskip: &lt;<i>skip</i>&gt;
 </ul>
 
 Like <a href="#lineskip"><tt>line skip</tt></a>, this is most useful
-in a detached header.  It tells how many bytes (greater than or equal
-to zero) to skip in a data file in order to get to the beginning of
-the data.  By definition, the bytes are skipped according to the
-action of <tt>fgetc()</tt>.  When used in combination with <a
+in a detached header.  There are two possibilities for its use,
+depending on the value of <i>skip</i>: greater than or equal to zero,
+or being exactly to -1.
+
+<p>
+
+If <i>skip</i> is greater than or equal to zero, it tells how many
+bytes to skip in a data file in order to get to the beginning of the
+data.  By definition, the bytes are skipped according to the action of
+<tt>fgetc()</tt>.  When used in combination with <a
 href="#byteskip"><tt>line&nbsp;skip</tt></a>, the byte skipping is
 done <b>after</b> the line skipping.  When this field does not appear,
 <i>skip</i> is taken to be zero.  Negative values are not valid.
@@ -1163,6 +1116,23 @@ data are compressed together, the beginning of the data can be easily
 found via a <tt>byte skip</tt> offset.  This also applies to large
 datasets written by FORTRAN programs, for which even "raw" data can be
 proceeded by a four-byte representation of the data length.
+
+<p>
+
+As a special trick copied from the <a
+href="http://tolkien.rad.unc.edu/technologies/MetaImage/">MetaImage</a>
+file format, the value of <i>skip</i> can be -1.  This is valid only
+with raw encoding, and on a data file which isn't standard input
+(<tt>stdin</tt>).  The action of this byte skip is to <tt>fseek()</tt>
+backwards from the end of the data file, to the beginning of the data.
+The distance to seek is calculated from the nrrd type and axis sizes.
+This is a useful trick for getting at binary data in other formats
+with unknown (or variable) length binary headers, such as DICOM, TIFF,
+and BMP, but only if the data is uncompressed.
+
+<p>
+
+If <i>skip</i> is -1, the action of <tt>lineskip</tt> is entirely moot.
 
 <!-- 
 <hr noshade width="30%" align=left>
@@ -1423,43 +1393,6 @@ in which every axis is spatial, and logically lives in the same space,
 the units information will unfortunately be repeated for all axes.
 Having separate units for all axes is more compelling in the case of
 multi-dimensional scatterplots and spectral image data.
-
-<h2><a name="sect6">6. Future Extensions</a></h2>
-
-I have some ideas on how the NRRD file format may be extended in the
-future, but these are not likely to happen within the next year.
-If they are developed, it will be with the introduction of a slightly
-different magic, to be distinct from <tt>NRRD0001</tt>.
-
-<ul>
-
-<li> More than one array per NRRD file:  There are many situations
-where it is good to logically associate multiple NRRD files together
-as one "data set".  Examples include a large volume and its
-pre-computed univariate histogram (to help in isovalue navigation), or
-a collection of different one-, two-, and three-dimensional lookup
-tables which are good transfer functions for a given volume.  I am
-leaning towards implementing this multi-NRRD association with XML on
-top of regular NRRD0001 files.  If you need this, though, you should
-probably be using <a href="http://hdf.ncsa.uiuc.edu/">HDF
-(<tt>http://hdf.ncsa.uiuc.edu/</tt>)</a>
-
-<li> More general storage of attribute/value pairs: Something more
-than writing and parsing comments would be good.  But again, this is
-really the domain of HDF.
-
-<li> Bricking:  Whenever I do get around to implementing bricking in
-<b>nrrd</b>, the results will be saved in NRRD files.  One level of
-bricking will turn a 3-D array into a 6-D array.  For various subtle
-reasons, the representation of the axis mins and maxs becomes
-ambiguous in the case of cell-centered data, and this information is
-meaningless for all the bricked axes.  Brick overlap should be
-represented too, but this means a new field.
-
-<li> Other compression methods: It would be really nice to have a
-compression method that worked well on floating point data.
-
-</ul>
 
 <p>
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>
