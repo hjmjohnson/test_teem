@@ -1,0 +1,115 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2003, 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Making Visible Woman CT Hands
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<A href="http://sourceforge.net"><IMG 
+ src="http://sourceforge.net/sflogo.php?group_id=85445&amp;type=2"
+ align=right width="125" height="37" border="0" alt="SourceForge.net Logo"></A>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Making Visible Woman CT Hands</b></h2>
+</table>
+
+The hands of the Visible Female fresh CT dataset are nice regions of
+the whole dataset to isolate for rendering purposes.  This page
+documents the steps needed to create volume of the right and left
+hands, as well as a post-processing step to remove the hip bone from
+these volumes.
+
+<p>
+
+As done with the <a href="../vmhead/index.html">Visible Male frozen CT
+head</a>, first you need to <a
+href="http://www.nlm.nih.gov/research/visible/getting_data.html">get
+the data</a> and set up some symlinks:
+
+<blockquote><pre>
+ln -s ......./VisibleHuman/female/radiological/normalCT data
+ln -s ......./VisibleHuman/female/radiological/normalCTHeaders hdrs
+</pre></blockquote>
+
+<p>
+
+The slices for the hands never change resolution, so looking
+at any one of the header files should provide sufficient 
+guidance.  From hdrs/c_vf1700.txt:
+<blockquote><pre>
+width.................................: 512
+height................................: 512
+...
+Slice Thickness (mm).....................: 1
+Image matrix size - X....................: 512
+Image matrix size - Y....................: 512
+Display Field of view - X (mm)...........: 480
+Display Field of view - Y (if different).: 0
+Image dimension - X......................: 480
+Image dimension - Y......................: 480
+Image pixel size - X.....................: 0.9375
+Image pixel size - Y.....................: 0.9375
+</pre></blockquote><p>
+
+480 mm / 512 pixels = 0.9375 mm/pixel.  As with ../VFemFeet, this
+implies cell centering, but "unu make" doesn't make it easy to
+specify this, so we won't.  Byte skip is 3416 (as indicated by the
+"length" field of the "Image File Header").  To inspect this slice:
+
+<blockquote><pre>
+zcat data/c_vf1700.fre.Z \
+ | unu make -t ushort -e raw -en big -s 512 512 -bs 3416 \
+ | unu quantize -b 8 \
+ | unu save -f pnm | xv -
+</pre></blockquote><p>
+
+
+<blockquote><pre>
+</pre></blockquote><p>
+
+
+<blockquote><pre>
+</pre></blockquote><p>
+
+
+<blockquote><pre>
+</pre></blockquote><p>
+
+
+<blockquote><pre>
+</pre></blockquote><p>
+
+
+<blockquote><pre>
+</pre></blockquote><p>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
