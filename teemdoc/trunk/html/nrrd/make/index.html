@@ -1,0 +1,266 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2003, 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Making and inspecting a synthetic dataset
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<A href="http://sourceforge.net"><IMG 
+ src="http://sourceforge.net/sflogo.php?group_id=85445&amp;type=2"
+ align=right width="125" height="37" border="0" alt="SourceForge.net Logo"></A>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Making and Inspecting a Synthetic Dataset</b></h2>
+</table>
+
+This page shows how careful use of <tt>unu</tt> always one to create
+and inspect a non-trivial synthetic volume dataset.  Since we don't have
+to write any new code, or need any external tools (except perhaps a
+text editor), this is a good example of the kind of swiss-army knife that
+<tt>unu</tt> is.  Following each command example are some points about
+what is going on.  Note that in the following "X", "Y", and "Z" are
+simply synonyms for "fastest axis", "medium axis", and "slowest axis":
+<b>nrrd</b> supplies gives no intrinsic names to the axes.
+
+<p>
+
+We start with a 64x64x64 volume (<tt>x.nrrd</tt>) which varies from -1.3
+to 1.3 along the X axis, and is constant along Y and Z:
+
+<blockquote><pre>
+echo "-1.3 1.3   -1.3 1.3   -1.3 1.3   -1.3 1.3" \
+ | unu reshape -s 2 2 2 \
+ | unu resample -s 64 64 64 -k tent -o x.nrrd
+</pre></blockquote>
+
+<ul>
+<li> Because <b>nrrd</b> can read plain text data, we can use something
+as simple as "<tt>echo</tt>" to get data into nrrd.  The output of
+"<tt>echo</tt>" will actually be a 1-by-8 2-dimensional nrrd.
+<li> "<tt>unu reshape</tt>" imposes new dimensions on the data, making
+it into a 2x2x2 volume.  Because this does not change the memory
+ordering of the samples, it remains the same as indicated by the
+"<tt>echo</tt>" command.
+<li> "<tt>unu resample</tt>" upsamples this is 64x64x64 using linear
+interpolation ("<tt>-k tent</tt>").
+</ul>
+
+<p>
+
+The synthetic dataset will sample the function 
+<blockquote>
+f(x) = x<sup>2</sup> + y<sup>2</sup> + z<sup>2</sup>
+  - x<sup>4</sup> - y<sup>4</sup> - z<sup>4</sup>
+</blockquote>
+
+So we start with squaring the X values in <tt>x.nrrd</tt>:
+
+<blockquote><pre>
+unu 2op pow x.nrrd 2 -o xx.nrrd
+</pre></blockquote>
+
+<ul>
+<li> <tt>unu 2op</tt> is a little different from other <tt>unu</tt> 
+commands in its avoidance of the "<tt>-i</tt>" flag.  Rather, the
+two arguments (and there are always exactly two) come after the
+binary operator, which here is "<tt>pow</tt>".  
+<li> This should be read as prefix notation, as in 
+"<tt>pow(x.nrrd,2)</tt>", that is, we're raising every value in
+in <tt>x.nrrd</tt> to the power 2.
+</ul>
+
+We need to create similar arrays in which the value varies along
+the Y and Z axes (<tt>y.nrrd</tt>, <tt>z.nrrd</tt>):
+<blockquote><pre>
+unu swap -i xx.nrrd -a 0 1 -o yy.nrrd
+unu swap -i xx.nrrd -a 0 2 -o zz.nrrd
+</pre></blockquote>
+
+At this point we can add these volumes together to get a dataset
+with spherical isosurfaces (<tt>sph.nrrd</tt>):
+<blockquote><pre>
+unu 2op + xx.nrrd yy.nrrd \
+ | unu 2op + - zz.nrrd -o sph.nrrd
+</pre></blockquote>
+<ul>
+<li> Although there is a "<tt>unu 3op</tt>", currently addition is
+not one of the availble ternary operators. so we string together
+two "<tt>unu 2op</tt>" invocations.
+<li> Because "<tt>unu 2op</tt>" always requires two arguments after
+the operator ("<tt>+</tt>"), we have to identify standard input somehow,
+and <b>nrrd</b> follows the unix convention of using "<tt>-</tt>" for
+this.  To the uninitiated, "<tt>-</tt>" might seem to have some arithmetic
+significance, but this is not the case.
+</ul>
+
+We can inspect what we have so far, to make sure that the data
+looks as we expect.  One way of inspecting a volume in one image 
+is to make a mosaic of its slices:
+
+<blockquote><pre>
+unu pad -i sph.nrrd -min -1 -1 0 -max M+1 M+1 M -b pad -v 0 \
+ | unu axsplit -a 2 -s 8 8 \
+ | unu permute -p 0 2 1 3 \
+ | unu axmerge -a 0 | unu axmerge -a 1 \
+ | unu quantize -b 8 -o sph-mos.png
+unu resample -i sph-mos.png -s x0.5 x0.5 -k tent -o sph-mos-th.png
+</pre></blockquote>
+
+<center>
+<a href="img/sph-mos.png"><img 
+alt="sph-mos-th.png" width=264 height=264 src="img/sph-mos-th.png"></a>
+</center>
+<ul>
+<li> We want a little visual demarcation between the slices, so we
+pad with value zero.  The "<tt>-min</tt>" and "<tt>-max</tt>" flags
+result in padding by one sample in X and Y, but not in Z.
+<li> "<tt>unu axsplit</tt>": A mosaic is a 2-D array of (2-D) images,
+so we have to split the Z axis into two axes in order to get a 4-D nrrd.
+<li> "<tt>unu permute</tt>": We have to mingle the slices axes (0 and 1)
+with the newly created mosaic axes (2 and 3).  In this case, we could
+have also used "<tt>unu swap</tt>".
+<li> "<tt>unu axmerge</tt>": Having intermingled the slice and mosaic
+axes, we have to re-join them into a two-dimensional image.  Conceptually,
+the X dimension of the image has a fast dimension which varies within
+a slice, and a slow dimension which varies across slices.  The Y dimension
+is configured similarly.
+<li> "<tt>unu resample</tt>": This just downsamples the image some
+to make the thumb-nail used below.  Note that because <b>nrrd</b> can
+read and write PNG images, we can go directly from <tt>unu</tt> to a web page.
+</ul>
+
+The final synthetic volume, "<tt>pin.nrrd</tt>", also requires raising
+the original volume to the 4rth power.  All this is done with "<tt>unu
+2op</tt>".  We also create a new mosaic of the result:
+
+<blockquote><pre>
+unu 2op pow xx.nrrd 2 -o xxxx.nrrd
+unu 2op pow yy.nrrd 2 -o yyyy.nrrd
+unu 2op pow zz.nrrd 2 -o zzzz.nrrd
+
+unu 2op - sph.nrrd xxxx.nrrd \
+ | unu 2op - - yyyy.nrrd \
+ | unu 2op - - zzzz.nrrd -o pin.nrrd
+
+unu pad -i pin.nrrd -min -1 -1 0 -max M+1 M+1 M \
+ | unu axsplit -a 2 -s 8 8 \
+ | unu permute -p 0 2 1 3 \
+ | unu axmerge -a 0 | unu axmerge -a 1 \
+ | unu quantize -b 8 -o pin-mos.png
+unu resample -i pin-mos.png -s x0.5 x0.5 -k tent -o pin-mos-th.png
+</pre></blockquote>
+<center>
+<a href="img/pin-mos.png"><img 
+alt="pin-mos-th.png" width=264 height=264 src="img/pin-mos-th.png"></a>
+</center>
+<ul>
+<li> In "<tt>unu 2op</tt>", the use of "<tt>-</tt>" to signify both
+subtraction and standard input is a little bizarre looking, but its
+an idiom that makes more sense with repeated use.
+<li> The mosaic is created by exact same sequence of steps as before,
+although the first step ("<tt>unu pad</tt>") bleeds out the values
+at the boundary, instead of using one specified value (as before).
+</ul>
+
+A more revealing look at the shape of this volume is possible with 
+what is basically an isocontour extraction.  Except that instead of
+actually doing an isocontour, we'll just use a transfer function. 
+We'll seek to emphasize values around 0.0, with a tent-shaped peak.
+
+<blockquote><pre>
+echo "-1 0   -0.2 0    0.0 1   0.2 0   1 0" \
+ | unu reshape -s 2 5 -o <a href="iso-txf.txt">iso-txf.txt</a>
+unu imap -i pin.nrrd -m iso-txf.txt \
+ | unu pad -min -1 -1 0 -max M+1 M+1 M \
+ | unu axsplit -a 2 -s 8 8 | unu permute -p 0 2 1 3 \
+ | unu axmerge -a 0 | unu axmerge -a 1 \
+ | unu quantize -b 8 -o iso-mos.png
+unu resample -i iso-mos.png -s x0.5 x0.5 -k tent -o iso-mos-th.png
+</pre></blockquote>
+<center>
+<a href="img/iso-mos.png"><img 
+alt="iso-mos-th.png" width=264 height=264 src="img/iso-mos-th.png"></a>
+</center>
+<ul>
+<li> The transfer function "<tt>iso-txf.txt</tt>" could just have well
+been created in a text editor.  We're just showing off here.
+<li> "<tt>unu imap</tt>" performs the mapping of the data values in
+"<tt>pin.nrrd</tt>" through the transfer function in "<tt>iso-txf.txt</tt>".
+"<tt>Imap</tt>"  stands for "irregular map", because the control points
+between the linear ramps are irregularly spaced.  
+</ul>
+
+This allows us to see the general shape of the volume: a puffy cube with
+slightly extended corners, perhaps like a pin-cushion.
+More colorful version:
+<blockquote><pre>
+unu imap -i pin.nrrd -m <a href="coliso-txf.txt">coliso-txf.txt</a> \
+ | unu pad -min 0 -1 -1 0 -max M M+1 M+1 M \
+ | unu axsplit -a 3 -s 8 8 | unu permute -p 0 1 3 2 4 \
+ | unu axmerge -a 1 | unu axmerge -a 2 \
+ | unu quantize -b 8 -o coliso-mos.png
+unu resample -i coliso-mos.png -s = x0.5 x0.5 -k tent -o coliso-mos-th.png
+</pre></blockquote>
+<p>
+<center>
+<a href="img/coliso-mos.png"><img 
+alt="coliso-mos-th.png" width=264 height=264 src="img/coliso-mos-th.png"></a>
+</center>
+<ul>
+<li> Because each line of <tt>coliso-txf.txt</tt> has four lines instead
+of the two (in <tt>iso-txf.txt</tt>), the output of "<tt>unu imap</tt>"
+has three values (instead of one), so the result is a Nrrd of dimension
+4 (not 3).  
+<li> The "<tt>unu pad</tt>", "<tt>unu axsplit</tt>", and all 
+subsequent commands have to take the extra dimension into account.
+This is a consequence of <b>nrrd</b>'s "everything is a scalar" mentality:
+an 3-D volume of colors is represented as a 4-D volume of scalars.
+</ul>
+
+Finally, we'll modify the sphere dataset <tt>sph.nrrd</tt> so that its
+zero isosurface is at about the same position as that of
+<tt>pin.nrrd</tt>.  Considering that the original coordinates were from
+-1.3 to 1.3, we'll subtract 1.0 from the the values in <tt>sph.nrrd</tt>,
+over-writing the old volume in the process:
+<blockquote><pre>
+unu 2op - sph.nrrd 1 -o sph.nrrd
+</pre></blockquote>
+
+At this point we can clean up the little temporary files from
+creating <tt>sph.nrrd</tt> and <tt>pin.nrrd</tt>:
+<blockquote><pre>
+rm -f x.nrrd {xx,yy,zz}.nrrd {xxxx,yyyy,zzzz}.nrrd
+</pre></blockquote>
+
+Now we can <a href="">make a volume renderings</a> of 
+the <tt>sph.nrrd</tt> and <tt>pin.nrrd</tt> volumes.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
