@@ -35,10 +35,10 @@ GK's C code: nrrd: NRRD-Compatible File Formats
     <h2>&nbsp;&nbsp;<b>NRRD-Compatible File Formats</b></h2>
 </table>
 
-The <b>nrrd</b> library knows how to read NRRD files, as well as two
-other formats of data: plain text files, and PGM/PPM images.  This
-page describes how the <b>nrrd</b> library interprets and uses these
-formats.
+The <b>nrrd</b> library knows how to read NRRD files, as well as three
+other formats of data: plain text files, PGM/PPM images, and PNG
+images.  This page describes how the <b>nrrd</b> library interprets
+and uses these formats.
 
 <h3>Plain text files</h3>
 
@@ -244,11 +244,12 @@ be said to be "lossless".
 
 <b>Nrrd</b> also supports PNG images via the <a
 href="http://www.libpng.org/pub/png/libpng.html">libpng</a> library.
-<b>Nrrd</b> can read any PNG file, including 1,2,4,8,16 bit grayscale (G),
-grayscale-alpha (GA), RGB, RGBA, and paletted images, and can write 8 and 16
-bit G, GA, RGB, and RGBA formats.  Nrrd field specifications are stored
+<b>Nrrd</b> can read any PNG file, including 1,2,4,8,16 bit grayscale (Y),
+grayscale-alpha (YA), RGB, RGBA, and paletted images, and can write 8 and 16
+bit Y, YA, RGB, and RGBA formats.  Nrrd field specifications are stored
 as special PNG comments. The valid field specifications are the same
-as for PNM images.
+as for PNM images.  Gamma and background color transformations are not
+yet supported in the reader, we apologize for the inconvenience.
 
 <p>
 
@@ -328,7 +329,7 @@ the output magic will be <tt>P3</tt> or <tt>P6</tt>, respectively.
 <tr>
 <td>"<tt>.png</tt>" <td>PNG image file (<tt>nrrdFormatPNG</tt>)
 <td>dimensions must be 2 or 3, for 3 with first axis
-1-4 samples long; type must be <tt>uchar</tt> or <tt>uint</tt> <td>can
+1-4 samples long; type must be <tt>uchar</tt> or <tt>ushort</tt> <td>can
 be <tt>nrrdEncodingRaw</tt>; the output magic will be
 <tt>\211PNG</tt>.
 
