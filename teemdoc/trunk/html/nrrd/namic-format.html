@@ -47,11 +47,15 @@ format is also available</a>.
 <p>
 
 The easiest way to describe the format usage
-is by example.  Two examples are given here: 
+is by example.  Three examples are given here: 
 <ol>
 <li><a href="#morph"><tt>Harvard_VA/morph/HUVA51125252/HUVA51125252_spgr.nhdr</tt></a>: a scalar SPGR (MRI) volume
 <li><a href="#dwi"><tt>Harvard_VA/diffusion/HUVA33202368/HUVA33202368_dwi.nhdr</tt></a>:
-a volume of diffusion-weighted images
+a volume of diffusion-weighted images (DWIs).
+<li><a href="#ten"><tt>HUVA33202368_tensor.nrrd</tt></a>: a tensor volume computed from
+the previous DWI volume.  This is not actually part of NAMIC database, but
+is included to show how the NRRD format can be used to store masked
+diffusion tensor volumes.
 </ol>
 In each case, the ASCII header will be
 given, followed by a line-by-line explanation of what the header is
@@ -310,6 +314,70 @@ nrrdKeyValueGet(nrrd,"DW_gradient_002")<br>
 ...</tt>
 </table>
 
+<p>
+<a name="ten"><hr noshade width="30%" align=left></a>
+<p>
+
+The previous DWI volume can be used to calculate a diffusion tensor
+volume using the <tt>tend</tt> command-line Teem program, invoked as:
+<blockquote><pre>
+tend estim -i HUVA33202368_dwi.nhdr -t 210 -B kvp -knownB0 true -o HUVA33202368_tensor.nrrd
+</pre></blockquote>
+This performs linear-least-squares estimation of the diffusion tensor
+values, based on the gradient information in the key/value pairs of the
+DWI header.  Also based on the mean DWI threshold 210 (found by some
+experimentation), it generates a foreground/background mask
+value (either 1.0 or 0.0) which is stored per-sample.
+The resulting 4-D volume has the following header (viewable by running
+<tt>unu head HUVA33202368_tensor.nrrd</tt>):
+<blockquote><pre>
+NRRD0004
+type: float
+dimension: 4
+space: right-anterior-superior
+sizes: 7 256 256 35
+thicknesses:  NaN  NaN  NaN 4
+space directions: none (-0.859375,0,0) (0,0,-0.859375) (0,5,0)
+centerings: ??? cell cell cell
+kinds: 3D-masked-symmetric-matrix space space space
+endian: big
+encoding: raw
+space units: "mm" "mm" "mm"
+space origin: (117.5,-93,119)
+</pre></blockquote>
+
+Note:
+<ul>
+<li> The space and orientation information is the same in the DWI volume,
+although now axis 0 (not 4),
+which stores the mask and tensor values, "<tt>none</tt>"
+for the <tt>space direction</tt>.
+<li> The <tt><a href="format.html#kinds">kind</a></tt> on axis 0 is <tt>3D-masked-symmetric-matrix</tt>.  The seven values on this axis are, in order:<br>
+mask Dxx Dxy Dxz Dyy Dyz Dzz.
+<li> Because the diffusion-sensitizing gradient directions stored in
+the key/value pairs of the DWI volume were used to compute the B-matrix,
+and because the gradient directions were expressed in (R,A,S) space,
+the matrix components of the diffusion tensor are also expressed in 
+(R,A,S) space.  The agreement between the tensor measurement and
+array orientation frames is not a requirement of the NRRD format (nor could
+it possibly be enforced as such), but this convention greatly simplifies
+the task of communicating sample tensor volumes.
+</ul>
+
+
+<pre>
+
+
+
+
+
+
+
+
+
+
+
+</pre>
 
 <p>
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>
