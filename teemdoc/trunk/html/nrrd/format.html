@@ -51,12 +51,12 @@ GK's C code: nrrd: Definition of NRRD File Format
   <li><a href="#sect1.6">Miscellaneous info</a>
   </ol>
 <li><a href="#sect2">ASCII encoding of floating point values</a>
-<li><a href="#sect3">Detached headers</a>
+<li><a href="#sect3">Detached headers with "<tt>data file:</tt>"</a>
 <li><a href="#sect4">Space and orientation information</a><br>
 <a href="#space"><tt>space</tt></a>, 
 <a href="#spacedimension"><tt>space dimension</tt></a>,
 <a href="#spaceunits"><tt>space units</tt></a>,
-<a href="#origin"><tt>origin</tt></a>,
+<a href="#spaceorigin"><tt>space origin</tt></a>,
 <a href="#spacedirections"><tt>space directions</tt>
 
 <li><a href="#sect5">Basic field specifications </a><br>
@@ -614,7 +614,7 @@ patterns for positive and negative infinity.
 NRRD writers should verify that their <tt>printf()</tt> function behaves
 in accordance with these rules.
 
-<h2><a name="sect3">3. Detached Headers</a></h2>
+<h2><a name="sect3">3. Detached Headers with "<tt>data file:</tt>"</a></h2>
 
 Detached headers allow data stored in one or more separate files,
 with or without headers of another format, to be accessed by a NRRD
@@ -796,7 +796,7 @@ with basic field specifications "<tt>space:</tt>"
 and "<tt>space dimensions:</tt>", and per-axis field specification
 "<tt>space units:</tt>".
 <li> Determine the translation (or position) of the array.  Done with
-basic field specification "<tt>origin:</tt>", which locates the "first"
+basic field specification "<tt>space origin:</tt>", which locates the "first"
 sample.
 <li> Determine the direction of each axis of the array relative to the space.
 Done with per-axis field specifications "<tt>space directions:</tt>".
@@ -833,7 +833,7 @@ space: &lt;<i>space</i>&gt;
 This names a particular space in which the array lives, which implies
 the dimension of the space.  This (or "<tt>space dimension</tt>") has to 
 precede the other orientation-related fields, because it determines how
-many components there are in the vectors of the <tt>origin</tt>
+many components there are in the vectors of the <tt>space origin</tt>
 and <tt>space directions</tt> fields.
 The possible values are:
 
@@ -932,7 +932,7 @@ space dimension: &lt;<i>int</i>&gt;
 If the space surrounding the array is not available as an explicitly
 named space with the <tt>space</tt> field specification, the dimension
 of the space is given with this.  The integral dimension determines how
-many components there are in the vectors given in the <tt>origin</tt>
+many components there are in the vectors given in the <tt>space origin</tt>
 and <tt>space directions</tt> vectors.  This (or <tt>space</tt>) has
 to precede the other orientation-related fields.
 
@@ -950,9 +950,9 @@ space vectors are measured.  For example:
 space units: "mm" "mm" "mm"
 </pre></blockquote>
 
-<a name="origin"><hr noshade width="30%" align=left></a>
+<a name="spaceorigin"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-origin: &lt;<i>vector</i>&gt;
+space origin: &lt;<i>vector</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional, and is an optional part of defining orientation
@@ -978,7 +978,7 @@ The vector is delimited by "<tt>(</tt>" and "<tt>)</tt>", and the
 individual components are comma-separated.  This is an example of
 a three-dimensional origin specification:
 <blockquote><pre>
-origin: (0.0,1.0,0.3)
+space origin: (0.0,1.0,0.3)
 </pre></blockquote>
 
 <a name="spacedirections"><hr noshade width="30%" align=left></a>
@@ -996,7 +996,7 @@ direction and spacing associated with each axis of the array.  Unlike
 the "direction cosines" given in the "Image Orientation" (0020,0037)
 field of a DICOM file, these vectors are not unit-length: the spacing
 between samples is recovered as the magnitude of the vector.
-format of these vectors is the same as that of the "<tt>origin</tt>"
+format of these vectors is the same as that of the "<tt>space origin</tt>"
 specification.  For axes whose samples are not distributed in space
 (such as three samples of an axis giving RGB colors), the vector may
 be given as "<tt>none</tt>".  This is an example of how the
@@ -1439,6 +1439,9 @@ datafile: LIST [&lt;<i>subdim</i>&gt;]
 <li> Always optional
 </ul>
 
+(Read <a href="#sect3">Section 3</a>)
+<p>
+
 This is always optional, but it is the only means of distinguishing
 from an attached or a detached NRRD header.  When it is present, it is
 interpreted according to <a href="#sect3">Section 3</a>, and the
@@ -1739,6 +1742,7 @@ can't be infinite).
 <a name="centers"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
 centers: &lt;<i>center[0]</i>&gt; &lt;<i>center[1]</i>&gt; ... &lt;<i>center[dim-1]</i>&gt;
+centerings: &lt;<i>center[0]</i>&gt; &lt;<i>center[1]</i>&gt; ... &lt;<i>center[dim-1]</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional
