@@ -116,12 +116,14 @@ information on <b>biff</b> usage.
 <p>
 
 Exceptions to the above are functions which have "Valid" in their
-name, like <tt>baneValidHVol</tt>.  These should be read as predicates
-in a logical statement, not as function calls.  So,
+name, like <tt>baneValidHVol</tt>, as well as some other functions
+like <tt>nrrdFitsInFormat</tt>.  These should be read more as
+predicates in a logical statement, not as function calls.  So,
 <tt>baneValidHVol(hvol)</tt> returns non-zero when <tt>hvol</tt>
 <b>is</b> as valid histogram volume, and it returns zero when
-<tt>hvol</tt> is <b>not</b> a valid histogram volume.  Code might
-look like:
+<tt>hvol</tt> is <b>not</b> a valid histogram volume.  Code might look
+like:
+
 <blockquote><pre>
 if (!baneValidHVol(hvol)) {
   sprintf(err, "%s: given nrrd isn't a histogram volume", me);
