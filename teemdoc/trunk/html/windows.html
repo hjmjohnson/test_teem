@@ -43,12 +43,12 @@ also built together with these libraries.
 <p>
 
 You can download precompiled binaries with the compression encodings
-enabled or not.  For both, you'll need to copy <tt>lib/teem.dll</tt>
-to somewhere within the Windows path, typically
-<tt>%SystemRoot%/system32</tt>.  For the compression encodings, you'll
-need to copy the provided DLLs <tt>lib/zlib.dll</tt> and
-<tt>lib/libbz2.dll</tt> to the same directory in case you do not have
-them yet.
+and PNG support enabled or not.  For both, you'll need to copy
+<tt>lib/teem.dll</tt> to somewhere within the Windows path, typically
+<tt>%SystemRoot%/system32</tt>.  For the compression encodings and png
+support, you'll need to copy the provided DLLs <tt>lib/zlib.dll</tt>,
+<tt>lib/libbz2.dll</tt>, and <tt>lib/libpng.dll</tt> to the same
+directory in case you do not have them yet.
 
 <p>
 
@@ -89,8 +89,7 @@ will actually be called "<tt>teem-1.XblahN</tt>" or something similar.
 <li> Open the Visual Studio 6.0 workspace file <tt>teem.dsw</tt>.
 <li> Select the configuration you want to build using 
 the <tt>"Build"</tt> menu's <tt>"Set"%__bdest%" Active Configuration"</tt> item.  You
-have four choices: <tt>Release</tt>, <tt>Debug</tt>, <tt>Release
-Compression</tt>, and <tt>Debug Compression</tt>.
+have four choices: <tt>Release Light</tt>, <tt>Debug Light</tt>, <tt>Release</tt>, and <tt>Debug</tt>.
 <li> Select all projects by shift-clicking on them in the workspace file-view
 window.
 <li> Right click on the selection and hit <tt>"Build"</tt> in the
@@ -99,12 +98,11 @@ pop-up menu.
 
 <h3>Visual Studio .NET users</h3>
 <ol>
-<li> Go into the <tt>vc7</tt> directory.
+<li> Go into the <tt>vc.net</tt> directory.
 <li> Open the Visual Studio .NET solution file <tt>teem.sln</tt>.
 <li> Select the configuration you want to build using 
 the <tt>"Build"</tt> menu's <tt>"Configuration Manager"</tt> item.
-You have four choices: <tt>Release</tt>, <tt>Debug</tt>, <tt>Release +
-Compression</tt>, and <tt>Debug + Compression</tt>.
+You have four choices: <tt>Release Light</tt>, <tt>Debug Light</tt>, <tt>Release</tt>, and <tt>Debug</tt>.
 <li> In the solution explorer window right click on <tt>"Solution teem"</tt> and hit
 <tt>"Build Solution"</tt> in the pop-up menu.
 </ol>
@@ -155,14 +153,16 @@ are cleaned up before the build.
 
 <p>
 
-The compression options require the <b>zlib</b> and <b>bzip2</b> libraries, which
-are available in source or precompiled Windows binary form at <a
-href="http://www.gzip.org/zlib/">http://www.gzip.org/zlib/</a> and 
-<a
-href="http://sources.redhat.com/bzip2/">http://sources.redhat.com/bzip2/</a>.
-These libraries must be available to the compiler, e.g. by copying the
-import libraries and headers to the Visual Studio library and include
-subdirectories, otherwise the build will fail.
+The regular configurations require the <b>zlib</b>, <b>bzip2</b>, and
+<b>libpng</b> libraries, which are available in source or precompiled
+Windows binary form at <a
+href="http://www.gzip.org/zlib/">http://www.gzip.org/zlib/</a>, <a
+href="http://sources.redhat.com/bzip2/">http://sources.redhat.com/bzip2/</a>,
+and <a
+href="http://www.libpng.org/pub/png/libpng.html">http://www.libpng.org/pub/png/libpng.html</a>,
+respectively.  These libraries must be available to the compiler,
+e.g. by copying the import libraries and headers to the Visual Studio
+library and include subdirectories, otherwise the build will fail.
 
 <p>
 
