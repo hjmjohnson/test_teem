@@ -41,6 +41,8 @@ unu imap -i pin.nrrd -m iso-txf.txt \
  | unu quantize -b 8 -o iso-mos.png
 unu resample -i iso-mos.png -s x0.5 x0.5 -k tent -o iso-mos-th.png
 
+echo "-1.0 0 0 0    -0.8 0 0 0    -0.5 0 0 1    -0.3 0 0 0    -0.2 0 0 0     0.0 0 1 0     0.2 0 0 0     0.4 0 0 0   0.5 0 0 0     0.6 1 0 0     1.0 0 0 0" \
+ | unu reshape -s 4 11 -o coliso-txf.txt
 unu imap -i pin.nrrd -m coliso-txf.txt \
  | unu pad -min 0 -1 -1 0 -max M M+1 M+1 M \
  | unu axsplit -a 3 -s 8 8 | unu permute -p 0 1 3 2 4 \
@@ -52,4 +54,4 @@ unu 2op - sph.nrrd 1 \
  | unu 2op x -1 - -o sph.nrrd
 
 rm -f x.nrrd {xx,yy,zz}.nrrd {xxxx,yyyy,zzzz}.nrrd
-
+rm -f iso-txf.txt coliso-txf.txt
