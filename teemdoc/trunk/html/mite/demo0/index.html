@@ -1,0 +1,172 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2003, 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: mite: Basic miter demo
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<A href="http://sourceforge.net"><IMG 
+ src="http://sourceforge.net/sflogo.php?group_id=85445&amp;type=2"
+ align=right width="125" height="37" border="0" alt="SourceForge.net Logo"></A>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/mite80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">mite</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Basic <tt>miter</tt> demo</b></h2>
+</table>
+
+This page shows an example of how to use the <tt>miter</tt> volume
+renderer.  The datasets being rendered, <tt>sph.nrrd</tt> and
+<tt>pin.nrrd</tt> were created with <tt>unu</tt>, <a
+href="../../nrrd/make/index.html">as demonstrated here</a>. We'll go
+through the <a href="../opts.html">six kinds of information</a> that
+<tt>miter</tt> needs, to build up the commands that will generate
+renderings.
+
+<ol>
+
+<li> Volume input, image output
+
+<ul>
+<li> "<tt>-i pin.nrrd -o pin-rend.nrrd</tt>", or, 
+<li> "<tt>-i sph.nrrd -o sph-rend.nrrd</tt>"
+</ul>
+
+<li> Camera and image information
+
+<ul>
+<li> "<tt>@<a href="cam.txt">cam.txt</a></tt>"
+</ul>
+
+This is an example of a <b>hest</b> response file.
+
+<li> Lighting and surface properties
+
+<ul>
+<li> "<tt>-ld 0.3 -1 -2.2 -am 1 1 1 -ads 0.0 0.7 0.3 -sp 70</tt>"
+</ul>
+
+The light direction (<tt>ld</tt>) above and to the right of the viewer,
+like an offset head-light.
+
+<li> Kernels used in filtered sampling
+
+<ul>
+<li> "<tt>-k00 cubic:1,0 -k11 cubicd:1,0 -k22 cubicdd:1,0</tt>"
+</ul>
+
+This uses the B-spline for value reconstruction, and its derivatives
+for derivative measurement.  
+
+<li> Ray and compositing parameters
+
+<ul>
+<li> "<tt>-step 0.008 -ref  0.01 -nt 30 -n1 0.99</tt>"
+</ul>
+
+The axis aligned rays will sample the volume about 2/0.008 = 250 times,
+which should be good for a 64<sup>3</sup> volume.
+
+<li> Transfer functions
+
+We have to do a bit of <tt>unu</tt> hacking to generate the transfer
+function:
+
+<blockquote><pre>
+echo "0 1" \
+ | unu reshape -s 1 2 \
+ | unu resample -s = 1024 -k tent \
+ | unu save -f text -o ramp.txt
+
+echo "-1.0 0.0   -0.8 0.0    0.8 1.0    1.0 1.0" \
+ | unu reshape -s 2 4 \
+ | unu imap -i ramp.txt -r -m - \
+ | unu axinfo -a 0 -l "A" \
+ | unu axinfo -a 1 -l "gage(v)" -mm -1.0 1.0 -o val-txf.nrrd
+
+rm -f ramp.txt
+</pre></blockquote>
+
+The first command created a 1024 line file <tt>ramp.txt</tt> containing
+the values linearly increasing from 0.0 to 1.0.  This was fed into
+the <tt>unu imap</tt> with control points implementing a step function,
+and then <tt>unu axinfo</tt> sets up the axis information so that <b>mite</b>
+can use the nrrd as a transfer function.  Now we can tell <tt>miter</tt>:
+
+<ul>
+<li> "<tt>-txf val-txf.nrrd</tt>"
+</ul>
+
+</ol>
+
+Putting it all together, we have:
+
+<blockquote><pre>
+miter -i sph.nrrd -o sph-rend.nrrd @cam.txt \
+  -ld 0.3 -1 -2.2 -am 1 1 1 -ads 0.0 0.7 0.3 -sp 70 \
+  -k00 cubic:1,0 -k11 cubicd:1,0 -k22 cubicdd:1,0 \
+  -step 0.008 -ref 0.01 -nt 30 -n1 0.99 \
+  -txf val-txf.nrrd
+overrgb -i sph-rend.nrrd -g 1.4 -b 0.2 0.3 0.4 -o sph-blu.png
+overrgb -i sph-rend.nrrd -g 1.4 -b 0.7 0.3 0.2 -o sph-red.png
+
+miter -i pin.nrrd -o pin-rend.nrrd @cam.txt \
+  -ld 0.3 -1 -2.2 -am 1 1 1 -ads 0.0 0.7 0.3 -sp 70 \
+  -k00 cubic:1,0 -k11 cubicd:1,0 -k22 cubicdd:1,0 \
+  -step 0.008 -ref 0.01 -nt 30 -n1 0.99 \
+  -txf val-txf.nrrd
+overrgb -i pin-rend.nrrd -g 1.4 -b 0.2 0.3 0.4 -o pin-blu.png
+overrgb -i pin-rend.nrrd -g 1.4 -b 0.7 0.3 0.2 -o pin-red.png
+</pre></blockquote>
+<center>
+<table>
+<tr>
+<td><img height=200 width=200 src="img/sph-red.png">
+<td><img height=200 width=200 src="img/sph-blu.png">
+<tr>
+<td><tt>sph-red.png</tt>
+<td><tt>sph-blu.png</tt>
+<tr>
+<td><img height=200 width=200 src="img/pin-red.png">
+<td><img height=200 width=200 src="img/pin-blu.png">
+<tr>
+<td><tt>pin-red.png</tt>
+<td><tt>pin-blu.png</tt>
+</table>
+
+</center>
+
+<p>
+
+A transcript of all the commands on this page is also available: <a
+href="rend-sph-pin.txt"><tt>rend-sph-pin.txt</tt></a>.  You can run
+all the commands by simply saying "<tt>source rend-sph-pin.txt</tt>"
+inside any useful shell.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

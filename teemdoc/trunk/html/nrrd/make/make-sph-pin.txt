@@ -1,0 +1,55 @@
+echo "-1.3 1.3   -1.3 1.3   -1.3 1.3   -1.3 1.3" \
+ | unu reshape -s 2 2 2 \
+ | unu resample -s 64 64 64 -k tent -o x.nrrd
+
+unu 2op pow x.nrrd 2 -o xx.nrrd
+
+unu swap -i xx.nrrd -a 0 1 -o yy.nrrd
+unu swap -i xx.nrrd -a 0 2 -o zz.nrrd
+
+unu 2op + xx.nrrd yy.nrrd \
+ | unu 2op + - zz.nrrd -o sph.nrrd
+
+unu pad -i sph.nrrd -min -1 -1 0 -max M+1 M+1 M -b pad -v 0 \
+ | unu axsplit -a 2 -s 8 8 \
+ | unu permute -p 0 2 1 3 \
+ | unu axmerge -a 0 | unu axmerge -a 1 \
+ | unu quantize -b 8 -o sph-mos.png
+unu resample -i sph-mos.png -s x0.5 x0.5 -k tent -o sph-mos-th.png
+
+unu 2op pow xx.nrrd 2 -o xxxx.nrrd
+unu 2op pow yy.nrrd 2 -o yyyy.nrrd
+unu 2op pow zz.nrrd 2 -o zzzz.nrrd
+
+unu 2op - sph.nrrd xxxx.nrrd \
+ | unu 2op - - yyyy.nrrd \
+ | unu 2op - - zzzz.nrrd -o pin.nrrd
+
+unu pad -i pin.nrrd -min -1 -1 0 -max M+1 M+1 M \
+ | unu axsplit -a 2 -s 8 8 \
+ | unu permute -p 0 2 1 3 \
+ | unu axmerge -a 0 | unu axmerge -a 1 \
+ | unu quantize -b 8 -o pin-mos.png
+unu resample -i pin-mos.png -s x0.5 x0.5 -k tent -o pin-mos-th.png
+
+echo "-1 0   -0.2 0    0.0 1   0.2 0   1 0" \
+ | unu reshape -s 2 5 -o iso-txf.txt
+unu imap -i pin.nrrd -m iso-txf.txt \
+ | unu pad -min -1 -1 0 -max M+1 M+1 M \
+ | unu axsplit -a 2 -s 8 8 | unu permute -p 0 2 1 3 \
+ | unu axmerge -a 0 | unu axmerge -a 1 \
+ | unu quantize -b 8 -o iso-mos.png
+unu resample -i iso-mos.png -s x0.5 x0.5 -k tent -o iso-mos-th.png
+
+unu imap -i pin.nrrd -m coliso-txf.txt \
+ | unu pad -min 0 -1 -1 0 -max M M+1 M+1 M \
+ | unu axsplit -a 3 -s 8 8 | unu permute -p 0 1 3 2 4 \
+ | unu axmerge -a 1 | unu axmerge -a 2 \
+ | unu quantize -b 8 -o coliso-mos.png
+unu resample -i coliso-mos.png -s = x0.5 x0.5 -k tent -o coliso-mos-th.png
+
+unu 2op - sph.nrrd 1 \
+ | unu 2op x -1 - -o sph.nrrd
+
+rm -f x.nrrd {xx,yy,zz}.nrrd {xxxx,yyyy,zzzz}.nrrd
+
