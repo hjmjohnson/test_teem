@@ -1,6 +1,7 @@
 <!--
   Documentation for "teem: Gordon Kindlmann's research software"
-  Copyright (C) 2004, 2003, 2002, 2001, 2000 University of Utah
+  Copyright (C)  2005 Gordon Kindlmann
+  Copyright (C)  2004, 2003, 2002, 2001, 2000 University of Utah
   This documentation may not be modified or redistributed in any
   form, except by the copyright holder.
 -->
@@ -38,24 +39,42 @@ GK's C code: nrrd: Library Description
     <h2>&nbsp;&nbsp;Library Description</h2>
 </table>
 
-This page is intended to be a basic introduction to programming with
-the <b>nrrd</b> API.  This will make the most sense if you already
-know what sort of data and meta-data can be represented in a nrrd.
-The <a href="intro.html">Introduction</a> to nrrd is useful in this
-respect; the <a href="format.html">Definition of NRRD File Format</a>
-is a more detailed and "bottom-up" view of what can go into a nrrd,
-from the standpoint of the written file.  This will do the same thing,
-from the standpoint of what is available as data structures in memory.
+<table border=1>
+<tr><td>
+<ol>
+<li><a href="#structs">Data Structures</a>
+<li><a href="#io">Input/Output functions, with error reporting</a>
+<li><a href="#alloc">Reading a NRRD with a different memory allocator</a>
+<li><a href="#data">Getting data into and out of nrrds</a>
+<li><a href="#peraxis">Setting/Getting per-axis information</a>
+<li><a href="#keyvalue">Key/Value Pairs</a>
+<li><a href="#overview">Overview of rest of API</a>
+</ol>
+</table>
 
-<h2>Data Structures</h2>
+<p>
+
+This page is intended to be a basic introduction to programming with
+the <b>nrrd</b> API.  The stand-alone <b>NrrdIO</b> library includes
+all the functions described in Section 1 through 6; it lacks the
+functions (listed in Section 7) which perform non-trivial
+manipulations of the array values.  This page will make the most sense
+if you already know what sort of data and meta-data can be represented
+in a nrrd.  The <a href="intro.html">Introduction</a> to nrrd is
+useful in this respect, as is the <a href="descformat.html">General
+Description of the NRRD Format</a>. The <a
+href="format.html">Definition of NRRD File Format</a> is a 
+detailed and "bottom-up" view of what can go into a nrrd, from the
+standpoint of the written file.  This will do the same thing, from the
+standpoint of what is available as data structures in memory.
+
+<a name="structs"><h2>1. Data Structures</h2></a>
 
 We start with the <tt>Nrrd</tt> data structure.  This comes in two
 parts: the struct for per-axis information (<tt>NrrdAxis</tt>), and the main 
 <tt>Nrrd</tt> struct which includes an array of <tt>NrrdAxis</tt>s.  These
-are extracted from <tt>nrrd.h</tt> in <tt>teem/src/nrrd/nrrd.h</tt>,
-from teem version 1.6.0.  With the introduction of key/value pairs, 
-the <tt>Nrrd</tt> struct has probably converged to something that will
-not change for a few years.
+are extracted from <tt>teem/src/nrrd/nrrd.h</tt>
+(or <tt>NrrdIO.h</tt>).
 
 <blockquote><pre>
 /*
@@ -65,26 +84,52 @@ not change for a few years.
 ** one axis of a nrrd.  The only member which MUST be explicitly
 ** set to something meaningful is "size".
 **
+** If an axis lies conceptually along some direction in an enclosing
+** space of dimension nrrd-&gt;spaceDim, then the first nrrd-&gt;spaceDim
+** entries of spaceDirection[] must be non-NaN, and min, max, spacing,
+** and units must NOT be set;  thickness, center, and label can still
+** be used.  The mutual exclusion between axis-aligned and general
+** direction information is enforced per-axis, not per-array.
+**
 ** The min and max values give the range of positions "represented"
 ** by the samples along this axis.  In node-centering, "min" IS the
 ** position at the lowest index.  In cell-centering, the position at
 ** the lowest index is between min and max (a touch bigger than min,
-** assuming min < max).
+** assuming min &lt; max).
+**
+** There needs to be a one-to-one correspondence between these variables
+** and the nrrdAxisInfo* enum (nrrdEnums.h), the per-axis header fields
+** (see nrrdField* enum in nrrdEnums.h), and the various methods in axis.c
 */
 typedef struct {
-  int size;                      /* number of elements along each axis */
-  double spacing;                /* if non-NaN, distance between samples */
-  double min, max;               /* if non-NaN, range of positions spanned
-				    by the samples on this axis.  Obviously,
-				    one can set "spacing" to something
-				    incompatible with min and max: the idea
-				    is that only one (min and max, or
-				    spacing) should be taken to be significant
-				    at any time. */
-  int center;                    /* cell vs. node centering */
-  char *label;                   /* short info string for each axis */
-  char *unit;                    /* short string for identifying units */
-} NrrdAxis;
+  int size;                 /* number of elements along each axis */
+  double spacing;           /* if non-NaN, distance between samples */
+  double thickness;         /* if non-NaN, nominal thickness of region
+                               represented by one sample along the axis. No
+                               semantics relative to spacing are assumed or
+                               imposed, and unlike spacing, there is no
+                               sensible way to alter thickness- it is either
+                               copied (as with cropping and slicing) or set to
+                               NaN (when resampled). */
+  double min, max;          /* if non-NaN, range of positions spanned by the
+                               samples on this axis.  Obviously, one can set
+                               "spacing" to something incompatible with min
+                               and max: the idea is that only one (min and
+                               max, or spacing) should be taken to be
+                               significant at any time. */
+  double spaceDirection[NRRD_SPACE_DIM_MAX]; 
+                            /* the vector, in "space" (as described by
+                               nrrd-&gt;space and/or nrrd-&gt;spaceDim), from one
+                               sample to the next sample along this axis.  It
+                               is the column vector of the transform from
+                               index space to "space" space */
+  int center;               /* cell vs. node centering (value should be one of
+                               nrrdCenter{Unknown,Node,Cell} */
+  int kind;                 /* what kind of information is along this axis
+                               (from the nrrdKind* enum) */
+  char *label,              /* short info string for each axis */
+    *units;                 /* string identifying the unit */
+} NrrdAxisInfo;
 
 /*
 ******** Nrrd struct
@@ -97,31 +142,58 @@ typedef struct {
   ** generally set at the same time that either the nrrd is created,
   ** or at the time that the nrrd is wrapped around an existing array 
   */
-  void *data;                    /* the data in memory */
-  int type;                      /* a value from the nrrdType enum */
-  int dim;                       /* what is dimension of data */
+
+  void *data;                       /* the data in memory */
+  int type;                         /* a value from the nrrdType enum */
+  int dim;                          /* the dimension (rank) of the array */
 
   /* 
   ** All per-axis specific information
   */
-  NrrdAxis axis[NRRD_DIM_MAX];   /* axis[0] is the fastest axis in the scan-
-				    line ordering, the one who's coordinates
-				    change the fastest as the elements are
-				    accessed in the order in which they appear
-				    in memory */
+  NrrdAxisInfo axis[NRRD_DIM_MAX];  /* axis[0] is the fastest axis in the scan-
+                                       line ordering, the one who's coordinates
+                                       change the fastest as the elements are
+                                       accessed in the order in which they
+                                       appear in memory */
 
   /* 
-  ** Information of dubious standing- descriptive of whole array, but
-  ** not necessary (meaningful only for some uses of a nrrd), but basic
-  ** enough to be part of the basic nrrd type
+  ** Optional information descriptive of whole array, some of which is
+  ** meaningfuly for only some uses of a nrrd
   */
-  char *content;                 /* briefly, just what the hell is this data */
-  int blockSize;                 /* for nrrdTypeBlock array, block byte size */
-  double oldMin, oldMax;         /* if non-NaN, and if nrrd is of integral
-				    type, extremal values for the array
-				    BEFORE it was quantized */
-  void *ptr;                     /* never read or set by nrrd; use/abuse
-				    as you see fit */
+  char *content;                    /* brief account of what this data is */
+  char *sampleUnits;                /* units of measurement of the values 
+                                       stored in the array itself (not the 
+                                       array axes and not space coordinates).
+                                       The logical name might be "dataUnits",
+                                       but that's perhaps ambiguous.  Note that
+                                       these units may apply to non-scalar
+                                       kinds (e.g. coefficients of a vector
+                                       have the same units) */
+  int space;                        /* from nrrdSpace* enum, and often 
+                                       implies the value of spaceDim */
+  int spaceDim;                     /* if non-zero, the dimension of the space
+                                       in which the regular sampling grid
+                                       conceptually lies.  This is a seperate
+                                       variable because this dimension can be
+                                       different than the array dimension. 
+                                       The non-zero-ness of this value is in 
+                                       fact the primary indicator that space
+                                       and orientation information is set.
+                                       This identifies the number of entries in
+                                       "origin" and the per-axis "direction"
+                                       vectors that are taken as meaningful */
+  char *spaceUnits[NRRD_SPACE_DIM_MAX];   
+                                    /* units for coordinates of space */
+  double spaceOrigin[NRRD_SPACE_DIM_MAX]; 
+                                    /* the location of the center the first
+                                       (lowest memory address) array sample,
+                                       regardless of node-vs-cell centering */
+  int blockSize;                    /* for nrrdTypeBlock:, block byte size */
+  double oldMin, oldMax;            /* if non-NaN, and if nrrd is of integral
+                                       type, extremal values for the array
+                                       BEFORE it was quantized */
+  void *ptr;                        /* never read or set by nrrd; use/abuse
+                                       as you see fit */
 
   /* 
   ** Comments.  Read from, and written to, header.
@@ -149,7 +221,7 @@ definitions is to understand what information can be represented.
 There is one <tt>NrrdAxis</tt> struct for each axis (or dimension) in
 the dataset, and the only necessary piece of information is the
 <tt>size</tt>; everything else is optional meta-information.
-<tt>spacing</tt>, <tt>min</tt>, and <tt>max</tt> are all doubles which
+<tt>spacing</tt>, <tt>thickness</tt>, <tt>min</tt>, and <tt>max</tt> are all doubles which
 follow the convention that if no useful value is known, then the value
 is set to <tt>AIR_NAN</tt>, which represents
 Not-A-Number. <tt>label</tt> and <tt>unit</tt> are standard C char*
@@ -178,7 +250,7 @@ the catch-all for other meta-information that you wish to associated
 with an array in a way that will be saved out to a NRRD file, and
 recovered upon reading in the file.
 
-<h2>Input/Output functions and error handling</h2>
+<a name="io"><h2>2. Input/Output functions, with error reporting</h2></a>
 
 There are four main I/O functions; two functions for reading, and two
 for writing, and you choose depending on whether you giving a
@@ -266,11 +338,12 @@ you want to over-ride the default behavior of the I/O functions.
 Experience has shown that the defaults probably do what you want.
 <li> You pass "<tt>NRRD</tt>" to <tt>biffGetDone()</tt> because you know
 that the function that just died is in the <b>nrrd</b> library.
-To be pedantic, you do have to free the <tt>char*</tt> that you get here.
+To be good, you do have to free the <tt>char*</tt> that is returned
+from biff.
 <li> <tt>nrrdType</tt> is a thing called an <tt>airEnum</tt>, which 
 facilitates mapping between strings and integral enum values.
-<tt>airEnumStr</tt> maps from the enum value to a string
-(<tt>airEnumVal</tt> goes the other way).
+<tt>airEnumStr()</tt> maps from the enum value to a string
+(<tt>airEnumVal()</tt> goes the other way).
 <li> <tt>nrrdElementNumber()</tt> and <tt>nrrdElementSize()</tt> both
 return type <tt>size_t</tt>, thus the cast to <tt>int</tt> for printing.
 </ul>
@@ -309,7 +382,7 @@ the header of a NRRD file (much easier than using <tt>more</tt> or
 <tt>less</tt>!)
 </ul>
 
-<h2>Reading a NRRD with a different memory allocator</h2>
+<a name="alloc"><h2>3. Reading a NRRD with a different memory allocator</h2></a>
 
 In some cases you want to read a NRRD in, but you want to do the
 memory allocation, instead of the nrrd library doing it for you.  This
@@ -322,7 +395,7 @@ as re-reading the header).  This function demonstrates this:
 Nrrd *
 customLoad(char *filename) {
   char me[]="demoIO", *err;
-  NrrdIoState *nios;
+  NrrdIoState *nio;
   Nrrd *nin;
   void *data;
   
@@ -330,27 +403,28 @@ customLoad(char *filename) {
   nin = nrrdNew();
   
   /* tell nrrdLoad to only read the header, not the data */
-  nios = nrrdIoStateNew();
-  nrrdIoStateSet(nios, nrrdIoStateSkipData, AIR_TRUE);
+  nio = nrrdIoStateNew();
+  nrrdIoStateSet(nio, nrrdIoStateSkipData, AIR_TRUE);
   
   /* read in the nrrd header from file */
-  if (nrrdLoad(nin, filename, nios)) {
+  if (nrrdLoad(nin, filename, nio)) {
     err = biffGetDone(NRRD);
     fprintf(stderr, "%s: trouble reading \"%s\" header:\n%s",
             me, filename, err);
-    free(err); nios = nrrdIoStateNix(nios);
+    free(err); nio = nrrdIoStateNix(nio);
     return NULL;
   }
   
   /* we're done with the nrrdIoState, this sets it to NULL */
-  nios = nrrdIoStateNix(nios);
+  nio = nrrdIoStateNix(nio);
 
-  /* 1) YOU, the nrrd user, look at things like nin->dim,
-     nrrdElementNumber(nin), nrrdElementSize(nin), 
+  /* 1) YOU, the nrrd user, look at things like nin-&gt;dim, nin-&gt;type
      nin-&gt;axis[0].size, nin-&gt;axis[1].size, etc in order allocate the data
-     for the nrrd.  Make sure that the data is allocated as one single
-     contiguous address range, or else nrrd will not operate correctly on
-     the values stored there. */
+     for the nrrd.  There are two convenience functions you should use:
+     1) nrrdElementNumber(nin) returns the total number of sample values.
+     2) nrrdElementSize(nin) returns the number of bytes in each value.
+     Make sure that the data is allocated as one single contiguous address
+     range, or else nrrd will not operate correctly on the values. */
 
   /* 2) YOU now set nin-&gt;data to the beginning of your allocated memory */
   nin-&gt;data = YOUR POINTER HERE;
@@ -368,13 +442,15 @@ customLoad(char *filename) {
     return NULL;
   }
 
-  /* return the nrrd.  Remember that you probably want to nrrdNix this
-     nrrd, and not nrrdNuke, since nrrdNuke will free(nin-&gt;data) */
+  /* return the nrrd.  When your program is done with the nrrd, the right
+     way to get rid of it is probably nrrdNix(): this will destroy the
+     Nrrd struct and its storage for meta information, but not the underlying
+     nrrd-&gt;data.  nrrdNuke(), on the other hand, will free(nin-&gt;data) */
   return nin;
 }
 </pre></blockquote>
 
-<h2>Getting data into and out of nrrds</h2>
+<a name="data"><h2>4. Getting data into and out of nrrds</h2></a>
 
 Suppose that you have a 128-by-128-by-64 3-D array of <tt>double</tt>s
 in memory (pointed to by the variable <tt>val</tt>) that you've
@@ -463,7 +539,7 @@ setting/getting values based on a one-dimensional index.
 Remember this pairing: <tt>nrrdWrap()</tt> with <tt>nrrdNix()</tt>,
 and <tt>nrrdAlloc()</tt> with <tt>nrrdNuke()</tt>.
 
-<h2>Setting/Getting per-axis information</h2>
+<a name="peraxis"><h2>5. Setting/Getting per-axis information</h2></a>
 
 The ability to store meta-information descriptive of each axis of a
 multi-dimensional array is one of the main differences between "raw"
@@ -479,9 +555,11 @@ a C enum, which includes these self-descriptive values:
 <li> <tt>nrrdAxisInfoSpacing</tt>
 <li> <tt>nrrdAxisInfoMin</tt>
 <li> <tt>nrrdAxisInfoMax</tt>
+<li> <tt>nrrdAxisInfoSpaceDirection</tt>
 <li> <tt>nrrdAxisInfoCenter</tt>
+<li> <tt>nrrdAxisInfoKind</tt>
 <li> <tt>nrrdAxisInfoLabel</tt>
-<li> <tt>nrrdAxisInfoUnit</tt>
+<li> <tt>nrrdAxisInfoUnits</tt>
 </ul>
 
 Note the one-to-one correspondence between these enum values and the
@@ -515,7 +593,7 @@ printf("labels were: %s, %s, %s, %s\n", lab0, lab1, lab2, lab3);
 </pre></blockquote>
 
 It may be easier to use the dimensionally general version of the
-function (although the <tt>printf()</tt> statement does again assume
+function (although the <tt>printf()</tt> call does again assume
 a 4-D nrrd, which could be checked at run-time):
 
 <blockquote><pre>
@@ -528,7 +606,7 @@ printf("labels were: %s, %s, %s, %s\n", lab[0], lab[1], lab[2], lab[3]);
 <ul>
 
 <li> <tt>NRRD_DIM_MAX</tt> is a compile-time limit on the dimension
-of the nrrd that can be handled.  This is currently set to 10.
+of the nrrd that can be handled.  This is currently set to 16.
 Having a compile-time max <b>greatly</b> simplifies many things that would
 otherwise have to be handled dynamically.
 
@@ -537,7 +615,7 @@ otherwise have to be handled dynamically.
 analagous non-var-arg version that ends with <tt>_nva</tt>.  
 
 <li> Rule of thumb for string allocation and the <b>nrrd</b> API:
-<b>every string is copied</b>.  That means that internally,
+<b>every string is strdup()ed</b>.  That means that internally,
 <tt>nrrdAxisInfoSet()</tt> copies the strings passed to it (so it is
 not reliant on the long-term existance of the strings passed to it),
 and <tt>nrrdAxisInfoGet()</tt> gives you copies of the strings stored
@@ -573,7 +651,7 @@ nrrdAxisInfoSet(nvec, nrrdAxisInfoSpacing, AIR_NAN, 1.0, 1.0, 2.0);
 <tt>double</tt>-type per-axis field (spacing, min, or max) similiarly
 means "don't know", "don't care".
 
-<h2>Key/Value Pairs</h2>
+<a name="keyvalue"><h2>6. Key/Value Pairs</h2></a>
 
 This is the simple but flexible way to store extra fields of
 information in a <tt>Nrrd</tt>.  These will be preserved exactly when
@@ -598,6 +676,8 @@ char *cam, *at;
 cam = nrrdKeyValueGet(nrend, "camera");
 at = nrrdKeyValueGet(nrend, "look-at");
 printf("camera = %s, look-at = %s\n", cam, at);
+free(cam); free(at);
+cam = NULL; at = NULL;
 </pre></blockquote>
 
 You can also iterate over all key/value pairs:
@@ -610,15 +690,20 @@ nk = nrrdKeyValueSize(nrend);
 for (ki=0; ki$lt;nk; ki++) {
   nrrdKeyValueIndex(nrend, &amp;key, &amp;val, ki);
   printf("%s = %s\n", key, val);
+  free(key); free(val);
+  key = NULL; val = NULL;
 }
 </pre></blockquote>
 
 <p>
 
-Individual pairs are erased with <tt>nrrdKeyValueErase()</tt>,
+Following the "all strings are strdup()ed" rule of thumb for strings in NRRD,
+the return from <tt>nrrdKeyValueGet()</tt> and 
+<tt>nrrdKeyValueIndex</tt> should be <tt>free()</tt>d.
+Individual key/value pairs are erased with <tt>nrrdKeyValueErase()</tt>,
 all pairs are erased with <tt>nrrdKeyValueClear()</tt>.
 
-<h2>Overview of rest of API</h2>
+<a name="overview"><h2>7. Overview of rest of API</h2></a>
 
 The following aims to give a brief description of the important
 <b>nrrd</b> library calls.  See <tt>teem/src/nrrd/nrrd.h</tt> for
@@ -976,6 +1061,10 @@ with uniformly spaced control points
 <td><b>-</b>
 <td align=left>send values in a nrrd through a map of linear ramps
 with irregularly located control points
+<tr>
+<td align=right><tt>nrrdApply1DSubstitution</tt>
+<td><b>-</b>
+<td align=left>send values through a substitution table
 </table>
 </center>
 
@@ -1063,6 +1152,15 @@ raster dimensions on an existing array
 <td align=right><tt>nrrdAxesMerge</tt>
 <td><b>-</b>
 <td align=left>Join two adjacent axes into a single axis
+<tr>
+<td align=right><tt>nrrdTile2D</tt>
+<td><b>-</b>
+<td align=left>Tile the slices along one axis into two other axes
+(makes a mosaic image)
+<tr>
+<td align=right><tt>nrrdUntile2D</tt>
+<td><b>-</b>
+<td align=left>Undoes the action of <tt>nrrdTile2D</tt>
 </table>
 </center>
 

@@ -56,6 +56,7 @@ The cone starts with the function z - 2*sqrt(x*x + y*y) + 0.5, sampled
 from -1 to 1 on each axis.  First start by sampling x, y, and z:
 
 <blockquote><pre>
+setenv NRRD_DEF_CENTER node
 echo "-1 1   -1 1   -1 1   -1 1" \
  | unu reshape -s 2 2 2 \
  | unu resample -s 100 100 90 -k tent -o x.nrrd
