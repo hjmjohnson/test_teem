@@ -163,17 +163,17 @@ are put into the red, green, and blue channels of an image.
 
 <h2>Using the nrrd API</h2>
 
-Considering that there are many other pages demonstrating use of
-<tt>unu</tt>, it would be nice if there was a program demonstrating
-use of the <b>nrrd</b> API itself (which <tt>unu</tt> is built on).
-Thus <a href="ninspect.c"><tt>ninspect.c</tt></a> was born- a simple
-utility program for making the kinds of projections shown above.
-<tt>ninspect</tt> is a demo program that needs the <b>nrrd</b>, 
-<b>biff</b>, and <b>air</b> libraries to compile, but its easier
-if you just link against the <tt>libteem.a</tt> super-library
-that contains all the objects in teem.  Running this program is
-easy: you supply the input volume filename and the output
-image filename:
+Considering that there are <a href="../demo.html">many other pages</a>
+demonstrating use of <tt>unu</tt>, it would be nice if there was a
+program demonstrating use of the <b>nrrd</b> API itself (which
+<tt>unu</tt> is built on).  Thus <a
+href="ninspect.c"><tt>ninspect.c</tt></a> was born- a simple utility
+program for making the kinds of projections shown above.
+<tt>ninspect</tt> is a demo program that needs the <b>nrrd</b>,
+<b>biff</b>, and <b>air</b> libraries to compile, but its easier if
+you just link against the <tt>libteem.a</tt> super-library that
+contains all the objects in teem.  Running this program is easy: you
+supply the input volume filename and the output image filename:
 
 <blockquote><pre>
 foreach DATA ( BostonTeapot aneurism bonsai foot ) 
