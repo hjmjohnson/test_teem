@@ -1,0 +1,158 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Download
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="../img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>Download</h1>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td>
+  <td>
+  <td>
+</table>
+
+<p>
+
+My software is made available under the terms of the LGPL.  <a
+href="../lgpl.html">A careful explanation of what this means for
+you</a> has been written.  This HTML documentation is included in the
+distribution, but the documentation is currently not licensed for any
+form of modification or redistribution.
+
+<p>
+
+The software is distributed as a tar file compressed with <a
+href="http://www.gzip.org/">gzip</a>.  <a
+href="http://www.gnu.org/software/tar/tar.html">GNU's tar program</a>
+can uncompress and untar in one shot ("<tt>tar xzvf</tt>").  So can
+Winzip, but:
+
+<p>
+
+<center>
+<table width="80%" border=2>
+<tr><td>
+
+You <b>MUST</b> disable
+"TAR&nbsp;file&nbsp;smart&nbsp;CR/LF&nbsp;conversion": Options
+menu... Configuration... Miscellaneous tab.  Unfortunately, this
+"smart" feature is enabled by default.  It might be tolerable if the
+only thing in a tar file was ascii text, but this is not the case with
+<b>teem</b> distributions, or with tar files in general.  Better yet,
+get <a href="http://www.cygwin.com/">Cygwin</a>, which includes GNU
+tar, and provides a nicer shell to work with, even if you're primarily
+running DOS/Windows programs, and not developing in Cygwin proper.
+</table>
+</center>
+
+<p>
+
+If you're downloading the software as "Just source", you probably want
+to look at information on <a href="../build.html">how to build
+teem</a>.  Otherwise, you can get it pre-built for a variety of
+architectures.
+
+<p>
+
+The "pre-built" files do not include the source or the documentation.
+They contain only <tt>bin</tt>, <tt>lib</tt>, and <tt>include</tt>
+directories into which all the required teem files have been
+copied/compiled.  In all of these except Windows, all the programs
+have been statically linked, and <b>nrrd</b> has been compiled with
+both compression encodings enabled.
+
+<p>
+
+<blockquote>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td align=left valign=middle width="50%">
+    Version
+  <td width="5%">
+  <td align=left width="45%">
+    What's New
+<tr>
+  <td colspan=3>
+    <hr noshade>
+<tr>
+  <td align=left valign=middle>
+    <font size="+1">teem-1.5beta1</font><br>
+    <small>(Release Planned October 9, 2002)</small><br>
+
+  <td>
+  <td align=left>
+    <a href="../moss/index.html"><b>moss</b></a> library and associated
+    <a href="../bin/ilk/index.html"><tt>ilk</tt></a> utility,
+    More queries added to <a href="../gage/index.html"><b>gage</b></a>,
+    many little bug fixes.
+
+<tr><td><hr noshade><td><td>
+<tr>
+  <td align=left valign=middle>
+    <font size="+1">teem-1.5beta0</font><br>
+    <small>(Released September 23, 2002)</small><br>
+
+    <a href="http://www.sci.utah.edu/~gk/teem/download/teem-1.5beta0.tgz">teem-1.5beta0.tgz</a>: Just source<br>
+
+    <a href="http://www.sci.utah.edu/~gk/teem/download/teem-1.5beta0-html.tgz">teem-1.5beta0-html.tgz</a>: Just HTML docs<br>
+
+    Pre-built: 
+<a href="http://www.sci.utah.edu/~gk/teem/download/teem-1.5beta0-linux.tgz">Linux</a> |
+<a href="http://www.sci.utah.edu/~gk/teem/download/teem-1.5beta0-cygwin.tgz">Cygwin</a> |
+<a href="http://www.sci.utah.edu/~gk/teem/download/teem-1.5beta0-darwin.tgz">Darwin</a> |
+<a href="http://www.sci.utah.edu/~gk/teem/download/teem-1.5beta0-solaris.tgz">Solaris</a> |
+<a href="http://www.sci.utah.edu/~gk/teem/download/teem-1.5beta0-irix6.n32.tgz">Irix6.n32</a> |
+<a href="http://www.sci.utah.edu/~gk/teem/download/teem-1.5beta0-irix6.64.tgz">Irix6.64</a> |
+<a href="http://www.sci.utah.edu/~gk/teem/download/teem-1.5beta0-win32-comp.tgz">Windows, with compression</a> |
+<a href="http://www.sci.utah.edu/~gk/teem/download/teem-1.5beta0-win32-nocomp.tgz">Windows, without compression</a>
+
+  <td>
+  <td align=left>
+    <a href="../mite/index.html"><b>mite</b></a>,
+    Re-write of <a href="../gage/index.html"><b>gage</b></a>,
+    gzip and bzip2 compression in <a href="../nrrd/index.html"><b>nrrd</b></a>,
+    Microsoft VC6 and VC7 project files, support for
+    <a href="http://developer.apple.com/darwin/">Darwin</a>,
+    completely new makefiles.
+
+<tr><td><hr noshade><td><td>
+<tr>
+  <td align=left valign=middle>
+    <a href="http://www.sci.utah.edu/~gk/teem/download/teem-1.4.tar.gz"><font size="+1">teem-1.4</font></a><br>
+    <small>(Released July 20, 2002)</small>
+  <td>
+  <td align=left>
+     <a href="../gage/index.html"><b>gage</b></a>, <a
+     href="../hoover/index.html"><b>hoover</b></a>, a new <a
+     href="../bane/index.html"><b>bane</b></a>, <a
+     href="../unrrdu/index.html"><tt>unu</tt></a>, and <a
+     href="../bin/qbert/index.html"><tt>qbert</tt></a>, for generating VGH
+     volumes for <a
+     href="http://www.cs.utah.edu/~jmk/simian/">Simian</a>.
+</table>
+</blockquote>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

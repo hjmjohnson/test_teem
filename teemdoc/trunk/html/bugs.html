@@ -1,0 +1,57 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Bugs and Limitations
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>Known Bugs and Limitations</h1>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="./index.html">teem</a></b>
+  <td>
+  <td>
+  <td>
+</table>
+
+<p>
+
+<h3><tt>unu</tt></h3>
+
+<ul>
+<li> Byte skipping in compressed encodings broken in "<tt>unu make</tt>"; 
+fixed in teem-1.5beta1.
+<li> Piping ("|") invocations of <tt>unu</tt> on Windows doesn't work
+because of how Windows opens stdin and stdout in ascii mode.  This has
+been fixed in teem-1.5beta1.
+</ul>
+
+<h3>Cygwin</h3>
+
+There is a (cygwin-imposed) 128 meg limit on the largest chunk of
+memory that can be allocated.  This can potentially effect everything,
+but may be noticed most with <a
+href="unrrdu/index.html"><tt>unu</tt></a> and <a
+href="bin/vprobe/index.html"><tt>vprobe</tt></a>.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: biff: Description
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/biff80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">biff</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Description</b></h2>
+</table>
+
+
+The vast majority of <b>teem</b> functions calls that do anything important
+or substantial have an <tt>int</tt> return type.  This is a
+Unix-system-call-style error code: it is zero if all is well, and non-zero
+if there was a problem.  Because of laziness and simplicity, I have not
+developed conventions for what different error codes mean, so <b>teem</b>
+functions generally return 1 if something went wrong.  The way that the
+function records what exactly went wrong is to store a text error message
+with <b>biff</b>.
+
+<p>
+
+Every error message to <b>biff</b> is keyed with a small string identifying
+what library or program is generating the error.  In <b>teem</b>, that
+string is usually just the name of the library ("nrrd", "gage", etc.).  In
+fact, the main header file for every <b>teem</b> library xxx has a
+<tt>#define XXX</tt> which expands to "xxx".  This is intended to be used
+as the <b>biff</b> key for any errors in that library.  A function at the
+top of a deep call-stack will record information about what the error
+condition was, and every other function down the stack can record
+contextual information.
+
+<p>
+
+For example, if a call to <tt>nrrdLoad()</tt> failed (with return value 1)
+because the header file refers to a non-existant data file, then the
+messages in <b>biff</b> tell the sad story:
+
+<blockquote><pre>
+test/tread: couldn't open nrrd "engine-crop.nhdr":
+[nrrd] nrrdLoad:
+[nrrd] nrrdRead: trouble reading NRRD
+[nrrd] _nrrdReadNrrd: trouble parsing data file info "./engine-crop.raw"
+[nrrd] _nrrdReadNrrdParse_data_file: fopen("./engine-crop.raw","rb") failed: No such file or directory
+</pre></blockquote>
+
+The first line isn't actually from <b>biff</b>, its from the stand-alone
+program which called <tt>nrrdLoad()</tt>.  The last line actually quotes
+the <tt>fopen()</tt> error string, <tt>strerror(errno)</tt>.  The code
+which printed out this error information is (copied from in
+<tt>teem/src/nrrd/test/tread.c</tt>):
+
+<blockquote><pre>
+  if (nrrdLoad(nin=nrrdNew(), ninName)) {
+    fprintf(stderr, "%s: couldn't open nrrd \"%s\":\n%s", me, ninName,
+        err = biffGetDone(NRRD));
+    free(err); exit(1);
+  }
+</pre></blockquote>
+
+<p>
+
+Text-based error messages like this have benefits and drawbacks.  The
+drawbacks is that until there is a uniform system of error codes to
+supplement and/or replace the text error messages, there is absolutely no
+way that a function can do any kind of error recovery.  This weakness is
+unfortunately inhereted by all the <b>teem</b> libraries that use
+<b>biff</b>.  For writing research code (I'm trying to get a PhD here),
+this hasn't been a problem.  Any error is effectively a fatal error, and I
+want to know exactly what went wrong, rather than have my code get clever
+and try to "recover" from invalid input parameters.  But the inability to
+systematically interpret errors may be more of an issue for other people
+wishing to use <b>teem</b> libraries in a non-research context.  Assuming
+that the <b>teem</b> libraries reach some level of maturity in the coming
+years, robust error handling will become more of a priority.  It hasn't
+been one so far.
+
+<p>
+
+The extremely compelling benefit of using text error messages is that
+you can immediately tell exactly what has gone wrong.  In research
+contexts, where the priority is implementing novel functionality with
+experimental software, the last thing to waste time on is trying to
+interpret your own error codes, or deal with the consequences of not
+having specific error codes.  Having a simple API for adding
+descriptive text error messages encourages individual tests for the
+various assumptions taken in a function, so the resulting <b>biff</b>
+message can be extremely specific.  Half the lines of some <b>nrrd</b>
+functions, for example, are <b>biff</b>-based tests and messages.
+Knowing more than you want about an error is no problem; knowing less
+than you want can be a disastrous waste of time.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

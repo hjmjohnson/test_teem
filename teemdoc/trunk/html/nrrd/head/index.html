@@ -1,0 +1,245 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Visible Human Female Color Data Processing
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="../../img/teem80.jpg"></a>
+  <td width="1%" height=80>
+  <td width="1%" height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td width="50%" height=80 align=center valign=bottom>
+    <h2>Visible Human Female Color Data Processing</h2>
+  <td>
+<tr>
+  <td align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td align=center valign=top>
+    <b><a href="./index.html">nrrd</a></b>
+  <td align=center>
+    <img width=256 height=325 alt=""
+      src="head256.jpg"><br>
+  <td align=left valign=middle><font size="+1">
+    - <a href="prelim.html">Preliminaries</a><br>
+       <font size="-3">&nbsp;</font><br>
+    - <a href="inspect.html">Slice Inspection</a><br>
+       <font size="-3">&nbsp;</font><br>
+    - <a href="crop.html">Cropping</a><br>
+       <font size="-3">&nbsp;</font><br>
+    - <a href="fiduc.html">Fiducial Inspection</a><br>
+       <font size="-3">&nbsp;</font><br>
+    - <a href="problem.html">Brightness Problem</a><br>
+       <font size="-3">&nbsp;</font><br>
+    - <a href="brcube.html">Cube of Brain</a><br>
+       <font size="-3">&nbsp;</font><br>
+    - <a href="strips.html">Gray Scale Strips</a><br>
+       <font size="-3">&nbsp;</font><br>
+    - <a href="joint.html">Joint Histograms</a><br>
+       <font size="-3">&nbsp;</font><br>
+    - <a href="diffs.html">Image Differences</a><br>
+    </font>
+</table>
+
+<p>
+
+The goal of these pages is three-fold:
+
+<ul>
+
+<li> Demonstrate how <b>teem</b> software can be used to inspect and analyze
+some of the RGB color data from the <a
+href="http://www.nlm.nih.gov/research/visible/visible_human.html">Visible
+Human Project</a>.  Specifically, demonstrate the utility of <a
+href="../../unrrdu/index.html"><tt>unu</tt></a> as a swiss-army-knife
+for processing raster data.
+
+<li> Describe the results of this analysis, especially concerning the
+problem of image brightness changing from slice to slice.
+
+<li> Document the steps taken in an effort to make a clean,
+"artifact"-free color volume dataset of the head of the Visible
+Female.
+
+</ul>
+
+The quality of a visualization is related to the quality of the
+original data and the care with which it is processed.  The goal here
+is to be as careful as possible when assembling a volume dataset from
+the RGB color images, and to learn as much as possible while doing so,
+so as to enable the best possible visualizations.  This involves a few
+different tasks: inspecting the original RGB slices in an image
+viewer, cropping the images to include only the region of interest
+(the head), analyzing the changes in position of the fiducial markers
+to detect inter-slice translations, and finally analyzing (and trying
+to correct) the inter-slice variations in image brightness.
+
+<p>
+
+The software used for this is primarily a single command-line tool, <a
+href="../../unrrdu/index.html"><tt>unu</tt></a>, which, like
+<tt>cvs</tt>, is really multiple commands combined into one
+executable.  Along the way, two other pieces of <b>teem</b> software
+are employed, an image manipulation program similar to <a
+href="http://www.imagemagick.org/www/mogrify.html">mogrify</a> called
+"<a href="../../bin/ilk/index.html"><tt>ilk</tt></a>", and a tool for
+measuring values and derivatives in scalar and vector volumes, called
+"<a href="../../bin/vprobe/index.html"><tt>vprobe</tt></a>".  <a
+href="http://www.trilon.com/xv/">Xv</a> will be used to view PPM
+images, and in order to make <a
+href="http://www.libpng.org/pub/png/">PNG</a> images for the web, I
+also use the <a
+href="http://www.imagemagick.org/www/convert.html">convert</a> program
+from <a href="http://www.imagemagick.org/">ImageMagick</a>.  Using
+command-line tools may seem a little old-fashioned, but it means that
+if you have the Visible Human data, you can recreate 100% of what I
+did simply by copying and pasting from these pages into a shell.
+Every single image (except for one Matlab plot) appearing on
+the following pages can be regenerated exactly with the commands preceeding
+it.
+
+<p>
+
+<table>
+
+<tr>
+<td><a href="prelim.html"><img 
+width=134 height=79 border=0 alt="" src="weevhp.jpg"></a>
+<td width=10>
+<td> 1) <a href="prelim.html">Preliminaries</a>: Where to get the
+data, directory structure assumed by examples.
+
+<tr>
+<td><a href="inspect.html"><img 
+width=134 height=79 border=0 alt="" src="weehead.jpg"></a>
+<td width=10>
+<td> 2) <a href="inspect.html">Slice Inspection</a>: How to look at 
+one slice with <tt>xv</tt>, and/or downsample it.
+<br>
+Demonstrates <tt>unu
+<a href="../../unrrdu/make.html">make</a>, 
+<a href="../../unrrdu/permute.html">permute</a>, 
+<a href="../../unrrdu/save.html">save</a>, 
+<a href="../../unrrdu/resample.html">resample</a></tt>.
+
+<tr>
+<td><a href="crop.html"><img 
+width=134 height=79 border=0 alt="" src="weemax.jpg"></a>
+<td width=10>
+<td> 3) <a href="crop.html">Cropping</a>: Cropping the slices down the
+the interesting bits (the head, and two of the fiducial markers),
+and generating these for all head slices.
+<br>
+Demonstrates <tt>unu
+<a href="../../unrrdu/project.html">project</a>, 
+<a href="../../unrrdu/crop.html">crop</a>.
+
+<tr>
+<td><a href="fiduc.html"><img 
+width=134 height=79 border=0 alt="" src="weefiduc.jpg"></a>
+<td width=10>
+<td> 4) <a href="fiduc.html">Fiducial Inspection</a>: Looking at exactly
+how the fiducial markers moved from the top of the head to the bottom.
+<br>
+Demonstrates <tt>unu
+<a href="../../unrrdu/quantize.html">quantize</a>, 
+<a href="../../unrrdu/join.html">join</a>, 
+<a href="../../unrrdu/swap.html">swap</a>, 
+<a href="../../unrrdu/2op.html">2op</a></tt>.
+
+<tr>
+<td><a href="problem.html"><img 
+width=134 height=79 border=0 alt="" src="weefire.jpg"></a>
+<td width=10>
+<td> 5) <a href="problem.html">The inter-slice brightness problem</a>:
+Using various kind of projections and histograms to visualize how the
+image brightness can change suddenly from slice to slice.
+<br>
+Demonstrates <tt>unu
+<a href="../../unrrdu/reshape.html">reshape</a>, 
+<a href="../../unrrdu/histax.html">histax</a>, 
+<a href="../../unrrdu/heq.html">heq</a>, 
+<a href="../../unrrdu/flip.html">flip</a>,
+<a href="../../unrrdu/rmap.html">rmap</a>,
+<a href="../../unrrdu/slice.html">slice</a></tt>.
+
+<tr>
+<td><a href="brcube.html"><img 
+width=134 height=79 border=0 alt="" src="weecorp.jpg"></a>
+<td width=10>
+<td> 6) <a href="brcube.html">Cube of Brain</a>: A cubical region of
+the dataset is select for closer scrutiny of the effects of the
+brightness problem.
+<br>
+Demonstrates <tt><a href="../../bin/vprobe/index.html"><tt>vprobe</tt></a>.
+
+<tr>
+<td><a href="strips.html"><img 
+width=134 height=79 border=0 alt="" src="weestrip.jpg"></a>
+<td width=10>
+<td> 7) <a href="strips.html">Gray Scale Strips</a>: Extracting the
+gray scale strips from the Kodak card in some of the images.
+<br>
+Demonstrates <tt><a href="../../bin/ilk/index.html"><tt>ilk</tt></a>.
+
+<tr>
+<td><a href="joint.html"><img 
+width=134 height=79 border=0 alt="" src="weejoint.jpg"></a>
+<td width=10>
+<td> 8) <a href="joint.html">Joint Histograms</a>: Precisely visualize
+the brightness variations among small sets of images, and the
+unfortunate fact that the gray scale strips don't capture all the
+brightness variations inside the body.
+<br>
+Demonstrates <tt>unu
+<a href="../../unrrdu/jhisto.html">jhisto</a>.
+
+
+<tr>
+<td><a href="diffs.html"><img 
+width=134 height=79 border=0 alt="" src="weediff.jpg"></a>
+<td width=10>
+<td> 9) <a href="diffs.html">Image differences</a>: Per-pixel image
+differences also depict the brightness changes, as well as shedding
+a little light on why the gray scale strips failed.
+
+<tr>
+<td height=79 align=center>???
+<td width=10>
+<td> 10) Correcting the brightness problem.  In progress.
+
+</table>
+
+<p>
+
+<!--
+
+MRI through brain:
+zcat m_vf1054.??.Z | unu make -i - -t short -en big -s 69486 3 | unu crop -min 3950 0 -max M M | unu reshape -s 256 256 3 | unu permute -p 0 2 1 | unu reshape -s 768 256 | unu quantize -b 8 | unu save -f pnm | xv -
+
+normalCT through brain:
+zcat c_vf1050.fre.Z | unu make -i - -t short -en big -s 512 512 -bs 3416 | unu quantize -b 8 | unu save -f pnm | xv -
+
+-->
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
+

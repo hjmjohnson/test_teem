@@ -1,0 +1,77 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: hoover
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="../img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>hoover</h1>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td>
+  <td align=center>
+    <img width=256 height=256 alt="US Constitution? Take that!"
+      src="../img/hoov256.jpg"><br>
+  <td align=left valign=middle><!-- <font size="+1">
+    - <a href=""></a><br>
+       <font size="-2">&nbsp;</font><br>
+    - <a href=""></a><br>
+    </font> -->
+</table>
+
+<h2>Volume Rendering Framework</h2>
+
+<b>Hoover</b> is a minimalist library that facilitates the
+construction of simple ray-casting volume renderers.
+Basically, you tell <b>hoover</b> information about the camera, image,
+and volume, and then provide it with seven callback functions,
+implementing the behavior you want:
+<ul>
+<li> At the beginning and ending of the rendering
+<li> At the beginning and ending of a thread
+<li> At the beginning and ending of a ray
+<li> At each sample point along the ray
+</ul>
+
+After all has been set up, you call <tt>hoovRender()</tt> and let your
+callbacks do the work.  <b>Hoover</b> is the basis of the simple
+pseudo-volume renderer <a
+href="../bin/mrender/index.html"><tt>mrender</tt></a> as well as the <a
+href="../mite/index.html"><b>mite</b></a> volume renderer.  <b>Mite</b>, for
+instance, is basically just a different set of seven callbacks to plug
+into <b>hoover</b>.  By itself, <b>hoover</b> doesn't actually know
+the first thing about volume rendering.  Multi-threading support is
+actually not implemented yet, but as soon as it is, any
+<b>hoover</b>-based renderer will be multi-threaded.  <b>Hoover</b> is
+also not very flexible: there is no concept of reflection or shadow
+rays, and only a simplistic load-sharing scheme.  However, it gets the
+job done, and is a useful framework for implementing a
+proof-of-concept volume renderer.
+
+<p>
+
+More information as time permits.
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

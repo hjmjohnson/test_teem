@@ -1,0 +1,134 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"> 
+<html>
+<head>
+<title>
+GK's C code: bane/gkms tutorial: Step 2
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+
+<h2><a href="../"><img border=0 width=80 height=80
+src="../../img/bane80.jpg"></a><br>
+<small><small>&nbsp;</small></small><br>
+<tt><b>bane</b></tt>/<tt><b>gkms</b></tt> tutorial: Step 2:
+Creating VG, VH scatterplots</h2>
+
+<blockquote>
+Information for creating scatterplots is seen from running "gkms scat":
+
+<blockquote><pre>
+usage: bin/gkms scat [-g &lt;gamma&gt;] &lt;hvolIn&gt; &lt;VGout&gt; &lt;VHout&gt;
+Default values are in {}s
+  -g gamma : gamma used to brighten scatterplot
+             (gamma &gt; 1 makes image brighter; gamma &lt; 0 inverts everthing
+             {1.4}
+    hvolIn : histogram volume being analyzed
+VGout VHout: the value-gradient and value-2ndDerivative scatterplot
+             images to be created (PGM format)
+</pre></blockquote>
+
+Right now the "gamma" option is the only interesting variable; it
+controls how bright or dark the scatterplots will be.  Running with
+the default setting:
+<blockquote><pre>
+gkms scat engine-hvol.nrrd engine-vg.pgm engine-vh.pgm
+</pre></blockquote>
+
+produces:
+
+<center>
+<table>
+<tr>
+<td><img width=256 height=256 src="img/engine-vg.gif">
+<td><img width=256 height=256 src="img/engine-vh.gif">
+<tr>
+<td><a href="img/engine-vg.pgm"><tt>engine-vg.pgm</tt></a>
+<td><a href="img/engine-vh.pgm"><tt>engine-vh.pgm</tt></a>
+</table>
+</center>
+
+These are the sorts of scatterplots that I made at the beginning of my
+MS thesis research (in 1995), after I had decided that making
+histogram volumes was useful, but before I'd come up with a way of
+analyzing them.  In both of them, the scalar data value is the
+horizontal axis, and the derivative value (gradient magnitude in VG,
+and second directional derivative in gradient direction in VH) on the
+vertical axis.  The ability to glean information from these
+scatterplots is not immediate; reading <a
+href="http://www.cs.utah.edu/~gk/MS/html/node10.html">this section</a>
+and <a href="http://www.cs.utah.edu/~gk/MS/html/node15.html">this
+section</a> from my MS thesis may be helpful.
+
+<p>
+
+
+We could stand to make the scatterplots brighter- the top-most arch in
+the VG scatterplot is quite faint ...
+
+<blockquote><pre>
+gkms scat -g 3.0 engine-hvol.nrrd engine-vg-g3.pgm engine-vh-g3.pgm
+</pre></blockquote>
+
+<center>
+<table>
+<tr>
+<td><img width=256 height=256 src="img/engine-vg-g3.gif">
+<td><img width=256 height=256 src="img/engine-vh-g3.gif">
+<tr>
+<td><a href="img/engine-vg-g3.pgm"><tt>engine-vg-g3.pgm</tt></a>
+<td><a href="img/engine-vh-g3.pgm"><tt>engine-vh-g3.pgm</tt></a>
+</table>
+</center>
+
+<p>
+
+If you want to print the scatterplot somewhere, it is probably best to
+invert it so that the fine points don't get lost in black toner:
+
+<blockquote><pre>
+gkms scat -g -3.0 engine-hvol.nrrd engine-vg-inv.pgm engine-vh-inv.pgm
+</pre></blockquote>
+
+<center>
+<table>
+<tr>
+<td><img width=256 height=256 src="img/engine-vg-inv.gif">
+<td><img width=256 height=256 src="img/engine-vh-inv.gif">
+<tr>
+<td><a href="img/engine-vg-inv.pgm"><tt>engine-vg-inv.pgm</tt></a>
+<td><a href="img/engine-vh-inv.pgm"><tt>engine-vh-inv.pgm</tt></a>
+</table>
+</center>
+
+Using a negative gamma gives you the same result as using a positive
+gamma, and then inverting the image.
+
+<p>
+
+The scatterplots are informative because, in part, of a histogram
+equalization which is done on the scatterplot image so that the
+different gray levels are better utilized.  This is followed by the
+gain.  These two operations are done by <tt>nrrd</tt>'s
+<tt>nrrdHistoEq()</tt> and <tt>nrrdArithGamma()</tt> functions,
+respectively.  <a
+href="http://www.cs.utah.edu/~gk/MS/html/node15.html#SECTION00441000000000000000">This
+section</a> of my MS thesis describes that process.
+
+
+
+</blockquote>
+<p>
+<a href="http://validator.w3.org/check/referer"><img border="0"
+src="../../img/valid-html32s.gif"
+alt="Valid HTML 3.2!" height="20" width="58"></a>
+</p>
+
+</body>
+</html>

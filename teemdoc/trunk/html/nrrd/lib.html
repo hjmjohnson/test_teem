@@ -1,0 +1,58 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Library Description
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;Library Description</h2>
+</table>
+
+<!--
+
+Currently, the <b>nrrd</b> library, as with all the <b>teem</b>
+libraries, is implemented completely in C.  There are various aspects
+of <b>nrrd</b> that smack of C++ templates, and some that cry out for
+templates, but these are the exceptions.  I program in C because its a
+simple little language, and I know what I'm doing.  Plus, sticking to
+C keeps debugging easy, and it has made porting a snap.  Other people
+who have used <b>nrrd</b> in their C++ frameworks have found it very
+easy to put their own C++ wrappers around the <tt>Nrrd</tt> C struct:
+the contructor calls <tt>nrrdNew()</tt>, the destructor calls
+<tt>nrrdNuke</tt>, the "slice" method calls <tt>nrrdSlice()</tt>, the
+"convert" method calls <tt>nrrdConvert</tt>, and so on.
+
+-->
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

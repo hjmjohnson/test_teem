@@ -1,0 +1,171 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<a href="../"><img border=0 width=80 height=80
+src="../img/teem80.jpg"></a><br>
+
+<center>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr><td><img width=256 height=256 src="../img/nrrd256.jpg">
+<tr><td align=center><font size="+3"><tt><b>nrrd</b></tt></font>
+<tr><td align=center><small><small>(<a 
+href="../names.html#nrrd">about the name</a>)</small></small>
+</table>
+</center>
+
+<h2>Nearly Raw Raster Data</h2>
+
+<tt><b>nrrd</b></tt> is a library for reading, writing, slicing, dicing,
+projecting, permuting, shuffling, converting, quantizing,
+histograming, resampling, and otherwise manipulating N-dimensional
+raster data of any scalar type.  The default file format is simple: human
+readable ASCII header, followed by raw binary data; other formats
+(such as ASCII data) are possible.  Also, <tt><b>nrrd</b></tt> recognizes and
+generates raw and ascii PNM images (PPM color and PGM grayscale).
+Finally, reading data from existing non-nrrd files is
+facilitated through the use of detached headers (header and data in
+seperate files), and the ability to locate the start of data at an
+arbitrary position in a file (so as to skip past another format's
+ascii or binary header).
+
+<p>
+
+Most of the motivation for writing <tt><b>nrrd</b></tt> came from an
+observation while doing my Master's thesis research: 99.9% of the
+time, the data that I care about is raster data; whether it be a 3-D
+scalar volume, a 3-D histogram volume, a 2-D image, a 2-D transfer
+function, a 1-D histogram, etc.  It would be silly to not have a
+simple way of unifying these representations, for all dimensions, for
+all the various C basic types, with all the mathematically sensible
+ways of changing between dimensions, and with the ability to view the
+data as a PNM image whenever possible.  <tt><b>nrrd</b></tt> was
+actually the first <tt><b>teem</b></tt> library written (started in
+1998), <a href="../air/"><tt><b>air</b></tt></a> and <a
+href="../biff/"><tt><b>biff</b></tt></a> grew out of it.  Since then,
+4-D nrrds have been for representing tensor fields, and 5-D nrrds for
+time-varying vector fields.
+
+<p>
+
+Stark simplicity is the main principle of <tt><b>nrrd</b></tt>. The
+goal of <tt><b>nrrd</b></tt> is <em>not</em> to introduce any layers
+of abstraction between the programmer and the numerical data resident
+in the computer's memory.  Rather, the point is to create the thinnest
+and most simplistic possible interface to the raw raster data itself.
+For instance, it assumes that the programmer is comfortable with
+thinking about arrays as being simultaneously multi-dimensional in
+logical structure while strictly uni-dimensional in memory layout.
+This comes fairly easily to people who have spent significant time
+manipulating and processing data in "raw" form, or who, when faced
+with getting data to and from a disk, think first <tt>fread()</tt> and
+<tt>fwrite()</tt>.
+
+<p>
+
+Essentially, <tt><b>nrrd</b></tt> is a toolbox for making the manipulation of
+raw data more convenient for those programmers who are comfortable
+thinking at that low level of representation, or for those procedures
+or algorithms which logically operate at that level.  While there are
+a few parts of <tt><b>nrrd</b></tt> which smack of C++ templates,
+<tt><b>nrrd</b></tt> is written in vanilla ANSI C.  The basic unit of the
+<tt><b>nrrd</b></tt> library is the <tt>Nrrd</tt> struct, which is little
+more than a thin wrapper around a "<tt>void&nbsp;*</tt>" pointing to
+the underlying raw array in memory.  The wrapper holds information
+such as the type, dimension, axis lengths and limits, and comments.
+With time, the "thin" wrapper has gotten somewhat thicker, but I
+believe that I've nearly converged on the feature set that
+<tt><b>nrrd</b></tt> will support.
+
+<p>
+
+In the context of other software which deals with raster data,
+<tt><b>nrrd</b></tt>'s most likely role is that of a <b>pre-processing
+engine</b>, in which some visualization/analysis/segmentation needs
+the raster data in a certain type/size/dimension/order which doesn't
+quite match the available data.  Ideally, instead of writing a one-off
+program or perl or IDL script for this kind of data hacking,
+<tt><b>nrrd</b></tt> can be employed.
+
+<p>
+
+In more detail, the <tt><b>nrrd</b></tt> functionality includes:
+<ul>
+<li><b>Cropping + Padding</b>: Select some subset or superset of the
+original data, allowing either padding or flooding at the boundaries.
+
+<li><b>Slicing + Stitching/Joining</b>: cut an (N-1)-D array
+from a N-D one by slicing at some position along some axis,
+or stitch many such slices back into an N-D array, or join
+many small N-D slabs into a larger volume.
+
+<li><b>Blurring, Filtering, or other Resampling</b>: This allows
+high-quality resampling of data (both up- and down-sampling) using an
+interpolating kernel, as well as resampling with non-interpolating
+kernels (such a Gaussian).  Limited forms of median filtering also are
+supported.
+
+<li><b>Quantizing</b>: easy ways of going from a floating point array
+to an integral representation, using either 8, 16, or 32 bits.  If
+floating point values between 0.0 and 10.0 are quantized, the
+<tt><b>nrrd</b></tt> struct can remember that the original value range was
+0.0 to 10.0.
+
+<li><b>Converting</b>: changing between different scalar types
+(changing an array of <tt>int</tt>s into one of <tt>float</tt>s,
+using the exact same semantics as C assignment and casting.
+
+<li><b>Axis Permutation</b>: When a N-D array is arranged linearly in
+memory, there is some ordering to the different axis according to how
+"fast" their coordinates change.  That axis ordering can be
+arbitrarily rearranged.
+
+<li><b>Shuffling</b>: The slices along one axis can be re-ordered
+
+<li><b>Histograms</b>: I often think of data in terms of its histogram,
+so generating histograms of different types is basic in <tt><b>nrrd</b></tt>.
+There are actually four kinds of histograming operations:
+<ul>
+<li>Simple histograming: view the data as a big 1-D array, make a new
+1-D array which is its histogram
+<li>Histogram drawing: make an informative picture of a 1-D histogram
+<li>Axis histograming: An N-D array can be viewed as an (N-1)-D array
+of 1-D scanlines, along some chosen axis.  Axis histograming replaces
+each 1-D scanline with its histogram.
+<li>Multi-histograming: Generalizes simple histogramming to M dimensions:
+given M nrrds of equal size, generate an M-D histogram in which
+each bin records the number of the intercombinations of values between the 
+input <tt><b>nrrd</b></tt> implied by the bin coordinates.
+</ul>
+
+<li><b>Projections ("Measures")</b>: An N-D array can be reduced to an
+(N-1)-D array by replacing every scanline along some direction with a
+single scalar value.  This process is called a "measure" in
+<tt><b>nrrd</b></tt>, and currently supported measures include min, max, sum,
+product, mean, median, mode, L1, L2, Linf, and variance.
+
+<li><b>PNM image</b>: PNM images are recognized as nrrds, and
+nrrds can be saved as PGM or PPM image when appropriate.
+
+</ul>
+
+... More information as time permits ...
+
+
+<p>
+
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+
+</body>
+</html>

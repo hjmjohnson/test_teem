@@ -1,0 +1,127 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Directory Structure
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="../img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>Directory Structure</h1>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td>
+  <td>
+  <td>
+</table>
+<p>
+
+Upon unpacking a tarball, or doing a
+"<tt>cvs checkout teem</tt>", there will be a directory named something like
+<tt>teem</tt> or <tt>teem-1.Nblah</tt>.  It contains:
+<ul>
+<li> <a href="README.txt"><tt>README.txt</tt></a> : General pleasantries.
+<li> <tt>src/</tt> : All the individual teem libraries have subdirectories
+in here; see below.
+<li> <tt>cygwin/</tt>, <tt>darwin/</tt>, <tt>irix6.64/</tt>,
+<tt>irix6.n32/</tt>, <tt>linux/</tt>, <tt>solaris/</tt>: All the unix-like
+architecture-specific directories.  Each of these contain:
+<ul>
+<li> <tt>bin/</tt>: Where the makefiles put compiled "installed"
+binaries (executables)
+<li> <tt>lib/</tt>: Where the makefiles put "installed" 
+libraries (static and shared)
+  normally go
+<li> <tt>obj/</tt>: Where the makefiles put object files during compilation,
+and where libraries go when compiling "dev"
+<li> <tt>purify/</tt>: Purify's cache directory
+</ul>
+<li> <tt>win32/</tt>: Slightly different than the other architecture-specific
+directories.  The first three directories have the same role as on
+unix/cygwin, but they are used by the project files, instead of the 
+makefiles.
+<ul>
+<li> <tt>bin/</tt>: Where binaries go, 
+<li> <tt>lib/</tt>: For <tt>libteem.dll</tt> and <tt>libteem.lib</tt>
+<li> <tt>obj/</tt>: Where object files go
+<li> <tt>make/</tt>: 
+<ul>
+<li> <tt>vc6/</tt>: files specific to VC6
+<li> <tt>vc7/</tt>: files specific to VC7 (Visual Studio .net)
+<li> <tt>common/</tt>: files shared by VC6 and VC7
+</ul>
+</ul>
+<li> <tt>bin/</tt>, <tt>lib/</tt>: These can be used as the locations
+for "installed" binaries and libraries (instead of the architecture-specific
+directories), when the environment variable <tt>TEEM_DEST</tt> is set to
+this directory (the one containing <tt>bin/</tt>, <tt>lib/</tt>).  This is
+done, for instance, when creating the pre-built binary versions for
+distribution
+<li> <tt>include/</tt>: Where all "installed" header files go.
+This also contains some <tt>teem*.h</tt> headers which are used
+as tests on the the settings of various compiler variables.
+</ul>
+
+The <tt>teem/src/</tt> directory contains:
+<ul>
+<li> <a href="src/LICENSE.txt"><tt>LICENSE.txt</tt></a>:
+The full text of the GNU Lesser General Public License.
+<li> <a href="src/README.txt"><tt>README.txt</tt></a>:
+brief information about the different libraries, and a text version of
+the inter-library dependency graph
+<li> <a href="src/CHANGES.txt"><tt>CHANGES.txt</tt></a>: high-level
+description of changes between teem versions.
+<li> <a href="src/TODO.txt"><tt>TODO.txt</tt></a>: the long road ahead
+in teem development.
+<li> <tt>names.pl</tt>, <tt>unangle.pl</tt>: dinky little perl scripts
+used sometimes during development or writing documentation
+<li> <tt>preamble.c</tt>, <tt>preamble.mk</tt>: the LGPL preamble, included
+in every file C source, header, and make file.
+<li> <tt>GNUmakefile</tt>: Top-level makefile.
+<li> <tt>make/</tt>: 
+<ul>
+<li> <tt>cygwin.mk</tt>, <tt>darwin.mk</tt>, <tt>irix6.mk</tt>,
+<tt>linux.mk</tt>, <tt>solaris.mk</tt>: The architecture-specific makefiles.
+All the variations in how GNU make behaves on different architectures 
+are based on these.
+<li> <tt>template.mk</tt>, <tt>externals.mk</tt>: supplementary makefiles
+</ul>
+<li> <tt>hex/</tt>: not a teem library at all-- stand-alone hex encoder
+and decoder.
+<li> <tt>bin/</tt>: source files for the teem "bins": the stand-alone
+executables that link against various teem libraries.
+<li> <tt>air</tt>, <tt>hest</tt>, <tt>biff</tt>, <tt>ell</tt>, <tt>nrrd</tt>, 
+<tt>unrrdu</tt>, <tt>dye</tt>, <tt>gage</tt>, <tt>bane</tt>, <tt>limn</tt>, 
+<tt>hoover</tt>, <tt>mite</tt>, <tt>ten</tt>, <tt>echo</tt>: The source
+files for each library.  Each one may contain:
+<ul>
+<li> <tt>GNUmakefile</tt>: library-specific makefile: gives inter-library
+dependency, and lists object files and tests for this library.
+<li> <tt>CHANGES.txt</tt>: detailed library-specific changes between 
+teem versions
+<li> <tt>TODO.txt</tt>: things remaining for this library
+<li> <tt>test/</tt>: contains source files for the test programs,
+which are built with "<tt>make dev</tt>".
+</ul>
+</ul>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

@@ -1,0 +1,1 @@
+-i init.ppm -b wrap -t scale:0.33,0.33 rotate:5

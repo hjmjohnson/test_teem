@@ -1,0 +1,86 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: unu resample
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h1>&nbsp;&nbsp;<b><tt>unu resample</tt></b></h1>
+</table>
+
+<blockquote><pre>
+unu resample: Filtering and {up,down}sampling with a seperable kernel.
+Provides simplified access to nrrdSpatialResample() by assuming (among other
+things) that the same kernel is used for resampling every axis (every axis
+which is being resampled), and by assuming that the whole axis is being
+resampled (no cropping or padding). Chances are, you should use defaults for
+"-b" and "-v" and worry only about the "-s" and "-k" options. This resampling
+respects the difference between cell- and node-centered data.
+
+Usage: unu resample -s &lt;s0  ...&gt; [-k &lt;kern&gt;] [-b &lt;behavior&gt;] [-v &lt;value&gt;] \
+       [-t &lt;type&gt;] [-i &lt;nin&gt;] [-o &lt;nout&gt;]
+
+  -s &lt;s0 ...&gt; = For each axis, information about how many samples in output:
+              o "=": leave this axis untouched: no resampling whatsoever
+              o "x&lt;float&gt;": number of output samples is some scaling of
+                the number samples in input, multiplied by &lt;float&gt;
+              o "&lt;int&gt;": exact number of samples
+                (1 or more sampling specifications)
+    -k &lt;kern&gt; = The kernel to use for resampling. Possibilities include:
+              o "box": nearest neighbor interpolation
+              o "tent": linear interpolation
+              o "cubic:B,C": Mitchell/Netravali BC-family of cubics:
+                  "cubic:1,0": B-spline; maximal blurring
+                  "cubic:0,0.5": Catmull-Rom; good interpolating kernel
+              o "quartic:A": 1-parameter family of interpolating quartics
+                ("quartic:0.0834" is most accurate)
+              o "gauss:S,C": Gaussian blurring, with standard deviation S
+                and cut-off at C standard deviations
+                default: "quartic:0.0834"
+-b &lt;behavior&gt; = How to handle samples beyond the input bounds:
+              o "pad": use some specified value
+              o "bleed": extend border values outward
+              o "wrap": wrap-around to other side
+                default: "bleed"
+   -v &lt;value&gt; = for "pad" boundary behavior, pad with this value (double);
+                default: "0.0"
+    -t &lt;type&gt; = type to save output as. By default (not using this option),
+                the output type is the same as the input type.;
+                default: "unknown"
+     -i &lt;nin&gt; = input nrrd; default: "-"
+    -o &lt;nout&gt; = output nrrd (string); default: "-"
+</pre></blockquote>
+
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

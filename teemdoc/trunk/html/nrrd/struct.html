@@ -1,0 +1,68 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Data structure
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;Data structure</h2>
+</table>
+
+
+<!--
+
+One data structure, the <tt>Nrrd</tt> C struct, is used
+for everything from univariate histograms to time-varying volumetric
+tensor data.  The "<tt>dim</tt>" field of the <tt>Nrrd</tt> holds the
+dimension.  
+
+There is a data structure for the axis,
+the <tt>NrrdAxis</tt> C struct.  Each <tt>Nrrd</tt> contains a length
+<tt>NRRD_DIM_MAX</tt> array of <tt>NrrdAxis</tt> structs.  
+
+Regardless of its type, the memory
+holding the data is pointed to by the <tt>void*</tt> "<tt>data</tt>"
+in the <tt>Nrrd</tt> struct.  
+
+The <tt>Nrrd</tt> struct represents the type of data by setting its
+"<tt>type</tt>" field to one of the <tt>nrrdType*</tt> enum values,
+defined in <tt>nrrdEnums.h</tt>. 
+
+This is facilated by the <tt>airEnum</tt>
+"<tt>nrrdType</tt>" defined in <tt>enumsNrrd.c</tt>.  
+
+
+-->
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

@@ -1,0 +1,443 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: General unu Info
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>General <tt>unu</tt> Info</b></h2>
+</table>
+
+<h3>Common command-line arguments</h3>
+
+Some command-line options appear in multiple <tt>unu</tt> commands.
+For the sake of sanity and consistency, whenever the same information
+is needed by multiple <tt>unu</tt> commands, the same command-line
+option is used.  Here is a list of the common options:
+
+<table border=1>
+
+<tr>
+<td>"<tt>-i</tt>", "<tt>-o</tt>"
+<td>input nrrd or data, output nrrd
+
+<tr>
+<td>"<tt>-t</tt>"
+
+<td><a name="-t">Scalar type of the data</a>.
+The possible valid values are exactly
+the same as for the <a href="../nrrd/format.html#type"><tt>type</tt>
+field descriptor</a> in the NRRD header.  Used by <tt>make</tt>,
+<tt>convert</tt>, and many others.  Every type has a one-word
+equivalent, listed below:
+<table border=0 cellpadding=0 cellspacing=0>
+<tr><td><tt>-t int8</tt> <td>:<td> signed 1-byte integer
+<tr><td><tt>-t uchar</tt> <td>:<td> unsigned 1-byte integer
+<tr><td><tt>-t short</tt> <td>:<td> signed 2-byte integer
+<tr><td><tt>-t ushort</tt> <td>:<td> unsigned 2-byte integer
+<tr><td><tt>-t int</tt> <td>:<td> signed 4-byte integer
+<tr><td><tt>-t uint</tt> <td>:<td> unsigned 4-byte integer
+<tr><td><tt>-t longlong</tt> <td>:<td> signed 8-byte integer
+<tr><td><tt>-t ulonglong</tt> <td>:<td> unsigned 8-byte integer
+<tr><td><tt>-t float</tt> <td>:<td> 4-byte floating point
+<tr><td><tt>-t double</tt> <td>:<td> 8-byte floating point
+</table>
+
+<tr>
+<td>"<tt>-p</tt>"
+
+<td>Position in index space along an axis.  Used with <tt>slice</tt>,
+<tt>crop</tt>, and <tt>pad</tt>, for example.  This can either be an
+integer (interpreted as an exact index position), or of the form
+"<tt>M+&lt;<i>int</i>&gt;</tt>" or "<tt>M-&lt;<i>int</i>&gt;</tt>",
+which is interpreted as some offset (<tt><i>int</i></tt>) from the
+last sample along that axis.  That is, <tt>M</tt> is highest index
+along the axis, or, one less than the number of samples along that
+axis.  <tt>crop</tt> and <tt>pad</tt> also allow
+"<tt>m+&lt;<i>int</i>&gt;</tt>", which is position relative to the
+given minimum position.
+
+<tr>
+<td>"<tt>-b</tt>"
+
+<td>Number of bins, in a histogram.  Used with <tt>cmedian</tt>,
+<tt>histo</tt>, <tt>jhisto</tt>, <tt>histax</tt>,
+<tt>heq</tt>.  ("<tt>-b</tt>" means "# bits" to <tt>quantize</tt>)
+
+<tr>
+<td>"<tt>-a</tt>"
+
+<td>Which axis. Always just an integer (the first axis is 0);
+<b>nrrd</b> has no notion of axis names like "X" or "Y".  Used by
+<tt>slice</tt>, <tt>dice</tt>, <tt>project</tt>,
+<tt>join</tt>, and others.
+
+<tr>
+<td>"<tt>-s</tt>"
+
+<td>Axis sizes.  Used by <tt>make</tt>, <tt>resample</tt>,
+and <tt>reshape</tt> to identify the number of samples along
+each axis.
+
+<tr>
+<td>"<tt>-e</tt>"
+
+<td>Encoding of data.  Used by <tt>make</tt> and <tt>save</tt>.  The
+arguments to this option are exactly the same as for the <a
+href="../nrrd/format.html#encoding"><tt>encoding</tt> field
+descriptor</a> in the NRRD header.
+
+<tr>
+<td>"<tt>-en</tt>"
+
+<td>Endianness of data.  Used by <tt>make</tt> and <tt>save</tt>.  The
+arguments to this option are exactly the same as for the <a
+href="../nrrd/format.html#endian"><tt>endian</tt> field descriptor</a>
+in the NRRD header.
+
+</table>
+
+<h3>Input and Output</h3>
+
+By default, nearly all the <tt>unu</tt> commands get their input from,
+and write their output to, stdin and stdout, respectively.  The few
+exceptions to this are commands primarily designed for specialized
+input or output.  Stdin and stdout are both represented to
+<tt>unu</tt> by a single dash, "<tt>-</tt>"; whether it means stdin or
+stdout is clear from context.
+
+<p>
+
+You can control output nrrd file format with the filename extension
+supplied to the "<tt>-o</tt>" option.  This is also how to save the
+output nrrd with a detached header.  The interpretation of filename
+extension is according to the table below.  Every command except
+"<tt>unu make</tt>" conforms to this behavior.
+
+<table border=1>
+<tr>
+<td>extension (case sensitive)
+<td>format
+
+<tr>
+<td>"<tt>.txt</tt>"
+<td>plain text file
+
+<tr>
+<td>"<tt>.pgm</tt>"
+<td>PGM image file
+
+<tr>
+<td>"<tt>.ppm</tt>"
+<td>PPM image file
+
+<tr>
+<td>"<tt>.nhdr</tt>"
+<td colspan=3>NRRD file with
+<a href="../nrrd/format.html#sect3">detached header</a>
+
+<tr>
+<td>"<tt>.nrrd</tt>", anything else
+<td>NRRD file with attached header
+
+</table>
+
+<p>
+
+See the <a href="../nrrd/otherformat.html#readwrite">Reading and
+Writing non-NRRD files</a> section of <a
+href="../nrrd/otherformat.html">NRRD-Compatible File Formats</a> for
+details.  
+
+<p> If the output is not being written to a file, but sent to stdout,
+then "<tt>unu save</tt>" must be used to force a particular format.
+This facilitates a slick way of viewing 2-D nrrds with <tt>xv</tt>.  If you
+have a 2-D nrrd of <tt>float</tt>s, and you want to get a qualitative
+sense of what it looks like, you can run:
+
+<blockquote><pre>
+unu quantize -i float.nrrd -b 8 | unu save -f pnm | xv -
+</pre></blockquote>
+
+No quantized nrrd is ever written to disk, nor is any PGM image.
+
+<h3>Command-line usage and arguments</h3>
+
+Because all of <tt>unu</tt> is based on the same command-line parser
+(<a href="../hest/index.html"><b>hest</b></a>), there is a great deal
+of consistency between the various <tt>unu</tt> commands.
+<ul>
+
+<li> You get a listing of all possible <tt>unu</tt> commands by typing
+just "<tt>unu</tt>".
+
+<li> You can always get usage information for command
+<tt><i>cmd</i></tt> by typing just "<tt>unu <i>cmd</i></tt>".
+If, when composing a long chain of <tt>unu</tt> commands, you want to
+see the usage for a command you're going to use, then type Ctrl-a Ctrl-k, and
+then type "<tt>unu <i>cmd</i></tt>" for the usage info.  After you've
+read that, type Ctrl-y to get back the long line you were editing.
+If this doesn't work for you, you're not using csh or a derivative shell,
+which is unfortunate.
+
+<li> Usage information for a command always comes in three parts:
+general information, usage line (starts with "<tt>Usage: </tt>"), and
+a glossary of all the options shown in the usage line.  Here's the output
+of "<tt>unu gamma</tt>":
+<blockquote><pre>
+unu gamma: Brighten or darken values with a gamma. Just as in xv, the gamma
+value here is actually the reciprocal of the exponent actually used to
+transform the values.
+
+Usage: unu gamma [-i &lt;nin&gt;] -g &lt;gamma&gt; [-min &lt;value&gt;] [-max &lt;value&gt;] \
+       [-o &lt;nout&gt;]
+
+    -i &lt;nin&gt; = input nrrd
+  -g &lt;gamma&gt; = gamma &gt; 1.0 brightens; gamma &lt; 1.0 darkens. Negative gammas
+               invert values (like in xv). (double)
+-min &lt;value&gt; = Value to implicitly map to 0.0 prior to calling pow().
+               Defaults to lowest value found in input nrrd. (double)
+-max &lt;value&gt; = Value to implicitly map to 1.0 prior to calling pow().
+               Defaults to highest value found in input nrrd. (double)
+   -o &lt;nout&gt; = output nrrd (string); default: "-"
+</pre></blockquote>
+
+<li> Any flagged command-line options (the ones preceeded by "<tt>-i</tt>",
+"<tt>-t</tt>", "<tt>-s</tt>", and the like) can appear in <b>any</b> order.
+The unflagged options are parsed in the fixed ordering indicated by the
+usage line.
+
+<li> Optional arguments are enclosed in square ("<tt>[]</tt>") brackets.
+
+</ul>
+
+<h3><b>nrrd</b> library vs. <tt>unu</tt> program</h3>
+
+The functionality in <tt>unu</tt> is a very good indication of the
+functionality in <b>nrrd</b>, but there is not an exact mapping
+between the two.  For instance, <tt>unu resample</tt> provides access
+to <tt>nrrdSpatialResample()</tt>, but with some assumptions: the same
+kernel is being used on every axis which is resampled, and the entire
+range of indices along an axes is resampled.
+<tt>nrrdSpatialResample()</tt> does not have these constraints:
+different kernels can be used on different axes (or the same kernel
+with different parameter vectors), and cropping and padding can be
+done at the same time as resampling.  On the other hand, <tt>unu
+crop</tt> and <tt>unu pad</tt> have some intelligence about how they
+parse the coordinates used to specify the output region.  "<tt>unu crop
+-min 10 10 -max M-10 M-10</tt>" says that the upper bound of the
+cropping should be 10 samples less than the maximum position along
+axes 0 and 1.  The underlying <tt>nrrdCrop</tt> function, on the other
+hand, can take only absolute integer positions.
+
+<p>
+
+Below is the correspondance between <tt>unu</tt> commands and
+functions in the <b>nrrd</b> library.  Nearly all the <tt>unu</tt>
+commands rely on <tt>nrrdLoad()</tt> for reading the nrrd and
+<tt>nrrdSave()</tt> for writing the nrrd.  If nothing else, this
+list provides a bare-bones outline of the <b>nrrd</b> API.
+
+<center>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+<td align=right><tt>unu</tt> command
+<td>-
+<td align=left><b>nrrd</b> function
+
+<tr>
+<td align=right><tt>make, head, data</tt>
+<td>-
+<td align=left>n/a
+
+<tr>
+<td align=right><tt>convert</tt>
+<td>-
+<td align=left><tt>nrrdConvert()</tt>
+
+<tr>
+<td align=right><tt>resample</tt>
+<td>-
+<td align=left><tt>nrrdSpatialResample()</tt>
+
+<tr>
+<td align=right><tt>cmedian</tt>
+<td>-
+<td align=left><tt>nrrdCheapMedian()</tt>
+
+<tr>
+<td align=right><tt>quantize</tt>
+<td>-
+<td align=left><tt>nrrdQuantize()</tt>
+
+<tr>
+<td align=right><tt>unquantize</tt>
+<td>-
+<td align=left><tt>nrrdUnquantize()</tt>
+
+<tr>
+<td align=right><tt>project</tt>
+<td>-
+<td align=left><tt>nrrdProject()</tt>
+
+<tr>
+<td align=right><tt>slice</tt>
+<td>-
+<td align=left><tt>nrrdSlice()</tt>
+
+<tr>
+<td align=right><tt>dice</tt>
+<td>-
+<td align=left>repeated calls to <tt>nrrdSlice()</tt>
+
+<tr>
+<td align=right><tt>join</tt>
+<td>-
+<td align=left><tt>nrrdJoin()</tt>
+
+<tr>
+<td align=right><tt>crop</tt>
+<td>-
+<td align=left><tt>nrrdCrop()</tt>
+
+<tr>
+<td align=right><tt>pad</tt>
+<td>-
+<td align=left><tt>nrrdPad_nva()</tt>
+
+<tr>
+<td align=right><tt>reshape</tt>
+<td>-
+<td align=left><tt>nrrdReshape_nva()</tt>
+
+<tr>
+<td align=right><tt>permute</tt>
+<td>-
+<td align=left><tt>nrrdPermuteAxes()</tt>
+
+<tr>
+<td align=right><tt>swap</tt>
+<td>-
+<td align=left><tt>nrrdSwapAxes()</tt>
+
+<tr>
+<td align=right><tt>shuffle</tt>
+<td>-
+<td align=left><tt>nrrdShuffle()</tt>
+
+<tr>
+<td align=right><tt>flip</tt>
+<td>-
+<td align=left><tt>nrrdFlip()</tt>
+
+<tr>
+<td align=right><tt>block</tt>
+<td>-
+<td align=left><tt>nrrdBlock()</tt>
+
+<tr>
+<td align=right><tt>unblock</tt>
+<td>-
+<td align=left><tt>nrrdUnblock()</tt>
+
+<tr>
+<td align=right><tt>histo</tt>
+<td>-
+<td align=left><tt>nrrdHisto()</tt>
+
+<tr>
+<td align=right><tt>dhisto</tt>
+<td>-
+<td align=left><tt>nrrdHistoDraw()</tt>
+
+<tr>
+<td align=right><tt>jhisto</tt>
+<td>-
+<td align=left><tt>nrrdHistoJoint()</tt>
+
+<tr>
+<td align=right><tt>histax</tt>
+<td>-
+<td align=left><tt>nrrdHistoAxis()</tt>
+
+<tr>
+<td align=right><tt>heq</tt>
+<td>-
+<td align=left><tt>nrrdHistoEq()</tt>
+
+<tr>
+<td align=right><tt>gamma</tt>
+<td>-
+<td align=left><tt>nrrdArithGamma()</tt>
+
+<tr>
+<td align=right><tt>1op</tt>
+<td>-
+<td align=left><tt>nrrdArithUnaryOp()</tt>
+
+<tr>
+<td align=right><tt>2op</tt>
+<td>-
+<td align=left><tt>nrrdArithBinaryOp()</tt>
+
+<tr>
+<td align=right><tt>3op</tt>
+<td>-
+<td align=left><tt>nrrdArithTernaryOp()</tt>
+
+<tr>
+<td align=right><tt>lut</tt>
+<td>-
+<td align=left><tt>nrrdApply1DLut()</tt>
+
+<tr>
+<td align=right><tt>rmap</tt>
+<td>-
+<td align=left><tt>nrrdApply1DRegMap()</tt>
+
+<tr>
+<td align=right><tt>imap</tt>
+<td>-
+<td align=left><tt>nrrdApply1DIrregMap()</tt>
+
+<tr>
+<td align=right><tt>save</tt>
+<td>-
+<td align=left>n/a
+
+</table>
+</center>
+
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

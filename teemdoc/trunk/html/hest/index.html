@@ -1,0 +1,136 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: hest
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="../"><img border=0 width=80 height=80 alt="to teem"
+    src="../img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>hest</h1>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="../">teem</a></b>
+  <td>
+  <td align=center>
+    <img width=256 height=256 alt="Mr. T commands respect"
+      src="../img/hest256.jpg"><br>
+  <td align=left valign=middle><font size="+1">
+    - <a href="term.html">Terminology</a><br>
+       <font size="-2">&nbsp;</font><br>
+    - <a href="usage1.html">Usage Basics</a><br>
+       <font size="-2">&nbsp;</font><br>
+    - <a href="usage2.html">Usage Details</a><br>
+       <font size="-2">&nbsp;</font><br>
+    - <!-- <a href="example.html"> -->Examples<!-- </a> --><br>
+       <font size="-2">&nbsp;</font><br>
+    - <a href="ref.html">Reference</a><br>
+       <font size="-2">&nbsp;</font><br>
+    - <a href="comments.html">Comments</a>
+    </font>
+</table>
+
+
+<h2>Command-line parsing</h2>
+
+The <b>hest</b> library parses a variety of command-line options with
+a small set of functions.  The primary utility of
+<b>hest</b> is for situations where the command line has to
+communicate non-binary values for numerous options.  This is often the
+situation in a rendering or visualization program which has many
+parameters or "knobs" to adjust, which may or may not have default
+values, and each of which may be in fact an array of values, instead
+of just a single number or string.  These functions are not as handy
+for situations where the majority of options are binary, as is the
+case for many unix commands.  So, idioms like "-xzv" are not
+supported, however binary options are supported as stand-alone
+command-line flags.
+
+<p>
+
+Useful things about <b>hest</b>:
+<ul>
+
+<li> Can parse an arbitrary number of parameters for one option,
+allowing things like "<tt>-i&nbsp;*.txt</tt>".
+
+<li> Can parse both flagged and unflagged options.  Flags can have
+both a short form (such as "<tt>-i</tt>") and a long form (such as
+"<tt>--input</tt>").  Unflagged options are interpreted according to
+their order on the command line, allowing things like "<tt>mv *.txt
+~/pub</tt>".
+
+<li> Response files: plain text files containing options which you
+don't want to have to type on the command line.  Response file names
+can appear anywhere on the command line.  Their contents are
+effectively inserted in the command line where the response file name
+appears. Response files can contain comments.
+
+<li> Automatic generation of helpful usage information, given as one
+long line showing the various options, such as:
+<pre>
+Usage: cmd [@file...] -res &lt;sx sy&gt; [-v [&lt;level&gt;]] [-out &lt;file&gt;] &lt;input...&gt;
+</pre>
+
+<li> Automatic generation of a "glossary" of options, listing their
+flags and their meanings, such as:
+<pre>
+    @file... = response file(s) containing command-line arguments
+-res &lt;sx sy&gt; = image resolution (2 ints)
+-v [&lt;level&gt;] = verbosity level (optional int); default 0
+ -out &lt;file&gt; = PPM image output (string); default output.ppm
+  &lt;input...&gt; = input image file(s) (1 or more strings)
+</pre>
+
+<li> Simple specification of the option information, either statically
+(an initialization of an array of <tt>hestOpt</tt> structs) or
+dynamically (a sequence of calls to <tt>hestOptAdd</tt>).
+
+<li> Can parse <b>anything</b>, given a set of callbacks to do so, but
+this is very ugly and currently undocumented.
+
+</ul>
+
+<p>
+
+There other tools out there to help with command-line parsing.  In
+fact, the <a
+href="http://argtable.sourceforge.net"><b>argtable</b></a> library
+provided the inspiration for <b>hest</b>.  There is a good chance that
+your command-line parsing needs are better served by <b>argtable</b>.
+It doesn't support multiple parameters in the options, but its error
+message generation is better, its usage is simpler, and it supports
+different formats of flag (instead of just one or two hyphens as
+prefix, and whitespace for delimiting). <a
+href="http://wsd.iitb.fhg.de/~kir/clighome">Clig</a> (Command Line
+Interpreter Generator) supports multiple parameters, but requires Tcl
+to generate the C code.  The <tt>getopt</tt> function is popular but
+doesn't really do that much.  The <a
+href="http://freshmeat.net/projects/popt">popt</a> library is like
+<tt>getopt</tt> on steroids, and looks very useful.  It is the
+command-line parsing brains of GNOME, which also has <a
+href="http://developer.gnome.org/arch/misc/popt.html">a page about
+popt</a>.  It doesn't seem to do multiple parameter options, or
+unflagged options.
+
+<p>
+
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+
+</body>
+</html>
