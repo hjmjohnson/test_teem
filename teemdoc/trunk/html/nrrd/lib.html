@@ -445,7 +445,7 @@ if you know exactly what the dimension of the nrrd is:
 <blockquote><pre>
 char *lab0, *lab1, *lab2, *lab3;
 ...
-nrrdAxisInfoGet(nvec, nrrdAxisInfoLabel, &lab0, &lab1, &lab2, &lab3);
+nrrdAxisInfoGet(nvec, nrrdAxisInfoLabel, &amp;lab0, &amp;lab1, &amp;lab2, &amp;lab3);
 printf("labels were: %s, %s, %s, %s\n", lab0, lab1, lab2, lab3);
 </pre></blockquote>
 
@@ -543,7 +543,7 @@ char *key, *val;
 ...
 nk = nrrdKeyValueSize(nrend);
 for (ki=0; ki$lt;nk; ki++) {
-  nrrdKeyValueIndex(nrend, &key, &val, ki);
+  nrrdKeyValueIndex(nrend, &amp;key, &amp;val, ki);
   printf("%s = %s\n", key, val);
 }
 </pre></blockquote>
