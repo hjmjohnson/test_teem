@@ -74,10 +74,7 @@ Cygwin) create a text file, each line is terminated by a pair of
 characters, "<tt>\r\n</tt>".  When everyone else creates a text file,
 each line is terminated by just "<tt>\n</tt>".  NRRD readers must be
 able to handle both types of line terminations; NRRD writers can use
-one or the other or both.  While C's ability to open files in "ASCII"
-mode ideally handles this, this approach may be complicated by the
-fact that the header can be followed by binary data, which must be
-read and written byte-for-byte untransformed.  The line termination is
+one or the other or both.  The line termination is
 ignored once the line has been read from file, so when the description
 below says "the line contains ...", it is referring to everything
 prior to the character(s) comprising the line termination.  In the current
@@ -170,27 +167,28 @@ All of the field specifications have the same structure: a string
 identifier), then a colon followed by a single space "<tt>: </tt>",
 and then the information describing the field "&lt;<i>desc</i>&gt;"
 (called the field descriptor).  All field identifiers are case
-insensitive.  The only field descriptors which are not case insensitive
-are the one which contain strings (the <tt>content</tt> and
-<tt>labels</tt> fields).  Whitespace (which does not constitute the
-previous line's termination) is not allowed before a field
-identifier. Extra whitespace after the field descriptor and before the
-line termination should be ignored.  The NRRD format is complicated by
-the fact that some fields are always necessary, while some fields are
-always optional, and some fields are necessary only some of the time.
-Whether or not a field is necessary depends on previous information in
-the header.  This is why there is no standard template for all NRRD
-headers, or a context-free grammar for NRRD headers.
+insensitive.  The only field descriptors which are not case
+insensitive are the one which contain strings (the <tt>content</tt>,
+<tt>labels</tt>, and <tt>units</tt> fields).  Whitespace (which does
+not constitute the previous line's termination) is not allowed before
+a field identifier. Extra whitespace after the field descriptor and
+before the line termination should be ignored.  The NRRD format is
+complicated by the fact that some fields are always necessary, while
+some fields are always optional, and some fields are necessary only
+some of the time.  Whether or not a field is necessary depends on
+previous information in the header.  This is why there is no standard
+template for all NRRD headers, or a context-free grammar for NRRD
+headers.
 
 <p>
 
-Some field specifications have field descriptors which give a piece of
+Some field specifications give a piece of
 information about each and every axis in a nrrd; these are called
 "per-axis specifications".  Identifying how many samples there are
 along each dimension of the array is an example of this.  Per-axis
 specifications must have as many components as there are dimensions in
 the array, so that they can identify information for every axis.
-There is no partial or "implied" per-axis information.  Other field
+There is no partial or implied per-axis information.  Other field
 specifications are general with respect to array dimension, such as
 the type of the array; these are called "non-per-axis specifications".
 
@@ -210,15 +208,15 @@ what the current <b>nrrd</b> implementation can do.
 
 <p>
 
-Per-axis specifications can only appear <b>after</b> the dimension
-field specification.  This simplifies the task of parsing per-axis
-specifications, since we know how many pieces of information need to
-be parsed (the same as the dimension).  This also avoids any attempts
-at cleverness in the form of guessing the nrrd dimension based on the
-first per-axis specification.  Non-per-axis specifications can appear
-<b>both before and after</b> the dimension field.  Other than the one
-constraint about per-axis specification location, field specifications
-may appear in <b>any</b> order within the header (after the magic).
+Non-per-axis specifications can appear <b>both before and after</b>
+the dimension field.  Per-axis specifications can only appear
+<b>after</b> the dimension field specification.  This simplifies the
+task of parsing per-axis specifications, since we know how many pieces
+of information need to be parsed (the same as the dimension).  This
+also avoids any attempts at cleverness in the form of guessing the
+nrrd dimension based on the first per-axis specification.  Other than
+this one constraint, field specifications may appear in <b>any</b>
+order within the header (after the magic).
 
 <!-- 
 <p>
@@ -245,24 +243,22 @@ sizes: &lt;<i>size[0]</i>&gt; &lt;<i>size[1]</i>&gt; ... &lt;<i>size[dim-1]</i>&
 </pre></blockquote>
 
 &lt;<i>size[i]</i>&gt; is the number of samples along axis <i>i</i>,
-with axis ordering going from fastest to slowest.  The number of
-integers must obviously equal the dimension specified in the
-<tt>dimension</tt> field.  As with all the other per-axis field
-identifiers, <tt>sizes</tt> ends with "s" to emphasize the plurality
-of the field it specifies.  The field identifiers do not change,
-however, for one-dimensional nrrds.
+with axis ordering going from fastest to slowest.  As with all the
+other per-axis field identifiers, <tt>sizes</tt> ends with "s" to
+emphasize the plurality of the field it specifies.  The field
+identifiers do not change, however, for one-dimensional nrrds.
 
 <p>
 
 The issue of axis ordering is fundamental.  In memory and on disk,
 there is a strict linear order of all the values in an array.
 Logically, however, each sample has one or more coordinates which
-identify its position, as many coordinates as there are dimensions in
+identify its position-- as many coordinates as there are dimensions in
 the array.  The "fastest" axis is the one associated with the
 coordinate which increments fastest as the samples are traversed in
 memory order.  Typical raster ordering of interleaved RGB data is
 logically a three-dimensional array.  The fastest axis is the
-three-samples-long color axis, followed by the horizontal axis, with
+color axis (only three samples long), followed by the horizontal axis, with
 the vertical axis being the slowest.  All the per-axis field
 specifications identify information for each axis, and the axis
 ordering is always (reading left to right) fastest to slowest.  NRRD
@@ -299,23 +295,9 @@ values, but "<tt>hex</tt>" allows extraction of images from some
 PostScript files, and compression is also supported; see the <a
 href="#encoding"><tt>encoding</tt> specification</a> (<a
 href="#sect4">Section 4</a>).  NRRD readers must be able to support
-raw and ASCII encoding, everything else is optional.  However, <!--
-there is no risk that NRRD will turn into another TIFF, a format so
-flexible that few readers actually support all of the <a
-href="http://partners.adobe.com/asn/developer/PDFS/TN/TIFF6.pdf">121
-page specification</a>.  The only --> the <b>only</b> optional
-encodings which may be added to NRRD in the future will be ones for
-which there exist freely available command-line tools to convert the
-encoded data (in isolation) to raw data.  If you have a NRRD file
-<tt>volume.nrrd</tt>, with an attached header, using a data encoding
-not supported by the available nrrd implementation, you can always use
-the unix/linux/cygwin command "<tt>tail&nbsp;+N&nbsp;volume.nrrd</tt>"
-(where N is two plus the number of lines in the header) to get at all
-the data, so as to pass it onto a stand-alone converter.  Or, the <a
-href="../unrrdu/index.html">Utah Nrrd Utilities</a> command
-"<tt>unu&nbsp;data</tt>" is a much easier way of doing the exact same
-thing.  Data in a separate file, detached from the NRRD header, is
-obviously trivial to pass to a converter.
+raw and ASCII encoding, everything else is optional.  See the 
+<a href="descformat.html">general description of NRRD format</a>
+for more information about how optional encodings are handled.
 
 <p>
 
@@ -355,7 +337,7 @@ and <a href="#sect5">Section 5</a>.
 
 One of the things that makes reading a NRRD header complicated is the
 idea that the absence of an optional piece of information is just as
-important to record as the information when it was explicitly given.
+important to record as the information when it is explicitly given.
 Whatever data structure is created or updated as the result of reading
 a NRRD header must enable the writer to write the exact same NRRD
 header, up to field ordering.  If you generate a nrrd at run-time, and
@@ -445,12 +427,13 @@ descriptors (strings) are delimited by quotes).
 
 <p>
 
-No other fields are allowed in a "<tt>NRRD0001</tt>" magic NRRD file
-other than those defined in <a href="#sect4">Section 4</a> and <a
-href="#sect5">Section 5</a>.  NRRD readers are not expected to make
-any efforts to deal with non-conformant files (in contrast to PNM
-recommendations), but specific and intelligent human-readable error
-messages are of course encouraged.
+No other fields are allowed in a "<tt>NRRD0001</tt>" or
+"<tt>NRRD00.01</tt>" magic file other than those defined in <a
+href="#sect4">Section 4</a> and <a href="#sect5">Section 5</a>.  NRRD
+readers are not expected to make any efforts to deal with
+non-conformant files (in contrast to PNM recommendations), but
+specific and intelligent human-readable error messages are of course
+encouraged.
 
 <h2><a name="sect2">2. ASCII encoding of floating point</a></h2>
 
@@ -539,11 +522,11 @@ between blocks on disk and user-space memory (<a
 href="index.html"><b>nrrd</b></a> currently supports direct IO on
 SGIs, via the <a href="../air/index.html"><b>air</b></a> library).
 Direct IO requires special alignment between the data segment
-beginning and block boundaries on disk, which makes using attached
+beginning and the block boundaries on disk, which makes using attached
 headers nearly impossible.  Detached headers are also the simplest way
 to deal with NRRD readers which do not support the optional encodings,
 since a stand-alone program (such as "<tt>gzip/gunzip</tt>" or
-<tt>bzip2/bunzip2</tt>") will be able to process the separate data
+"<tt>bzip2/bunzip2</tt>") will be able to process the separate data
 file.
 
 <p>
@@ -558,14 +541,14 @@ data file: &lt;<i>filename</i>&gt;
 "<tt>datafile:</tt>" is also valid.  "<tt><i>filename</i></tt>"
 identifies the file that contains the data. The addition of this field
 is the only difference between attached headers and detached headers.
-The magic at the beginning is the same, so there is currently no way
-to immediately detect if the header being parsed is attached or
-detached.  The rest the field specifications are the same, and because
-the <tt>data file</tt> field specification is a non-per-axis
-specification, it may appear anywhere in the header.  Detached headers
-may end with the the last field specification, or with a single blank
-line following the last field specification (in which case anything
-following the blank line is ignored).
+The magic at the beginning of the header is the same, so there is
+currently no way to immediately detect if the header being parsed is
+attached or detached.  The rest the field specifications are the same,
+and because the <tt>data file</tt> field specification is a
+non-per-axis specification, it may appear anywhere in the header.
+Detached headers may end with the the last field specification, or
+with a single blank line following the last field specification (in
+which case anything following the blank line is ignored).
 
 <p>
 
@@ -592,7 +575,9 @@ message.
 
 <li> Otherwise, "<tt><i>filename</i></tt>" gives the name of the data
 file.  It is passed directly to <tt>fopen()</tt> without any
-interpretation.
+interpretation.  Filenames which are not include full paths are
+therefore interpreted as being relative to the current working
+directory of the reader, where ever that is.
 
 </ul>
 
@@ -688,25 +673,25 @@ Matlab, Microsoft-land, or some other program.  Notice that
 "<tt>char</tt>" is not a NRRD type descriptor, to avoid potential
 confusion associated with the inherent signed/unsigned ambiguity of
 the "<tt>char</tt>" C type.  If the platform has different C type
-names for the types described (for example, if "<tt>int</tt>" is 8
-bytes, or an "<tt>unsigned char</tt>" is 4), there will have to be a
-disconnect between the type implied by the type descriptor, and the
-actual types used.  In other words, the NRRD format <b>requires</b> a
-binding between the first two columns in the chart above.  The third
-column is just what the current <b>nrrd</b> implementation uses on most
-supported platforms; this has proven surprisingly portable.
+names for the types described, there will have to be a disconnect
+between the type implied by the type descriptor, and the actual types
+used.  In other words, the NRRD format <b>requires</b> a binding
+between the first two columns in the chart above.  The third column is
+just what the current <b>nrrd</b> implementation uses on most
+supported platforms; this has proven surprisingly portable. In
+Windows, however, there is no "<tt>long long</tt>", so
+"<tt>__int64</tt>" is used instead.
 
 <p> As currently defined, NRRD is simply not portable to platforms on
 which all the types described above (second column) are not available
-via some C type declaration or another.  For example, in Windows,
-there is no "<tt>long long</tt>", so "<tt>__int64</tt>" is used
-instead.  We will eventually have many computers in which the minimum
-addressable unit is larger than 8 bits, in which case NRRD will either
-have to be expanded to allow types with unaddressable values (in which
-case a <tt>bit</tt> type might as well be added), or, some rules will
-have to be defined for converting a smaller type into an addressable
-type during data read.  Having addressable samples vastly simplifies
-the task of implementing array operations.
+via some C type declaration or another.  We will eventually have many
+computers in which the minimum addressable unit is larger than 8 bits,
+in which case NRRD will either have to be expanded to allow types with
+unaddressable values (in which case a <tt>bit</tt> type might as well
+be added), or, some rules will have to be defined for converting a
+smaller type into an addressable type during data read.  Having
+addressable samples vastly simplifies the task of implementing array
+operations.
 
 <p>
 
@@ -758,7 +743,7 @@ must be greater than zero.  Specifically, it identifies the number of
 bytes between the beginning of one block and the beginning of the
 next.  Perhaps confusingly, it says nothing about the block size of
 the file system in use.  Knowing the block size allows the NRRD reader
-to know how many bytes of raw data should be read from file.  The
+to know how many bytes of non-ascii data should be read from file.  The
 block size is often the return from <tt>sizeof()</tt> operator applied
 to a C struct or a C++ object, but as usual, this may not be the same
 as the sum of the sizes of the constituent members.  See the <a
@@ -852,14 +837,17 @@ determine the image dimensions.
 
 <p>
 
-The "standard detached suffix" is the filename suffix that should be used by
-NRRD writers producing a separate data file in conjunction with a
-detached header.  This is most important for the compressed encodings;
-as the stand-alone programs expect certain suffixes, and the filename
-of their output should end in "<tt>.raw</tt>".  <tt>gzip</tt> and
-<tt>bzip2</tt> are currently the only compression methods supported.
-NRRD readers, however, should not care about the filename
-suffix of a detached data file.
+The "standard detached suffix" is the filename suffix that should be
+used by NRRD writers producing a separate data file in conjunction
+with a detached header.  This is most important for the compression
+encodings, since the stand-alone programs expect certain suffixes when
+decompressing ("<tt>.gz</tt>" and "<tt>.bz2</tt>" for gzip and bzip2,
+respectively), and these suffixes are stripped after decompression.
+Because the result of decompressing compressed data from a NRRD is
+always raw (as opposed to compressed ascii text), the suffix for the
+detached file includes "<tt>.raw</tt>" as well.  NRRD readers,
+however, should not care about the filename suffix of a detached data
+file.
 
 <p>
 
@@ -984,16 +972,22 @@ oldmin: &lt;<i>min</i>&gt;
 <ul>
 <li> Always optional
 <li> Meaningless for floating-point and block nrrds
-<li> Type: double
+<li> Type: <tt>double</tt>
 </ul>
 
 For integral data values which were produced as a result of linear
 quantization, this records the lowest input value that was mapped to
-the lowest output integral value.  If a floating point nrrd with
-values ranging from 0.0 to 1.0 is quantized to 8 bits,
-<tt>old&nbsp;min</tt> will be 0.0.  This is not the middle of the
-range of values that were all mapped to the lowest output integer, but
-the lowest of those values.
+the lowest output integral value.  However, this does not include
+information about the original range of values that were clamped
+to some smaller range prior to be quantized-- only that smaller
+range is represented.
+
+<p>
+
+For example, if a floating point nrrd with values ranging from 0.0 to
+1.0 is quantized to 8 bits, <tt>old&nbsp;min</tt> will be 0.0.  This
+is not the middle of the range of values that were all mapped to the
+lowest output integer, but the lowest of those values.
 
 <p>
 
@@ -1023,12 +1017,13 @@ datafile: &lt;<i>file</i>&gt;
 <li> Always optional
 </ul>
 
-This is always optional, but it the only means of distinguishing from
-an attached or a detached NRRD header.  When it is present, it is
-interpreted according to <a href="#sect3">Section 3</a>, and the 
-header is considered finished at the EOF, or at the blank line following
-the last field, and any data after the blank line (if present) is ignored.
-If this field is not present, the data is assumed to be in the same file
+This is always optional, but it is the only means of distinguishing
+from an attached or a detached NRRD header.  When it is present, it is
+interpreted according to <a href="#sect3">Section 3</a>, and the
+header is considered finished at the EOF, or at the blank line
+following the last field, whichever comes first.  If the header ends
+with a blank line, and any data after the blank line is ignored.  If
+this field is not present, the data is assumed to be in the same file
 as the header, following the blank line marking the end of the header.
 
 <hr noshade width="30%" align=left>
@@ -1109,8 +1104,7 @@ with.  Also, ASCII headers (such as in PNM images) often allow
 multiple lines of optional comments, so the number of lines to skip
 has to be determined on a per-file basis by looking at the
 (uncompressed) file, at which point the data might as well be written
-out as a NRRD file.  In contrast, binary headers (such as in many
-non-DICOM images saved from medical scanners), are very often fixed
+out as a NRRD file.  In contrast, binary headers are very often fixed
 length, and not human readable, which means that when the header and
 data are compressed together, the beginning of the data can be easily
 found via a <tt>byte skip</tt> offset.  This also applies to large
@@ -1285,7 +1279,7 @@ can't be infinite).
 
 <hr noshade width="30%" align=left>
 <blockquote><pre>
-<a name="centers">centers: &lt;<i>cent[0]</i>&gt; &lt;<i>cent[1]</i>&gt; ... &lt;<i>cent[dim-1]</i>&gt;</a>
+<a name="centers">centers: &lt;<i>center[0]</i>&gt; &lt;<i>center[1]</i>&gt; ... &lt;<i>center[dim-1]</i>&gt;</a>
 </pre></blockquote>
 <ul>
 <li> Always optional
@@ -1305,13 +1299,13 @@ node centered, or if neither is known.
   the grid element.
   <td>Histograms, scatterplots, images for mip-maps, images in contexts in
   which a pixel can be correctly thought of as "a little square", volumes
-  as a grid of cuberilles.
+  as a grid of cuberilles, in which the logical element is a cube with
+  a single value at the center.
 <tr>
   <td>"<tt>node</tt>"
   <td>The location of the sample is at the boundary between grid elements.
-  <td>Volumes as a grid of "voxels", and pretty much any multi-dimensional
-  signal processing context in which something other than nearest neighbor
-  filtering is being applied.
+  <td>Volumes as a grid of "voxels", in which the logical element is a 
+  cube with a value at each of its eight corners.
 <tr>
   <td>"<tt>???</tt>"
   <td>Centering information for this axis is either meaningless or unknown
@@ -1343,9 +1337,9 @@ and lookup tables, the axis labels can name the quantity associated
 with each axis.  The label strings aren't otherwise parsed or
 interpreted by functions that operate on nrrd arrays, other than to
 simply associate a label with an axis through all operations in which
-an axis is logically preserved.  For example, slicing a nrrd with
-labels "X", "Y", and "Z" along axis 2 should result in a nrrd with
-labels "X" and "Y".
+an axis is logically preserved.  For example, if we take a a nrrd with
+labels "X", "Y", and "Z", and we slice along axis 2, the result should
+be a nrrd with labels "X" and "Y".
 
 <p>
 
@@ -1392,7 +1386,9 @@ units of the world space associated with the <tt>spacings</tt>,
 in which every axis is spatial, and logically lives in the same space,
 the units information will unfortunately be repeated for all axes.
 Having separate units for all axes is more compelling in the case of
-multi-dimensional scatterplots and spectral image data.
+multi-dimensional scatterplots, spectral image data, and what
+<b>nrrd</b> calls "axis histograms", which are histograms along one
+axis but spatially varying along all other axes.
 
 <p>
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>
