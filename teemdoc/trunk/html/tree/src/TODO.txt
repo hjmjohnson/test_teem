@@ -1,13 +1,8 @@
+image registration tool for small translational errors
 
 apparent problem w/ gage probing (0,0,0) in a cell-centered thickness-1 volume
 gageIv3Fill: padded size = (258,258,3);
     fd = 4; point (pad: 1) coord = (1,1,0) --> bidx = -66564
-
-nrrd: verbose message to confirm directIO success
-
-nrrd: extract min, max, hasNonExist from nrrd struct, create nrrdRange
-
-nrrd: key/value pairs
 
 air: make floating point stuff more like C++: lots of per-arch #defines
 
@@ -15,18 +10,12 @@ bin/unu: valgrid parsing of encoding stuff
 
 echo: test textured lights
 
-nrrd: matlab reader/writer for raw and ascii formats
-
 bin/emap: allow generating envmaps useful for specular highlights
 
 mite: add diffuse and specular envmape
 
 gage: consider changing gageProbe() to take position both in index and
 unit world space, since many programs only care about unit world space
-
-limn: make it smarter- so that joining parts together is possible in a
-way that facilitates transformations and correct drawing.  This really
-requires general data structures for 2-D graphics primatives...
 
 bin: create "segprobe" analog to vprobe and pprobe
 
@@ -40,27 +29,24 @@ DTInspect:
  - add plane of glyphs
  - fix normals on isosurface
 
+leaf: do it
+
+limn: make it smarter- so that joining parts together is possible in a
+way that facilitates transformations and correct drawing.  This really
+requires general data structures for 2-D graphics primatives...
+
 make: make sure that test programs actually link against the development
       library instead of the installed one.
 
 make: finish documenting how GNUMake works for teem
 
-leaf: do it
-
 unrrdu: standardize hest framework for doing unu/gkms/tend style programs
-
-nrrd: enable imagemagick-style format flagging on filenames, thereby
-obviating "unu save -f pnm" steps in pipes to standard out
 
 mrender: deal with vectors
 
 air: make airOneLine return number of bytes read; current return
   of string length is entirely redundant with return of strlen()
   and then enable the ftell() check after PNG magic read
-
-nrrd: support Analyze format
-nrrd: support FITS format
-nrrd: support TIFF format
 
 dye: colormaps
 
