@@ -133,13 +133,17 @@ input or output.  Stdin and stdout are both represented to
 <tt>unu</tt> by a single dash, "<tt>-</tt>"; whether it means stdin or
 stdout is clear from context.
 
-<p>
+<p> The encoding produced by all <tt>unu</tt> commands is raw.
+The exception to this is "<tt>unu save</tt>", which has a 
+"<tt>-e</tt>" option to control the output encoding.  This is
+the only way to control encoding with <tt>unu</tt>.
 
-You can control output nrrd file format with the filename extension
-supplied to the "<tt>-o</tt>" option.  This is also how to save the
-output nrrd with a detached header.  The interpretation of filename
-extension is according to the table below.  Every command except
-"<tt>unu make</tt>" conforms to this behavior.
+<p> You can control output nrrd file format with the filename
+extension supplied to the "<tt>-o</tt>" option.  This is also how to
+save the output nrrd with a detached header.  The interpretation of
+filename extension is according to the table below.  Every command
+except "<tt>unu make</tt>" conforms to this
+behavior.
 
 <table border=1>
 <tr>
@@ -152,20 +156,22 @@ extension is according to the table below.  Every command except
 
 <tr>
 <td>"<tt>.pgm</tt>"
-<td>PGM image file
+<td>PGM image file, raw encoding
 
 <tr>
 <td>"<tt>.ppm</tt>"
-<td>PPM image file
+<td>PPM image file, raw encoding
 
 <tr>
 <td>"<tt>.nhdr</tt>"
 <td colspan=3>NRRD file with
-<a href="../nrrd/format.html#sect3">detached header</a>
+<a href="../nrrd/format.html#sect3">detached header</a>,
+raw encoding
 
 <tr>
 <td>"<tt>.nrrd</tt>", anything else
-<td>NRRD file with attached header
+<td>NRRD file with attached header,
+raw encoding
 
 </table>
 
@@ -174,7 +180,7 @@ extension is according to the table below.  Every command except
 See the <a href="../nrrd/otherformat.html#readwrite">Reading and
 Writing non-NRRD files</a> section of <a
 href="../nrrd/otherformat.html">NRRD-Compatible File Formats</a> for
-details.  
+details.
 
 <p> If the output is not being written to a file, but sent to stdout,
 then "<tt>unu save</tt>" must be used to force a particular format.
