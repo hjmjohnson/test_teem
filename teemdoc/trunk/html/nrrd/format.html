@@ -212,7 +212,7 @@ and then the information describing the field "&lt;<i>desc</i>&gt;"
 (called the field descriptor).  All field identifiers are case
 insensitive.  Many of the field descriptors are also case
 insensitive, the exceptions are the field descriptors containing
-strings: the <tt>content</tt>, <tt>labels</tt>, <tt>units</tt>, and
+strings: the <tt>content</tt>, <tt>labels</tt>, <tt>units</tt>, <tt>space units</tt>, and
 <tt>sample units</tt> fields.  Whitespace (that is not part of the
 previous line's termination) is not allowed before a field
 identifier. Extra whitespace after the field descriptor and before the
@@ -526,7 +526,7 @@ descriptors (for example, "<tt>uchar</tt> is the same as
 "<tt>unsigned&nbsp;char</tt>").  Quotes are used to delimit the field
 descriptors in the explanation of their meaning; quotes are not part
 of the descriptor itself (except for the <a
-href="#labels"><tt>labels</tt></a> and <a
+href="#labels"><tt>labels</tt></a> and various <a
 href="#units"><tt>units</tt></a> specifications, in which the
 descriptors (strings) are delimited by quotes).
 
@@ -692,7 +692,7 @@ given explicitly, in the NRRD header, one filename per line, in the
 line starting after data file field specification, until the end 
 of file.  Thus, this form of the field specification <b>must</b> be
 the last specification of the header.  If you have a single detached
-datafile whose name is unfortunate to be "<tt>LIST</tt>", you can
+datafile whose name is unfortunate enough to be "<tt>LIST</tt>", you can
 still refer to it by "<tt>data file: ./LIST</tt>".
 
 </ol>
@@ -969,7 +969,7 @@ vector of the matrix transform.  By being specific to the center of
 the sample, this is independent of the cell- versus node-centering of
 the data.  This field conveys the same information as the "Image
 Position" (0020,0032) field of a DICOM file, except the space in which
-the vector coordinates are given need not by the DICOM-specific
+the vector coordinates are given need not be the DICOM-specific
 LPS space.
 
 <p>
@@ -984,7 +984,7 @@ space origin: (0.0,1.0,0.3)
 
 <a name="spacedirections"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
-space directions: "&lt;<i>vector[0]</i>&gt;" "&lt;<i>vector[1]</i>&gt;" ... "&lt;<i>vector[dim-1]</i>&gt;"
+space directions: &lt;<i>vector[0]</i>&gt; &lt;<i>vector[1]</i>&gt; ... &lt;<i>vector[dim-1]</i>&gt;
 </pre></blockquote>
 <ul>
 <li> Always optional, but is a necessary part of defining orientation
@@ -997,7 +997,7 @@ direction and spacing associated with each axis of the array.  Unlike
 the "direction cosines" given in the "Image Orientation" (0020,0037)
 field of a DICOM file, these vectors are not unit-length: the spacing
 between samples is recovered as the magnitude of the vector.
-format of these vectors is the same as that of the "<tt>space origin</tt>"
+The format of these vectors is the same as that of the "<tt>space origin</tt>"
 specification.  For axes whose samples are not distributed in space
 (such as three samples of an axis giving RGB colors), the vector may
 be given as "<tt>none</tt>".  This is an example of how the
