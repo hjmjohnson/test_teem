@@ -80,9 +80,17 @@ architectures.
 The "pre-built" files do not include the source or the documentation.
 They contain only <tt>bin</tt>, <tt>lib</tt>, and <tt>include</tt>
 directories into which all the required teem files have been
-copied/compiled.  In all of these except Windows, all the programs
-have been statically linked, and <b>nrrd</b> has been compiled with
-both compression encodings enabled.
+copied/compiled.  On all architectures (including Windows), all the
+programs have been statically linked, and <b>nrrd</b> has been
+compiled with gzip/zlib and bzip2 compression, as well as PNG support.
+<b>Hoover</b>, however, is not pre-compiled with pthread support.
+
+<p>
+
+As of version 1.5.0, downloads are coming from the
+<a href="http://sourceforge.net/project/showfiles.php?group_id=85445">
+"Project: Teem: File List"</a> at <a
+href="http://sourceforge.net">Sourceforge</a>.
 
 <p>
 
@@ -99,14 +107,46 @@ both compression encodings enabled.
     <hr noshade>
 <tr>
   <td align=left valign=middle>
-    <font size="+1">teem-1.5beta2</font><br>
-    <small>(Planned release Dec. 9 2002)</small><br>
+    <font size="+1">teem-1.5</font><br>
+    <small>(Released September 9, 2003)</small><br>
+
+Source:
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.5.0.tar.gz?download">Unix</a> | 
+<a href="">Windows</a>
+
+<br>
+
+Pre-built: 
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.5.0-linux.tar.gz?download">GNU/Linux</a> |
+<a href="">Windows</a> |
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.5.0-cygwin.tar.gz?download">Cygwin</a> |
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.5.0-darwin.tar.gz?download">Darwin</a> |
+Solaris |
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.5.0-irix6.n32.tar.gz?download">Irix6.n32</a> |
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.5.0-irix6.64.tar.gz?download">Irix6.64</a>
 
   <td>
   <td align=left>
-    Support for <a href="http://www.libpng.org/pub/png/">PNG</a> images
-    and VTK "STRUCTURE_POINTS" datasets
-    in <a href="../nrrd/index.html"><b>nrrd</b></a>, minor bugfixes.
+<ul>
+<li> Lots of small bugfixes
+<li> <a href="../nrrd/index.html"><b>nrrd</b></a>/
+     <a href="../unrrdu/index.html"><tt>unu</tt></a>:
+    now supports <a href="http://www.libpng.org/pub/png/">PNG</a> images
+    and VTK's <tt>STRUCTURE_POINTS</tt> datasets; 
+    added <tt>nrrdSplice</tt>, <tt>nrrdInset</tt> functions, and a 
+    set of functions for doing connected components, added windowed sinc
+    kernels, made API more consistent
+<li> <a href="../echo/index.html"><b>echo</b></a>: 
+     completely resurrected and usable
+<li> <a href="../ell/index.html"><b>ell</b></a>:
+     inverse and pseudo-inverse for (dense) matrices
+<li> <a href="../gage/index.html"><b>gage</b></a>:
+     re-organized and easier to use
+<li> <a href="../mite/index.html"><b>mite</b></a>:
+     first time its actually usably finished
+<li> <a href="../ten/index.html"><b>ten</b></a>:
+     initial support for fiber tracking, more glyph-based viz, and the 
+     <tt>tend</tt> command-line program (like <tt>unu</tt> for <b>nrrd</b>).
 
 <tr><td><hr noshade><td><td>
 <tr>

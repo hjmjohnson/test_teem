@@ -87,6 +87,16 @@ which printed out this error information is (copied from in
   }
 </pre></blockquote>
 
+Error messages can be transfered from one key to another, as in this
+case, where a <b>nrrd</b> error propagated to <b>limn</b>:
+<blockquote><pre>
+test/tcamanim: trouble making camera path:
+[limn] limnCameraPathMake: trouble creating time warp spline
+[limn] limnSplineCleverNew: couldn't create spline
+[limn] limnSplineNew: given nrrd has problems
+[limn] [nrrd] nrrdCheck: nrrd has NULL data pointer
+</pre></blockquote>
+
 <p>
 
 Text-based error messages like this have benefits and drawbacks.  The
