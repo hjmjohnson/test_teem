@@ -36,10 +36,9 @@ GK's C code: Teem on Windows
 <h2>Using Teem:</h2>
 
 On Windows all the <b>teem</b> libraries are built into one monolithic
-DLL and an import library that <b>teem</b> users can link against.  While 
-<b>teem</b> normally builds about a dozen little <a
-href="./bin/index.html">command-line programs</a>, only the few listed
-below are currently included in the Windows distribution.
+DLL and an import library that <b>teem</b> users can link against.
+The teem <a href="./bin/index.html">command-line utilities</a> 
+are also built together with these libraries.
 
 <p>
 
@@ -107,20 +106,7 @@ the Build menu's Configuration Manager item.
 </ol>
 
 The libraries and executables are compiled in the win32/lib and win32/bin
- subdirectories and comprise:
-  <ul>
-  <li>lib/teem.dll and lib/teem.lib<br>
-  lib/teemd.dll and lib/teemd.lib are the Debug versions
-  <li>bin/<a href="unrrdu/index.html">unu</a>.exe: Utah Nrrd Utilities.
-  Command-line nrrd interface, piping works as of version 1.5beta1.
-  <li>bin/<a href="bane/intro/index.html">gkms</a>.exe: 
-  Semi-automatic generation of transfer functions.
-  <li>bin/<a href="bin/qbert/index.html">qbert</a>.exe:
-  Generating volumes for <a href="http://www.cs.utah.edu/~jmk/simian/">Simian</a>
-  <li>bin/<a href="bin/mrender/index.html">mrender</a>.exe:
-  Command-line volume rendering without lighting or transfer functions.
-  </ul>
-By default these files and the public headers are copied into the
+ subdirectories.  By default these files and the public headers are copied into the
 bin, lib, and include subdirectories of the teem root directory during
  the build.  Optionally, you can set the $TEEM_DEST environment variable to
   customize the installation.  Note that the directory $TEEM_DEST
