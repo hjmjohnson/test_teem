@@ -1,0 +1,90 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Visible Female Color Data Processing: Preliminaries
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="head80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <font size="-1"><a href="./index.html">Visible<br>Female</a></font>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Preliminaries</b></h2>
+</table>
+
+<p>
+
+The data used for this is available from the <a
+href="http://www.nlm.nih.gov/">National Library of Medecine</a>'s <a
+href="http://www.nlm.nih.gov/research/visible/visible_human.html">Visible
+Human Project</a>; see <a
+href="http://www.nlm.nih.gov/research/visible/getting_data.html">this
+page</a> for instructions.
+
+<p>
+
+All the command examples (in <tt>mono-spaced font</tt> on the
+following pages) assume that you are in the directory where you have a
+few gigs of spare disk space, as cropped copies of the slices will be
+put there.  
+
+<p>
+
+The command examples also assume that the all the compressed slice
+images for the head (such as <tt>avf1054b.raw.Z</tt>) can be found in
+a directory called "<tt>data/</tt>"; whether this is a symlink or a
+real sub-directory is not an issue.  All the PNG images generated will
+be put in another sub-directory (or link to one), called
+"<tt>doc/</tt>".  This was more for my benefit, so that I could update
+the documentation easily as I created the examples.
+
+<p>
+
+One alias used in many of the examples is for making a PNG image
+with ImageMagick's convert program:
+<blockquote><pre>
+alias topng "unu save -f pnm | convert PNM:- "
+</pre></blockquote>
+
+<p>
+
+If you plan on following along by executing all the commands that are
+included on each page, be sure to run them all, and to run them in 
+order.  Various files and aliases are set up in earlier stages that
+will be used at later stages.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Visible Female Color Data Processing: Inspection
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="head80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <font size="-1"><a href="./index.html">Visible<br>Female</a></font>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Inspection</b></h2>
+</table>
+<p>
+
+The individual slices are 2048x1216, with non-interleaved color, and
+compressed with Unix "<tt>compress</tt>".  Currently, <b>nrrd</b> has
+no "<tt>compress</tt>"-compatible encoding; the gzip and bzip2
+encodings in <b>nrrd</b> only handle those specific compression
+methods. Perhaps confusingly, the similarly named command-line tools
+(<tt>gzip</tt>, </tt>bzip2</tt>) automatically detect and handle
+multiple compression types. However, we can use <tt>zcat</tt> to
+uncompress the data, and then pipe this to <tt>unu make</tt>.
+
+<p> The following sequence can be used to inspect any one of the
+slices with <a href="http://www.trilon.com/xv/">xv</a>,
+<tt>avf1100a</tt> is just an example.  The image viewer doesn't have
+to be xv; it just needs to be able to take PPM images on stdin and
+display them.
+
+<blockquote><pre>
+zcat data/avf1100a.raw.Z \
+  | unu make -i - -t uchar -s 2048 1216 3 -e raw \
+  | unu permute -p 2 0 1 \
+  | unu save -f pnm | xv -
+</pre></blockquote>
+
+How this works: 
+<ul>
+
+<li> <tt><a href="../../unrrdu/make.html">unu make</a> ... </tt> The
+data is raw unsigned chars, so we use "<tt>-t uchar</tt>" and "<tt>-e
+raw</tt>".  Because the colors are not interleaved, the image values
+consist of three 8-bit images in succession, first for red, then
+green, then blue.  That means that the axis ordering is (X,Y,RGB), and
+this is the ordering of the axis sizes given to "<tt>-s</tt>".
+
+<li> <tt><a href="../../unrrdu/permute.html">unu permute</a> ... </tt>
+Most image formats make the colors the fastest axis, not the slowest
+axis, so we need to re-arrange the axes.  The numbers here give the
+new ordering of the old axes.  What was axis 2 (color, the third axis)
+is now the first axis, going from (X,Y,RGB) to (RGB,X,Y).
+
+<li> <tt><a href="../../unrrdu/save.html">unu save</a> ... </tt> This
+puts the data into PNM format (instead of the default NRRD format) and
+passes it on to <tt>xv</tt> for display.
+
+</ul>
+
+<p>
+
+In many of the following examples, an image will be saved to PNG file
+with ImageMagick's "convert" program, via
+<blockquote><pre>
+ ... | unu save -f pnm | convert PNM:- blah.png
+</pre></blockquote>
+This last step is something it would make sense to create an alias for:
+<blockquote><pre>
+alias topng "unu save -f pnm | convert PNM:- "
+</pre></blockquote>
+
+For example, one of the slices can be downsampled and saved to PNG as
+follows:
+
+<blockquote><pre>
+zcat data/avf1100a.raw.Z \
+  | unu make -i - -t uchar -s 2048 1216 3 -e raw \
+  | unu resample -k cubic:0,0.5 -s x0.2 x0.2 = \
+  | unu permute -p 2 0 1 | topng doc/<a href="avf1100a.th.png">avf1100a.th.png</a>
+</pre></blockquote>
+
+<ul>
+<li> <tt><a href="../../unrrdu/resample.html">unu resample</a>
+... </tt> This does axis-aligned resampling with the given kernel,
+"<tt>-k cubic:0,0.5</tt>", a particular member of the
+Mitchell/Netravali BC-family of cubic kernels (B=0,C=0.5), better
+known as the Catmull-Rom kernel.  We only want to downsample in the
+spatial axes X and Y by a factor of 0.2, which is signified to
+"<tt>-s</tt>" by "<tt>x0.2</tt>" for axis 0 and 1.  However, we don't
+want to do anything between the colors; axis 2 should be left just as
+it is.  This is signified to "<tt>-s</tt>" by "<tt>=</tt>".
+</ul>
+
+<center>
+<img alt="" width=409 height=243 src="avf1100a.th.png">
+</center>
+
+<p>
+
+Inspecting slices in this manner allows one to see that the shoulders begin
+around slice <tt>avf1215a</tt>:
+
+<blockquote><pre>
+zcat data/avf1215a.raw.Z \
+  | unu make -i - -t uchar -s 2048 1216 3 -e raw \
+  | unu resample -k cubic:0,0.5 -s x0.2 x0.2 = \
+  | unu permute -p 2 0 1 | topng doc/<a href="avf1215a.th.png">avf1215a.th.png</a>
+</pre></blockquote>
+<center>
+<img alt="" width=409 height=243 src="avf1215a.th.png">
+</center>
+
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: unu heq
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h1>&nbsp;&nbsp;<b><tt>unu heq</tt></b></h1>
+</table>
+
+<blockquote><pre>
+unu heq: Perform histogram equalization. If this seems to be doing nothing,
+try increasing the number of histograms bins by an order of magnitude or two
+(or more). Or, use "unu gamma" to warp the values in the direction you know
+they need to go. Either of these might work because extremely tall and narrow
+peaks in the equalization histogram will produce poor results.
+
+Usage: unu heq -b &lt;bins&gt; [-s [&lt;bins&gt;]] [-a &lt;amount&gt;] [-m &lt;filename&gt;] \
+       [-i &lt;nin&gt;] [-o &lt;nout&gt;]
+
+    -b &lt;bins&gt; = # bins to use in histogram that is created in order to
+                calculate the mapping that achieves the equalization. (int)
+  -s [&lt;bins&gt;] = # bins in value histogram to ignore in calculating the
+                mapping. Bins are ignored when they get more hits than other
+                bins, and when the values that fall in them are constant. This
+                is an effective way to prevent large regions of background
+                value from distorting the equalization mapping.
+                (optional int); default: "0"
+  -a &lt;amount&gt; = extent to which the histogram equalizing mapping should be
+                applied; 0.0: no change, 1.0: full equalization (float);
+                default: "1.0"
+-m &lt;filename&gt; = The value mapping used to achieve histogram equalization is
+                represented by a univariate regular map. By giving a filename
+                here, that map can be saved out and applied to other nrrds
+                with "unu rmap" (string)
+     -i &lt;nin&gt; = input nrrd
+    -o &lt;nout&gt; = output nrrd (string); default: "-"
+</pre></blockquote>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

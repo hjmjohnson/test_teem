@@ -1,0 +1,464 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: hest: Usage Details
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/hest80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">hest</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Usage Details</b></h2>
+</table>
+<p>
+
+Knowing the <a href="term.html">terminology</a> and <a
+href="usage1.html">usage basics</a>, here is a detailed description of
+each of the different kinds of options which <b>hest</b> can deal
+with.  This is the information you'd need to set the elements of a
+<tt>hestOpt</tt> struct, either by static initialization, or by a call
+to <tt>hestOptAdd()</tt>.  Essentially, this page describes in detail
+the somewhat complicated behavior of the <a
+href="ref.html#hestParse"><tt>hestParse()</tt></a> function.
+
+<ol>
+
+<li>
+
+The first thing that happens in <tt>hestParse()</tt> is to verify
+that the <tt>hestOpt</tt> array itself is valid.  This is the
+same check that <tt>hestOptCheck()</tt> does.
+
+<li>
+
+The response file arguments are parsed.  But if the
+<tt>respFileEnable</tt> flag of the <tt>hestParm</tt> struct is zero
+(false), then no response files are parsed, and this step is skipped.
+Otherwise, any argument that starts with the "<tt>@</tt>" character is
+assumed to be a response file name (But the role of <tt>@</tt> is not
+set in stone; you can alter either the <tt>respFileFlag</tt> field in
+the <tt>hestParm</tt> struct, or you can alter the
+<tt>hestRespFileFlag</tt> global.)  You can have as many response file
+arguments on the command line as you want, where ever you want.  The
+response files are parsed as follows:
+<ul>
+<li> The file is read one line at a time until the end of the file
+is reached.
+<li> Everything after the pound character ("<tt>#</tt>") is ignored,
+as is the <tt>#</tt> itself.  This is how you can comment your
+reponse files.  The role of <tt>#</tt> is not set it stone: you can
+alter the <tt>respFileComment</tt> field of the <tt>hestParm</tt>
+struct, or you can alter the <tt>hestRespFileComment</tt> global.
+<li> Blank lines are ignored.
+<li> Each line is parsed into white-space seperated tokens: these
+are the arguments you would normally type on the command line.
+<li> As each line is parsed, the new arguments  are effectively appended
+to the list of arguments parsed so far.  There is no memory of which
+line the different arguments came from.
+<li> All white space is considered equal, and is compressed to a 
+single space character.
+<li> The big long list of space-seperated arguments is effectively
+inserted into the original command line, in place of the where
+the <tt>@</tt>-prefixed response file name had been.
+</ul>
+
+<li>
+
+The flagged options (the flag and its parameters) are extracted
+from the command line.  <tt>hestParse()</tt> has to decide which
+arguments belong to which flagged options, so that it can extract
+what it should.  For stand-alone flags, single fixed parameter options,
+and multiple fixed parameter options, this is simple.  For single
+and multiple variable parameter options, it uses four ways to 
+find the end of the parameter list:
+<ul>
+<li> The end of the command line obviously signals the end of a
+parameter list.
+<li> An argument recognized as a flag for the current <tt>hestOpt</tt>
+array also terminates the parameter list.  This is risky only when
+your variable parameters are either strings which can be mistaken
+for flags, or are negative numbers.  Oh well.
+<li> An argument consisting only of two hyphens ("<tt>--</tt>") also
+terminates the paramter list.  When <tt>--</tt>
+performs the role of terminating a parameter list, it is removed
+from the command-line.  <tt>--</tt> isn't set in stone: you can
+set the second character, after the initial hyphen, to something
+else, either by altering the <tt>varParamStopFlag</tt> field of
+the <tt>hestParm</tt> struct, or by altering the <tt>hestVarParamStopFlag</tt>
+global.
+<li> The <tt>max</tt> field of the <tt>hestOpt</tt> struct determines
+the maximum number of parameters to be associated with the option.
+If <tt>max</tt> arguments are parsed without any of the previous
+three rules going into effect, then this obviously terminates
+the parameter list.
+</ul>
+A flagged option can appear multiple times on the command-line, or
+in a response file and the command-line.  Only the last occurance
+will be used.  Because the arguments found in response files are
+effectively inserted into the command line at the point the response
+file is named, this means that the original command line can over-ride,
+or can be over-ridden by, arguments in the response files, depending
+on the ordering. 
+
+
+<li> The remaining arguments are parsed as the unflagged options.  Unlike with
+flagged options, the order of the unflaged options in the
+<tt>hestOpt</tt> array is significant: the <tt>hestOpt</tt> array will be
+traversed, and each unflagged option will cause some arguments to be
+extracted from the command line.  Again, there is the same problem of
+determining which arguments belong to which options.  Currently, for
+simplicity's sake, there is a simple rule: you can have only one
+variable parameter unflagged option.  This means there is an
+unambiguous way to parse the remaining arguments into parameters for
+the different options.
+
+</ol>
+
+All the actions described above are performed on <em>copies</em> of
+the given <tt>argc</tt>, <tt>argv</tt> arguments passed to
+<tt>hestParse()</tt>.  They are left untouched.
+
+<p>
+
+Once values have been parsed and <tt>hestParse()</tt> has returned,
+there is no way of knowing whether the values set came from 
+the command-line or the given default information.
+
+<p>
+
+The strings from the comman-line are parsed into values using
+the <tt>airParseStr[]</tt> array of functions.  These are
+essentially wrappers around the system's <tt>sscanf</tt>
+function, with two exceptions:
+<ol>
+<li> When parsing <tt>float</tt>s or <tt>double</tt>s, these
+will recognize a strings containing "nan", "inf", "+inf",
+and "-inf" as the IEEE 754 special floating point values.
+<li> The booleans are actually treated as integers, but "on", "yes", "y",
+"true", "t", and "1" are all parsed (in a <em>case-insensitive</em>
+manner) as 1, and "off", "no", "n", "false", "f", and "0" are all
+parsed as 0.
+</ol>
+
+<p>
+
+For reference, here again is the relevent section of the <tt>hestOpt</tt>
+struct definition (from <tt>hest.h</tt>):
+<pre>
+  char *flag,           /* how the option is identified on the cmd line */
+    *name;              /* simple description of option's parameter(s) */
+  int type,             /* type of option (from airType enum) */
+    min, max;           /* min and max # of parameters for option */
+  void *valueP;         /* storage of parsed values */
+  char *dflt,           /* default value written out as string */
+    *info;              /* description to be printed with "glossary" info */
+  int *sawP,            /* used ONLY for multiple variable parameter options
+                           (min &lt; max &gt; 2): storage of # of parsed values */
+</pre>
+Some of the fields in the <tt>hestOpt</tt> struct are the same
+regardless of the kind of option, or are the same for nearly all kinds
+of options.  They are described here, and not in the detailed
+explanation of each kind (below).  Exceptions to these general rules
+are noted below.
+
+<ul>
+
+<li><tt>flag</tt>: This string contains the short, and possibly long,
+form of the flag.  If <tt>flag</tt> is NULL, then there is no flag
+whatsoever, and the option is unflagged.  Otherwise ...
+
+<ul>
+<li> The short form of the flag is prefixed by a single hyphen
+("<tt>-</tt>"); the long form is prefixed by two hyphens
+("<tt>--</tt>").  If there is no "<tt>,</tt>" in <tt>flag</tt>, then
+the flag only exists in short form. If <tt>flag</tt> contains a comma,
+then the characters before the comma
+constitute the short form of the flag, and the stuff after the comma
+is the long form of the flag.
+
+<li> Flags are case sensitive.  
+
+<li> By their nature, unflagged options must appear on the command
+line, while flagged options can either be mandatory or optional.
+Whether or not a flagged option is mandatory or optional depends on
+whether default information is given.  If <tt>dflt</tt> is NULL, then
+the option is mandatory; if <tt>dflt</tt> is non-NULL, then the option
+is optional.
+
+<li> Actually, the meaning of the <tt>,</tt> character in seperating
+the short and long form of the flag is not fixed in
+stone: the character signifying the break between the long and short
+form of the flag can be set as the <tt>multiFlagSep</tt> field of the
+<a href="">hestParm</a> struct, or by setting the
+<tt>hestMultiFlagSep</tt> global.
+
+</ul>
+
+<li><tt>type</tt>: An integer value from the <tt>airType</tt> enum.
+
+<li><tt>valueP</tt>:
+<ul>
+<li> This is always a pointer or address of some kind.
+<li> Whenever memory is allocated by <tt>hestParse()</tt>, <tt>valueP</tt>
+or <tt>*valueP</tt> will be set to point to it.  Because the interpretion
+of <tt>valueP</tt> is different for each option kind and type,
+you probably shouldn't try to free this memory yourself.  It is simplest
+to just pass the same <tt>hestOpt</tt> array to <tt>hestParseFree()</tt>,
+and it will free any and all memory allocated by <tt>hestParse()</tt>.
+<li>Even if it turned out that no memory was allocated,
+<tt>hestParseFree()</tt> will know that, and there is no harm in calling
+it needlessly.
+<li> For all options, <tt>valueP</tt> can be NULL, so that the option will
+parsed, but no values will be set, and no memory is allocated
+</ul>
+
+<li><tt>dflt</tt>: How default information is provided.  As mentioned
+above, whether <tt>dflt</tt> is NULL or not determines whether flagged
+options are mandatory or optional.  Default information is ignored
+for unflagged options, because unflagged options are always mandatory.
+
+<li><tt>info</tt> is the string printed as part of the detailed
+explanation of the options, generated by <a
+href="ref.html#hestGlossary"><tt>hestGlossary()</tt></a>.  It is
+always optional: it can be set to NULL if no detailed information is
+needed.
+
+<li><tt>sawP</tt> is ignored for all kinds of options except
+multiple variable parameter.
+
+</ul>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<hr noshade align=center width="70%">
+<font size="+2"><b>Stand-alone flags:</b></font>
+(<tt>min == 0; max == 0</tt>)<p>
+<ul>
+<li><tt>flag</tt>: (see general rules above)
+<li><tt>name</tt>: Ignored (there are no parameters to describe)
+<li><tt>type</tt>: Ignored (<tt>int</tt> is assumed).
+<li><tt>valueP</tt>: The address of an <tt>int</tt>.  If the flag appears
+on the command line, <tt>*valueP</tt> is set to 1; if it does not appear,
+<tt>valueP</tt> is set to 0.
+<li><tt>dflt</tt>: Ignored.  (Stand-alone flags are inherently optional,
+and there are no parameters to give values for.)
+</ul>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<hr noshade align=center width="70%">
+<font size="+2"><b>Single fixed parameter:</b></font>
+(<tt>min == 1; max == 1</tt>)<p>
+<ul>
+<li><tt>flag</tt>: (see general rules above)
+<li><tt>name</tt>: Must be non-NULL.  A succinct (one-word) description
+of the single parameter to be supplied for this option.
+<li><tt>type</tt>: (see general rules above)
+<li><tt>valueP</tt>: 
+  <ul>
+  <li> For everything other than a string, this should
+  be the address of a variable with the type implied by the <tt>type</tt>
+  member above.  <pre>float v;  ---&gt; &amp;v</pre>
+  <li> For strings, this should be the address of a <tt>char*</tt>:
+  <pre>char *s;  ---&gt; &amp;s</pre>
+  <li> <tt>hestParse()</tt> set <tt>*valueP</tt> to the parsed and newly
+  allocated string: <u>Memory will
+  be allocated</u>.
+  <li> The above is true regardless of whether the string was parsed from
+  the command-line or from the default.
+  <li> Use NULL to tell <tt>hestParse()</tt> to discard the parameter after
+  parsing.  No value is set, nor is any string allocated.
+  </ul>
+<li><tt>dflt</tt>: If <tt>dflt</tt> is non-NULL, it should contain
+the string representation of a single value of the type indicated by
+the <tt>type</tt> member.
+</ul>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<hr noshade align=center width="70%">
+<font size="+2"><b>Multiple fixed parameters:</b></font>
+(<tt>min == max; max &gt; 1</tt>)<p>
+
+<ul>
+<li><tt>name</tt>: Must be non-NULL.  This should be a succinct representation
+of the option's parameters, and this representation should
+ explicitly indicate that multiple
+parameters are required.  This helps <tt>hestUsage()</tt> generate the most
+useful usage information.  For example, if you needed to supply X and Y
+image resolution as two integer parameters, then the <tt>name</tt> should
+be something like "<tt>resX resY</tt>", and not just "<tt>resolution</tt>".
+<li><tt>type</tt>: (see general rules above)
+<li><tt>valueP</tt>:
+  <ul>
+  <li> This must be the base address of an <u>already allocated</u> array.
+  The reason the array should be already allocated is that you should know
+  exactly how many elements you want, or else you wouldn't be using a
+  multiple fixed parameter option.
+  <li> For all non-string <tt>type</tt>s, <tt>valueP</tt> should be simply
+  the variable representing the pre-allocated array:
+  <pre>float v[3]; ---&gt; v</pre>
+  The parsed values are stored in
+  the individual <tt>valueP[i]</tt> elements of the array (after appropriate
+  casting).  No memory is allocated.
+  <li> For strings, the type of <tt>valueP</tt> should be <tt>char**</tt>,
+  kind of like <tt>argv</tt> itself:  <pre>char *str[3]; ---&gt; str</pre>
+  Each <tt>valueP[i]</tt> element of the
+  array is set to a parsed and newly allocated string: <u>Memory will be
+  allocated></u>.
+  Unlike <tt>argv</tt>, this can not be a NULL-terminated array of 
+  <tt>char*</tt>s, because the array allocation size should be fixed
+  (by the caller) at the number of parameters.
+  <li> The above is true regardless of whether the string was parsed from
+  the command-line or from the default.
+  <li> Use NULL to tell <tt>hestParse()</tt> to discard the parameter after
+  parsing.  No values are set, nor are any strings allocated.
+  </ul> 
+
+<li><tt>dflt</tt>: If <tt>dflt</tt> is non-NULL, it should contain
+the string representation of a <tt>min</tt> values (or <tt>max</tt>
+values, same thing) of the type indicated by the <tt>type</tt> member.
+The different values, including strings, are delimited by white space.
+Currently, quoted or escaped white space (so as to include white space
+in strings) is not intelligently handled.
+
+</ul>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<hr noshade align=center width="70%">
+<font size="+2"><b>Single variable parameter:</b></font>
+(<tt>min == 0; max == 1</tt>)<p>
+
+<ul>
+
+<li><tt>name</tt>: Exactly the same as for single fixed parameter.
+
+<li><tt>type</tt>: (see general rules above)  Note, however, that
+this kind of option was not really intended to deal with strings.
+It is best suited for integer variables like verboseness or debug
+level.
+
+<li><tt>valueP</tt>: The type information is exactly the same
+as for single fixed parameter options.  How the value is set,
+however, is different.  If the option is <em>unflagged</em>:
+<ul>
+<li> If the option does not appear (that is, if the single parameter
+constituting the option does not appear), then the value is set
+to the default.  For strings, this means <u>memory is allocated</u>.
+<li> If the option does appear, the the value is set to the 
+command-line parameter.  For strings, this means <u>memory is allocated</u>.
+</ul>
+If the option is <em>flagged</em>:
+<ul>
+<li> If the option does not appear (that is, the flag does not
+appear), then the value is set according to the default.  For strings,
+this means <u>memory is allocated</u>.
+<li> If the flag appears, but it has no parameters, then:
+<ul>
+<li> For non-strings, the default is parsed, say, as value <tt>V</tt>,
+and then the value is set to <tt>!V</tt>, the logical "not" of the value.
+"Not" returns 0 (zero) for all non-zero values, and 1 (one) for zero.
+<li> For strings, the value is set to NULL.  No memory is allocated.
+</ul>
+<li> If the flag appears, and has the single parameter, then the value
+is set to that paramter.  For strings, <u>memory is allocated</u>.
+</ul>
+
+<li><tt>dflt</tt>: This is the exception to all the other kinds of
+options:  the default string is <em>required</em> for single variable
+parameter options.   This is because of the funny semantics of
+this kind of option.  
+
+</ul>
+
+<!-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -->
+<hr noshade align=center width="70%">
+<font size="+2"><b>Multiple variable parameters:</b></font>
+(<tt>min &lt; max; max &gt; 1</tt>)<p>
+
+<b>Note</b>: If you know ahead of time that you want at most, say,
+five parameters for an option, then you can set max as 5.  However, if
+there is no obvious upper limit to the number of parameters, then set
+<tt>max</tt> to -1.  <b>hest</b> internally interprets this as
+<tt>INT_MAX</tt>, from <tt>/usr/include/limits.h</tt>.  Setting
+<tt>min</tt> to 1 and <tt>max</tt> to -1 is the best way to support
+parsing the output of command-line filename expansion, as from
+"<tt>*.txt</tt>"
+
+<ul>
+<li><tt>flag</tt>: (see general rules above)
+<li><tt>name</tt>: Must be non-NULL.  Should be a succinct description
+of <em>one</em> of the option's parameters, or of the <em>minimum number</em>
+of parameters (<tt>min</tt>), whichever is greater.  The <tt>hestUsage()</tt>
+function will follow <tt>name</tt> with ellipses ("...") in order to
+represent the parameters that should constitute this option.
+
+<li><tt>type</tt>: (see general rules above)
+<li><tt>valueP</tt>:  <tt>hestParse()</tt> will allocate an array (and 
+in the case of strings, allocate each string element of the array), and
+set <tt>*valueP</tt> to the base address of that array.  If you know ahead
+of time how many parameters you want, then use a multiple
+<em>fixed</em> parameter option.
+<ul>
+  <li> For all non-string <tt>type</tt>s, <tt>valueP</tt> should be the
+  address of a variable which is a pointer to <tt>type</tt>:
+  <pre>float *vs; ---&gt; &amp;vs</pre>
+  In this case, <tt>*valueP</tt> (same as <tt>vs</tt>) will be set to the 
+  address of the newly allocated array of <tt>float</tt>s, and all the
+  <tt>v[i]</tt> elements are set to the parsed parameters.
+  <u>Memory is allocated</u> for the array.
+  <li> For strings, the type of <tt>valueP</tt> should be <tt>char***</tt>,
+  because it must be the address of a <tt>char**</tt> array:
+  <pre>char **strs; ---&gt; &amp;str</pre>
+  In this case, <tt>*valueP</tt> (same as <tt>strs</tt>) will be set to the
+  address of the newly allocated array of <tt>char*</tt>, and the elements
+  <tt>strs[i]</tt> are set to the parameters.  <u>Memory is allocated</u>,
+  both for the array of <tt>char*</tt>, and for the string elements 
+  themselves.  
+  <li> In contrast to multiple <em>fixed</em> parameter string
+  options, the <tt>char**</tt> array created by <tt>hestParse()</tt>
+  for multiple <em>variable</em> parameter string options
+  <em>is</em> NULL-terminated, like an <tt>argv</tt>.  This is to support
+  the usage of <tt>hestParse()</tt> to extract a set of flagged options,
+  and then put the remainder of the command-line into a new <tt>char**</tt>,
+  which can then be treated as a new <tt>argv</tt>.
+  <li> The above is true regardless of whether the string was parsed from
+  the command-line or from the default.
+  <li> Use NULL to tell <tt>hestParse()</tt> to discard the parameter after
+  parsing.  No values are set, nor are any strings allocated.
+</ul>
+
+<li><tt>dflt</tt>: Can be NULL or non-NULL; same rules as for
+multiple fixed parameters, except that the number of items in the 
+<tt>dflt</tt> string should obviously be in the allowable range
+(between <tt>min</tt> and <tt>max</tt>).
+
+</ul>
+
+<p><a href="http://validator.w3.org/check/referer">&nbsp;</a>
+
+</body>
+</html>
+
+

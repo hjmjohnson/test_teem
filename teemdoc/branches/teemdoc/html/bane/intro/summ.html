@@ -1,0 +1,135 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"> 
+<html>
+<head>
+<title>
+GK's C code: bane/gkms tutorial: Summary
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+
+<h2><a href="../"><img border=0 width=80 height=80
+src="../../img/bane80.jpg"></a><br>
+<small><small>&nbsp;</small></small><br>
+<tt><b>bane</b></tt>/<tt><b>gkms</b></tt> tutorial: Summary</h2>
+
+<blockquote>
+
+Here all the steps it took to go from a volume in non-nrrd format
+to an opacity function:
+
+<ol>
+
+<li><tt>crop engine.den.nhdr 59 207 20 227 0 M engine-crop.nrrd</tt><br>
+
+From the <a href="dataprep.html">preparing the data</a> section, we
+saw how to put a nrrd header on a different volume format in order to
+operate on it, such as cropping, using <tt>unrrdu</tt>.
+
+<p>
+<li><tt>gkms hvol engine-crop.nrrd engine-hvol.nrrd</tt><br>
+
+This made the <a href="hvol.html">histogram volume</a>.  This is the
+slowest step.
+
+<p>
+<li><b>optional</b>: 
+<tt>gkms scat engine-hvol.nrrd engine-vg.pgm engine-vh.pgm</tt><br>
+
+Making the <a href="scat.html">scatterplots</a> wasn't necessary, but
+hopefully it was educational.
+
+<p>
+<li><tt>gkms info engine-hvol.nrrd engine-info1.nrrd</tt><br>
+<tt>gkms info -d 2 engine-hvol.nrrd engine-info2.nrrd</tt><br>
+
+This <a href="info.html">distilled</a> out the essential information
+from the histogram volume.
+
+<p>
+<li><b>optional</b>:
+<tt>gkms pvg engine-info2.nrrd engine-pvg.ppm</tt><br>
+
+This made <a href="pvg.html">pretty pictures</a> of the boundary
+characteristics of the dataset, as measured by the histogram volume.
+
+<p>
+<li><tt>gkms opac -s 1.5 engine-info1.nrrd engine-opac11.nrrd</tt><br>
+<tt>gkms opac -s 1 -g 15 -m 1 engine-info2.nrrd engine-opac22.nrrd</tt><br>
+
+These are two of <a href="opac.html">opacity function</a> commands
+that were used.
+
+</ol>
+
+<p>
+
+This research has worked to reduce the numbers of parameter settings
+which are necessary to make a direct volume rendering.  Of course,
+there are some parameters which remain.  I view these three as
+the most important (in order of importance):
+
+<ol>
+<li><b>The boundary emphasis function</b>.  This is required, because it is
+via this function that an actual opacity assignment is possible.  
+One way to describe this research is that it has broken opacity function
+generation into two parts, a hard part and an easy part.  The hard part
+is largely automated, the easy part is the primary user control.
+
+<p>
+<li><b>gthresh, and sigma</b>.  These are parameters which control how
+the position function (distance map) is calculated from the histogram
+volume, and setting them to good values is pretty important in getting
+nice opacity functions out.
+
+<p>
+<li><b>Derivative inclusion</b>.  The histogram volume is not useful
+if it doesn't contain the important information about the boundaries,
+and this information is tied up in derivative measurements taken
+throughout the dataset.  The fidelity with which these measurements
+are represented in the histogram volume is determined by what range of
+derivative values are included in it.
+
+</ol>
+
+Here are some other parameters which matter:
+
+<ul>
+
+<li><b>Choice of second derivative measure</b>.  Actually, I view
+this as being part of a larger problem of determining the best way
+to measure complex higher order derivatives in volume data, and this
+is a research topic unto itself.
+
+<p>
+<li><b>Method of histogram volume distillation</b>.  I've usually used
+the mean, but experience has shown that the median or the mode work
+better on some datasets.
+
+<p>
+<li><b>Post-processing of the generated opacity function</b>.  The
+median filtering of the 2-D opacity function is one example of this,
+cropping out large regions by hand is another.
+
+</ul>
+
+... More experience/suggestions on how to set the remaining parameters as
+time permits ...
+
+
+
+</blockquote>
+<p>
+<a href="http://validator.w3.org/check/referer"><img border="0"
+src="../../img/valid-html32s.gif"
+alt="Valid HTML 3.2!" height="20" width="58"></a>
+</p>
+
+</body>
+</html>

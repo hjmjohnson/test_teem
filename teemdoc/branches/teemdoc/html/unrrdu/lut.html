@@ -1,0 +1,68 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: unu lut
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h1>&nbsp;&nbsp;<b><tt>unu lut</tt></b></h1>
+</table>
+
+<blockquote><pre>
+unu lut: Map nrrd through univariate lookup table (itself represented as a
+nrrd). The lookup table can be 1D, in which case the output has the same
+dimension as the input, or 2D, in which case the output has one more dimension
+than the input, and each value is mapped to a scanline (along axis 0) from the
+lookup table.
+
+Usage: unu lut -m &lt;lut&gt; [-r] [-min &lt;value&gt;] [-max &lt;value&gt;] [-t &lt;type&gt;] \
+       [-i &lt;nin&gt;] [-o &lt;nout&gt;]
+
+    -m &lt;lut&gt; = lookup table to map input nrrd through
+          -r = rescale the input values from the input range to the lut
+               domain, assuming it is explicitly defined
+-min &lt;value&gt; = Value to map to low end of lut. Defaults to lowest value found
+               in input nrrd. Explicitly setting this (and the same for the
+               max) is useful only with rescaling ("-r") or if map doesn't
+               know its domain (double)
+-max &lt;value&gt; = Value to map to high end of lut. Defaults to highest value
+               found in input nrrd. (double)
+   -t &lt;type&gt; = specify the type ("int", "float", etc.) of the output nrrd. By
+               default (not using this option), the output type is the lut's
+               type.
+    -i &lt;nin&gt; = input nrrd
+   -o &lt;nout&gt; = output nrrd (string); default: "-"
+</pre></blockquote>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

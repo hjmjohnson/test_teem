@@ -1,0 +1,142 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: General Information
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>General Information</h1>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="./index.html">teem</a></b>
+  <td>
+  <td>
+  <td>
+</table>
+
+<p>
+
+<h3>THIS IS UNFINISHED</h3>
+
+The inter-dependencies of the <b>teem</b> libraries has slowly
+converged according to my notion of what functionality is
+"fundamental" versus "specialized".  This is not a clear-cut
+distinction, but the present arrangement has proven successful.
+It is graphed here:
+<center>
+<a href="img/teemmap.gif"><img width=303 height=197 src="img/teemmaps.gif"
+alt="teem lib dependency graph"></a>
+</center>
+<b>air</b> is at the top because it depends on no other library
+(besides the system's math library).  Each edge represents a
+dependency, either from using data or functions provided by the higher
+library, or from requiring a data structure definition or
+<tt>#define</tt> from its header file.  Going from top to bottom, the
+libraries appear in exactly the same order that they are built.
+
+<ul>
+
+<li><b>Names of things</b>: Every library has a header (.h) file with
+the same name as the library.  <b>air</b> has <tt>air.h</tt>, and so
+forth.  Libraries may have additional header files; <b>nrrd</b> has
+both <tt>nrrd.h</tt> and <tt>nrrdDefines.h</tt>.  However, the only
+header file which needs to be explicitly <tt>#include</tt>d in other
+source code using the library is the primary header file (such as
+<tt>air.h</tt> or <tt>nrrd.h</tt>).  Within those header files, there
+will be some <tt>#define</tt>s; every one of them starts with the
+library name in upper case, followed by an underscore.  For instance,
+<tt>air.h</tt> defines a macro called <tt>AIR_INDEX</tt> for
+generating linear array indices from floating point numbers.
+
+<p>
+
+Every symbol (function, global variable) in a library starts with a
+fixed "symbol prefix", or some number of underscores followed by the
+"symbol prefix".  Currently, (for <b>air</b>, <b>biff</b>,
+<b>nrrd</b>, <b>bane</b>, and <b>limn</b>), the symbol prefix is
+identical to the library name.  For instance, all "public"
+<b>nrrd</b> function names start with <b>nrrd</b>.  There may be a
+library in the future with a shortened version of the library as the
+symbol prefix.
+
+</ul>
+
+<hr width="70%" noshade>
+
+<ul>
+<li><b>Return codes</b>: Nearly all functions in <b>teem</b> return
+an <tt>int</tt>.  This value is the error code; it is non-zero when
+there has been an error.  This means that code to check for errors 
+will generally look like:
+<blockquote><pre>
+if (teemFunction(arg1, arg2)) {
+  do error handling;
+  return 1;
+}
+/* else no problem ... */
+</pre></blockquote>
+
+
+Were I to get fancy, the exacty value would be some indicator of what
+sort of error happened.  This practice has not been adopted.  For the
+most part, textual descriptions (in English) of the errors accumulate
+with <a href="biff/index.html"><b>biff</b></a>.  For instance, in
+<tt>nrrdSwapAxes()</tt>, we find the code
+
+<blockquote><pre>
+if (nrrdPermuteAxes(nout, nin, axes)) {
+  sprintf(err, "%s: trouble swapping axes", me);
+  biffAdd(NRRD, err); return 1;
+}
+</pre></blockquote>
+
+The use of <tt>biffAdd()</tt> insures that the current error string is
+added to list of previous errors, with the assumption that
+<tt>nrrdPermuteAxes()</tt> also left some errors with <b>biff</b>.
+See the <a href="biff/index.html"><b>biff</b> page</a> for more specific 
+information on <b>biff</b> usage.
+
+<p>
+
+Exceptions to the above are functions which have "Valid" in their
+name, like <tt>baneValidHVol</tt>.  These should be read as predicates
+in a logical statement, not as function calls.  So,
+<tt>baneValidHVol(hvol)</tt> returns non-zero when <tt>hvol</tt>
+<b>is</b> as valid histogram volume, and it returns zero when
+<tt>hvol</tt> is <b>not</b> a valid histogram volume.  Code might
+look like:
+<blockquote><pre>
+if (!baneValidHVol(hvol)) {
+  sprintf(err, "%s: given nrrd isn't a histogram volume", me);
+  biffAdd(BANE, err); return 1;
+}
+/* else no problem ... */
+</pre></blockquote>
+
+</ul>
+
+<hr width="70%" noshade>
+
+<p>
+
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+
+</body>
+</html>

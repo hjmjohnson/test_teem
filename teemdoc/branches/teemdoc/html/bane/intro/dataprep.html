@@ -1,0 +1,173 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"> 
+<html>
+<head>
+<title>
+GK's C code: bane tutorial: Step 0
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+
+<h2><a href="../"><img border=0 width=80 height=80
+src="../../img/bane80.jpg"></a>
+<a href="../../nrrd/"><img border=0 width=80 height=80
+src="../../img/nrrd80.jpg"></a>
+<a href="../../unrrdu/"><img border=0 width=80 height=80
+src="../../img/unrrdu80.jpg"></a>
+<br>
+<small><small>&nbsp;</small></small><br>
+<tt><b>bane</b></tt>/<tt><b>gkms</b></tt> tutorial: Step 0: Preparing
+the data</h2>
+
+It is often the case that a given volume dataset needs some
+pre-processing before it makes sense to analyze or visualize it.
+Cropping out large regions of background value is one common task,
+which is demonstrated below, using the <a
+href="../../nrrd/"><tt>nrrd</tt></a> and <a
+href="../../unrrdu/"><tt>unrrdu</tt></a> parts of <a
+href="../../"><tt>teem</tt></a>.  There are many other things which
+make sense as pre-processing steps in working with volume data
+(down-sampling or re-sampling, quantizing, converting, etc), and
+<tt>unrrdu</tt> is probably a good tool for the job.  <b>Please
+Note</b>, however, that the usage of the <tt>unrrdu</tt> tools will
+change in syntax shortly (to be similar to how the <tt>cvs</tt>
+program works, as well as <tt>gkms</tt>), but the basic functionality
+will of course remain.
+
+<ol>
+
+<li> The engine-block CT scan dataset is available from
+<a href="ftp://www-graphics.stanford.edu/pub/volpack/data/engine/">
+Stanford's volpack related pages</a>.  Download the file
+<tt>engine.den.Z</tt> and uncompress it, creating the file <tt>engine.den</tt>.
+
+<p>
+
+<li> <tt>engine.den</tt> contains the raw data we care about, plus
+some binary header stuff we don't care about.  Sounds like a job for
+<a href="../../nrrd/"><tt>nrrd</tt></a>!  We can create a simple ASCII
+header file which stays seperate from the data file, called (for
+example) <a href="engine.den.nhdr"><tt>engine.den.nhdr</tt></a> which
+contains the following:
+<blockquote>
+<pre>
+NRRD00.01
+content: engine
+type: uchar
+dimension: 3
+sizes: 256 256 110
+labels: "x" "y" "z"
+spacings: 1.0 1.0 1.0
+data file: ./engine.den
+byte skip: 62
+encoding: raw
+</pre>
+</blockquote>
+The "<tt>byte skip: 62</tt>" line instructs <tt>nrrd</tt> to start
+getting the raw data 62 bytes from the start.  If there were lines of
+ASCII header to skip (such as a <a
+href="http://www.kitware.com/vtk.html">VTK</a> header), the field
+would instead be "<tt>line skip: </tt>".  Not all the fields used above
+are absolutely needed; for the curious, here is a minimalist header:
+<blockquote>
+<pre>
+NRRD00.01
+type: uchar
+dimension: 3
+sizes: 256 256 110
+data file: ./engine.den
+byte skip: 62
+encoding: raw
+</pre>
+</blockquote>
+
+<p>
+
+<li> As you may already know, this dataset contains a lot of useless
+background value.  If we crop it out, all further analysis will run
+raster, and the results (including the renderings) will be the same.
+Sounds like a job for <a href="../../unrrdu"><tt>unrrdu</tt></a>!
+This use of <tt>unrrdu</tt>'s project tool generates a maximum
+intensity projection (measure #2) along the Z axis (axis #2) and Y
+axis (axis #1) so that we can see how to crop it:
+<blockquote>
+<pre>
+project engine.den.nhdr 2 2 <a href="img/engine.den-maxZ.pgm">engine.den-maxZ.pgm</a>
+</pre>
+</blockquote>
+<center>
+<img width=256 height=256 src="img/engine.den-maxZ.gif">
+</center>
+<blockquote>
+<pre>
+project engine.den.nhdr 1 2 <a href="img/engine.den-maxY.pgm">engine.den-maxY.pgm</a>
+</pre>
+</blockquote>
+<center>
+<img width=256 height=110 src="img/engine.den-maxY.gif">
+</center>
+
+<p>
+
+<li> Inspecting the resulting images (with a tool like <a
+href="http://www.trilon.com/xv/">xv</a>) tells us that the (x,y)
+coordinates (59,207) and (20,227) encompasses all the interesting
+stuff with about three voxels of border.  In the Z axis, there is need
+for cropping (in fact, it seems to have been a bit too aggressively
+cropped already).  If you want to indicate "the last index along this
+axis", without knowing how big that axis is, you can use "M" instead
+of a number.  Thus, we invoke (<tt>unrrdu</tt>'s) crop as such:
+
+<blockquote><pre>
+crop engine.den.nhdr 59 207 20 227 0 M engine-crop.nrrd
+</pre></blockquote>
+
+<p>
+
+<li> We can verify that the cropping worked right, with another use of
+<tt>project</tt>:
+<blockquote><pre>
+project engine-crop.nrrd 2 2 <a href="img/engine-crop-maxZ.pgm">engine-crop-maxZ.pgm</a>
+</pre></blockquote>
+
+<center>
+<img width=149 height=208 src="img/engine-crop-maxZ.gif">
+</center>
+
+<p>
+
+<li> Supposing that you don't want the <tt>nrrd</tt> header and the
+raw data together in the same file, you break the file into two parts
+simply by changing the output filename to end in "<tt>.nhdr</tt>", for
+"nrrd header":
+
+<blockquote><pre>
+crop engine.den.nhdr 59 207 20 227 0 M engine-crop.nhdr
+</pre></blockquote>
+
+The <tt>nrrdSave()</tt> function of <tt>nrrd</tt> interprets this
+filename auto-magically, putting the header information in a small
+ASCII file called "<tt>engine-crop.nhdr</tt>", while putting all the
+raw data with no header whatsoever in seperate file called
+"<tt>engine-crop.raw</tt>".
+
+</ol>
+
+We now return to the <a href="">rest of the tutorial</a> ...
+<p>
+<a href="http://validator.w3.org/check/referer"><img border="0"
+src="../../img/valid-html32s.gif"
+alt="Valid HTML 3.2!" height="20" width="58"></a>
+</p>
+
+
+</body>
+</html>
+
+

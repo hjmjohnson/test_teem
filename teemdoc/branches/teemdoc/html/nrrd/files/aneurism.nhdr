@@ -1,0 +1,9 @@
+NRRD0001
+content: aneurism
+# Courtesy of Philips Research, Hamburg, Germany
+dimension: 3
+type: uchar
+sizes: 256 256 256
+spacings: 1 1 1
+data file: ./aneurism.raw.gz
+encoding: gzip

@@ -1,0 +1,112 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Demonstrations of using nrrd
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Demonstrations of using nrrd</b></h2>
+</table>
+
+While the various pages for the individual <a
+href="../unrrdu/index.html"><tt>unu</tt></a> commands show the use of
+the commands in isolation (or relative isolation), the examples here
+are more like case studies.  They show how a combination <b>nrrd</b>
+functions can be used to get some data processing task done.
+
+<p>
+
+<table>
+<tr>
+<td align=right>
+  <a href="head/index.html"><img border=0 alt=""
+  width=143 height=85 src="minihead.jpg" align=left></a>
+<td width=10>
+<td valign=center>
+  <a href="head/index.html">Visible Female color data processing</a><br>
+  Steps toward producing a clean and closely cropped volume from
+  the color images.
+</table>
+
+<!--
+
+processing visible human data
+
+in C examples, mention that many nrrd functions do allow
+nin == nout
+
+from scratch:
+nrrdAlloc, nrrdMaybeAlloc, nrrdPPM, nrrdPGM
+unu make, unu make -h
+
+on images:
+slicing, cropping, padding
+
+oh look, content has been set
+
+resampling
+
+shuffling, flipping, permuting
+
+joining
+
+histogram equalization, with and without smart, as compared to
+other programs.
+
+arithmetic, and utility of NrrdIters
+
+color mapping (lut, rmap, imap)
+
+on volumes:
+histogramming
+
+oh look, content has been set
+
+with blurring, joint histograms
+
+quantizing, unquantizing, converting
+
+projection as a way of inspecting data
+
+dice, join
+
+fancy tiling
+
+- using reshape and crop to nix fixed length binary headers
+
+- using pad on complex data to get a color image
+
+-->
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

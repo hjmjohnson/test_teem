@@ -1,0 +1,66 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: unu project
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h1>&nbsp;&nbsp;<b><tt>unu project</tt></b></h1>
+</table>
+
+<blockquote><pre>
+unu project: Collapse scanlines to scalars along some axis. The scanline is
+reduced to a single scalar by "measuring" all the values in the scanline with
+some measure. The output nrrd has dimension one less than input; the output
+type depends on the measure.
+
+Usage: unu project -a &lt;axis&gt; -m &lt;measr&gt; [-i &lt;nin&gt;] [-o &lt;nout&gt;]
+
+ -a &lt;axis&gt; = axis to project along (int)
+-m &lt;measr&gt; = How to "measure" a scanline. Possibilities include:
+           o "min", "max", "mean", "median", "mode", "variance"
+             (self-explanatory)
+           o "SD": standard deviation
+           o "product", "sum": product or sum of all values along
+             scanline
+           o "L1", "L2", "Linf": different norms
+           o "histo-min", "histo-max", "histo-mean", "histo-median",
+             "histo-mode", "histo-product", "histo-sum", "histo-variance":
+             same measures, but for when the scanlines are histograms of
+             values, not the values themselves.
+  -i &lt;nin&gt; = input nrrd
+ -o &lt;nout&gt; = output nrrd (string); default: "-"
+</pre></blockquote>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

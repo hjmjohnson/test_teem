@@ -1,0 +1,8 @@
+NRRD0001
+content: aneurism
+type: unsigned char
+dimension: 3
+sizes: 256 256 256
+spacings: 1 1 1
+data file: ./aneurism.raw.gz
+encoding: gz

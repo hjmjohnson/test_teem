@@ -1,0 +1,242 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+<td align=center><a href="air/index.html"><img border=0 width=35 height=35 src="img/air35.jpg" alt=""></a>
+<td align=center><a href="bane/index.html"><img border=0 width=35 height=35 src="img/bane35.jpg" alt=""></a>
+<td align=center><a href="biff/index.html"><img border=0 width=35 height=35 src="img/biff35.jpg" alt=""></a>
+<td align=center><a href="bin/index.html"><img border=0 width=35 height=35 src="img/bin35.jpg" alt=""></a>
+<td align=center><a href="dye/index.html"><img border=0 width=35 height=35 src="img/dye35.jpg" alt=""></a>
+<td align=center><a href="echo/index.html"><img border=0 width=35 height=35 src="img/echo35.jpg" alt=""></a>
+<td align=center><a href="ell/index.html"><img border=0 width=35 height=35 src="img/ell35.jpg" alt=""></a>
+<td align=center><a href="gage/index.html"><img border=0 width=35 height=35 src="img/gage35.jpg" alt=""></a>
+<td align=center><a href="hest/index.html"><img border=0 width=35 height=35 src="img/hest35.jpg" alt=""></a>
+<td align=center><a href="hoover/index.html"><img border=0 width=35 height=35 src="img/hoov35.jpg" alt=""></a>
+<td align=center><a href="limn/index.html"><img border=0 width=35 height=35 src="img/limn35.jpg" alt=""></a>
+<td align=center><a href="mite/index.html"><img border=0 width=35 height=35 src="img/mite35.jpg" alt=""></a>
+<td align=center><a href="moss/index.html"><img border=0 width=35 height=35 src="img/moss35.jpg" alt=""></a>
+<td align=center><a href="nrrd/index.html"><img border=0 width=35 height=35 src="img/nrrd35.jpg" alt=""></a>
+<td align=center><a href="ten/index.html"><img border=0 width=35 height=35 src="img/ten35.jpg" alt=""></a>
+<td align=center><a href="unrrdu/index.html"><img border=0 width=35 height=35 src="img/unrrdu35.jpg" alt=""></a>
+<tr>
+<td valign=top align=center><a href="air/index.html"><font size=-1>air</font></a>
+<td valign=top align=center><a href="bane/index.html"><font size=-1>bane</font></a>
+<td valign=top align=center><a href="biff/index.html"><font size=-1>biff</font></a>
+<td valign=top align=center><a href="bin/index.html"><font size=-1>bins</font></a>
+<td valign=top align=center><a href="dye/index.html"><font size=-1>dye</font></a>
+<td valign=top align=center><a href="echo/index.html"><font size=-1>echo</font></a>
+<td valign=top align=center><a href="ell/index.html"><font size=-1>ell</font></a>
+<td valign=top align=center><a href="gage/index.html"><font size=-1>gage</font></a>
+<td valign=top align=center><a href="hest/index.html"><font size=-1>hest</font></a>
+<td valign=top align=center><a href="hoover/index.html"><font size=-1>hoover</font></a>
+<td valign=top align=center><a href="limn/index.html"><font size=-1>limn</font></a>
+<td valign=top align=center><a href="mite/index.html"><font size=-1>mite</font></a>
+<td valign=top align=center><a href="moss/index.html"><font size=-1>moss</font></a>
+<td valign=top align=center><a href="nrrd/index.html"><font size=-1>nrrd</font></a>
+<td valign=top align=center><a href="ten/index.html"><font size=-1>ten</font></a>
+<td valign=top align=center><a href="unrrdu/index.html"><font size=-1>unrrdu</font></a>
+</table>
+<p>
+<center>
+<img width=256 height=256 src="img/teem256.jpg" alt=""><br>
+<h1><b>teem</b></h1>
+</center>
+
+<center>
+<table width="80%" border=2>
+<tr><td>
+
+Note: This documentation is currently under development.  Much of it
+is still empty.  What isn't empty describes the version of 
+<b>teem</b> that is only released in beta (v1.5), or an older version
+no longer supported (v1.2), but probably not the stable one <a
+href="download/index.html">currently available (v1.4)</a>.  This will
+be the last major code reorganization before I graduate.  Your
+patience is appreciated.
+
+</table>
+</center>
+
+<h2>GK's C code</h2>
+
+This is the software that I write to do my research.  I distribute it
+because others have found it useful.  The code is written in C, and
+organized as a set of libraries, each of which with some coarsely
+defined functionality.  Whatever exists in the way of documentation
+for each of the libraries is below.  The libraries heavily depend on
+each other (in a non-circular way), so they are built and distributed
+as a group.  The only other library that is required is the math
+library ("<tt>-lm</tt>").  The libraries populate a common directory
+structure (under CVS control), collectively they are called
+<b>teem</b>.  There are also assorted command-line programs, see
+below.
+
+<ul>
+
+<li>
+  <a href="download/index.html">Download</a>
+  the software.  You can get either source, documentation, or pre-built
+  libraries and executables.
+
+<li>
+  <a href="build.html">Building <b>teem</b></a>, the basics.
+  Supported platforms are: GNU/Linux, <a
+  href="http://www.cygwin.com">Cygwin</a>, Irix (n32, 64), Solaris,
+  Windows, Mac OS X.
+
+<li>
+ <a href="bugs.html">Known bugs and limitations</a>. 
+
+<li>
+  <a href="tree/index.html">Directory Structure</a>.  How the <b>teem</b> source
+  tree is set up.
+
+<li>
+  <a href="gmake/index.html">How <b>teem</b> uses GNU make</a>; details
+  about building teem, including how to enable optional external libraries.
+  Documents the various environment variables that control the build process.
+
+<li>
+  <a href="general.html">General infomation</a> about <b>teem</b>.
+  
+<li>
+  <a href="names.html">Naming scheme</a>.
+  Why all the libraries have such curious names.
+
+</ul>
+
+<p>
+
+<blockquote>
+
+<center>
+<table width="90%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td align=center width=100><a href="./air/index.html"><img
+     border=0 width=80 height=80 src="img/air80.jpg" alt=""></a>
+  <td><a href="./air/index.html"><big><b>air</b></big></a> :
+  Core utilities and macros
+
+  <td align=center width=100><a href="./hest/index.html"><img
+     border=0 width=80 height=80 src="img/hest80.jpg" alt=""></a>
+  <td><a href="./hest/index.html"><big><b>hest</b></big></a> :
+  Command-line parsing
+<tr>
+  <td align=center width=100><a href="./biff/index.html"><img
+     border=0 width=80 height=80 src="img/biff80.jpg" alt=""></a>
+  <td><a href="./biff/index.html"><big><b>biff</b></big></a> :
+  Error message collection
+
+  <td align=center width=100><a href="./ell/index.html"><img
+     border=0 width=80 height=80 src="img/ell80.jpg" alt=""></a>
+  <td><a href="./ell/index.html"><big><b>ell</b></big></a> :
+  Linear algebra functions and macros.
+<tr>
+  <td align=center width=100><a href="./nrrd/index.html"><img
+     border=0 width=80 height=80 src="img/nrrd80.jpg" alt=""></a>
+  <td><a href="./nrrd/index.html"><big><b>nrrd</b></big></a> :
+  N-dimensional array representation and manipulation
+
+  <td align=center width=100><a href="./unrrdu/index.html"><img
+     border=0 width=80 height=80 src="img/unrrdu80.jpg" alt=""></a>
+  <td><a href="./unrrdu/index.html"><big><b>unrrdu</b></big></a> :
+  Command-line utilities based on <b>nrrd</b>
+<tr>
+  <td align=center width=100><a href="./dye/index.html"><img
+     border=0 width=80 height=80 src="img/dye80.jpg" alt=""></a>
+  <td><a href="./dye/index.html"><big><b>dye</b></big></a> :
+  Color representation and conversion
+
+  <td align=center width=100><a href="./moss/index.html"><img
+     border=0 width=80 height=80 src="img/moss80.jpg" alt=""></a>
+  <td><a href="./moss/index.html"><big><b>moss</b></big></a> :
+  Geometric transforms and sampling of images
+<tr>
+  <td align=center width=100><a href="./gage/index.html"><img
+     border=0 width=80 height=80 src="img/gage80.jpg" alt=""></a>
+  <td><a href="./gage/index.html"><big><b>gage</b></big></a> :
+  Filtered point-sampling in volumes
+
+  <td align=center width=100><a href="./bane/index.html"><img
+     border=0 width=80 height=80 src="img/bane80.jpg" alt=""></a>
+  <td><a href="./bane/index.html"><big><b>bane</b></big></a> :
+  Re-Implementation of my 
+     <a href="http://www.cs.utah.edu/~gk/MS">MS thesis</a> 
+     (and&nbsp;<a href="http://www.cs.utah.edu/~gk/papers/vv98">VolVis98
+     paper</a>)
+<tr>
+  <td align=center width=100><a href="./limn/index.html"><img
+     border=0 width=80 height=80 src="img/limn80.jpg" alt=""></a>
+  <td><a href="./limn/index.html"><big><b>limn</b></big></a> :
+  Graphics and drawing
+
+  <td align=center width=100><a href="./hoover/index.html"><img
+     border=0 width=80 height=80 src="img/hoov80.jpg" alt=""></a>
+  <td><a href="./hoover/index.html"><big><b>hoover</b></big></a> :
+  Simple volume rendering framework.
+<tr>
+  <td align=center width=100><a href="./mite/index.html"><img
+     border=0 width=80 height=80 src="img/mite80.jpg" alt=""></a>
+  <td><a href="./mite/index.html"><big><b>mite</b></big></a> :
+  Simple scalar volume renderer
+
+  <td align=center width=100><a href="./ten/index.html"><img
+     border=0 width=80 height=80 src="img/ten80.jpg" alt=""></a>
+  <td><a href="./ten/index.html"><big><b>ten</b></big></a> :
+  Diffusion tensor analysis and visualization
+<tr>
+  <td align=center width=100><a href="./echo/index.html"><img
+     border=0 width=80 height=80 src="img/echo80.jpg" alt=""></a>
+  <td><a href="./echo/index.html"><big><b>echo</b></big></a> :
+  Ray-tracer
+
+</table>
+</center>
+
+</blockquote>
+
+<b>Teem</b> also comes with some command-line programs which link with
+the libraries above.  These programs demonstrate the functionality of
+the libraries, as well as providing a simple and easy way to get work
+done with <b>teem</b>, without having to write C/C++ code.  For
+instance, <tt>qbert</tt> is a stand-alone program based on <b>gage</b>
+which can generate volumes of a format used by <a
+href="http://www.cs.utah.edu/~jmk/simian/">Simian</a>, the volume
+renderer used in our <a
+href="http://www.cs.utah.edu/~jmk/papers/vis01/">Vis '01</a> paper.
+More information here:
+
+<p>
+
+<blockquote>
+
+<center>
+<table width="90%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td align=center width=100><a href="./bin/index.html"><img
+     border=0 width=80 height=80 src="img/bin80.jpg" alt=""></a>
+  <td><a href="./bin/index.html"><big>bins</big></a> :
+  <tt>qbert</tt>, <tt>mrender</tt>, <tt>vprobe</tt>, and others.
+</table>
+</center>
+
+</blockquote>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
