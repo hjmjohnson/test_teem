@@ -1,0 +1,297 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: General Description of the NRRD format
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>General Description of the NRRD format</b></h2>
+</table>
+
+<h2>General Description of the NRRD format</h2>
+
+The NRRD format was primarily designed to be easy to write, rather
+than easy to read.  The NRRD header is simple ASCII text, one field
+per line.  The fields in the header do not have a strict ordering, and
+most of them are optional.  Most strings are case insensitive, and
+alternate forms of many of the identifiers and descriptors are
+allowed.  Writing NRRD headers by hand, from scratch, is entirely
+feasible (although the <a href="../unrrdu/index.html">Utah Nrrd
+Utilities</a> program "<tt>unu make -h</tt>" is probably a better
+solution).  When writing non-ASCII data, the byte ordering is
+recorded, but not altered to match one particular endianness.  The format
+flexibility greatly increases the complexity and responsibilities of a
+NRRD reader, but the compelling benefit is having a simple portable
+format that is general with respect to dimension and type.
+
+<p>
+
+The NRRD file format was also conceived as being somewhat analogous to
+the PPM format for color images: straight-forward, friendly to
+programmers, and descriptive of a sufficiently large class of data to
+be useful in research.  Time and experience with the NRRD format has
+gradually increased its complexity (such as with the introduction of
+node- versus cell-centered samples), but the feature set has very
+nearly converged.  As a general representation of raster data, NRRD is
+intended to occupy the very large but sparsely populated niche between
+<ol>
+
+<li> Raw, headerless data, hopefully with some nearby README file 
+explaining the type and dimensions.
+
+<li> Very sophisticated, powerful (complicated) formats such as <a
+href="http://hdf.ncsa.uiuc.edu/">HDF
+(<tt>http://hdf.ncsa.uiuc.edu/</tt>)</a>.
+
+</ol>
+
+Various aspects of the NRRD format borrow heavily from the PCGV volume
+dataset format developed by James Durkin at the Cornell Program of
+Computer Graphics.  
+
+
+<h2>Compared to the VTK format</h2>
+
+The <a href="http://public.kitware.com/VTK/pdf/file-formats.pdf">VTK
+(<tt>http://public.kitware.com/VTK/pdf/file-formats.pdf</tt>)</a> file
+format is more general than NRRD in the types of information
+represented, and slightly less general that NRRD when it comes to
+raster data.
+
+<p>
+
+Unlike NRRD, VTK can represent:
+<ul>
+<li> Point sets, polygonal data, structure and unstructured meshes
+of various types
+<li> Multiple pieces of data in one file, allowing samples to have
+many various attributes.
+<li> Vector and tensor types explicitly.  In NRRD, these are
+represented implicitly, by using a short non-spatial axis prior to
+the spatial axes.
+</ul>
+
+But with raster data, unlike VTK, NRRD can:
+<ul>
+<li> Read and write data in either byte-ordering (VTK is always 
+big-endian).
+<li> Have the data in a seperate file from the header.
+<li> Represent the difference between cell and node-centered samples
+<li> Store data of of any dimension, and any C scalar type.
+<li> Encode data in more than just ascii and binary, including gzip
+and bzip2 compression.  
+<li> Store more peripheral information, such as axis labels and units,
+old min and max (range of values pre-quantization)
+</ul>
+
+<h2>Compared to the MetaImage format</h2>
+
+This format (specs available from <a
+href="http://tolkien.rad.unc.edu/technologies/MetaImage/"><tt>http://tolkien.rad.unc.edu/technologies/MetaImage/</tt></a>)
+was developed at the <a href="http://tolkien.rad.unc.edu">Computer
+Aided Diagnosis and Display Lab</a> at UNC.  It is extremely similar
+to NRRD in terms of representational capabilities, in that it
+represents arrays of general type and dimension.
+
+<p> Here are some differences in representational capability or
+aspects of the file format.  In favor of MetaImage:
+
+<ul>
+<li> Having a detached header file give a list of image (slice) filenames,
+while describing those images as a volume, is quite powerful, and
+MetaIO has two different ways of doing this.
+<li> The <tt>ElementNumberOfChannels</tt> field allows a nominally
+3-D data header to describe what is logically a 4-D array.  NRRD
+suffers from a slight weirdness in this regard (a color image is a 
+three-dimensional nrrd), a consequence of its "everything is a scalar"
+mentality.
+<li> The distinction between element size and element spacing is
+fundamental to properly representing MRI data when the slice thickness
+is different (usually less than) the spacing between slices.  NRRD
+doesn't know anything about this difference, and perhaps it should.
+</ul>
+
+<p>
+
+In favor of NRRD:
+<ul>
+<li> Has a simple "magic" on a line by itself at the beginning of the file,
+to unambiguously identify the type of the file to multi-format readers.
+<li> Having more than just raw and ascii encoding: gzip and bzip2 compression,
+as well as hex.
+<li> A more conservative approach to representing optional information.
+If you don't know information like sample spacing, you don't include
+that field. The NRRD reader remembers that you didn't know spacing, 
+instead of inventing some default value.
+</ul>
+
+<p>
+
+There are many one-to-one parallels between the header fields in 
+the two formats:
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+<td align=right><b>NRRD</b>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><b>MetaImage</b>
+<tr>
+<td align=right><tt>#</tt>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>Comment</tt>
+<tr>
+<td align=right><tt>dimension</tt>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>NDims</tt>
+<tr>
+<td align=right><tt>sizes</tt>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>DimSize</tt>
+<tr>
+<td align=right><tt>type</tt>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>ElementType</tt>
+<tr>
+<td align=right><tt>endian</tt>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>ElementByteOrderMSB</tt>
+<tr>
+<td align=right><tt>byte skip</tt>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>HeaderSize</tt>
+<tr>
+<td align=right><tt>min</tt>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>ElementMin</tt>
+<tr>
+<td align=right><tt>max</tt>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>ElementMax</tt>
+<tr>
+<td align=right><tt>content</tt>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>Name</tt>
+<tr>
+<td align=right><tt>axis mins</tt>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>Position</tt>
+<tr>
+<td align=right><tt>data file</tt>
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>ElementDataFile</tt>
+<tr>
+<td align=right>(not using a detached header)
+<td><tt>&nbsp;-&nbsp;
+<td align=left><tt>ElementDataFile LOCAL</tt>
+</table>
+
+<p>
+
+Some MetaImage fields that NRRD has no good analog for:
+<ul>
+<li> <tt>ObjectType</tt>, <tt>ObjectSubType</tt>, <tt>TransformType</tt>, 
+  <tt>Modality</tt>: descriptive strings
+<li> <tt>ID</tt>, <tt>ParentID</tt>: integers
+<li> <tt>Color</tt>, <tt>Orientation</tt>, <tt>AnatomicalOrientation</tt>:
+arrays
+<li> <tt>SequenceID</tt>: 4-tuple of integers specific to DICOM format,
+which uniquely identifies the dataset.
+</ul>
+
+<p>
+
+Some NRRD fields that MetaImage doesn't seem to have analogs for:
+<ul>
+<li> <tt>centers</tt>: cell-vs-node centering
+<li> <tt>axis maxs</tt>: good with histograms, scatterplots, fields of view
+<li> <tt>old min</tt>, <tt>old max</tt>:
+  remembering value range pre-quantization
+<li> <tt>line skip</tt>: very handy for snarfing data from other formats,
+  such as VTK, VisPack, and PostScript
+<li> <tt>labels</tt>: arbitrary string per axis
+<li> <tt>units</tt>: arbitrary string per axis giving units that spacing
+  is measured in.
+</ul>
+
+<p>
+
+
+<h2>Future Extensions</h2>
+
+There are at least two things which will be added to the next
+version of the NRRD format.  These changes will probably be implemented
+within a year.  The magic for this new and improved
+format has not yet been established.
+
+<ol>
+
+<li> New field: "<tt>gamma: </tt>".  This is to have parity with the
+PNG's gamma chunk.  Like "<tt>min: </tt>", "<tt>max: </tt>", and
+"<tt>axis mins: </tt>", this will be an optional field, which is
+sensible to use for only some nrrds.
+
+<li> General facility for key/value pairs.  This would be a more
+structured way of storing non-nrrd optional information than comments
+provide.
+
+</ol>
+
+I have some other ideas on how the NRRD file format may be extended in
+the future, but these are not likely to happen within the next year.
+
+<ul>
+
+<li> More than one array per NRRD file:  There are many situations
+where it is good to logically associate multiple NRRD files together
+as one "data set".  Examples include a large volume and its
+pre-computed univariate histogram (to help in isovalue navigation), or
+a collection of different one-, two-, and three-dimensional lookup
+tables which are good transfer functions for a given volume.  I am
+leaning towards implementing this multi-NRRD association with XML on
+top of regular NRRD0001 files.  If you need this, though, you should
+probably be using <a href="http://hdf.ncsa.uiuc.edu/">HDF
+(<tt>http://hdf.ncsa.uiuc.edu/</tt>)</a>
+
+<li> Bricking:  Whenever I do get around to implementing bricking in
+<b>nrrd</b>, the results will be saved in NRRD files.  One level of
+bricking will turn a 3-D array into a 6-D array.  For various subtle
+reasons, the representation of the axis mins and maxs becomes
+ambiguous in the case of cell-centered data, and this information is
+meaningless for all the bricked axes.  Brick overlap should be
+represented too, but this means a new field.
+
+<li> Other compression methods: It would be really nice to have a
+compression method that worked well on floating point data.
+
+</ul>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
