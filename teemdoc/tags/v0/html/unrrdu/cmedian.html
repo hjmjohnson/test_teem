@@ -1,0 +1,69 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: unu cmedian
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h1>&nbsp;&nbsp;<b><tt>unu cmedian</tt></b></h1>
+</table>
+
+<blockquote><pre>
+unu cmedian: Cheap histogram-based median filtering. Only works on 1, 2, or 3
+dimensions. The window over which filtering is done is always square, and only
+a simplistic weighting scheme is available. The filtering works by forming a
+histogram of the values in the window, and updating it as the window slides
+through the volume. Because of this histogramming, precision will be lost on
+anything other than 8-bit data (assuming a sane # bins "-b"). Also, this is
+"cheap" because it doesn't do any filtering on the border (as defined by
+radius "-r"); values at these locations are simply copied from input.
+
+Usage: unu cmedian -r &lt;radius&gt; [-b &lt;bins&gt;] [-w &lt;weight&gt;] [-p] [-i &lt;nin&gt;] \
+       [-o &lt;nout&gt;]
+
+-r &lt;radius&gt; = how big a window to filter over. "-r 1" leads to a 3x3 window
+              in an image, and a 3x3x3 window in a volume (int)
+  -b &lt;bins&gt; = # of bins in histogram (int); default: "2048"
+-w &lt;weight&gt; = How much higher to preferentially weight samples that are
+              closer to the center of the window. "1.0" weight means that all
+              samples are uniformly weighted over the window, which
+              facilitates a simple speed-up. (float); default: "1.0"
+         -p = Pad the input (with boundary method "bleed"), and crop the
+              output, so as to overcome our cheapness and correctly handle the
+              border. Obviously, this takes more memory.
+   -i &lt;nin&gt; = input nrrd
+  -o &lt;nout&gt; = output nrrd (string); default: "-"
+</pre></blockquote>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

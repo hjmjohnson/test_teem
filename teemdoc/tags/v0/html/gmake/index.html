@@ -1,0 +1,141 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Use of GNU Make; Build Details
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width="1%" height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="../img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h2>Use of GNU Make;<br>Build Details</h2>
+  <td width="30%" height=80>
+<tr>
+  <td align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td>
+  <td>
+  <td>
+</table>
+<p>
+
+<h3>THIS IS UNFINISHED</h3>
+
+(This information is irrelevant for non-Cygwin Windows users)
+
+<p>
+
+<b>Teem</b> uses a system of GNU makefiles in order to build the
+software.  The actions of "make" depends on where its invoked in the
+tree, what environment variables set, and of course, what targets are
+specified.  This system has evolved over the years to match my pattern
+of development, which includes working simultaneously on different
+platforms which share a file system.  This page aims to describe the
+functioning of GNU make with <b>teem</b>, starting with the useful and
+ending with the obscure.  Referring to information about the <a
+href="../tree/index.html">directory structure</a> may be useful.
+
+<p>
+
+Some terminology.  <b>Teem</b> is made of a number of libraries, such
+as <a href="../nrrd/index.html"><b>nrrd</b></a>.  One result of
+compiling a library is the creation of some files such as
+<tt>libnrrd.a</tt> and <tt>libnrrd.so</tt>.  To distinguish between
+the <b>nrrd</b> "library" in general, and these <tt>lib</tt> files, I
+call the <tt>lib</tt> files "libs".  <b>Teem</b> also comes with some
+simple command-line programs which demonstrate and use the libraries,
+I call these "bins".  Many of the libraries have associated testing
+programs, compiled from sources in the <tt>test</tt> subdirectory of
+each library.  These programs are called "tests".
+
+<p>
+
+Here is an overview of the different ways that you can invoke make,
+and how it will behave according to where you're starting it from.
+
+<p>
+
+The makefiles are:
+<ul>
+
+<li> <tt>teem/src/GNUmakefile</tt>: The "top-level" makefile.  This
+defines variables and functions that are used by all the other files.
+
+<li> <tt>teem/src/make/errorCheck.mk</tt>: Does error checking on the
+values of environment variables.
+
+<li> <tt>teem/src/make/&lt;<i>arch</i>&gt;.mk</tt>: For all the
+architectures supported (except Windows), there is an
+"architecture-specific" makefile which records the specifics of that
+platform.  Which of these is used depends on the value of the
+environment variable <tt>TEEM_ARCH</tt>.
+
+<li> <tt>teem/src/&lt;<i>library</i>&gt;/GNUmakefile</tt>: Each
+library has its own makefile, recording all library-specific
+information, such as names of the public and private headers, and all
+the object files required to make the lib.
+
+<li> <tt>teem/src/bin/GNUmakefile</tt>: All the bins are made
+according to this makefile, different in structure to the library
+makefiles.
+
+<li> <tt>teem/src/make/template.mk</tt>: This is included by all the
+library makefiles, but in a way which is effectively templated on the
+name of the library.  It is actually the most important makefile,
+because it expresses all the intra- and inter- library dependencies.
+
+<li> <tt>teem/src/make/externals.mk</tt>: This helps coordinate the
+optional linking in of external libraries that extend the
+functionality of <b>teem</b>, such as gzip compression for
+<b>nrrd</b>.
+
+<li> <tt>teem/src/make/compare.sh</tt>: Not actually a makefile, but
+used by <tt>template.mk</tt> (via the <tt>newer.than</tt> function
+defined in <tt>teem/src/GNUmakefile</tt>) to compare file dates, in
+a way seperate from make's network of targets and prerequisites.
+
+</ul>
+
+<b>Environment variables</b>:  The environment variables
+specific to <tt>teem</tt> all start with <tt>TEEM_</tt>.  Currently,
+their only role is to control how "make" runs to build things.
+These are the variables which have a global effect on how all 
+<tt>teem</tt> libraries are built.  More specific information
+about the system of Makefiles can be found <a href="make.html">here</a>.
+<table border=1 cellpadding=3 cellspacing=3>
+<tr>
+ <td align=right><tt>TEEM_ARCH</tt>
+ <td>The architecture you're compiling with and for.
+ <b>This is the only environment variable which MUST be set</b>
+ in order to build libraries in <tt>teem</tt>.  Currently supported
+ are "irix6.n32", "irix6.64", "linux", and "solaris".
+<tr>
+ <td align=right><tt>TEEM_LINK_SHARED</tt>
+ <td>If set to the string "true" then binaries, when linked, will be
+  linked with shared libraries, and not static libraries. If not set,
+  we link against static libraries, in order to produce
+  stand-alone binaries (or as stand-alone as the system allows).
+<tr>
+ <td align=right><tt>TEEM_PURIFY</tt>
+ <td>If set to "true", run purify on all compiles and links.
+  The architecture-specific makefile must define <tt>PURIFY</tt>.
+</table>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

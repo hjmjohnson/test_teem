@@ -1,0 +1,109 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: Unrrdu: unu convert
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/unrrdu80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">unrrdu</a></b>
+  <td>
+    <h1>&nbsp;&nbsp;<b><tt>unu convert</tt></b></h1>
+</table>
+
+<blockquote><pre>
+unu convert: Convert nrrd to another type (as if by per-value cast)
+
+Usage: unu convert -t &lt;type&gt; [-i &lt;nin&gt;] [-o &lt;nout&gt;]
+
+-t &lt;type&gt; = type to convert to
+ -i &lt;nin&gt; = input nrrd
+-o &lt;nout&gt; = output nrrd (string); default: "-"
+</pre></blockquote>
+
+This makes available to nrrds the exact same rules of casting that
+apply to the basic scalar types in C.  No attempt is made to clamp,
+scale, or otherwise map values.  You can convert from and to any
+of the <a href="gen.html#-t">10 scalar types</a>.
+
+<p>
+
+One use for this is handling data that comes from a plain text file.
+<b>Nrrd</b> treats <a href="../nrrd/otherformat.html">numerical data
+from plain text files</a> as arrays of <tt>float</tt>s, so if you have
+a text file containing values which you know are integers, then
+<tt>unu convert</tt> is a simple way to convert them to an integral
+type after they've been read in.  Here's some numbers in <a href="text.txt">
+<tt>text.txt</tt></a>:
+<blockquote><pre>
+194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+194 194 194 194 0 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+194 194 194 194 0 194 194 194 194 194 194 194 194 0 194 194 194 194 194
+194 194 194 194 0 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+194 194 194 194 0 194 0 0 0 194 194 194 0 0 194 194 194 194 194
+194 194 194 194 0 0 194 194 194 0 194 194 194 0 194 194 194 194 194
+194 194 194 194 0 194 194 194 194 0 194 194 194 0 194 194 194 194 194
+194 194 194 194 0 194 194 194 194 0 194 194 194 0 194 194 194 194 194
+194 194 194 194 0 194 194 194 194 0 194 194 194 0 194 194 194 194 194
+194 194 194 194 0 194 194 194 194 0 194 0 0 0 0 0 194 194 194
+194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194 194
+</pre></blockquote>
+
+And this reads the text file to produce a PGM image:
+<blockquote><pre>
+unu convert -i text.txt -t uchar -o <a href="text.pgm">text.pgm</a>
+</pre></blockquote>
+<center>
+<img src="text.gif" alt="">
+</center>
+
+<ul>
+
+<li> If you want to quantize floating point values down to 8, 16, or
+32 bits, clamping them as you go, then use <a
+href="quantize.html"><tt>unu quantize</tt></a>.
+
+<li> If you just want to clamp values in a nrrd, keeping them the same
+type, use <a href="3op.html"><tt>unu 3op clamp</tt></a>
+
+<li> If you want to scale values in a nrrd (as if by multiplying every
+value by some constant), use <a href="2op.html"><tt>unu 2op x</tt></a>.
+
+</ul>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

@@ -1,0 +1,322 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Example NRRD files
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Example NRRD files</b></h2>
+</table>
+
+This page demonstrates some of the different possible NRRD headers.
+Reading through this will give some idea of what kind of data NRRD is
+good at representing, but this isn't a complete indication of all the
+possibilities in the format.  See the <a href="../format.html">file
+format definition</a> for all the details.  The simplest way to learn
+about making (simple) headers is by running the <a
+href="../../unrrdu/index.html"><tt>unu</tt></a> program as:
+"<tt>unu&nbsp;make</tt>".  This will print complete usage information
+for the different command-line arguments.
+"<tt>unu&nbsp;make&nbsp;-h</tt>" is the easiest way to start making
+detached header files for existing data.
+
+<h3>Gray-scale image</h3>
+Here's an 8-bit <a href="fool.jpg">small image</a> in <a href="fool.pgm">PGM
+format</a>.  The same data can be put <a href="fool.nrrd">NRRD format</a>.
+The header looks like this:
+<blockquote><pre>
+NRRD0001
+type: unsigned char
+dimension: 2
+sizes: 128 128
+encoding: raw
+
+WYXWYWVUVUSSTSPOPOOLKMJJJHFFFDCA  data ... data ...
+</pre></blockquote>
+
+This is the minimalist header for 2-dimensional data.  Every NRRD file
+starts with the magic "<tt>NRRD0001</tt>" to unambiguously identify
+the file as NRRD file, for NRRD readers, as well as any other readers
+that have to handle multiple formats.  In this case, the <a
+href="../format.html#dimension"><tt>dimension</tt></a> field says that
+this is two-dimensional data, and the <a
+href="../format.html#sizes"><tt>sizes</tt></a> field is saying that
+the array has 128 samples along both its axes.
+
+<p>
+
+If we wanted to create a NRRD header which referred to
+the PGM image, but didn't contain any data itself, we could <a
+href="fool.nhdr">write this,</a> which is the entire detached header:
+<blockquote><pre>
+NRRD0001
+type: unsigned char
+dimension: 2
+sizes: 128 128
+encoding: raw
+data file: ./fool.pgm
+line skip: 3
+</pre></blockquote>
+
+Assuming that <tt>fool.pgm</tt> is in the same directory as this
+header file, the detached header is as good as <a
+href="fool.nrrd"><tt>fool.nrrd</tt></a>, from any other working
+directory.
+
+<p>
+
+With either detached or attached headers, its easy to add comments
+to the header.  They start with "<tt>#</tt>" and go to the line termination,
+and can be anywhere after the magic:
+<blockquote><pre>
+NRRD0001
+content: freshman year foolishness in Risley Hall
+type: unsigned char
+dimension: 2
+# the original size was much larger
+sizes: 128 128
+encoding: raw
+data file: ./fool.pgm
+# this skips past the PPM header, more lines would have to be
+# skipped if there where comments in the PPM file itself.
+line skip: 3
+</pre></blockquote>
+
+The <a href="../format.html#content"><tt>content</tt></a> field is
+effectively a comment, but is intended to serve as a concise textual
+description of the contents of the NRRD file.
+
+<p>
+
+But so far this has just been an exercise to demonstrate the NRRD
+header.  For data that can be stored in a PPM or PGM image, you might
+as well use PGM and PPM images, since the <a
+href="../index.html"><b>nrrd</b></a> library can natively read and
+write PGM and PPM images with the exact same <tt>nrrdLoad()</tt> and
+<tt>nrrdSave()</tt> library calls as for NRRD files.
+
+<p>
+
+If the type of the data is 32-bit <tt>float</tt> instead of
+<tt>unsigned char</tt>, then <a href="../format.html#endian">byte
+ordering</a> (endianness) information is required in the header: <a
+href="foolf.nrrd"><tt>foolf.nrrd</tt></a>
+
+<blockquote><pre>
+NRRD0001
+type: float
+dimension: 2
+sizes: 128 128
+endian: big
+encoding: raw
+
+raw data ... data ...
+</pre></blockquote>
+
+If this had been written in a linux, cygwin, or windows box, the
+endian line would instead say "<tt>endian: little</tt>".  NRRD readers
+know how to read either byte ordering, and no particular byte ordering
+is favored in the NRRD format.  <a href="../format.html#type">Other
+possible types</a> include "<tt>int</tt>", "<tt>short</tt>", and
+"<tt>double</tt>".
+
+
+<h3>Color image</h3>
+
+Because NRRD adopts the simple philosophy that "everything is a
+scalar", <a href="foolc.jpg">a color image</a> (also available in <a
+href="fool.ppm">PPM format</a>) is actually a 3-dimensional array,
+with a short 3-sample-long axis preceeding the spatial axes (<a
+href="foolc.nrrd"><tt>foolc.nrrd</tt></a>):
+
+<blockquote><pre>
+NRRD0001
+type: unsigned char
+dimension: 3
+sizes: 3 128 128
+encoding: raw
+
+X[JXYIWXFWXIXYIWVFV ... data ... data ...
+</pre></blockquote>
+
+In NRRD, whenever a field is giving information about each and every
+field (called "per-axis field"), the ordering of the axes is always
+fastest to slowest.
+
+<p>
+
+Nearly all the field identifiers and descriptors are case-insensitive.
+The header above could just as well be:
+
+<blockquote><pre>
+NRRD0001
+TYPE: UNSIGNED CHAR
+DIMENSION: 3
+SIZES: 3 128 128
+ENCODING: RAW
+
+X[JXYIWXFWXIXYIWVFV ... data ... data ...
+</pre></blockquote>
+
+<p>
+
+Except for the fact that the per-axis fields must follow the
+<tt>dimension</tt> field, the fields can appear in any order.  Also,
+some of the fields, (such as <a
+href="../format.html#type"><tt>type</tt></a>) admit alternatives, so
+this is valid and equivalent:
+
+<blockquote><pre>
+NRRD0001
+dimension: 3
+encoding: raw
+sizes: 3 128 128
+type: uchar
+
+X[JXYIWXFWXIXYIWVFV ... data ... data ...
+</pre></blockquote>
+
+<h3>Scalar volume data</h3>
+
+<a href="http://www.volvis.org/">volvis.org</a> has a number of volume
+datasets, all of them gzip-compressed raw unsigned chars.  Because
+NRRD can handle various encodings, including gzip and bzip2
+compression, it is easy to make a detached header for these volumes,
+without ever having to uncompress them.
+
+<p>
+
+For instance, here's a header for <a href="http://www.gris.uni-tuebingen.de/areas/scivis/volren/datasets/data/aneurism.raw.gz">aneurism.raw.gz</a>.  If your
+web browser decides to be helpful and uncompress the file as part of downloading, then use <a href="http://www.xach.com/snarf/">snarf</a> to get the URL
+directly.
+<blockquote><pre>
+NRRD0001
+content: aneurism
+# Courtesy of Philips Research, Hamburg, Germany
+dimension: 3
+type: uchar
+sizes: 256 256 256
+spacings: 1 1 1
+data file: ./aneurism.raw.gz
+encoding: gzip
+</pre></blockquote>
+
+Except for the comment noting the original source of the data, a
+functionally identical header can be generated with one invocation
+of <tt>unu make -h</tt>:
+<blockquote><pre>
+unu make -h -i ./aneurism.raw.gz -t uchar -s 256 256 256 -sp 1 1 1 \
+-c aneurism -e gzip -o <a href="aneur.nhdr">aneur.nhdr</a>
+</pre></blockquote>
+
+We record <a href="../format.html#spacings"><tt>spacings</tt></a> for
+this dataset because unlike the previous examples, we know that
+information with certainty now.  NRRD never forces you to represent
+information you don't actually know.  The <a
+href="../format.html#encoding"><tt>encoding</tt></a> field is what
+identifies this as gzip compressed data.  This is fully inter-operable
+with the command-line gzip/gunzip tools.  In this case, compression
+allows the dataset to be <b>fifty</b> times smaller, and the ability
+to leave data compressed is very conveniant.
+
+<p>
+
+If we save the header above to a file <a
+href="aneurism.nhdr"><tt>aneurism.nhdr</tt></a>, in the same directory
+as the <tt>aneurism.raw.gz</tt> file, then we're done.  We
+can immediately start using <a
+href="../unrrdu/index.html"><tt>unu</tt></a>, for instance, to start
+inspecting the data:
+
+<blockquote><pre>
+unu project -i aneurism.nhdr -a 0 -m max -o <a href="an-max.pgm">an-max.pgm</a>
+</pre></blockquote>
+<center>
+<img src="an-max.jpg" width=256 height=256 alt="an-max">
+</center>
+
+<blockquote><pre>
+unu project -i aneurism.nhdr -a 0 -m variance | unu gamma -g 4 \
+| unu quantize -b 8 -o <a href="an-var.pgm">an-var.pgm</a>
+</pre></blockquote>
+<center>
+<img src="an-var.jpg" width=256 height=256 alt="an-var">
+</center>
+
+<h3>Univariate histograms</h3>
+
+Histograms, joint histograms, and scatterplots are all raster data,
+just like images, so NRRD can represents them as well.  The histogram
+of the aneurysm dataset, for instance, is a 1-D nrrd:
+<blockquote><pre>
+unu histo -i aneurism.nhdr -b 256 | unu save -f nrrd -e ascii -o <a href="an-hist.nrrd">an-hist.nrrd</a>
+
+NRRD0001
+content: histo(aneurism,256)
+type: unsigned int
+dimension: 1
+sizes: 256
+axis mins: 0
+axis maxs: 255
+centers: cell
+labels: "histo(aneurism,256)"
+encoding: ascii
+
+16608268
+3600
+3506
+3380
+3097
+3197
+...
+</pre></blockquote>
+
+The <a href="../format.html#axismins"><tt>axis mins</tt></a> and <a
+href="../format.html#axismaxs"><tt>axis maxs</tt></a> fields are used
+to represent the range of values which were mapped to the lowest and
+highest bins of the histogram.  Because the bins of the histogram are
+necessarily cell-centered, this is recorded via the <a
+href="../format.html#centers"><tt>centers</tt></a> field.
+<tt>unu</tt> also tries to generate a consise verbal description of
+the data it produces, based on the <tt>content</tt> field of the
+input.  In this case, the new <tt>content</tt> was also used in the <a
+href="../format.html#labels"><tt>labels</tt></a> field, which allows
+arbitrary strings to be associated with each axis.
+
+
+<!--
+using byteskip to get past fortran-written info
+-->
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

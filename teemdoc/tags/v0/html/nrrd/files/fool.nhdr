@@ -1,0 +1,7 @@
+NRRD0001
+type: unsigned char
+dimension: 2
+sizes: 128 128
+encoding: raw
+data file: ./fool.pgm
+line skip: 3

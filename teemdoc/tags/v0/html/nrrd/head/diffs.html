@@ -1,0 +1,216 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Visible Female Color Data Processing: Image Differences
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="head80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <font size="-1"><a href="./index.html">Visible<br>Female</a></font>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Image Differences</b></h2>
+</table>
+<p>
+
+As yet another way of looking at the brightness variation problem,
+per-pixel image differences are also interesting.  They have less
+ability to characterize the brightness differences than do the <a
+href="joint.html">joint histograms</a>, but they also provide some
+contextual clues about the nature of the brightness variations.  In
+the previous pages on <a href="strips.html">the gray scale strips</a>
+and <a href="joint.html">joint histograms</a>, four locations in the
+head were chosen for their evidence (and non-evidence) of the
+brightness problem.  This page looks at successive pairs of images
+from those four locations, in conjuction with closer inspection of the
+axis histograms.
+
+<p>
+
+<blockquote><pre>
+cat > cmap2.txt
+0 0 0
+0 0 1
+1 0 0
+1 1 0
+1 1 1
+<i>(Ctrl-D)</i>
+alias sliceprep "unu make -i - -t uchar -s 2048 1216 3 -e raw | unu permute -p 2 0 1 | unu crop -min 0 260 30 -max M 1820 M"
+alias shrink "unu resample -s = x0.2 x0.2 -k cubic:0,0.5"
+alias cquant "unu quantize -b 8 -min -30 -max 30"
+alias nquant "unu project -a 0 -m L2 | unu rmap -m cmap2.txt -min 0 -max 60 | unu quantize -b 8"
+alias histaxzoom "unu pad -min 0 -2 -2 0 -max M M+2 M+2 M -b pad -v 0 | unu permute -p 0 1 3 2 | unu reshape -s 3 42 260 | unu resample -s = x10 = -k box"
+</pre></blockquote>
+
+<ul>
+
+<li> <tt>sliceprep</tt>: This crops a full-resolution slice image down
+to contain just the blue block and the region below it, including the
+Kodak card.
+
+<li> <tt>shrink</tt>: This downsamples from full-resolution to the image
+resolution used here.  Note that I'm doing the differencing first,
+then resampling, not the other way around.
+
+<li> <tt>cquant</tt>: After doing image differencing, I want to
+re-quantize to 8-bits, but want to set the min and max explicitly to
+be centered around zero, so that the difference of identical pixels
+will be mapped to (128,128,128).
+
+<li> <tt>nquant</tt>: After doing image differencing, this takes the
+L2 norm of the component-wise difference, and then colormaps this
+through <tt>cmap2.txt</tt>
+
+<li> <tt>histaxzoom</tt>: Its possible to do image manipulation with
+<tt>unu</tt>, but its not pretty or intuitive, and this is a good
+example of that.  In conjuction with the <tt>unu join</tt> and <tt>unu
+crop</tt> on the <a href="problem.html#percomp">per-component axis
+histograms</a>, this adds a black border around the selected region,
+re-arranges the images side-by-side, then upsamples in X, so as to
+"zoom" in on axis histograms of 5 slices on either side of the
+transition of interest.
+
+</ul>
+
+Since many images are involved, the sets of difference images
+are organized into sub-pages.
+
+<ol>
+
+<li> <a href="diff1.html">First step discontinuity</a>: 
+This is the discontinuity that goes through the corpus callosum,
+the streak most visible in the XZ and YZ projections of the
+<a href="brcube.html">cube of brain</a>.
+
+<li> <a href="diff2.html">Second step discontinuity</a>:
+This is the discontinuity that goes through the tops of the eyes.
+
+<li> <a href="diff3.html">Isolated dark slice</a>: 
+This is the single dark slice that goes through the bridge of the nose.
+
+<li> <a href="diff4.html">The control</a>: This region was deemed to
+have no problematic brightness variations.
+
+</ol>
+
+Although it is a stretch to make strong conclusions based on a small
+number of slices, these difference images imply that there are at
+least two very different causes of brightness variations.  In the
+first two cases (the step discontuities) the change was exactly
+coincident with the Kodak card being moved.  Perhaps some aspect of
+the machinery was reset at these slices, including a change in the
+lighting.  It is in these cases where the Kodak card did successfully
+capture the brightness variation that occurs inside the head.
+
+<p>
+
+In the third case, the Kodak card has not moved, and the pattern on
+the difference images suggest that something changed on the surface
+itself, rather than the lighting, which would explain why the Kodak
+card completely failed to capture the brightness variation visible
+inside the head.  Based on this, I did difference images for another
+set of images around an isolated dark slice, the one that goes through
+the nose, but closer to the tip than the previous dark slice.  Slice
+indices and names are:
+
+<ul>
+<li><pre>
+459: avf1154a.raw.Z
+460: avf1154b.raw.Z
+461: avf1154c.raw.Z
+462: avf1155a.raw.Z
+463: avf1155b.raw.Z
+</pre>
+</ul>
+
+<blockquote><pre>
+unu join -i histax{R,G,B}.ppm -a 3 | unu crop -min 0 <b>456</b> 0 0 -max M m+9 M M \
+  | histaxzoom | topng doc/<a href="hist5.png">hist5.png</a>
+zcat data/<b>avf1154a</b>.raw.Z | sliceprep -o 0.ppm
+zcat data/<b>avf1154b</b>.raw.Z | sliceprep -o 1.ppm
+zcat data/<b>avf1154c</b>.raw.Z | sliceprep -o 2.ppm
+zcat data/<b>avf1155a</b>.raw.Z | sliceprep -o 3.ppm
+zcat data/<b>avf1155b</b>.raw.Z | sliceprep -o 4.ppm
+unu 2op - {0,1}.ppm -t int | cquant | shrink | topng doc/<a href="diff5CA.png">diff5CA.png</a>
+unu 2op - {1,2}.ppm -t int | cquant | shrink | topng doc/<a href="diff5CB.png">diff5CB.png</a>
+unu 2op - {2,3}.ppm -t int | cquant | shrink | topng doc/<a href="diff5CC.png">diff5CC.png</a>
+unu 2op - {3,4}.ppm -t int | cquant | shrink | topng doc/<a href="diff5CD.png">diff5CD.png</a>
+unu 2op - {0,1}.ppm -t int | nquant | shrink | topng doc/<a href="diff5NA.png">diff5NA.png</a>
+unu 2op - {1,2}.ppm -t int | nquant | shrink | topng doc/<a href="diff5NB.png">diff5NB.png</a>
+unu 2op - {2,3}.ppm -t int | nquant | shrink | topng doc/<a href="diff5NC.png">diff5NC.png</a>
+unu 2op - {3,4}.ppm -t int | nquant | shrink | topng doc/<a href="diff5ND.png">diff5ND.png</a>
+</pre></blockquote>
+
+<center>
+<table>
+<tr>
+  <td align=center colspan=3><img width=420 height=260 alt="" src="hist5.png">
+<tr>
+  <td align=center colspan=3><tt>hist5.png</tt>: Segments of the red,
+green, and blue <a href="problem.html#percomp">axis histograms</a>,
+for Z slices 456 to 465.
+<tr>
+  <td><img width=312 height=237 alt="" src="diff5CA.png">
+  <td><img width=312 height=237 alt="" src="diff5CB.png">
+  <td><img width=312 height=237 alt="" src="diff5CC.png">
+  <td><img width=312 height=237 alt="" src="diff5CD.png">
+<tr>
+  <td align=center><tt>diff5CA.png</tt>
+  <td align=center><tt>diff5CB.png</tt>
+  <td align=center><tt>diff5CC.png</tt>
+  <td align=center><tt>diff5CD.png</tt>
+<tr>
+  <td><img width=312 height=237 alt="" src="diff5NA.png">
+  <td><img width=312 height=237 alt="" src="diff5NB.png">
+  <td><img width=312 height=237 alt="" src="diff5NC.png">
+  <td><img width=312 height=237 alt="" src="diff5ND.png">
+<tr>
+  <td align=center><tt>diff5NA.png</tt>
+  <td align=center><tt>diff5NB.png</tt>
+  <td align=center><tt>diff5NC.png</tt>
+  <td align=center><tt>diff5ND.png</tt>
+</table>
+</center>
+
+As with the previous isolated dark slice, the Kodak card indicates no
+change, and, greater difference magnitudes on the slice were visible
+to the sides of the head.  The colormapping of the L2 difference norm
+shows that the interior of the head also has higher difference values;
+there are more yellow pixels in the back of the head in
+<tt>diff4NB.png</tt> and <tt>diff4NC.png</tt>.
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>

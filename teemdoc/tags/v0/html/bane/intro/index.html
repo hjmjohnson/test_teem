@@ -1,0 +1,174 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"> 
+<html>
+<head>
+<title>
+GK's C code: bane/gkms tutorial
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+
+<h2><a href="../"><img border=0 width=80 height=80
+src="../../img/bane80.jpg"></a><br>
+<small><small>&nbsp;</small></small><br>
+Introduction to <tt><b>bane</b></tt>, Using <tt><b>gkms</b></tt></h2>
+
+<blockquote>
+
+What follows is a demonstration of how the <tt>bane</tt> library can
+be used, via the <tt>gkms</tt> command-line program, to generate
+opacity functions for direct volume rendering of scalar fields.
+<tt>gkms</tt> is made from <tt>bin/gkms.c</tt> in the
+<tt>src/bane</tt> directory of teem.  It is compiled and copied to
+teem's architecture-specific <tt>bin</tt> directory as part of doing
+a "make install" on teem.
+
+<p>
+
+This also ends up being an introduction to the ideas behind my my <a
+href="http://www.cs.utah.edu/~gk/MS">MS thesis</a> and <a
+href="http://www.cs.utah.edu/~gk/papers/vv98">VolVis98 paper</a>.
+While familiarity with those would be helpful here, it is not
+essential.
+
+<p>
+
+The <tt>bane</tt> library is not especially optimized for speed,
+because having a correct implementation was more important to me than
+a fast one.  Not to worry- the slowest part of the analysis takes at
+most about a minute.  All the subsequent steps which might be part of
+an interactive loop are much, much faster.
+
+<p>
+
+<a href="dataprep.html">
+<b>STEP 0</b>: Preparing the data<br>
+</a>
+Let's use a standard but non-trivial dataset: the
+engine-block CT scan.  We will create a volume dataset, in
+<tt>nrrd</tt> format, called <tt>engine-crop.nrrd</tt>.
+
+<p>
+
+All the subsequent steps in opacity function generation use the
+executable called <tt>gkms</tt>, which is built as part of
+installing <tt>bane</tt>.  Running <tt>gkms</tt> with no arguments
+produces a usage message which lists its capabilities:
+<!-- 
+~/usr/local/irix6.n32/bin/gkms 
+-->
+<blockquote><pre>
+usage: gkms &lt;command&gt; ...
+command is one of:
+   hvol : make histogram volume
+   scat : make v-g and v-h scatterplots
+   info : make projections needed for opacity function generation
+    pvg : make colormapped plots of p(v,g)
+   opac : make opacity functions
+For all commands, input and output filenames can be "-" to signify stdin
+and stdout (respectively), where unambiguous.
+</pre></blockquote>
+
+The following steps will use each of these capabilities in sequence.
+
+<p>
+
+<a href="hvol.html">
+<b>STEP 1</b>: Creating the histogram volume
+(with <tt>gkms hvol ...</tt>)<br>
+</a>
+The data structure which is used as the basis for all
+later analysis steps is called the "histogram volume".  It is a
+record, in the form of a histogram, of the relationship between
+three-quantities which matter for describing the boundaries present in
+a dataset: "data value" (same as gray value, or intensity, or scalar
+value), gradient magnitude, and the second directional derivative
+along the gradient direction.
+
+<p>
+
+<a href="scat.html">
+<b>STEP 2</b>: Inspecting the histogram volume with scatterplots
+(with <tt>gkms scat ...</tt>)<br>
+</a>
+Once you've made the histogram volume, its nice to be able to look at
+it.  There are at least two reasons for this.  First, you want to be
+sure that the inclusion ranges set in the previous step were
+appropriate.  Specifically, important structures at high derivatives
+may have been clipped out, or the inclusion was <b>too</b> generous,
+which means that the interesting variation of derivative value was
+compressed to a small number of bins.  Second, looking at these
+scatterplots may be all you need to start setting opacity functions-
+since they can tell you about the boundaries present in the data.
+Also, looking at the scatterplots for known datasets can increase your
+intuition for the kinds of patterns measured by the histogram volume,
+and how they relate to the data itself.
+
+<p>
+
+<a href="info.html">
+<b>STEP 3</b>: Distilling the Histogram Volume (with <tt>gkms info
+... </tt>)<br>
+</a>
+My method for analyzing the histogram volume in order to produce an
+opacity function does not actually need look at the entire histogram
+volume itself; it only needs to look at certain projections, or
+distillations, of its contents.  It is these projections which will be
+analyzed in later stages to produce opacity functions.  For lack of a
+better term, I call these projection "info" files.
+
+<p>
+
+<a href="pvg.html">
+<b>STEP 4</b>: Making pictures of p(v,g) (with <tt>gkms
+pvg ... </tt>)<br>
+</a>
+The colormapped graph of the two-dimensional position function p(v,g)
+is effectively a portrait of the boundary information which was
+captured by the histogram volume.  Although most relevent to the
+generation of two-dimensional opacity functions, it also makes sense
+to inspect this for making one-dimensional opacity functions, just to
+learn how (if at all) appropriate 1-D opacity functions are to the
+structures which exist in the data. This also includes a small
+digression on what I view as the most problematic (weak) aspect of my
+Master's thesis research.
+
+<p>
+
+<a href="opac.html">
+<b>STEP 5</b>: Making opacity functions (with <tt>gkms opac
+... </tt>)<br>
+</a>
+Finally, opacity functions.  The reason their generation is
+"semi-automatic" is that the user has to supply a final ingredient; a
+mapping boundary distance to opacity, the so-called "boundary emphasis
+function".  Plus, the "sigma" and "gthresh" knobs may need some
+adjustment ...
+
+<p>
+
+<a href="summ.html">
+<b>SUMMARY</b>: All the steps, the remaining parameters
+</a><br>
+A review of all the steps outlined in the previous sections, and a
+review of the various parameters that are left to play with using this
+method.
+
+
+</blockquote>
+<p>
+<a href="http://validator.w3.org/check/referer"><img border="0"
+src="../../img/valid-html32s.gif"
+alt="Valid HTML 3.2!" height="20" width="58"></a>
+</p>
+
+</body>
+</html>
+
+

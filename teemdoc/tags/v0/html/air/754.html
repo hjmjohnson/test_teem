@@ -1,0 +1,342 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: air: IEEE 754 floats
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/air80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">air</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>IEEE 754 floats</b></h2>
+</table>
+
+IEEE 754 is the standard that governs how modern computers represent
+floating point numbers.  One aspect of IEEE 754 which people tend not
+to exploit is its ability to represent special values like
+Not-A-Number, and +/-Infinity.  The <b>air</b> library has a number of
+macros and functions which are intended to make working with these
+quantities easier.
+
+<p>
+
+<h3>Not-A-Number</h3>
+
+Not-A-Number, or "NaN", doesn't represent a real value, but rather the
+fact that there is no value to be represented.  Various <b>teem</b>
+libraries, especially <a href="../nrrd/index.html"><b>nrrd</b></a>,
+use NaN as a flag to mean "don't know".  This use is completely in
+keeping with the 754 spec.  However, the special semantics of NaN mean
+that it is not trivial to create a <tt>#define</tt> or a compile-time
+constant to hold this value (as is possible with say, <tt>M_PI</tt>),
+and it is not trivial to test to see if a value is NaN.  This may be
+why more people don't use NaN as a flag, but <b>air</b> is useful
+here.
+
+<p>
+
+One thing to keep in mind: Section 6.2 of IEEE 754 guarantees that a
+NaN stored in a <tt>float</tt> will stay a NaN when stored in a
+<tt>double</tt>, and vice versa.  Thus, you need not be cautious about
+the "precision" of your NaN.  The same doesn't exactly hold for
+infinity, though.
+
+<p>
+
+<b>How to get NaN</b>: If you want a NaN, so that you can save it into
+a floating point variable, perhaps as an indicator for "don't know",
+or "uninitialized", you have a few options.
+
+<ol>
+
+<li> (fastest) Use <tt>AIR_NAN</tt>, as in "<tt>float
+nan=AIR_NAN;</tt>".  <tt>AIR_NAN</tt> is a #define for
+<tt>airFloatNaN.f</tt>, which is the <tt>float</tt> field of the
+<tt>airFloatNaN</tt> union, which is itself a compile-time constant,
+defined in <tt>teem/src/754.c</tt>
+
+<li> (slower) Use <tt>airFPGen_f(airFP_QNAN)</tt>, which tells
+the <tt>airFPGen_f()</tt> function to generate a <tt>float</tt> of the
+class <tt>airFP_QNAN</tt>.  Calling <tt>airNaN()</tt> is a wrapper around
+this.
+
+<li> Do it yourself.  Store 0.0 in some <tt>float</tt> variable
+<tt>nan</tt>, and then <tt>"nan /= nan"</tt>.  You have to create a
+seperate variable in order to avoid compiler warnings about the
+division by zero.
+
+</ol>
+
+<b>How to test for NaN</b>: If you want to see if a variable
+<tt>x</tt> of type <tt>float</tt> is NaN, you can do one of the
+following.  Both of these return non-zero when the passed value
+is a NaN, and zero when it is not.
+
+<ol>
+
+<li> (fastest) Use <tt>AIR_ISNAN_F(x)</tt>, a macro which does bit-masking
+to look at the exponent and fraction fields of the <tt>float</tt>
+
+<li> (slower) Use <tt>airIsNaN(x)</tt>.  Same as macro, but uses a
+union to access the exponent and fraction fields.
+
+<li> See if return from <tt>int airFPClass_f(float val)</tt> is
+<tt>airFP_SNAN</tt> or <tt>airFP_QNAN</tt>.
+
+</ol>
+
+If you have a variable that is of type <tt>double</tt>, you must use
+the second option, because the value will be cast to <tt>float</tt> as
+part of the function call <tt>airIsNaN</tt>, but NOT as part of macro
+invocation <tt>AIR_ISNAN_F</tt>.
+
+<p>
+
+There are in fact two kinds of NaNs, the signaling NaN and the quiet
+NaN.  Nothing in <b>teem</b> attempts to use the floating point
+exception handler to work with signaling NaNs, because there isn't a
+cross-platform C-language API to the floating point hardware.  Also,
+nothing in <b>teem</b> attempts to use the integer value stored in the
+fraction field of the NaN to represent different kinds of conditions
+of NaN, so effectively, a NaN is a NaN is a NaN.  However, an effort
+is made to make <tt>AIR_NAN</tt> be what the local architecture
+considers a quiet NaN, in case using a signalling NaN could have an
+impact on performace.
+
+<h3>Infinities</h3>
+
+A <tt>float</tt> infinity, when assigned to <tt>double</tt>, stays
+infinity (with the same sign), and vice versa.  But if a
+<tt>double</tt> holds a large value (larger than <tt>FLT_MAX</tt>) and
+this is assigned to a <tt>float</tt>, an infinity will result.  Thus,
+detecting an infinity has to be done either with functions specific to
+the type of the value, or (being conservative), with functions which
+take a <tt>double</tt> argument.
+
+<p>
+
+<b>To generate an infinity:</b>
+
+<ol>
+
+<li>Use <tt>AIR_POS_INF</tt> or <tt>AIR_NEG_INF</tt>, a
+<tt>#define</tt> for the float component of <tt>airFloatPosInf</tt>
+or <tt>airFloatNegInf</tt>; these are compile-time constant unions.
+
+<li>Use <tt>airFPGen_f(airFP_POS_INF)</tt> or
+<tt>airFPGen_f(airFP_NEG_INF)</tt>
+
+</ol>
+
+<b>To test if something is infinity:</b>
+
+<ol>
+
+<li>Use <tt>int airIsInf_f(float f)</tt> (or <tt>int airIsInf_d(double
+d)</tt>).  These return 1 when given a positive infinity, -1 when
+given a negative infinity, and 0 otherwise.
+
+<li> See if return from <tt>int airFPClass_f(float val)</tt> (or
+<tt>int airFPClass_d(double val)</tt>) is
+<tt>airFP_POS_INF</tt> or <tt>airFP_NEG_INF</tt>.
+
+</ol>
+
+<h3>"Existant" values</h3>
+
+Parts of teem, especially <a href="../nrrd/index.html"><b>nrrd</b></a>,
+rely on the notion of a floating point value "existing" or not.  A
+value "exists" if it is not a 754 special value, that is, its not
+infinity, and not NaN. In <b>nrrd</b>, for instance, many operations
+are defined to only operate on the existant values.  The average of
+1000 numbers, containing one NaN and one infinity, will actually be
+the average of the 998 "existant" numbers.  Some way of determine if a
+value exists is required.
+
+<p>
+
+Sadly, this requires some care.  Ideally, we could define a macro like
+this:
+<blockquote><pre>
+#define AIR_EXISTS(x) ((x) == (x))
+</pre></blockquote>
+
+This is supposed to work because x isn't equal to itself if x is a
+special value, but many compilers will reduce this to true, even at
+low optimization levels. So, we could try this:
+<blockquote><pre>
+#define AIR_EXISTS(x) (!((x) - (x)))
+</pre></blockquote>
+
+For special values, x&nbsp;-&nbsp;x is not 0, so this should work.  But some
+compilers (such as 64-bit Irix6 with "-Ofast", and Visual Studio)
+again decree that AIR_EXISTS() is true for any possible value of x.
+To be completely thorough, one has to actually look at the bit patterns
+of the values, at which point you have to be specific to the
+<tt>float</tt>/ <tt>double</tt> type, and correct about their byte-sizes:
+<blockquote><pre>
+#define AIR_EXISTS_F(x) ((*(unsigned int*)&(x) & 0x7f800000) != 0x7f800000)
+#define AIR_EXISTS_D(x) (                               \
+  (*(airULLong*)&(x) & AIR_ULLONG(0x7ff0000000000000))  \
+    != AIR_ULLONG(0x7ff0000000000000))
+</pre></blockquote>
+
+We want to avoid false negatives for <tt>double</tt>s with values greater
+than <tt>FLT_MAX</tt>, so if we had to pick one of these to wrap in a
+single function that was used for both <tt>float</tt> and <tt>double</tt>,
+it would be the second.  This is the approach currently taken: on machines
+for which (!((x)&nbsp;-&nbsp;(x))) doesn't work because of optimizations,
+we resort to casting the value to double, and looking at its bits (done
+in <tt>airExists_d()</tt>).  Thus, in <tt>air.h</tt> we find:
+<blockquote><pre>
+#ifdef WIN32
+#define AIR_EXISTS(x) (airExists_d(x))
+#else
+#define AIR_EXISTS(x) (!((x) - (x)))
+#endif
+</pre></blockquote>
+
+Hopefully, at some soon, teem will be made with the assistance of a
+highly customized GNU configure script which will determine these
+things on a per-architecture, per-optimization basis.  The above
+solution works on all platforms that <b>teem</b> compiles on, using
+the optimization levels that the makefiles supply (generally -O2).
+A function called <tt>airSanity()</tt> makes sure that all IEEE 754-related 
+macros (such as <tt>AIR_EXISTS()</tt>) work correctly.
+
+<h3>Determining/generating floating point classes</h3>
+
+<tt>air.h</tt> has an enum for the different classes that a floating
+point number can belong to:
+<blockquote><pre>
+enum {
+  airFP_Unknown,               /*  0: nobody knows */
+  airFP_SNAN,                  /*  1: signalling NaN */
+  airFP_QNAN,                  /*  2: quiet NaN */
+  airFP_POS_INF,               /*  3: positive infinity */
+  airFP_NEG_INF,               /*  4: negative infinity */
+  airFP_POS_NORM,              /*  5: positive normalized non-zero */
+  airFP_NEG_NORM,              /*  6: negative normalized non-zero */
+  airFP_POS_DENORM,            /*  7: positive denormalized non-zero */
+  airFP_NEG_DENORM,            /*  8: negative denormalized non-zero */
+  airFP_POS_ZERO,              /*  9: +0.0, positive zero */
+  airFP_NEG_ZERO,              /* 10: -0.0, negative zero */
+  airFP_Last                   /* after the last valid one */
+};
+</pre></blockquote>
+
+Values (of type <tt>int</tt>) from this enum are used in conjunction
+with:
+<ul><li>
+<blockquote><pre>
+float airFPGen_f(int cls);
+double airFPGen_d(int cls);
+</pre></blockquote>
+These generate <tt>float</tt> or <tt>double</tt> values of the
+given class.
+</ul>
+
+<ul><li>
+<blockquote><pre>
+int airFPClass_f(float val);
+int airFPClass_d(double val);
+</pre></blockquote>
+These categorize a given floating-point value into one of the classes.
+</ul>
+
+Ideally, I wouldn't have to reimplement these, since most platforms
+have them in some form or another.  But they are not part of ANSI C,
+so each platform has its own name for the header file in which these
+are found, different enum names for the different classes, and even
+different corresponding numeric values.
+
+
+<h3>Converting between floating-point values and integer triples</h3>
+
+There are a number of functions for creating and querying floating
+point values, written largely for the sake of learning about 754.
+
+<ul><li>
+<blockquote><pre>
+float airFPPartsToVal_f(int sign, int exp, int frac);
+void airFPValToParts_f(int *signP, int *expP, int *fracP, float v);
+</pre></blockquote>
+
+Let you convert between a <tt>float</tt> and the three integral fields
+which comprise it: 1-bit sign, 8-bit exponent, and 23-bit fraction.
+</ul>
+
+<ul><li>
+<blockquote><pre>
+double airFPPartsToVal_d(int sign, int exp, airULLong frac);
+void airFPValToParts_d(int *signP, int *expP, airULLong *fracP, double v);
+</pre></blockquote>
+
+Same thing, but for <tt>double</tt>.  <tt>airULLong</tt> is just
+another name for <tt>unsigned long long</tt>, which Microsoft calls an
+"<tt>unsigned __int64</tt>".  A <tt>double</tt> is a 1-bit sign,
+11-bit exponent, 52-bit fraction.
+</ul>
+
+<h3>Printing individual bits</h3>
+
+In case you don't trust yourself to read the hex output from the
+"<tt>%x</tt>" printf() conversion sequence, you can look at all
+the individual bits of a <tt>float</tt> or <tt>double</tt>:
+
+<ul><li>
+<blockquote><pre>
+void airFPFprintf_f(FILE *file, float val);
+void airFPFprintf_d(FILE *file, double val);
+</pre></blockquote>
+
+Sample output from <tt>airFPFprintf_f(stdout, 42)</tt>:
+<blockquote><pre>
+42.000000: class 5; 0x42280000 = sign:0x0, exp:0x84, frac:0x280000 = 
+ S < . . Exp . . > < . . . . . . . . . Frac. . . . . . . . . . >
+ 0 1 0 0 0 0 1 0 0 0 1 0 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 
+</pre></blockquote>
+
+Sample output from <tt>airFPFprintf_d(stdout, 42)</tt>:
+<blockquote><pre>
+42.000000: class 5; 0x4045000000000000 = 
+sign:0x0, exp:0x404, frac:0x5000000000000 = 
+S<...Exp...><.......................Frac.......................>
+0100000001000101000000000000000000000000000000000000000000000000
+</pre></blockquote>
+
+Command-line demos are "tests" <tt>teem/src/air/test/floatprint.c</tt> 
+and <tt>teem/src/air/test/doubleprint.c</tt> 
+
+
+</ul>
+
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
