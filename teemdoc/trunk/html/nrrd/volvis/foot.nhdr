@@ -1,0 +1,9 @@
+NRRD0002
+type: unsigned char
+dimension: 3
+sizes: 256 256 256
+spacings: 1 1 1
+data file: ./foot.raw.gz
+encoding: gzip
+source URL:=http://www.gris.uni-tuebingen.de/areas/scivis/volren/datasets/data/foot.raw.gz
+courtesy:=Philips Research, Hamburg, Germany

@@ -1,0 +1,9 @@
+NRRD0002
+type: unsigned char
+dimension: 3
+sizes: 256 256 178
+spacings: 1 1 1
+data file: ./BostonTeapot.raw.gz
+encoding: gzip
+source URL:=http://www.gris.uni-tuebingen.de/areas/scivis/volren/datasets/data/BostonTeapot.raw.gz
+courtesy:=Terarecon Inc, MERL, Brigham and Women's Hospital
