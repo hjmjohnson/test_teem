@@ -126,7 +126,7 @@ typedef struct {
   /* 
   ** Comments.  Read from, and written to, header.
   ** The comment array "cmt" is NOT NULL-terminated.
-  ** The number of comments is cmtArr->len.
+  ** The number of comments is cmtArr-&gt;len.
   */
   char **cmt;
   airArray *cmtArr;
@@ -309,6 +309,61 @@ the header of a NRRD file (much easier than using <tt>more</tt> or
 <tt>less</tt>!)
 </ul>
 
+<h2>Reading a NRRD with a different memory allocator</h2>
+
+In some cases you want to read a NRRD in, but you want to do the
+memory allocation, instead of the nrrd library doing it for you.  This
+is supported in nrrd, but you have to read the nrrd in two steps: the
+first time reads the nrrd header so that you can figure out how much
+memory to allocate, and the second time reads in the data (as well
+as re-reading the header).  This function demonstrates this:
+
+<blockquote><pre>
+Nrrd *
+customLoad(char *filename) {
+  char me[]="demoIO", *err;
+  NrrdIoState *nios;
+  Nrrd *nin;
+  void *data;
+  
+  /* create a new nrrd */
+  nin = nrrdNew();
+  
+  /* tell nrrdLoad to only read the header, not the data */
+  nios = nrrdIoStateNew();
+  nrrdIoStateSet(nios, nrrdIoStateSkipData, AIR_TRUE);
+  
+  /* read in the nrrd header from file */
+  if (nrrdLoad(nin, filename, nios)) {
+    err = biffGetDone(NRRD);
+    fprintf(stderr, "%s: trouble reading \"%s\" header:\n%s",
+            me, filename, err);
+    free(err); nios = nrrdIoStateNix(nios);
+    return NULL;
+  }
+  
+  /* we're done with the nrrdIoState, this sets it to NULL */
+  nios = nrrdIoStateNix(nios);
+  
+  /* load the nrrd again, this time the data will be read, but 
+     the existing nin-&gt;data memory will be used, because nrrdRead
+     (called by nrrdLoad) remembers the address and size of incoming
+     allocated data, and eventually it will get used, instead of
+     nrrd allocating new memory */
+  if (nrrdLoad(nin, filename, NULL)) {
+    err = biffGetDone(NRRD);
+    fprintf(stderr, "%s: trouble reading \"%s\" data:\n%s",
+	    me, filename, err);
+    free(err);
+    return NULL;
+  }
+
+  /* return the nrrd.  Remember that you probably want to nrrdNix this
+     nrrd, and not nrrdNuke, since nrrdNuke will free(nin-&gt;data) */
+  return nin;
+}
+</pre></blockquote>
+
 <h2>Getting data into and out of nrrds</h2>
 
 Suppose that you have a 128-by-128-by-64 3-D array of <tt>double</tt>s
@@ -377,7 +432,7 @@ int sx=128, sy=128, sz=64;
 ...
 nval = nrrdNew();
 nrrdAlloc(nval, nrrdTypeDouble, 3, sx, sy, sz);
-val = (double*)nval->data;
+val = (double*)nval-&gt;data;
 val[10 + sx*(20 + sy*30)] = 42;     /* val[x=10,y=20,z=30] = 42 */
 ...
 nrrdNuke(nval);
@@ -649,7 +704,7 @@ just a wrapper around <tt>nrrdSanity()</tt>.
 <tr>
 <td align=right><tt>nrrdContentSet</tt>
 <td><b>-</b>
-<td align=left>printf-style setting of the nrrd->content field
+<td align=left>printf-style setting of the nrrd-&gt;content field
 <tr>
 <td align=right><tt>nrrdCheck</tt>
 <td><b>-</b>
@@ -739,10 +794,6 @@ allows you to do so.
 <td align=right><tt>nrrdSwapEndian</tt>
 <td><b>-</b>
 <td align=left>reverses the byte-ordering of the data in memory
-<tr>
-<td align=right><tt></tt>
-<td><b>-</b>
-<td align=left>
 </table>
 </center>
 
@@ -760,8 +811,8 @@ demoIncr(Nrrd *nrrd, double incr) {
   double val;
   size_t I, N;
   
-  lup = nrrdDLookup[nrrd->type];
-  ins = nrrdDInsert[nrrd->type];
+  lup = nrrdDLookup[nrrd-&gt;type];
+  ins = nrrdDInsert[nrrd-&gt;type];
   N = nrrdElementNumber(nrrd);
   for (I=0; I&lt;N; I++) {
     val = lup(nrrd-&gt;data, I);
