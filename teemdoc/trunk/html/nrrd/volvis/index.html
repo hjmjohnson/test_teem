@@ -26,6 +26,10 @@ GK's C code: nrrd: Inspecting volvis.org datasets
   <td width=80 height=80>
     <a href="../index.html"><img border=0 width=80 height=80 alt=""
     src="../../img/nrrd80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../demo.html"><img border=0 width=80 height=80 alt=""
+    src="../demo80.png"></a>
   <td>
 <tr>
   <td width=80 align=center valign=top>
@@ -34,6 +38,10 @@ GK's C code: nrrd: Inspecting volvis.org datasets
     <b>/</b>
   <td width=80 align=center valign=top>
     <b><a href="../index.html">nrrd</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../demo.html">demo</a></b>
   <td>
     <h2>&nbsp;&nbsp;<b>Inspecting volvis.org datasets</b></h2>
 </table>
@@ -60,7 +68,7 @@ href="http://www.gsp.com/support/virtual/admin/curl/">curl</a>, <a
 href="http://www.xach.com/snarf/">snarf</a>, <a
 href="ftp://ftp.gnu.org/pub/gnu/wget/">wget</a>, or if you're old
 school, <a href="http://www.meat.net/~dbt/code/webgrab.c">webgrab</a>.
-I suggest these tools (using curl in examples below) the because many
+I suggest these tools (using curl in examples below) because many
 interactive web browsers will cleverly decompress the data for you.
 
 <p>
@@ -109,8 +117,137 @@ unu make -h -i ./foot.raw.gz -c foot -t uchar -e gzip \
       "courtesy:=Philips Research, Hamburg, Germany" \
   -o <a href="foot.nhdr">foot.nhdr</a>
 
-
 </pre></blockquote>
+
+<h2>Making projections</h2>
+
+Having made nrrd headers for the volumes, we can start inspecting
+what's inside with "<tt>unu</tt>", such as with:
+<blockquote><pre>
+unu project -i BostonTeapot.nhdr -a 2 -m sum \
+ | unu heq -b 3000 -s 1 -a 0.5 \
+ | unu quantize -b 8 -o teapot-zsum.png
+unu project -i BostonTeapot.nhdr -a 2 -m var \
+ | unu heq -b 3000 -s 1 -a 0.5 \
+ | unu quantize -b 8 -o teapot-zvar.png
+unu project -i BostonTeapot.nhdr -a 2 -m max -o teapot-zmax.png
+unu join -i teapot-z{sum,var,max}.png -a 0 -incr -o teapot-z.png
+</pre></blockquote>
+<center>
+<table>
+<tr> 
+<td> <img width=256 height=256 alt="teapot-zmax.png" src="teapot-zsum.png">
+<td> <img width=256 height=256 alt="teapot-zmax.png" src="teapot-zvar.png">
+<tr> 
+<td> <tt>teapot-zsum.png</tt>
+<td> <tt>teapot-zvar.png</tt>
+<tr> 
+<td> <img width=256 height=256 alt="teapot-zmax.png" src="teapot-zmax.png">
+<td> <img width=256 height=256 alt="teapot-zmax.png" src="teapot-z.png">
+<tr> 
+<td> <tt>teapot-zmax.png</tt>
+<td> <tt>teapot-z.png</tt>
+</table>
+</center>
+
+The projections of summation ("<tt>zsum</tt>") and variance
+("<tt>zvar</tt>"), but not maximum ("<tt>zmax</tt>"), are 50%
+histogram equalized, so that variations at all intensity levels are
+better visible.  <b>NOTE</b>: this means that very minor fluctuations
+in common values (such as the background) are greatly accentuated. 
+This often allows you to see tomography artifacts that would otherwise
+be hidden.  In the final image, the sum, var, and max images
+are put into the red, green, and blue channels of an image.
+
+<p>
+
+<h2>Using the nrrd API</h2>
+
+Considering that there are many other pages demonstrating use of
+<tt>unu</tt>, it would be nice if there was a program demonstrating
+use of the <b>nrrd</b> API itself (which <tt>unu</tt> is built on).
+Thus <a href="ninspect.c"><tt>ninspect.c</tt></a> was born- a simple
+utility program for making the kinds of projections shown above.
+<tt>ninspect</tt> is a demo program that needs the <b>nrrd</b>, 
+<b>biff</b>, and <b>air</b> libraries to compile, but its easier
+if you just link against the <tt>libteem.a</tt> super-library
+that contains all the objects in teem.  Running this program is
+easy: you supply the input volume filename and the output
+image filename:
+
+<blockquote><pre>
+foreach DATA ( BostonTeapot aneurism bonsai foot ) 
+  echo $DATA
+  echo ./ninspect ${DATA}.nhdr ${DATA}.png
+  unu resample -i ${DATA}.png -s = x0.4 x0.4 -o _${DATA}.png
+end
+</pre></blockquote>
+
+(Make some thumbnail images for these web pages:)
+<blockquote><pre>
+unu crop -i _BostonTeapot.png -min 0 0 0 -max M M 104 \
+ | unu resample -s = x0.79 x0.79 \
+ | unu pad -min 0 -2 0 -max M M+2 M -o __BostonTeapot.png
+unu crop -i foot.png -min 0 268 12 -max M m+255 m+255 \
+ | unu resample -s = 80 80 -o ../demo80.png
+</pre></blockquote>
+
+
+The images created by this program contain projections along
+three different axes.  The layout of axes within these images is
+like this:
+
+<blockquote><pre>
++------------------------+
+|                        |
+|  o-----&gt; <b>X</b>  o-----&gt; <b>Z</b>  |
+|  |          |          |
+|  |          |          |
+|  |          |          |
+|  v          v          |
+|  <b>Y</b>          <b>Y</b>          |
+|                        |
+|  o-----&gt; <b>X</b>             |
+|  |                     |
+|  |                     |
+|  |                     |
+|  v                     |
+|  <b>Z</b>                     |
+|                        |
++------------------------+
+</pre></blockquote>
+
+I'm using "X", "Y", and "Z" to refer to the fastest, medium, and
+slowest axes in the volumes.  The fastest axis is the one whose
+coordinate changes the fastest as one traverses all the samples
+in linear memory order.  There is no effort made to correct for
+non-isotropic sample spacing along the different axes.
+
+<p>
+
+Here is a gallery of the projections so created. Recall the note
+above about accentuation of fluctuations in the background value:
+these images make the datasets look a little lower-quality than
+they really are.
+
+<table>
+<tr>
+<td><a href="BostonTeapot.png"><img 
+alt="_BostonTeapot.png" src="_BostonTeapot.png"></a>
+<td><a href="aneurism.png"><img 
+alt="_aneurism.png" src="_aneurism.png"></a>
+<td><a href="bonsai.png"><img 
+alt="_bonsai.png" src="_bonsai.png"></a>
+<td><a href="foot.png"><img 
+alt="_foot.png" src="_foot.png"></a>
+<tr>
+<td><tt><a href="BostonTeapot.nhdr">BostonTeapot.nhdr</a>
+<td><tt><a href="aneurism.nhdr">aneurism.nhdr</a>
+<td><tt><a href="bonsai.nhdr">bonsai.nhdr</a>
+<td><tt><a href="foot.nhdr">foot.nhdr</a>
+</table>
+
+
 
 <p>
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>
