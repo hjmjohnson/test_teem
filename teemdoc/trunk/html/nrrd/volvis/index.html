@@ -74,32 +74,35 @@ Now, for each of the datasets, download the data, and make a detached
 nrrd header.  The "<tt>-e gzip</tt>" indicates that the data is gzip
 compressed.  Because the data is only unsigned char, byte ordering is
 not an issue, and the "<tt>-en</tt>" (endianness) option is not needed.
+Setting the content field ("<tt>-c</tt>") is so that subsequent nrrd
+operations can update the content field according to the actions taken.
 
 <blockquote><pre>
 curl ${DATAPATH}/aneurism.raw.gz &gt; aneurism.raw.gz
-unu make -h -i ./aneurism.raw.gz \
-  -t uchar -s 256 256 256 -sp 1 1 1 -e gzip \
+curl ${DATAPATH}/BostonTeapot.raw.gz &gt; BostonTeapot.raw.gz
+curl ${DATAPATH}/bonsai.raw.gz &gt; bonsai.raw.gz
+curl ${DATAPATH}/foot.raw.gz &gt; foot.raw.gz
+
+unu make -h -i ./aneurism.raw.gz -c aneurism -t uchar -e gzip \
+  -s 256 256 256 -sp 1 1 1 \
   -kv "source URL:=${DATAPATH}/aneurism.raw.gz" \
       "courtesy:=Philips Research, Hamburg, Germany" \
   -o <a href="aneurism.nhdr">aneurism.nhdr</a>
 
-curl ${DATAPATH}/BostonTeapot.raw.gz &gt; BostonTeapot.raw.gz
-unu make -h -i ./BostonTeapot.raw.gz \
-  -t uchar -s 256 256 178 -sp 1 1 1 -e gzip \
+unu make -h -i ./BostonTeapot.raw.gz -c BostonTeapot -t uchar -e gzip \
+  -s 256 256 178 -sp 1 1 1 \
   -kv "source URL:=${DATAPATH}/BostonTeapot.raw.gz" \
       "courtesy:=Terarecon Inc, MERL, Brigham and Women's Hospital" \
   -o <a href="BostonTeapot.nhdr">BostonTeapot.nhdr</a>
 
-curl ${DATAPATH}/bonsai.raw.gz &gt; bonsai.raw.gz
-unu make -h -i ./bonsai.raw.gz \
-  -t uchar -s 256 256 256 -sp 1 1 1 -e gzip \
+unu make -h -i ./bonsai.raw.gz -c bonsai -t uchar -e gzip \
+  -s 256 256 256 -sp 1 1 1 \
   -kv "source URL:=${DATAPATH}/bonsai.raw.gz" \
       "courtesy:=S. Roettger, VIS, University of Stuttgart" \
   -o <a href="bonsai.nhdr">bonsai.nhdr</a>
 
-curl ${DATAPATH}/foot.raw.gz &gt; foot.raw.gz
-unu make -h -i ./foot.raw.gz \
-  -t uchar -s 256 256 256 -sp 1 1 1 -e gzip \
+unu make -h -i ./foot.raw.gz -c foot -t uchar -e gzip \
+  -s 256 256 256 -sp 1 1 1 \
   -kv "source URL:=${DATAPATH}/foot.raw.gz" \
       "courtesy:=Philips Research, Hamburg, Germany" \
   -o <a href="foot.nhdr">foot.nhdr</a>
