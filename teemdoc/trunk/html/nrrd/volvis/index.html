@@ -1,0 +1,113 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2003, 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+GK's C code: nrrd: Inspecting volvis.org datasets
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<A href="http://sourceforge.net"><IMG 
+ src="http://sourceforge.net/sflogo.php?group_id=85445&amp;type=2"
+ align=right width="125" height="37" border="0" alt="SourceForge.net Logo"></A>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Inspecting volvis.org datasets</b></h2>
+</table>
+
+<a href="http://www.gris.uni-tuebingen.de/~meissner/">Michael Mei&szlig;ner</a>
+does the world of volume rendering a great service by running the 
+<a href="http://www.volvis.org">Volvis.org</a> website, which is the
+source of a number of volume datasets, including some classics like
+the lobster.  This page documents the steps required to create nrrd
+headers for the files there, as well demonstrating the <b>nrrd</b>
+API with a simple program for inspecting the datasets.
+
+<p>
+
+<h2>Making headers</h2>
+
+The datasets come as gzip-compressed raw files, which <b>nrrd</b> can
+read as is, without de-compression.  The <tt>unu make</tt> commands
+for each dataset are based on the information on the <a
+href="http://www.gris.uni-tuebingen.de/areas/scivis/volren/datasets/datasets.html">dataset
+page</a>.  To retrieve the compressed datasets, I suggest one of the
+many fine command-line URL retreival tools, such as <a
+href="http://www.gsp.com/support/virtual/admin/curl/">curl</a>, <a
+href="http://www.xach.com/snarf/">snarf</a>, <a
+href="ftp://ftp.gnu.org/pub/gnu/wget/">wget</a>, or if you're old
+school, <a href="http://www.meat.net/~dbt/code/webgrab.c">webgrab</a>.
+I suggest these tools (using curl in examples below) the because many
+interactive web browsers will cleverly decompress the data for you.
+
+<p>
+Its helpful to set an environment variable for the base URL that the
+datasets are coming from:
+<blockquote><pre>
+setenv DATAPATH http://www.gris.uni-tuebingen.de/areas/scivis/volren/datasets/data
+</pre></blockquote>
+
+Now, for each of the datasets, download the data, and make a detached
+nrrd header.  The "<tt>-e gzip</tt>" indicates that the data is gzip
+compressed.  Because the data is only unsigned char, byte ordering is
+not an issue, and the "<tt>-en</tt>" (endianness) option is not needed.
+
+<blockquote><pre>
+curl ${DATAPATH}/aneurism.raw.gz &gt; aneurism.raw.gz
+unu make -h -i ./aneurism.raw.gz \
+  -t uchar -s 256 256 256 -sp 1 1 1 -e gzip \
+  -kv "source URL:=${DATAPATH}/aneurism.raw.gz" \
+      "courtesy:=Philips Research, Hamburg, Germany" \
+  -o <a href="aneurism.nhdr">aneurism.nhdr</a>
+
+curl ${DATAPATH}/BostonTeapot.raw.gz &gt; BostonTeapot.raw.gz
+unu make -h -i ./BostonTeapot.raw.gz \
+  -t uchar -s 256 256 178 -sp 1 1 1 -e gzip \
+  -kv "source URL:=${DATAPATH}/BostonTeapot.raw.gz" \
+      "courtesy:=Terarecon Inc, MERL, Brigham and Women's Hospital" \
+  -o <a href="BostonTeapot.nhdr">BostonTeapot.nhdr</a>
+
+curl ${DATAPATH}/bonsai.raw.gz &gt; bonsai.raw.gz
+unu make -h -i ./bonsai.raw.gz \
+  -t uchar -s 256 256 256 -sp 1 1 1 -e gzip \
+  -kv "source URL:=${DATAPATH}/bonsai.raw.gz" \
+      "courtesy:=S. Roettger, VIS, University of Stuttgart" \
+  -o <a href="bonsai.nhdr">bonsai.nhdr</a>
+
+curl ${DATAPATH}/foot.raw.gz &gt; foot.raw.gz
+unu make -h -i ./foot.raw.gz \
+  -t uchar -s 256 256 256 -sp 1 1 1 -e gzip \
+  -kv "source URL:=${DATAPATH}/foot.raw.gz" \
+      "courtesy:=Philips Research, Hamburg, Germany" \
+  -o <a href="foot.nhdr">foot.nhdr</a>
+
+
+</pre></blockquote>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
