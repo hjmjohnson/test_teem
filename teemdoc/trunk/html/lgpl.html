@@ -33,15 +33,15 @@ GK's C code: About the LGPL
 
 <p>
 
-All of my software is released under the <a
+My software, <a href="index.html">teem</a>, is released under the <a
 href="http://www.gnu.org/licenses/licenses.html#LGPL">GNU Lesser
 General Public License</a> ("LGPL"), for a variety of reasons.  Most
-importantly, this license best conforms to the notion of sharing that
-I think is fundamental to academic research, which this software was
-created to support.  Also, because the development of this software
-was largely funded by the tax paying American public, I feel obligated
-to prevent situations where my software is used but can not be
-altered, inspected, or understood at the level of source code.
+importantly, this license best implements to the notion of "share and
+share alike" which is fundamental to academic research.  Also, because
+the development of this software was largely funded by the tax paying
+American public, I feel obligated to prevent situations where my
+software is used but can not be inspected, understood, or altered at
+the level of source code.
 
 <p>
 
@@ -68,11 +68,11 @@ school, lab, or company.
 
 After reading through the LGPL very carefully, I wrote up the
 following description of it, and the (minimal) responsibilities you
-have if you release software which uses teem. Other people here (at
-Utah) found it helpful because it clarifies whether or not the LGPL
-makes a distinction between static versus dynamic linking (the answer
-is no, and yes).  Also, it enumerates exactly what you'd need to do if
-you release software that uses teem (the upshot is, not much).  Please
+have if you release software which uses teem. Others have found it
+helpful because it clarifies whether or not the LGPL makes a
+distinction between static versus dynamic linking (the answer is no,
+and yes).  Also, it enumerates exactly what you'd need to do if you
+release software that uses teem (not much).  Please
 read on.
 
 <p>
@@ -88,14 +88,14 @@ of the work, and so on.
 <p>
 
 If you link my library with your program, the resulting binary is
-derived from my library, in the copyright sense, because the binary
+derived from my library (in the copyright sense) because the binary
 contains translated portions of my code.  The GNU licenses make no
 distinction between static and dynamic linking <b>insofar as the
-definition of a derived work, as applied to software, is concerned</b>.
-From the Preamble of the LGPL: "When a program is linked with a
-library, whether statically or using a shared library, the combination
-of the two is legally speaking a combined work, a derivative of the
-original library."
+definition of a derived work, as applied to compiled software, is
+concerned</b>.  From the Preamble of the LGPL: "When a program is
+linked with a library, whether statically or using a shared library,
+the combination of the two is legally speaking a combined work, a
+derivative of the original library."
 
 <p>
 
@@ -127,18 +127,20 @@ the derived work.
 
 <p>
 
-The important distinction here that those responsibilities, which I'll
-describe below, amount to something <b>less</b> than the full LGPL.
-Those responsibilities are mandated and defined by the LGPL (since the
-LGPL governs the distribution of any derived work), but they are
-<b>not the same as the LGPL</b>.  This is in contrast to what is
-required when the derived work involves modification of my source.  In
-other words, if you're worried about a license being "viral", then the
-LGPL is "viral" only to the extent that you find it necessary to make
-source code changes.  On the other hand, if you have found bugs or API
-deficiencies in my software, please tell me, so that everyone can
-benefit.  Since this software is how I do research, I'll be supporting
-it for quite awhile.
+The important distinction here is that those responsibilities, which
+I'll describe below, amount to something <b>less</b> than the full
+LGPL.  Those responsibilities are mandated and defined by the LGPL
+(since the LGPL governs the distribution of any derived work), but
+they are <b>not the same as the LGPL</b>.  Most confusion about the
+LGPL revolves around this basic property: Section 6 of the LGPL
+constrains (mildly) how you distribute compiled software using a
+LGPL'd library, but because those constraints are not the same as the
+LGPL, the LGPL does not propogate itself in the same way that the GPL
+does.  This is in contrast to what is required when the derived work
+involves modification of my source, in which case the full LGPL does
+apply.  However, if you have found bugs or API deficiencies in my
+software, please tell me, so that everyone can benefit.  Since this
+software is how I do research, I'll be supporting it for quite awhile.
 
 <p>
 
@@ -165,15 +167,15 @@ notices for other code you use, or if copyright notices are displayed
 as part of the program's operation, then you need to show teem's
 copyright notice as well:
 <blockquote><pre>
-  Copyright (C) 2002, 2001, 2000, 1999, 1998 University of Utah
+  Copyright (C) 2003, 2002, 2001, 2000, 1999, 1998 University of Utah
 </pre></blockquote>
 
-<li> You need to make it possible for users of your program to modify
-my teem libraries, and use those modified teem libraries in your
-program.  The principle of copyleft is that you pass on to others the
-same freedoms as were available to you.  The five possible ways to
-facilitate this, listed in Section 6, can be summarized as two
-alternatives:
+<li> The interesting part: You need to make it possible for users of
+your program to modify my teem libraries, and use those modified teem
+libraries in your program.  The principle of copyleft is that you pass
+on to others the same freedoms as were available to you.  The five
+possible ways to facilitate this, listed in Section 6, can be
+summarized as two alternatives:
 
 <ol>
 
@@ -192,7 +194,7 @@ alternatives:
   <li> If you only <b>dynamically link</b> against shared libraries,
   you're done!  The nature of shared libraries means that your program
   will slurp up the teem libraries (original or modified) at run-time.
-  You don't even need to distribute teem source.  (This is Section 6(b))
+  <b>You don't even need to distribute teem source</b>.  (This is Section 6(b))
 
 </ol>
 
@@ -201,7 +203,7 @@ alternatives:
 I mentioned above that the LGPL does not distinguish between static
 and dynamic linking insofar as the definition of a derivative work is
 concerned.  Section 6 of LGPL says that the distinction between static
-and dynamic does matter in the context of how to comply with LGPL,
+and dynamic <b>does</b> matter in the context of how to comply with LGPL,
 when you're releasing a program that uses teem without
 modifying it.  And this is how I imagine most everyone will use my
 libraries-- just linking against them as distributed.  You probably
