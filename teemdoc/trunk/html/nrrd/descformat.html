@@ -76,8 +76,72 @@ Various aspects of the NRRD format borrow heavily from the PCGV volume
 dataset format developed by James Durkin at the Cornell Program of
 Computer Graphics.  
 
+<h2>Optional encodings</h2>
 
-<h2>Compared to the VTK format</h2>
+NRRD has two basic encodings: ascii and raw.  It has other optional
+encodings which are useful in different situations:
+
+<ul>
+
+<li><tt>hex</tt>: If you know enough PostScript to learn the image
+dimensions, this allows you to snarf image data out of a PostScript file.
+
+<li><tt>gzip</tt>: Allows you to read and write data with the zlib
+compression library, in a way that is compatible with the gzip/gunzip
+command-line tools.
+
+<li><tt>bzip2</tt>: Allows you to read and write data with
+bzip2 compression, compatible with the bzip2/bunzip2 command-line tools.
+
+</ul>
+
+Having an optional encoding means that the <b>nrrd</b> library can be
+compiled without these turned on, so that no external libraries are
+needed.  Builds of the <b>nrrd</b> library which are missing the
+compression encodings will fail with a warning message when asked to
+read or write compressed data.
+
+<p>
+
+Other optional encodings may be added in the future.  However, there
+is no risk that NRRD will turn into another TIFF, a format so flexible
+that few readers actually support all of the <a
+href="http://partners.adobe.com/asn/developer/PDFS/TN/TIFF6.pdf">121
+page specification</a>.  The only optional encodings which may be
+added to NRRD in the future will be ones for which there exist freely
+available command-line tools to convert the encoded data (in
+isolation) to raw data.
+
+<p>
+
+If you have a NRRD file <tt>volume.nrrd</tt>, with an attached header,
+using a data encoding not supported by the available nrrd
+implementation, you can always use the unix/linux/cygwin command
+"<tt>tail&nbsp;+N&nbsp;volume.nrrd</tt>" (where N is two plus the
+number of lines in the header) to get at all the data, so as to pass
+it onto a stand-alone converter.  Or, the <a
+href="../unrrdu/index.html">Utah Nrrd Utilities</a> command
+"<tt>unu&nbsp;data</tt>" is a much easier way of doing the exact same
+thing.  Data in a separate file, detached from the NRRD header, is
+obviously trivial to pass to a converter.
+
+<p>
+
+I couldn't find stand-alone converters for hex data, so I wrote them:
+<ul>
+<li> <a href="enhex.c"><tt>enhex.c</tt></a>: converts from raw to hex
+<li> <a href="dehex.c"><tt>denex.c</tt></a>: converts from hex to raw
+</ul>
+
+<p>
+
+Because <tt>unu&nbsp;data</tt> will always be able to spit out the
+data portion of a NRRD file, even if the <b>nrrd</b> library on which
+it was built wasn't compiled with the optional encodings enabled,
+other non-teem NRRD readers should feel no obligation to support the
+optional encodings.
+
+<h2>NRRD compared to VTK format</h2>
 
 The <a href="http://public.kitware.com/VTK/pdf/file-formats.pdf">VTK
 (<tt>http://public.kitware.com/VTK/pdf/file-formats.pdf</tt>)</a> file
@@ -111,7 +175,7 @@ and bzip2 compression.
 old min and max (range of values pre-quantization)
 </ul>
 
-<h2>Compared to the MetaImage format</h2>
+<h2>NRRD compared to MetaImage format</h2>
 
 This format (specs available from <a
 href="http://tolkien.rad.unc.edu/technologies/MetaImage/"><tt>http://tolkien.rad.unc.edu/technologies/MetaImage/</tt></a>)
