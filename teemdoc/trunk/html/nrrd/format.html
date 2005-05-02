@@ -57,7 +57,8 @@ GK's C code: nrrd: Definition of NRRD File Format
 <a href="#spacedimension"><tt>space dimension</tt></a>,
 <a href="#spaceunits"><tt>space units</tt></a>,
 <a href="#spaceorigin"><tt>space origin</tt></a>,
-<a href="#spacedirections"><tt>space directions</tt>
+<a href="#spacedirections"><tt>space directions</tt></a>,
+<a href="#measurementframe"><tt>measurement frame</tt>.
 
 <li><a href="#basic">Basic field specifications </a><br>
 <a href="#dimension"><tt>dimension</tt></a>,
@@ -178,6 +179,9 @@ units</tt>" fields, general space and orientation information
 directions:</tt>", "<tt>space origin:</tt>", and "<tt>space
 units:</tt>" fields) , and the ability for the "<tt>data file:</tt>"
 field to identify multiple data files.
+
+<li><tt>NRRD0005</tt>: added "<tt>measurement frame:</tt>" field
+(should have been figured out for <tt>NRRD0004</tt>).
 
 </ul>
 
@@ -782,30 +786,40 @@ volume is oriented relative to a patient-based coordinate system such
 as right-anterior-superior.  The orientation information in a NRRD
 header defines a relationship between the individual axes of the
 array, and the basis vectors of the (single) space in which the array
-conceptually lives.  Because orientation information is a self-contained
-topic, all the related field specifications are described here, instead
-of in <a href="#basic">Section 5</a> and <a href="#per-axis">Section 6</a>.
+conceptually lives.  Because orientation information is a
+self-contained topic, all the related field specifications are
+described here, instead of in <a href="#basic">Section 5</a> and <a
+href="#per-axis">Section 6</a>.  For the purposes of this section,
+this surrounding space in which the image grid is logically oriented
+will be called "world space" (nonwithstanding the fact that
+application-specific uses of NRRDs may use "world space" to refer to
+yet another reference frame).
 
 <p>
 
 Orientation information is defined by a combination of basic and
-per-axis field specifications, which accomplish three things:
+per-axis field specifications, which accomplish four things:
 <ol>
 <li> Identify the space around array (or at least its dimension). Done
 with basic field specifications "<tt>space:</tt>"
 and "<tt>space dimensions:</tt>", and per-axis field specification
 "<tt>space units:</tt>".
-<li> Determine the translation (or position) of the array.  Done with
-basic field specification "<tt>space origin:</tt>", which locates the "first"
-sample.
+<li> (Optional) Determine the translation (or position) of the array. 
+Done with basic field specification "<tt>space origin:</tt>", which
+locates the "first" sample.
 <li> Determine the direction of each axis of the array relative to the space.
 Done with per-axis field specifications "<tt>space directions:</tt>".
+<li> (Optional) For quantities that are a vector or a matrix with coefficients
+measured with respect to some specific coordinate frame, the basic field
+specification "<tt>measurement frame</tt>" identifies the mapping from
+the coordinates of the measurement frame to those of the space around
+the array.
 </ol>
 
 The logic behind the break-down between basic and per-axis field
 specifications this is that if the raster ordering of the axes of the
 image data is permuted (for example the fastest and slowest axes are
-interchanged), items 1 and 2 are unchanged, while the elements of item
+interchanged), items 1, 2, and 4 are unchanged, while the elements of item
 3 have to be correspondingly permuted.
 
 <p>
@@ -833,8 +847,8 @@ space: &lt;<i>space</i>&gt;
 This names a particular space in which the array lives, which implies
 the dimension of the space.  This (or "<tt>space dimension</tt>") has to 
 precede the other orientation-related fields, because it determines how
-many components there are in the vectors of the <tt>space origin</tt>
-and <tt>space directions</tt> fields.
+many components there are in the vectors of the <tt>space origin</tt>,
+<tt>space directions</tt>, and <tt>measurement frame</tt> fields.
 The possible values are:
 
 <table border=1>
@@ -918,8 +932,11 @@ ordering: that the coordinates along the fastest axis increase in the
 left to right direction, and that the second and third array
 coordinates increase along the anterior and superior directions.  The
 NRRD format, in contrast, is careful to separate the issue of axis
-ordering from the task of identifying the space in which the array 
-is oriented.
+ordering from the task of identifying the space in which the array is
+oriented.  It is possible to reorder the axes, and/or the samples
+along an axis, while keeping the spatial locations of the samples
+unchanged.  None of this changes the identification (such as
+right-anterior-superior) of the world space.
 
 <a name="spacedimension"><hr noshade width="30%" align=left></a>
 <blockquote><pre>
@@ -930,11 +947,12 @@ space dimension: &lt;<i>int</i>&gt;
 (but not both) is necessary for defining orientation
 </ul>
 
-If the space surrounding the array is not available as an explicitly
+If the world space in question is not available as an explicitly
 named space with the <tt>space</tt> field specification, the dimension
 of the space is given with this.  The integral dimension determines how
-many components there are in the vectors given in the <tt>space origin</tt>
-and <tt>space directions</tt> vectors.  This (or <tt>space</tt>) has
+many components there are in the vectors given in the <tt>space origin</tt>,
+<tt>space directions</tt>, and <tt>measurement frame</tt> vectors. 
+This (or <tt>space</tt>) has
 to precede the other orientation-related fields.
 
 <a name="spaceunits"><hr noshade width="30%" align=left></a>
@@ -964,7 +982,7 @@ first sample in the array (the one whose value is given first in the
 data file, or with the lowest memory address).  This allows the
 translational position of the image to be defined.  If homogeneous
 coordinates are used to map from the index space of the array, to the
-surrounding space location, this vector would be the last column
+world space location, this vector would be the last column
 vector of the matrix transform.  By being specific to the center of
 the sample, this is independent of the cell- versus node-centering of
 the data.  This field conveys the same information as the "Image
@@ -1006,6 +1024,64 @@ axis) may be specified:
 <blockquote><pre>
 space directions: none (1,0,0) (0,1,0) (0,0,3)
 </pre></blockquote>
+
+<a name="measurementframe"><hr noshade width="30%" align=left></a>
+<blockquote><pre>
+measurement frame: &lt;<i>vector[0]</i>&gt; &lt;<i>vector[1]</i>&gt; ... &lt;<i>vector[spaceDim-1]</i>&gt;
+</pre></blockquote>
+<ul>
+<li> Always optional, and is an optional part of defining orientation
+</ul>
+
+This field defines the relationship between the frame associated with
+the coordinates of some non-scalar quantities, and the world
+space in which the image orientation is defined.  When quantities
+like vectors and tensors are numerically represented, some coordinate
+frame must be chosen in which to measure the coefficients of the
+vector or tensor.  This coordinate system may be called the
+"measurement frame".  It is logically distinct from the coordinate
+frame in which the image orientation is defined, the world 
+space in which the <tt>space directions</tt> and <tt>space
+origin</tt> vectors have their coefficients measured.
+
+<p>
+
+The <tt>measurement frame</tt> is a <b>basic</b> (per-array) field
+specification (not per-axis), which identifies a spaceDim-by-spaceDim
+matrix, where spaceDim is the dimension of world space (implied by
+<tt>space</tt> or given by <tt>space dimension</tt>).  <b>The matrix
+defines how to transform coordinates in the measurement frame to
+coordinates in world space</b>.  <tt>vector[<b>i</b>]</tt> gives
+<b>column&nbsp;i</b> of the measurement frame matrix.  Just as the
+<tt>space directions</tt> field gives, one column at a time, the
+mapping from image space to world space coordinates, the
+<tt>measurement frame</tt> gives the mapping measurement frame to
+world space coordinates, also one column at a time.
+
+<p>
+
+Somewhat confusingly and unfortunately, there are currently no
+semantics defined which relate the measurement frame matrix to any
+<tt>kind</tt> of any axis (such as "<tt>3-vector</tt>"), even though
+it might seem natural.  That is, the matrix defined by the
+"<tt>measurement frame</tt>" field is always a square matrix whose
+size is entirely determined by the dimension of world space, even if
+an axis identifies its <tt>kind</tt> as something which would seem to
+call for a different number of measurement frame dimensions.  This is
+unfortunately not a clear-cut issue.  Basically, it is not the job of
+the "<tt>measurement frame</tt>" field to reconcile an illogical
+combination of world space dimension and per-axis kind, which can
+arise with or without a measurement frame being defined.  Even when
+there is no inconsistency, there is no graceful way of identifying
+which axes' kinds have coordinates which may be mapped to world space,
+since this is logically per-axis information, but having a per-axis
+measurement frame is certainly overkill.  There is also the
+possibility that a measurement frame should be recorded for an image
+even though it is storing only scalar values (e.g., a sequence of
+diffusion-weighted MR images has a measurement frame for the
+coefficients of the diffusion-sensitizing gradient directions, and the
+measurement frame field is a logical store this information).  Experience
+and time may clarify this situation.
 
 <h2><a name="basic">5. Basic Field Specifications</a></h2>
 
