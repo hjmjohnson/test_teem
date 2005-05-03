@@ -1080,7 +1080,7 @@ possibility that a measurement frame should be recorded for an image
 even though it is storing only scalar values (e.g., a sequence of
 diffusion-weighted MR images has a measurement frame for the
 coefficients of the diffusion-sensitizing gradient directions, and the
-measurement frame field is a logical store this information).  Experience
+measurement frame field is the logical store this information).  Experience
 and time may clarify this situation.
 
 <h2><a name="basic">5. Basic Field Specifications</a></h2>
@@ -2062,14 +2062,16 @@ With time, more different kind values are apt to be added.
 
 <p>
 
-Vectors and matrices can be stored in NRRDs with space and
-orientation information (using the <tt>space direction</tt> and
-<tt>space origin</tt> fields).  The question then arises, is the
-coordinate frame of the orientation information the same as the
-coordinate frame in which the components of the vector or matrix are
-measured?  Unfortunately, because it is impossible for a mere file
-format to ensure agreement between these two coordinate frames,
-readers should not assume that they are the same.
+One issue that arises with storing vectors and matrices in NRRDs is
+identifying the coordinate frame in which their coefficients are
+measured.  The way to do this in NRRD is to use the <a
+href="#measurementframe"><tt>measurement frame</tt></a> field in
+combination with the <a href="#spacedirections"><tt>space
+directions</tt></a> field: which relates the measurement frame to the
+orientation of image as a whole.  Without the <tt>measurement
+frame</tt>, field there are no semantics for what the measurement
+frame is (it isn't safe to assume that its the same as the image
+orientation).
 
 <p>
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>
