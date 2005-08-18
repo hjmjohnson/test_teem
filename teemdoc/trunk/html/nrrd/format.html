@@ -93,11 +93,11 @@ GK's C code: nrrd: Definition of NRRD File Format
 <p>
 
 This document defines the NRRD file format.  <!-- It gives requirements and
-recommendations of readers and writers of this format.  --> Because the
+recommendations of readers and writers of this format.  Because the
 <b>nrrd</b> library also supports PNG, PPM, PGM, and plain text files,
 see also <a href="otherformat.html">NRRD-Compatible File Formats</a>
 to see how comments embedded in these files can be used to store the
-field definitions that normally comprise the NRRD header.  Since this
+field definitions that normally comprise the NRRD header. --> Since this
 document aims to be a self-contained reference for the NRRD file
 format, some of the material here repeats ideas found elsewhere in the
 <a href="index.html"><b>nrrd</b></a> documentation.  Besides defining
@@ -863,7 +863,7 @@ The possible values are:
     coordinate frame, with ordered
     basis vectors pointing <b>towards</b> right, anterior, and superior,
     respectively.  This space is used in the
-    <a href="http://nifti.nimh.nih.gov/old/dfwg/">NIFTI-1</a> extension to the
+    <a href="http://nifti.nimh.nih.gov/nifti-1/">NIFTI-1</a> extension to the
     Analyze format.
 <tr>
   <td>"<tt>left-anterior-superior</tt>" or "<tt>LAS</tt>"
@@ -1040,7 +1040,7 @@ like vectors and tensors are numerically represented, some coordinate
 frame must be chosen in which to measure the coefficients of the
 vector or tensor.  This coordinate system may be called the
 "measurement frame".  It is logically distinct from the coordinate
-frame in which the image orientation is defined, the world 
+frame in which the image orientation is defined, that is, the world 
 space in which the <tt>space directions</tt> and <tt>space
 origin</tt> vectors have their coefficients measured.
 
@@ -1050,7 +1050,7 @@ The <tt>measurement frame</tt> is a <b>basic</b> (per-array) field
 specification (not per-axis), which identifies a spaceDim-by-spaceDim
 matrix, where spaceDim is the dimension of world space (implied by
 <tt>space</tt> or given by <tt>space dimension</tt>).  <b>The matrix
-defines how to transform coordinates in the measurement frame to
+transforms (a column vector of) coordinates in the measurement frame to
 coordinates in world space</b>.  <tt>vector[<b>i</b>]</tt> gives
 <b>column&nbsp;i</b> of the measurement frame matrix.  Just as the
 <tt>space directions</tt> field gives, one column at a time, the
@@ -2010,7 +2010,7 @@ With time, more different kind values are apt to be added.
   <td>3
   <td>A 3-vector which is assumed to have unit L2 norm
 <tr>
-  <td><tt>4-vector</tt>
+  <td>"<tt>4-vector</tt>"
   <td>4
   <td>Any 4-vector
 <tr>
