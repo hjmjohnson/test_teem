@@ -1739,11 +1739,16 @@ thicknesses: &lt;<i>thickness[0]</i>&gt; &lt;<i>thickness[1]</i>&gt; ... &lt;<i>
 <li> Type: <tt>double</tt>
 </ul>
 
-This allows one to store information about the thickness of the region of
-space that is measured to determine a sample value.  The most probably use
-of this field is in conjuction with CT and MRI scanned volumes, which is
-inherently collected one slice at a time, and for which the slice thickness
-can be separate from the slice spacing.  
+This allows one to store information about the thickness of the region
+of space that is measured to determine a sample value.  The most
+probable use of this field is in conjuction with CT and MRI scanned
+volumes, which is inherently collected one slice at a time, and for
+which the slice thickness (separate from the slice spacing) is the
+nominal extent over which the slice measurements are made.  The
+sensitivity profile of the measurement is never a perfect box
+function, and is always scanner and protocol specific, but "thickness"
+is a common means of roughly characterizing the sensitivity profile
+with a single number.
 
 <p>
 
