@@ -36,73 +36,40 @@ GK's C code: Download
 
 <p>
 
-My software is made available under the terms of the LGPL.  <a
-href="../lgpl.html">A careful explanation of what this means for
-you</a> has been written.
+To get the current CVS version:
+<blockquote>
+<tt>cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/teem/ login</tt><br>
+(hit return)<br>
+<tt>cvs -d:pserver:anonymous@cvs.sourceforge.net:/cvsroot/teem/ co teem</tt>
+</pre>
+</blockquote>
+You can also browse the source online via
+<a href="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/teem/teem/">ViewCVS</a>.
 
 <p>
 
-<!--
-The software is distributed as a tar file compressed with <a
-href="http://www.gzip.org/">gzip</a>.  <a
-href="http://www.gnu.org/software/tar/tar.html">GNU's tar program</a>
-can uncompress and untar in one shot ("<tt>tar xzvf</tt>").  So can
-Winzip, but:
+<a href="http://sourceforge.net/project/showfiles.php?group_id=85445">The Teem download page at Sourceforge</a>
+is another way to get to all the files that are linked to below.
 
 <p>
 
-<center>
-<table width="80%" border=2>
-<tr><td>
-
-You <b>MUST</b> disable
-"TAR&nbsp;file&nbsp;smart&nbsp;CR/LF&nbsp;conversion": Options
-menu... Configuration... Miscellaneous tab.  Unfortunately, this
-"smart" feature is enabled by default.  It might be tolerable if the
-only thing in a tar file was ascii text, but this is not the case with
-<b>teem</b> distributions, or with tar files in general.  Better yet,
-get <a href="http://www.cygwin.com/">Cygwin</a>, which includes GNU
-tar, and provides a nicer shell to work with, even if you're primarily
-running DOS/Windows programs, and not developing in Cygwin proper.
-</table>
-</center>
+If you're downloading the software as "Source", you probably want to
+look at information on <a href="../build.html">how to build teem</a>.
+The "Pre-built" files do not include the source.  They contain only
+<tt>bin</tt>, <tt>lib</tt>, and <tt>include</tt> directories into
+which all the required teem files have been copied/compiled.  On all
+architectures (including Windows), all the programs have been
+statically linked, and <b>nrrd</b> has been compiled with gzip/zlib
+and bzip2 compression, as well as PNG support.
 
 <p>
 
--->
-
-If you're downloading the software as "Just source", you probably want
-to look at information on <a href="../build.html">how to build
-teem</a>.  Otherwise, you can get it pre-built for a variety of
-architectures.
-
-<p>
-
-The "pre-built" files do not include the source.
-They contain only <tt>bin</tt>, <tt>lib</tt>, and <tt>include</tt>
-directories into which all the required teem files have been
-copied/compiled.  On all architectures (including Windows), all the
-programs have been statically linked, and <b>nrrd</b> has been
-compiled with gzip/zlib and bzip2 compression, as well as PNG support.
-Pthreads were compiled in where I felt like it.
-
-<p>
-
-<!--
-As of version 1.5.0, downloads are coming from the
-<a href="http://sourceforge.net/project/showfiles.php?group_id=85445">
-"Project: Teem: File List"</a> at <a
-href="http://sourceforge.net">Sourceforge</a>.
--->
-
-<p>
-
-If you want to stay informed of new teem releases, and contribute
-to discussions of using teem to solve problems, you're welcome to
-subscribe to the <a
-href="http://lists.sourceforge.net/lists/listinfo/teem-users"><tt>teem-users</tt></a>
-mailing list.  Or, if you want to contribute to development, 
-you can subscribe to <a
+If you download and try Teem, you are encouraged to join the 
+<a href="http://lists.sourceforge.net/lists/listinfo/teem-users"><tt>teem-users</tt></a>
+mailing list, which is the primary venue for asking questions about Teem, its
+use, its development, and its applications.
+Hackers interested in contributing code to Teem itself can 
+subscribe to <a
 href="http://lists.sourceforge.net/lists/listinfo/teem-coders"><tt>teem-coders</tt></a>.
 
 <p>
@@ -405,6 +372,35 @@ Solaris |
      href="http://www.cs.utah.edu/~jmk/simian/">Simian</a>.
 </table>
 </blockquote>
+
+<!--
+The software is distributed as a tar file compressed with <a
+href="http://www.gzip.org/">gzip</a>.  <a
+href="http://www.gnu.org/software/tar/tar.html">GNU's tar program</a>
+can uncompress and untar in one shot ("<tt>tar xzvf</tt>").  So can
+Winzip, but:
+
+<p>
+
+<center>
+<table width="80%" border=2>
+<tr><td>
+
+You <b>MUST</b> disable
+"TAR&nbsp;file&nbsp;smart&nbsp;CR/LF&nbsp;conversion": Options
+menu... Configuration... Miscellaneous tab.  Unfortunately, this
+"smart" feature is enabled by default.  It might be tolerable if the
+only thing in a tar file was ascii text, but this is not the case with
+<b>teem</b> distributions, or with tar files in general.  Better yet,
+get <a href="http://www.cygwin.com/">Cygwin</a>, which includes GNU
+tar, and provides a nicer shell to work with, even if you're primarily
+running DOS/Windows programs, and not developing in Cygwin proper.
+</table>
+</center>
+
+<p>
+
+-->
 
 <p>
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>

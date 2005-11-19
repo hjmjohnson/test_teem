@@ -58,84 +58,110 @@ GK's C code
 <td valign=top align=center><a href="unrrdu/index.html"><font size=-1>unrrdu</font></a>
 </table>
 <p>
-<center>
-<img width=256 height=256 src="img/teem256.jpg" alt=""><br>
-<h1><b>teem</b></h1>
-</center>
 
-<blockquote>
-<blockquote>
-<blockquote>
-<h2>NEWS</h2>
+<h2>What Is Teem?</h2>
+
+<table align=right border=1 cellspacing=1 cellpadding=1 width="25%">
+<tr>
+<td width="25%">
+<b>News:</b>
 <ul>
-<li> March 7, 2005: <b><a href="download/index.html">Teem Version 1.8.0 released</a></b>
-<li> May 16, 2004: <b><a href="download/index.html">Teem Version 1.7.0 released</a></b>
+<li> March 7, 2005: <a href="download/index.html">Teem Version 1.8.0 released</a>
+<li> May 16, 2004: <a href="download/index.html">Teem Version 1.7.0 released</a>
 <li> May 16, 2004: <a href="http://www.sci.utah.edu/~gk/vissym04/">Figure reproduction</a> for the <a href="http://www.cs.utah.edu/~gk/papers/vissym04/">superquadric tensor glyph Vissym paper</a>
 <li> Dec 20, 2003: <a href="http://www.sci.utah.edu/~gk/DTI-data">Diffusion Tensor MRI datasets online</a>
 <!--
-<li> Oct 29, 2003: <b><a href="download/index.html">Teem Version 1.6.0 released</a></b>
+<li> Oct 29, 2003: <a href="download/index.html">Teem Version 1.6.0 released</a>
 -->
 <!--
 <li> Sept 16, 2003: <a href="http://www.sci.utah.edu/~gk/vis03">See how teem made all the renderings</a> for a recent <a href="http://vis.computer.org/vis2003/">IEEE Visualization 2003</a> paper. -->
 <!-- <li> Sept 16, 2003: <a href="http://sourceforge.net/mail/?group_id=85445"><tt>teem-users</tt> and <tt>teem-coders</tt></a> mailing lists created -->
 </ul>
+</td>
+</tr>
+</table>
 
-</blockquote>
-</blockquote>
-</blockquote>
 
-<h2>GK's C code</h2>
+Teem is a coordinated group of libraries for
+representing, processing, and visualizing scientific raster data.
+Teem includes command-line tools that permit the library functions to
+be quickly applied to files and streams, without having to write any
+code.  The most important library in Teem, <a
+href="nrrd/index.html">Nrrd</a>, and the <a
+href="./unrrdu/index.html"><tt>unu</tt></a> command-line tool on top
+of it, supports a range of operations for transforming N-dimensional
+raster data (resample, crop, slice, project, histogram, etc.), as well
+as the NRRD file format for storing arrays and their meta-information.
+Other especially useful libraries in Teem include:
+<ul>
+<li> <a href="gage/index.html">Gage</a>: fast convolution-based measurements 
+at arbitrary point locations in volume datasets (scalar, vector, tensor, etc.)
+<li> <a href="mite/index.html">Mite</a>: a multi-threaded ray-casting volume render
+with transfer functions based on any quantity Gage can measure
+<li> <a href="ten/index.html">Ten</a>: for estimating, processing, and 
+visualizing diffusion tensor fields.
+</ul>
 
-This is the software that I write to do my research.  Anything that I
-develop as part of trying out new ideas, or trying to better
-understand previous work, is here.  Because other people have
-increasingly found this software to be useful, I distribute it (under
-the <a href="lgpl.html">LGPL</a>), and try to support it.
+<h2><a href="download/index.html">Getting Teem</a></h2>
 
-<p>
+The <a href="download/index.html">Download</a> page provides
+links to the software, available either as source or as
+pre-built libraries and executables.
 
-The core code is written in C (about 100,000 lines), and organized as a
-set of libraries, each with some coarsely defined functionality. The
-libraries depend heavily on each other in a non-circular way, so they
-are built and distributed as a group, collectively called <b>teem</b>.
-The only required external library is the C math library
-("<tt>-lm</tt>"), although <b>teem</b> can optionally use the pthread,
-zlib, bzip2, and PNG libraries.  The most popular <b>teem</b> library
-is <a href="./nrrd/index.html"><b>nrrd</b></a>, which supports
-N-dimensional image processing, and a flexible file format for
-N-dimensional raster data.
-
-<p>
-
-Along with the <b>teem</b> libraries, I've written some command-line
-tools.
-These programs demonstrate the functionality of
-the libraries, as well as providing a simple and easy way to get work
-done with <b>teem</b>, without having to write C/C++ code.  
-The most popular is <a href="./unrrdu/index.html"><tt>unu</tt></a>, a
-convenient and concise interface to <b>nrrd</b>.  Also, 
-<tt>qbert</tt> is a stand-alone program based on <b>gage</b>
-which can generate volumes of a format used by <a
-href="http://www.cs.utah.edu/~jmk/simian/">Simian</a>, the volume
-renderer used in our <a
-href="http://www.cs.utah.edu/~jmk/papers/vis01/">Vis '01</a> paper.
-
-<p>
-
-Because I also use
-<a href="http://www.vtk.org">VTK</a> for some of my work, I distribute
-some of my VTK/tcl/tk programs.  Information about <b>teem</b>, the
-binaries, and the VTK programs, are below.
+<h2>Strengths of Teem</h2>
 
 <ul>
 
-<li>
-  <a href="download/index.html">Download</a>
-  the software.  You can get either source, documentation, or pre-built
-  libraries and executables.
+<li> Teem is effective: Its purpose is to support research in
+visualization and image processing, and research is enabled when
+simple things are simple to do.  Teem's functionality and its ease of
+use have allowed it to become a component of larger research software
+projects, such as <a
+href="http://software.sci.utah.edu/scirun.html">SCIRun</a> and <a
+href="http://www.slicer.org/">3D Slicer</a>.
+
+<li> Teem is light-weight: The libraries are written with an eye
+towards minimizing the annoyance of getting data in an out, by using
+the simplest possible constructs for the job, and by supporting the
+combinations of operations that arise in common practice.
+
+<li> Teem is coherent: The libraries were principally written by one
+person, so there is a consistent logic to how information is
+represented, and uniformity in the APIs across libraries.
+
+<li> Teem is portable: All the code is written in plain ANSI C, so it
+compiles everywhere, including Windows, using either <a
+href="http://www.cmake.org/HTML/Index.html">CMake</a> or GNU Make.
+A <a href="http://public.kitware.com/dashboard.php?name=namic">Dashboard</a>
+is used to monitor compiler errors and warnings.
+
+<li> Teem is growing: Some Teem libraries were created years ago
+and have remained stable and unchanged, but new libraries and new
+functionality are continually being added.
+
+<li> Teem is open source: Anyone can use it, and contributions are
+welcome.  Teem is licensed under the <a href="lgpl.html">GNU Lesser
+General Public License</a>, plus exceptions which facilitate linking
+Teem into binary-only applications.
+
+</ul>
+
+<h2>Other Information</h2>
+
+<ul>
+
+<li> <b>NOTE</b>: This and all other pages in this documentation are
+incomplete, and often out-of-date.  My apologies.  The quality and
+content of this documentation will be improved as time permits.
 
 <li>
-  <a href="general.html">General infomation</a> about <b>teem</b>.
+ The <a
+href="http://lists.sourceforge.net/lists/listinfo/teem-users">teem-users</a>
+mailing list is the primary venue for discussions on using Teem and 
+consideration of changes and directions of new development.
+
+<li>
+  <a href="general.html">General information</a> about <b>teem</b>.
   
 <li>
   <a href="names.html">Naming scheme</a>.
@@ -147,15 +173,9 @@ binaries, and the VTK programs, are below.
   href="http://www.cygwin.com">Cygwin</a>, Irix (n32, 64), Solaris,
   Windows, Mac OS X.
 
-<li>
-  <a href="http://cvs.sourceforge.net/cgi-bin/viewcvs.cgi/teem/teem/">
-  View Source</a>: 
-  you can inspect the individual source files via ViewCVS.
-
 <!--
 <li>
  <a href="bugs.html">Known bugs and limitations</a>. 
--->
 
 <li>
   <a href="tree/index.html">Directory Structure</a>.  How the <b>teem</b> source
@@ -165,12 +185,13 @@ binaries, and the VTK programs, are below.
   <a href="gmake/index.html">How <b>teem</b> uses GNU make</a>; details
   about building teem, including how to enable optional external libraries.
   Documents the various environment variables that control the build process.
+-->
 
 </ul>
 
 <p>
 
-<blockquote>
+<h2>Libraries in Teem</h2>
 
 <center>
 <table width="90%" border=0 cellpadding=0 cellspacing=0>
@@ -256,9 +277,9 @@ binaries, and the VTK programs, are below.
 </table>
 </center>
 
-</blockquote>
+<p>
 
-The bins:
+Information about the command-line tools:
 
 <blockquote>
 <table width="90%" border=0 cellpadding=0 cellspacing=0>
@@ -270,6 +291,15 @@ The bins:
 </table>
 
 </blockquote>
+
+<!--
+<center>
+<img width=256 height=256 src="img/teem256.jpg" alt=""><br>
+<h1><b>teem</b></h1>
+</center>
+-->
+
+
 
 <p>
 <a href="http://validator.w3.org/check/referer">&nbsp;</a>
