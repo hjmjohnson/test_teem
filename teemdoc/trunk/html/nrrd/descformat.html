@@ -183,8 +183,8 @@ Aided Diagnosis and Display Lab</a> at UNC.  It is extremely similar
 to NRRD in terms of representational capabilities, in that it
 represents arrays of general type and dimension.  As of the version 4
 of the NRRD file format (with magic "<tt>NRRD0004</tt>") there are
-no major differences between the representational abilities of the
-two formats.  There are some superficial differences. 
+basically only superficial differences
+between the representational abilities of the two formats.
 In favor of MetaImage:
 
 <ul>
@@ -213,12 +213,12 @@ attached headers.
 
 <li> A very conservative approach to representing optional information.
 If you don't know information like sample spacing, you don't include
-that field. The NRRD reader remembers that you didn't know spacing, 
-instead of inventing a default value.
+that field. The NRRD reader remembers that you didn't know spacing,
+rather than contriving a default value.
 
 <li> A flexible and general approach to defining the array orientation,
 which enables the lossless representation of orientation information
-from NIFTY-1, Analyze, and DICOM images.
+from NIFTI-1, Analyze, and DICOM images.
 
 <li> Has a powerful associated command-line program, <a
 href="../unrrdu/index.html"><tt>unu</tt></a> for doing image
@@ -314,24 +314,40 @@ This sort of information would be stored as key/value pairs in NRRD:
 Some NRRD fields that MetaImage doesn't seem to have analogs for:
 <ul>
 
-<li> <tt>centerings</tt>: cell-vs-node centering.  This is fundamental to
-properly representing the difference between histograms and other types
-of sampled signals.
+<li> <a href="format.html#centers"><tt>centers</tt></a>: Records
+whether samples are cell-centered or node-centered, which is
+fundamental to properly representing, for example, histograms (cell-centered) 
+versus some simulation data (node-centered).
 
-<li> <tt>axis maxs</tt>: Helpful for unambiguously storing
-histograms, scatterplots, and images with a specific field of view.
+<li> <a href="format.html#axismaxs"><tt>axis maxs</tt></a>: Helpful
+for unambiguously storing histograms, scatterplots, and images with a
+specific field of view.
 
-<li> <tt>old min</tt>, <tt>old max</tt>: Very handy for remembering
+<li> <a href="format.html#oldmin"><tt>old min</tt></a>, 
+<a href="format.html#oldmax"><tt>old max</tt></a>: Very handy for remembering
 the original range of floating point values, prior to quantization.
 
-<li> <tt>line skip</tt>: When snarfing data from other formats (VTK,
-VFF, VisPack, and even PostScript), specifying the skip in terms of lines
-(rather than bytes) is much simpler.
+<li> <a href="format.html#lineskip"><tt>line skip</tt></a>: When
+snarfing data from other formats (VTK, VFF, VisPack, and even
+PostScript), specifying the skip in terms of lines (rather than bytes)
+is much simpler.
 
-<li> <tt>labels</tt>: arbitrary string per axis
+<li> <a href="format.html#labels"><tt>labels</tt></a>: arbitrary
+string per axis
 
-<li> <tt>units</tt>: arbitrary string per axis giving units that spacing
-  is measured in.
+<li> <a href="format.html#units"><tt>units</tt></a>: arbitrary string
+  per axis giving units that spacing is measured in.
+
+<li> <a href="format.html#space"><tt>space</tt></a>: the space in
+which the orientation of the array is defined can be explicitly named,
+mainly to disambiguate between medical image format standards using
+different spaces (DICOM's left-posterior-superior versus NIFTI-1's
+right-anterior-superior).
+
+<li> <a href="format.html#measurementframe"><tt>measurement
+frame</tt></a>: for non-scalar data such as vectors and tensors, it is
+extremely useful to record the coordinate frame in which the vector
+and tensor coefficients are measured.
 
 </ul>
 
