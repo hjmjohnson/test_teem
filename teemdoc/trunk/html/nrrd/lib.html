@@ -10,7 +10,7 @@
 <html>
 <head>
 <title>
-Teem: nrrd: Library Description
+Teem: Nrrd: Library Description
 </title>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
 </head>
@@ -34,7 +34,7 @@ Teem: nrrd: Library Description
   <td valign=top>
     <b>/</b>
   <td width=80 align=center valign=top>
-    <b><a href="./index.html">nrrd</a></b>
+    <b><a href="./index.html">Nrrd</a></b>
   <td>
     <h2>&nbsp;&nbsp;Library Description</h2>
 </table>
@@ -56,12 +56,12 @@ Teem: nrrd: Library Description
 <p>
 
 This page is intended to be a basic introduction to programming with
-the <b>nrrd</b> API.  The stand-alone <b>NrrdIO</b> library includes
+the <b>Nrrd</b> API.  The stand-alone <b>NrrdIO</b> library includes
 all the functions described in Section 1 through 7; it lacks the
 functions (listed in Section 8) which perform non-trivial
 manipulations of the array values.  This page will make the most sense
 if you already know what sort of data and meta-data can be represented
-in a nrrd.  The <a href="intro.html">Introduction</a> to nrrd is
+in a nrrd.  The <a href="intro.html">Introduction</a> to Nrrd is
 useful in this respect, as is the <a href="descformat.html">General
 Description of the NRRD Format</a>. The <a
 href="format.html">Definition of NRRD File Format</a> is a 
@@ -79,7 +79,7 @@ are extracted from <tt>teem/src/nrrd/nrrd.h</tt>
 
 <blockquote><pre>
 /*
-******** NrrdAxis struct
+******** NrrdAxisInfo struct
 **
 ** all the information which can sensibly be associated with
 ** one axis of a nrrd.  The only member which MUST be explicitly
@@ -103,7 +103,7 @@ are extracted from <tt>teem/src/nrrd/nrrd.h</tt>
 ** (see nrrdField* enum in nrrdEnums.h), and the various methods in axis.c
 */
 typedef struct {
-  int size;                 /* number of elements along each axis */
+  size_t size;              /* number of elements along each axis */
   double spacing;           /* if non-NaN, distance between samples */
   double thickness;         /* if non-NaN, nominal thickness of region
                                represented by one sample along the axis. No
@@ -146,7 +146,7 @@ typedef struct {
 
   void *data;                       /* the data in memory */
   int type;                         /* a value from the nrrdType enum */
-  int dim;                          /* the dimension (rank) of the array */
+  unsigned int dim;                 /* the dimension (rank) of the array */
 
   /* 
   ** All per-axis specific information
@@ -172,9 +172,9 @@ typedef struct {
                                        have the same units) */
   int space;                        /* from nrrdSpace* enum, and often 
                                        implies the value of spaceDim */
-  int spaceDim;                     /* if non-zero, the dimension of the space
+  unsigned int spaceDim;            /* if non-zero, the dimension of the space
                                        in which the regular sampling grid
-                                       conceptually lies.  This is a seperate
+                                       conceptually lies.  This is a separate
                                        variable because this dimension can be
                                        different than the array dimension. 
                                        The non-zero-ness of this value is in 
@@ -183,13 +183,23 @@ typedef struct {
                                        This identifies the number of entries in
                                        "origin" and the per-axis "direction"
                                        vectors that are taken as meaningful */
-  char *spaceUnits[NRRD_SPACE_DIM_MAX];   
+  char *spaceUnits[NRRD_SPACE_DIM_MAX];
                                     /* units for coordinates of space */
-  double spaceOrigin[NRRD_SPACE_DIM_MAX]; 
+  double spaceOrigin[NRRD_SPACE_DIM_MAX];
                                     /* the location of the center the first
                                        (lowest memory address) array sample,
                                        regardless of node-vs-cell centering */
-  int blockSize;                    /* for nrrdTypeBlock:, block byte size */
+  double measurementFrame[NRRD_SPACE_DIM_MAX][NRRD_SPACE_DIM_MAX];
+                                    /* if spaceDim is non-zero, this may store 
+                                       a spaceDim-by-spaceDim matrix which 
+                                       transforms vector/matrix coefficients
+                                       in the "measurement frame" to those in
+                                       the world space described by spaceDim
+                                       (and hopefully space).  Coeff [i][j] is
+                                       column i and row j.  There are no
+                                       semantics linking this to the "kind" of
+                                       any axis, for a variety of reasons */
+  size_t blockSize;                 /* for nrrdTypeBlock, block byte size */
   double oldMin, oldMax;            /* if non-NaN, and if nrrd is of integral
                                        type, extremal values for the array
                                        BEFORE it was quantized */
@@ -276,40 +286,68 @@ enum {
 ** have, say, the gradient of RGB colors, you want the per-pixel 3x3
 ** array to have those two attribute axes tagged accordingly.
 **
-** More of these may be added in the future, as when nrrd supports bricking.
+** More of these may be added in the future, such as when nrrd
+** supports bricking.  Since nrrd is never going to be in the business
+** of manipulating the kind information or supporting kind-specific
+** semantics, there can be proliferation of nrrdKinds, provided
+** pointless redundancy is avoided.  
 **
-** NOTE: The nrrdKindSize() function returns the suggested length for these.
+**  There is a relationship between some of these (nrrdKindSpace is a
+** specific nrrdKindDomain), but currently there is no effort to
+** record this meta-kind information.
+**
+** Keep in sync:
+**   enumsNrrd.c: nrrdKind airEnum
+**        axis.c: nrrdKindSize()
+**        axis.c: _nrrdKindAltered()
+**
+** NOTE: The nrrdKindSize() function returns the valid size for these.
+** 
 */
 enum {
   nrrdKindUnknown,
-  nrrdKindDomain,            /*  1: "Yes, you can resample me" */
+  nrrdKindDomain,            /*  1: any image domain */
   nrrdKindSpace,             /*  2: a spatial domain */
   nrrdKindTime,              /*  3: a temporal domain */
-  nrrdKindList,              /*  4: "No, it is goofy to resample me" */
-  nrrdKindStub,              /*  5: axis with one sample (a placeholder) */
-  nrrdKindScalar,            /*  6: effectively, same as a stub */
-  nrrdKindComplex,           /*  7: real and imaginary components */
-  nrrdKind2Vector,           /*  8: 2 component vector */
-  nrrdKind3Color,            /*  9: ANY 3-component color value */
-  nrrdKind4Color,            /* 10: ANY 4-component color value */
-  nrrdKind3Vector,           /* 11: 3 component vector */
-  nrrdKind3Normal,           /* 12: 3 component vector, assumed normalized */
-  nrrdKind4Vector,           /* 13: 4 component vector */
-  nrrdKind2DSymMatrix,       /* 14: Mxx Mxy Myy */
-  nrrdKind2DMaskedSymMatrix, /* 15: mask Mxx Mxy Myy */
-  nrrdKind2DMatrix,          /* 16: Mxx Mxy Myx Myy */
-  nrrdKind2DMaskedMatrix,    /* 17: mask Mxx Mxy Myx Myy */
-  nrrdKind3DSymMatrix,       /* 18: Mxx Mxy Mxz Myy Myz Mzz */
-  nrrdKind3DMaskedSymMatrix, /* 19: mask Mxx Mxy Mxz Myy Myz Mzz */
-  nrrdKind3DMatrix,          /* 20: Mxx Mxy Mxz Myx Myy Myz Mzx Mzy Mzz */
-  nrrdKind3DMaskedMatrix,    /* 21: mask Mxx Mxy Mxz Myx Myy Myz Mzx Mzy Mzz */
+  /* -------------------------- end domain kinds */
+  /* -------------------------- begin range kinds */
+  nrrdKindList,              /*  4: any list of values, non-resample-able */
+  nrrdKindPoint,             /*  5: coords of a point */
+  nrrdKindVector,            /*  6: coeffs of (contravariant) vector */
+  nrrdKindCovariantVector,   /*  7: coeffs of covariant vector (eg gradient) */
+  nrrdKindNormal,            /*  8: coeffs of unit-length covariant vector */
+  /* -------------------------- end arbitrary size kinds */
+  /* -------------------------- begin size-specific kinds */
+  nrrdKindStub,              /*  9: axis with one sample (a placeholder) */
+  nrrdKindScalar,            /* 10: effectively, same as a stub */
+  nrrdKindComplex,           /* 11: real and imaginary components */
+  nrrdKind2Vector,           /* 12: 2 component vector */
+  nrrdKind3Color,            /* 13: ANY 3-component color value */
+  nrrdKindRGBColor,          /* 14: RGB, no colorimetry */
+  nrrdKindHSVColor,          /* 15: HSV, no colorimetry */
+  nrrdKindXYZColor,          /* 16: perceptual primary colors */
+  nrrdKind4Color,            /* 17: ANY 4-component color value */
+  nrrdKindRGBAColor,         /* 18: RGBA, no colorimetry */
+  nrrdKind3Vector,           /* 19: 3-component vector */
+  nrrdKind3Gradient,         /* 20: 3-component covariant vector */
+  nrrdKind3Normal,           /* 21: 3-component covector, assumed normalized */
+  nrrdKind4Vector,           /* 22: 4-component vector */
+  nrrdKindQuaternion,        /* 23: (x,y,z,w), not necessarily normalized */
+  nrrdKind2DSymMatrix,       /* 24: Mxx Mxy Myy */
+  nrrdKind2DMaskedSymMatrix, /* 25: mask Mxx Mxy Myy */
+  nrrdKind2DMatrix,          /* 26: Mxx Mxy Myx Myy */
+  nrrdKind2DMaskedMatrix,    /* 27: mask Mxx Mxy Myx Myy */
+  nrrdKind3DSymMatrix,       /* 28: Mxx Mxy Mxz Myy Myz Mzz */
+  nrrdKind3DMaskedSymMatrix, /* 29: mask Mxx Mxy Mxz Myy Myz Mzz */
+  nrrdKind3DMatrix,          /* 30: Mxx Mxy Mxz Myx Myy Myz Mzx Mzy Mzz */
+  nrrdKind3DMaskedMatrix,    /* 31: mask Mxx Mxy Mxz Myx Myy Myz Mzx Mzy Mzz */
   nrrdKindLast
 };
 </pre>
 </ul>
 
 In general, you do not directly set the struct members- you set this
-information via functions in the <b>nrrd</b> API.  As a matter of
+information via functions in the <b>Nrrd</b> API.  As a matter of
 convenience, however, it is common and okay to read value directly
 from the <tt>Nrrd</tt> struct, although many accessor functions are
 available as well.  The value of looking at the struct definitions above is
@@ -320,7 +358,7 @@ everything else is optional meta-information.  <tt>spacing</tt>,
 <tt>thickness</tt>, <tt>min</tt>, and <tt>max</tt> are all doubles
 which follow the convention that if no useful value is known, then the
 value is set to <tt>AIR_NAN</tt>, which represents
-Not-A-Number. <tt>label</tt> and <tt>unit</tt> are standard C char*
+Not-A-Number. <tt>label</tt> and <tt>units</tt> are standard C char*
 strings.  The <tt>center</tt> field takes on values from the 
 <tt>nrrdCenter</tt> enum (above).
 
@@ -369,7 +407,7 @@ return an <tt>int</tt> to signify an error condition or successful
 completion.  <b>Teem</b> uses verbose, detailed, textual error messages
 in favor of cryptic, integer error codes.  The error messages
 accumulate in a seperate library devoted to error handling, called
-<b>biff</b>.  Thus, handling errors in <b>nrrd</b> (or any other
+<b>biff</b>.  Thus, handling errors in <b>Nrrd</b> (or any other
 <b>Teem</b> library) involves making <b>biff</b> calls to get the
 error messages.  Here is a fairly complete/pedantic example of using
 <tt>nrrdLoad</tt> and <tt>nrrdSave</tt> with error handling:
@@ -426,7 +464,7 @@ is a place-holder for a <tt>NrrdIO</tt> struct, which is used whenever
 you want to over-ride the default behavior of the I/O functions.  
 Experience has shown that the defaults probably do what you want.
 <li> You pass "<tt>NRRD</tt>" to <tt>biffGetDone()</tt> because you know
-that the function that just died is in the <b>nrrd</b> library.
+that the function that just died is in the <b>Nrrd</b> library.
 To be good, you do have to free the <tt>char*</tt> that is returned
 from biff.
 <li> <tt>nrrdType</tt> is a thing called an <tt>airEnum</tt>, which 
@@ -642,6 +680,7 @@ a C enum, which includes these self-descriptive values:
 <ul>
 <li> <tt>nrrdAxisInfoSize</tt>
 <li> <tt>nrrdAxisInfoSpacing</tt>
+<li> <tt>nrrdAxisInfoThickness</tt>
 <li> <tt>nrrdAxisInfoMin</tt>
 <li> <tt>nrrdAxisInfoMax</tt>
 <li> <tt>nrrdAxisInfoSpaceDirection</tt>
@@ -1285,7 +1324,11 @@ dimension than input).
 <tr>
 <td align=right><tt>nrrdApply1DLut</tt>
 <td><b>-</b>
-<td align=left>send values in a nrrd through a lookup-table
+<td align=left>send values in a nrrd through a univariate lookup-table
+<tr>
+<td align=right><tt>nrrdApply2DLut</tt>
+<td><b>-</b>
+<td align=left>send values in a nrrd through a bivariate lookup-table
 <tr>
 <td align=right><tt>nrrdApply1DRegMap</tt>
 <td><b>-</b>
@@ -1495,6 +1538,11 @@ in 1-D, 2-D or 3-D
 <td><b>-</b>
 <td align=left>perform filtered up-sampling or down-sampling
 with arbitrary (seperable) kernels
+<tr>
+<td align=right><tt>nrrdResampleExecute</tt>
+<td><b>-</b>
+<td align=left>re-implementation of <tt>nrrdSpatialResample</tt>
+to allow fast resampling of multiple images
 </table>
 </center>
 
