@@ -55,7 +55,7 @@ because of the integration of tasks it represents.
 
 Teem is careful to minimize the chances of namespace
 clashes with other existing libraries, and is very consistent in how
-parts elements in the library are named.   All the Teem source
+symbols in the library are named.   All the Teem source
 complies fully with the policies described here.
 
 <p>
@@ -96,7 +96,7 @@ Teem headers in other headers is apt to look something like this
 Any <tt>#define</tt>s within the library headers will start with
 either the library name (in upper case), or an underscore followed by
 the library name.  For instance, <tt>air.h</tt> defines a macro called
-<tt>AIR_INDEX</tt>, and <tt>nrrdDefines.h</tt> defines an integer
+<tt>AIR_AFFINE</tt>, and <tt>nrrdDefines.h</tt> defines an integer
 <tt>NRRD_DIM_MAX</tt>.
 
 <p>
@@ -106,7 +106,7 @@ Teem library starts with the library name (in lower case), or
 one or more understores followed by the library name.  For example,
 the Nrrd library supplies functions named <tt>nrrdNew</tt>,
 <tt>nrrdCopy</tt>, and <tt>nrrdNuke</tt>, as well as global variables
-<tt>nrrdDefSpacing</tt> and <tt>nrrdStateVerboseIO</tt>, and 
+<tt>nrrdDefaultSpacing</tt> and <tt>nrrdStateVerboseIO</tt>, and 
 enum value names starting with <tt>nrrdFormat</tt>, <tt>nrrdEncoding</tt>,
 and <tt>nrrdType</tt>.
 

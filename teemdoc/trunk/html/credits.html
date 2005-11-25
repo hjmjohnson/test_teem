@@ -9,7 +9,7 @@
 <html>
 <head>
 <title>
-Teem: nrrd: Credits
+Teem: Credits
 </title>
 <meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
 </head>
@@ -17,56 +17,77 @@ Teem: nrrd: Credits
 <A href="http://sourceforge.net"><IMG 
  src="http://sourceforge.net/sflogo.php?group_id=85445&amp;type=2"
  align=right width="125" height="37" border="0" alt="SourceForge.net Logo"></A>
-<table border=0 cellpadding=0 cellspacing=0>
+<table width="100%" border=0 cellpadding=0 cellspacing=0>
 <tr>
-  <td width=80 height=80>
-    <a href="../index.html"><img border=0 width=80 height=80 alt=""
-    src="../img/teem80.jpg"></a>
-  <td height=80>
-  <td width=80 height=80>
-    <a href="./index.html"><img border=0 width=80 height=80 alt=""
-    src="../img/nrrd80.jpg"></a>
-  <td>
+  <td width="1%" height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt="to teem"
+    src="img/teem80.jpg"></a>
+  <td width="20%" height=80>
+  <td width="40%" height=80 align=center valign=middle>
+    <h1>Who helped create Teem</h1>
+  <td width="30%" height=80>
 <tr>
-  <td width=80 align=center valign=top>
-    <b><a href="../index.html">teem</a></b>
-  <td valign=top>
-    <b>/</b>
-  <td width=80 align=center valign=top>
-    <b><a href="./index.html">nrrd</a></b>
+  <td align=center valign=top>
+    <b><a href="./index.html">teem</a></b>
   <td>
-    <h2>&nbsp;&nbsp;<b>Credits</b></h2>
+  <td>
+  <td>
 </table>
 
 <p>
 
-Of all the <b>teem</b> libraries, <b>nrrd</b> has benefitted most from
-the work other people.
-
 <ul>
 
+<li> <a href="http://lmi.bwh.harvard.edu/~gk/">Gordon Kindlmann</a>
+initially created Teem to support his PhD research, and continues to
+lead development.
+
+</ul><ul>
+
 <li> <a href="http://www.cs.utah.edu/~dmw/">David Weinstein</a>, <a
-href="http://www.cs.utah.edu/~jdb/">J. Dean Brederson</a>, 
-<a href="http://www.sci.utah.edu/~ikits/">Milan Ikits</a>,
-Vidya Elangovan, and <a href="http://www.cs.utah.edu/~jmk/">Joe
-Kniss</a> were early adopters/debuggers.
+href="http://www.cs.utah.edu/~jdb/">J. Dean Brederson</a>, <a
+href="http://www.sci.utah.edu/~ikits/">Milan Ikits</a>, Vidya
+Elangovan, and <a href="http://www.cs.utah.edu/~jmk/">Joe Kniss</a>,
+and <a href="http://graphics.cs.ucdavis.edu/~lefohn/">Aaron Lefohn</a>
+were early adopters/debuggers.
 
-<li> Dave Weinstein added <b>nrrd</b> support into <a
-href="http://software.sci.utah.edu/scirun.html">SCIRun</a>
+</ul><ul>
 
-<li> Milan Ikits got <b>teem</b> to compile on Windows, and engineered
-the way to use GNU make to create Visual Studio files.
+<li> <a href="http://www.cs.utah.edu/~ikits/">Milan Ikits</a> was the
+first to build Teem on Windows by engineering a way to use GNU make to
+create Visual Studio files, helped add Gzip compression for
+<b>Nrrd</b>, added Bzip2 compression for <b>Nrrd</b>, added
+support for PNG images to <b>Nrrd</b>, and helps with design decisions.
+
+</ul><ul>
+
+<li> <a href="http://www.cs.utah.edu/~bigler/">James Bigler</a>
+wrote/adapted the Mersenne Twister code in <b>Air</b>,
+wrote the Gzip compression for <b>Nrrd</b>,
+implemented <tt>nrrdTile2D</tt> and <tt>nrrdUntile2D</tt>,
+and helps with design decisions.
+
+</ul><ul>
+
+<li> <a href="http://www.cs.utah.edu/~dmw/">David Weinstein</a> was
+an early adopter/debugger of <b>Nrrd</b> and <tt>unu</tt>, made
+<b>Nrrd</b> an basic datatype in <a
+href="http://software.sci.utah.edu/scirun.html">SCIRun</a>,
+and helps with design decisions.
+
+</ul><ul>
+
+<li> <a href="http://www.kitware.com/profile/team/cedilnik.html">Andy
+Cedilnik</a> added <a
+href="http://www.cmake.org/HTML/Index.html">CMake</a> support for Teem
+and created the <a
+href="http://public.kitware.com/dashboard.php?name=namic">Dashboard</a>
+for Teem.
+
+</ul><ul>
 
 <li> <a href="http://www.gollygee.com/weblogs/jblocksom/">Jonathan
 Blocksom</a> added support for Mac OSX.
-
-<li> Milan Ikits and <a href="http://www.cs.utah.edu/~bigler/">James
-Bigler</a> added support for <a href="http://www.gzip.org/">gzip</a>
-compression.
-
-<li> Milan Ikits added support for <a
-href="http://sources.redhat.com/bzip2/">bzip2</a> compression,
-and <a href="http://www.libpng.org/pub/png/">PNG</a> images.
 
 </ul>
 
