@@ -105,7 +105,7 @@ echo "-1.0 0.0   -0.8 0.0    0.8 1.0    1.0 1.0" \
  | unu reshape -s 2 4 \
  | unu imap -i ramp.txt -r -m - \
  | unu axinfo -a 0 -l "A" \
- | unu axinfo -a 1 -l "gage(v)" -mm -1.0 1.0 -o val-txf.nrrd
+ | unu axinfo -a 1 -l "gage(scalar:v)" -mm -1.0 1.0 -o val-txf.nrrd
 
 rm -f ramp.txt
 </pre></blockquote>
