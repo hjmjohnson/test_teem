@@ -53,7 +53,7 @@ text editor), this is a good example of the kind of swiss-army knife that
 <tt>unu</tt> is.  Following each command example are some points about
 what is going on.  Note that in the following "X", "Y", and "Z" are
 simply synonyms for "fastest axis", "medium axis", and "slowest axis":
-<b>nrrd</b> supplies or enforces no specific names to the axes.
+<b>Nrrd</b> supplies or enforces no specific names to the axes.
 
 <p>
 
@@ -62,16 +62,19 @@ We start with a 64x64x64 volume of (single-precision) floats
 is constant along Y and Z:
 
 <blockquote><pre>
+setenv NRRD_DEFAULT_CENTER node
 echo "-1.3 1.3   -1.3 1.3   -1.3 1.3   -1.3 1.3" \
  | unu reshape -s 2 2 2 \
  | unu resample -s 64 64 64 -k tent -o x.nrrd
 </pre></blockquote>
 
 <ul>
-<li> Because <b>nrrd</b> can read plain text data, we can use something
+<li> The upsampling done here assumes that the samples are node-centered.
+By default, <b>Nrrd</b> uses cell-centered samples.
+<li> Because <b>Nrrd</b> can read plain text data, we can use something
 as simple as "<tt>echo</tt>" to get data into nrrd.  The output of
 "<tt>echo</tt>" will actually be a 1-by-8 2-dimensional nrrd.
-<li> Whenever <b>nrrd</b> reads from a plain text file (as it is doing
+<li> Whenever <b>Nrrd</b> reads from a plain text file (as it is doing
 here), the type of the values is taken to be <tt>float</tt>
 <li> "<tt>unu reshape</tt>" imposes new dimensions on the data, making
 it into a 2x2x2 volume.  Because this does not change the memory
@@ -124,7 +127,7 @@ currently not one of the available ternary operators. So, we string together
 two "<tt>unu 2op</tt>" invocations.
 <li> Because "<tt>unu 2op</tt>" always requires two arguments after
 the operator ("<tt>+</tt>"), we have to identify standard input somehow,
-and <b>nrrd</b> follows the unix convention of using "<tt>-</tt>" for
+and <b>Nrrd</b> follows the unix convention of using "<tt>-</tt>" for
 this.  To the uninitiated, "<tt>-</tt>" might seem to have some arithmetic
 significance, but this is not the case.
 </ul>
@@ -162,7 +165,7 @@ the X dimension of the image has a fast dimension which varies within
 a slice, and a slow dimension which varies across slices.  The Y dimension
 is configured similarly.
 <li> "<tt>unu resample</tt>": This just downsamples the image some
-to make the thumb-nail used below.  Note that because <b>nrrd</b> can
+to make the thumb-nail used below.  Note that because <b>Nrrd</b> can
 read and write PNG images, we can go directly from <tt>unu</tt> to a web page.
 </ul>
 
@@ -250,7 +253,7 @@ has three values (instead of one), so the result is a Nrrd of dimension
 4 (not 3).  
 <li> The "<tt>unu pad</tt>", "<tt>unu axsplit</tt>", and all 
 subsequent commands have to take the extra dimension into account.
-This is a consequence of <b>nrrd</b>'s "everything is a scalar" mentality:
+This is a consequence of <b>Nrrd</b>'s "everything is a scalar" mentality:
 an 3-D volume of colors is represented as a 4-D volume of scalars.
 </ul>
 
