@@ -50,4 +50,4 @@ Deft-sqd: $(OBJS) main-sqd.o
 	/Developer/Tools/Rez -t APPL -o $@  /usr/local/src/fltk/FL/mac.r
 
 clean:
-	rm -f $(OBJS) main-dti.o main-sqd.o ../deft ../deft-sqd
+	rm -f $(OBJS) main-dti.o main-sqd.o Deft-dti Deft-sqd
