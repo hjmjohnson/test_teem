@@ -32,13 +32,11 @@
 #include <teem/ell.h>
 #include <teem/limn.h>
 #include <teem/ten.h>
-/* #include <teem/push.h> */
 
 #include <GL/glew.h>  /* includes glu.h */
 
-// #include <cstdio>
-// #include <iostream>
-// #include <vector>
+// not needed? #include <cstdio>
+// not needed? #include <iostream>
 
 #include <fltk/events.h>
 #include <fltk/gl.h>

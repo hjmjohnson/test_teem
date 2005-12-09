@@ -28,6 +28,8 @@
 #include "Deft.h"
 #include "Volume.h"
 
+#include <vector>
+
 #include <teem/gage.h>
 
 namespace Deft {
