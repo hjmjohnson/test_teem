@@ -25,10 +25,10 @@
 #ifndef DEFT_TRI_PLANE_UI_INCLUDED
 #define DEFT_TRI_PLANE_UI_INCLUDED
 
-#include "Deft.H"
-#include "Viewer.H"
-#include "Slider.H"
-#include "TriPlane.H"
+#include "Deft.h"
+#include "Viewer.h"
+#include "Slider.h"
+#include "TriPlane.h"
 
 #include <fltk/Group.h>
 #include <fltk/Choice.h>

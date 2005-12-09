@@ -25,10 +25,10 @@
 #ifndef DEFT_SCENE_INCLUDED
 #define DEFT_SCENE_INCLUDED
 
-#include "Deft.H"
-#include "Actor.H"
-#include "Object.H"
-#include "Group.H"
+#include "Deft.h"
+#include "Actor.h"
+#include "Object.h"
+#include "Group.h"
 
 namespace Deft {
 

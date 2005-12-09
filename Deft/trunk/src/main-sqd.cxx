@@ -22,11 +22,11 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "Deft.H"
-#include "Actor.H"
-#include "PolyData.H"
-#include "Viewer.H"
-#include "Plane.H"
+#include "Deft.h"
+#include "Actor.h"
+#include "PolyData.h"
+#include "Viewer.h"
+#include "Plane.h"
 
 int
 main(int, char **argv) {

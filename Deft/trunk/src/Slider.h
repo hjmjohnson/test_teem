@@ -25,7 +25,7 @@
 #ifndef DEFT_SLIDER_INCLUDED
 #define DEFT_SLIDER_INCLUDED
 
-#include "Deft.H"
+#include "Deft.h"
 #include <fltk/Box.h>
 
 namespace Deft {

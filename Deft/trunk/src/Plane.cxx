@@ -22,7 +22,7 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "Plane.H"
+#include "Plane.h"
 
 enum {
   flagUnknown,

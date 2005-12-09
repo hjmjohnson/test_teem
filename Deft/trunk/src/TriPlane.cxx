@@ -22,7 +22,7 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "TriPlane.H"
+#include "TriPlane.h"
 
 namespace Deft {
 

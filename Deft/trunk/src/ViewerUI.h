@@ -25,8 +25,8 @@
 #ifndef DEFT_VIEWER_UI_INCLUDED
 #define DEFT_VIEWER_UI_INCLUDED
 
-#include "Deft.H"
-#include "Viewer.H"
+#include "Deft.h"
+#include "Viewer.h"
 #include <fltk/FloatInput.h>
 #include <fltk/IntInput.h>
 #include <fltk/Output.h>

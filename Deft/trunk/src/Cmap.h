@@ -25,9 +25,9 @@
 #ifndef DEFT_CMAP_INCLUDED
 #define DEFT_CMAP_INCLUDED
 
-#include "Deft.H"
+#include "Deft.h"
 
-#include "Values.H"
+#include "Values.h"
 
 namespace Deft {
 

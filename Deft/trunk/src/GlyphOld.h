@@ -25,7 +25,7 @@
 #ifndef DEFT_GLYPHOLD_INCLUDED
 #define DEFT_GLYPHOLD_INCLUDED
 
-#include "Deft.H"
+#include "Deft.h"
 
 #include <teem/ten.h>
 

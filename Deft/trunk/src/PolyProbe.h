@@ -25,10 +25,10 @@
 #ifndef DEFT_POLY_PROBE_INCLUDED
 #define DEFT_POLY_PROBE_INCLUDED
 
-#include "Deft.H"
-#include "PolyData.H"
-#include "Gage.H"
-#include "Cmap.H"
+#include "Deft.h"
+#include "PolyData.h"
+#include "Gage.h"
+#include "Cmap.h"
 
 namespace Deft {
 

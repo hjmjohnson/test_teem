@@ -22,8 +22,8 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "Deft.H"
-#include "Viewer.H"
+#include "Deft.h"
+#include "Viewer.h"
 
 namespace Deft {
 

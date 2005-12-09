@@ -32,7 +32,7 @@
 ** function ...
 */
 
-#include "TensorGlyphUI.H"
+#include "TensorGlyphUI.h"
 
 namespace Deft {
 

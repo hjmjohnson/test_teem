@@ -22,8 +22,8 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "Deft.H"
-#include "Slider.H"
+#include "Deft.h"
+#include "Slider.h"
 
 namespace Deft {
 

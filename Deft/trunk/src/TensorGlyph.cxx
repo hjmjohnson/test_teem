@@ -22,7 +22,7 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "TensorGlyph.H"
+#include "TensorGlyph.h"
 
 /*
 ** NOTE: the logic of flags and updates is based entirely on a

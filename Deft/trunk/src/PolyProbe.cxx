@@ -22,7 +22,7 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "PolyProbe.H"
+#include "PolyProbe.h"
 
 enum {
   flagUnknown,

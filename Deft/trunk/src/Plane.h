@@ -25,8 +25,8 @@
 #ifndef DEFT_PLANE_INCLUDED
 #define DEFT_PLANE_INCLUDED
 
-#include "Deft.H"
-#include "PolyProbe.H"
+#include "Deft.h"
+#include "PolyProbe.h"
 
 /* excessive, actually */
 #define DEFT_PLANE_FLAG_NUM 80

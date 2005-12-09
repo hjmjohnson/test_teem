@@ -52,8 +52,8 @@ TARGET_LINK_LIBRARIES(deftLib
   ${DEFT_EXTRA_LIBRARIES}
   )
 
-ADD_EXECUTABLE(deft main-dti.cxx)
+ADD_EXECUTABLE(Deft-dti main-dti.cxx)
 TARGET_LINK_LIBRARIES(deft deftLib)
 
-ADD_EXECUTABLE(deft-sqd main-sqd.cxx)
+ADD_EXECUTABLE(Deft-sqd main-sqd.cxx)
 TARGET_LINK_LIBRARIES(deft-sqd deftLib)
