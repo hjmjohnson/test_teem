@@ -25,8 +25,8 @@
 #ifndef DEFT_GAGE_INCLUDED
 #define DEFT_GAGE_INCLUDED
 
-#include "Deft.H"
-#include "Volume.H"
+#include "Deft.h"
+#include "Volume.h"
 
 #include <teem/gage.h>
 

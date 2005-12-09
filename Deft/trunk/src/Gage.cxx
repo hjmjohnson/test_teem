@@ -22,7 +22,7 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "Gage.H"
+#include "Gage.h"
 
 #define GAGE_ERROR \
       fprintf(stderr, "%s: problem:\n%s", me, err=biffGetDone(GAGE)); \

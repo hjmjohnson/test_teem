@@ -25,7 +25,7 @@
 #ifndef DEFT_VOLUME_INCLUDED
 #define DEFT_VOLUME_INCLUDED
 
-#include "Deft.H"
+#include "Deft.h"
 
 namespace Deft {
 

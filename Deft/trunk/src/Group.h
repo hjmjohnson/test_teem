@@ -25,8 +25,8 @@
 #ifndef DEFT_GROUP_INCLUDED
 #define DEFT_GROUP_INCLUDED
 
-#include "Deft.H"
-#include "Object.H"
+#include "Deft.h"
+#include "Object.h"
 
 namespace Deft {
 

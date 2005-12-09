@@ -25,7 +25,7 @@
 #ifndef DEFT_ACTOR_INCLUDED
 #define DEFT_ACTOR_INCLUDED
 
-#include "Deft.H"
+#include "Deft.h"
 
 namespace Deft {
 

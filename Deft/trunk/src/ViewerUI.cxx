@@ -45,7 +45,7 @@ ViewerUI, and camResetButton_cb is a static method.  But:
 
 */
 
-#include "ViewerUI.H"
+#include "ViewerUI.h"
 
 namespace Deft {
 

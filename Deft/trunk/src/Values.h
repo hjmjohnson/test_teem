@@ -25,8 +25,8 @@
 #ifndef DEFT_VALUES_INCLUDED
 #define DEFT_VALUES_INCLUDED
 
-#include "Deft.H"
-#include "Gage.H"
+#include "Deft.h"
+#include "Gage.h"
 
 namespace Deft {
 

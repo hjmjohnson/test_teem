@@ -25,8 +25,8 @@
 #ifndef DEFT_VIEWER_INCLUDED
 #define DEFT_VIEWER_INCLUDED
 
-#include "Deft.H"
-#include "Scene.H"
+#include "Deft.h"
+#include "Scene.h"
 
 namespace Deft {
 

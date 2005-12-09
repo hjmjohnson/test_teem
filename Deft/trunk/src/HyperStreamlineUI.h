@@ -25,12 +25,12 @@
 #ifndef DEFT_HYPER_STREAMLINE_UI_INCLUDED
 #define DEFT_HYPER_STREAMLINE_UI_INCLUDED
 
-#include "Deft.H"
-#include "Viewer.H"
-#include "Slider.H"
-#include "TensorGlyph.H"
-#include "TriPlane.H"
-#include "HyperStreamline.H"
+#include "Deft.h"
+#include "Viewer.h"
+#include "Slider.h"
+#include "TensorGlyph.h"
+#include "TriPlane.h"
+#include "HyperStreamline.h"
 
 #include <fltk/Choice.h>
 #include <fltk/CheckButton.h>

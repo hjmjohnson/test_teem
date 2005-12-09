@@ -31,7 +31,7 @@
 #ifndef DEFT_OBJECT_INCLUDED
 #define DEFT_OBJECT_INCLUDED
 
-#include "Deft.H"
+#include "Deft.h"
 
 namespace Deft {
 

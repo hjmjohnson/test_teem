@@ -25,10 +25,10 @@
 #ifndef DEFT_TENSOR_GLYPH_UI_INCLUDED
 #define DEFT_TENSOR_GLYPH_UI_INCLUDED
 
-#include "Deft.H"
-#include "Viewer.H"
-#include "Slider.H"
-#include "TensorGlyph.H"
+#include "Deft.h"
+#include "Viewer.h"
+#include "Slider.h"
+#include "TensorGlyph.h"
 #include <fltk/Group.h>
 #include <fltk/Choice.h>
 #include <fltk/CheckButton.h>

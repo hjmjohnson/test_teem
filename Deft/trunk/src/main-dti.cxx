@@ -22,20 +22,20 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "Deft.H"
-#include "Object.H"
-#include "Actor.H"
-#include "Contour.H"
-#include "Viewer.H"
-#include "ViewerUI.H"
-#include "TensorGlyph.H"
-#include "TensorGlyphUI.H"
-#include "TriPlane.H"
-#include "TriPlaneUI.H"
-#include "HyperStreamline.H"
-#include "HyperStreamlineUI.H"
-#include "Gage.H"
-#include "Cmap.H"
+#include "Deft.h"
+#include "Object.h"
+#include "Actor.h"
+#include "Contour.h"
+#include "Viewer.h"
+#include "ViewerUI.h"
+#include "TensorGlyph.h"
+#include "TensorGlyphUI.h"
+#include "TriPlane.h"
+#include "TriPlaneUI.h"
+#include "HyperStreamline.h"
+#include "HyperStreamlineUI.h"
+#include "Gage.h"
+#include "Cmap.h"
 
 #include <fltk/Group.h>
 #include <fltk/Menu.h>

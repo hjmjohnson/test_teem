@@ -22,8 +22,8 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "Deft.H"
-#include "Actor.H"
+#include "Deft.h"
+#include "Actor.h"
 
 /* 
 ** learned: don't be surprised that you're not seeing anything on

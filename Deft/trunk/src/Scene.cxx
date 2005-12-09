@@ -28,8 +28,8 @@
 **  glShadeModel(GL_FLAT);
 */
 
-#include "Deft.H"
-#include "Scene.H"
+#include "Deft.h"
+#include "Scene.h"
 
 namespace Deft {
 

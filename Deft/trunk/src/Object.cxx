@@ -22,8 +22,8 @@
   WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "Deft.H"
-#include "Object.H"
+#include "Deft.h"
+#include "Object.h"
 
 /* learned: this doesn't make things to faster
 **   glEnable(GL_CULL_FACE);

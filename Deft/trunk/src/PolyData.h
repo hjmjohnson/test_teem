@@ -25,11 +25,11 @@
 #ifndef DEFT_POLYDATA_INCLUDED
 #define DEFT_POLYDATA_INCLUDED
 
-#include "Deft.H"
-#include "Object.H"
-#include "Gage.H"
-#include "Cmap.H"
-#include "Values.H"
+#include "Deft.h"
+#include "Object.h"
+#include "Gage.h"
+#include "Cmap.h"
+#include "Values.h"
 
 namespace Deft {
 

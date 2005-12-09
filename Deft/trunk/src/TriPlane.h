@@ -25,9 +25,9 @@
 #ifndef DEFT_TRI_PLANE_INCLUDED
 #define DEFT_TRI_PLANE_INCLUDED
 
-#include "Deft.H"
-#include "Group.H"
-#include "Plane.H"
+#include "Deft.h"
+#include "Group.h"
+#include "Plane.h"
 
 namespace Deft {
 

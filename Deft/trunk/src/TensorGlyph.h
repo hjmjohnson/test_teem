@@ -25,9 +25,9 @@
 #ifndef DEFT_TENSOR_GLYPH_INCLUDED
 #define DEFT_TENSOR_GLYPH_INCLUDED
 
-#include "Deft.H"
-#include "Object.H"
-#include "PolyData.H"
+#include "Deft.h"
+#include "Object.h"
+#include "PolyData.h"
 
 namespace Deft {
 

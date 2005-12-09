@@ -25,7 +25,7 @@
 #ifndef DEFT_CONTOUR_INCLUDED
 #define DEFT_CONTOUR_INCLUDED
 
-#include "Deft.H"
+#include "Deft.h"
 
 namespace Deft {
 

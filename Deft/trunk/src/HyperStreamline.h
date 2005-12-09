@@ -25,8 +25,8 @@
 #ifndef DEFT_HYPER_STREAMLINE_INCLUDED
 #define DEFT_HYPER_STREAMLINE_INCLUDED
 
-#include "Deft.H"
-#include "PolyProbe.H"
+#include "Deft.h"
+#include "PolyProbe.h"
 
 namespace Deft {
 
