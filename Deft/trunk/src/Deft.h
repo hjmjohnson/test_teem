@@ -25,9 +25,6 @@
 #ifndef DEFT_INCLUDED
 #define DEFT_INCLUDED
 
-#include <cstdio>
-#include <iostream>
-
 #include <teem/air.h>
 #include <teem/hest.h>
 #include <teem/biff.h>
@@ -39,7 +36,9 @@
 
 #include <GL/glew.h>  /* includes glu.h */
 
-#include <vector>
+// #include <cstdio>
+// #include <iostream>
+// #include <vector>
 
 #include <fltk/events.h>
 #include <fltk/gl.h>
