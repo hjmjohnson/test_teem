@@ -780,9 +780,9 @@ TensorGlyph::dataRGBUpdate() {
       R = AIR_CLAMP(0.0, R, 1.0);
       G = AIR_CLAMP(0.0, G, 1.0);
       B = AIR_CLAMP(0.0, B, 1.0);
-      R = pow(R, _rgbGamma);
-      G = pow(G, _rgbGamma);
-      B = pow(B, _rgbGamma);
+      R = pow(R, (float)_rgbGamma);
+      G = pow(G, (float)_rgbGamma);
+      B = pow(B, (float)_rgbGamma);
       ELL_3V_SET(dataLine + RGB_DATA_IDX, R, G, B);
     }
     flag[flagDataSorted] = false;
@@ -873,12 +873,12 @@ TensorGlyph::glyphPaletteUpdate() {
           }
           if (cl > cp) {
             trnsf = ZtoX;
-            alpha = pow(1-cp, _superquadSharpness);
-            beta = pow(1-cl, _superquadSharpness);
+            alpha = pow(1-cp, (float)_superquadSharpness);
+            beta = pow(1-cl, (float)_superquadSharpness);
           } else {
             trnsf = ident;
-            alpha = pow(1-cl, _superquadSharpness);
-            beta = pow(1-cp, _superquadSharpness);
+            alpha = pow(1-cl, (float)_superquadSharpness);
+            beta = pow(1-cp, (float)_superquadSharpness);
           }
           limnPolyDataSpiralSuperquadric(lpld, alpha, beta,
                                          2*_glyphRes, _glyphRes);

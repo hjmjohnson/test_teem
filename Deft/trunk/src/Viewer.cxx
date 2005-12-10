@@ -153,11 +153,11 @@ Viewer::cameraReset() {
              _camera->at[1], _camera->at[2]);
   ELL_3V_SET(_camera->up, 0, 0, 1);
   _camera->aspect = (double)w()/h();
-  fovY = 2*sqrt(3)*180.0*atan2((max[1] - min[1])/2, _camera->from[0])/AIR_PI;
-  fovZ = 2*sqrt(3)*180.0*atan2((max[2] - min[2])/2, _camera->from[0])/AIR_PI;
+  fovY = 2*sqrt((float)3)*180.0*atan2((max[1] - min[1])/2, (float)_camera->from[0])/AIR_PI;
+  fovZ = 2*sqrt((float)3)*180.0*atan2((max[2] - min[2])/2, (float)_camera->from[0])/AIR_PI;
   _camera->fov = AIR_MAX(fovY, fovZ);
-  _camera->neer = -sqrt(3)*1.001*(cmax - cmin)/2;
-  _camera->faar = sqrt(3)*1.001*(cmax - cmin)/2;
+  _camera->neer = -sqrt((float)3)*1.001*(cmax - cmin)/2;
+  _camera->faar = sqrt((float)3)*1.001*(cmax - cmin)/2;
   cameraUpdate();
   return;
 
@@ -442,8 +442,8 @@ Viewer::motion(int button, int shift, int x, int y, int dx, int dy) {
     fprintf(stderr, "%s: button %d motion @ %d %d (%d %d) (%s)\n", me,
             button, x, y, dx, dy, airEnumStr(viewerMode, _mode));
   }
-  double angle = (atan2(x - w()/2, y - h()/2) 
-                  - atan2(x+dx - w()/2, y+dy - h()/2));
+  double angle = (atan2((float)x - (float)w()/2, (float)y - (float)h()/2) 
+                  - atan2((float)x+dx - (float)w()/2, (float)y+dy - (float)h()/2));
   if (angle > AIR_PI) {
     angle -= 2*AIR_PI;
   } else if (angle < -AIR_PI) {
@@ -457,7 +457,7 @@ Viewer::motion(int button, int shift, int x, int y, int dx, int dy) {
                            _camera->vRange[0], _camera->vRange[1]);
   switch(_mode) {
   case viewerModeFov:
-    _camera->fov *= pow(3,-angle);
+    _camera->fov *= pow((float)3,(float)-angle);
     _camera->fov = AIR_MIN(179, _camera->fov);
     cameraUpdate();
     break;
@@ -524,7 +524,7 @@ Viewer::motion(int button, int shift, int x, int y, int dx, int dy) {
   case viewerModeDolly:
     ELL_3V_SUB(toEye, _camera->from, _camera->at);
     ELL_3V_NORM(toEye, toEye, oldDist);
-    newDist = oldDist*pow(3,-angle);
+    newDist = oldDist*pow((float)3,(float)-angle);
     _camera->fov = 2*180*atan(oldDist*tan(AIR_PI*_camera->fov/(2*180))
                               /newDist)/AIR_PI;
     _camera->dist *= newDist/oldDist;
@@ -532,8 +532,8 @@ Viewer::motion(int button, int shift, int x, int y, int dx, int dy) {
     cameraUpdate();
     break;
   case viewerModeDepth:
-    _camera->neer *= pow(3,angle);
-    _camera->faar *= pow(3,angle);
+    _camera->neer *= pow((float)3,(float)angle);
+    _camera->faar *= pow((float)3,(float)angle);
     cameraUpdate();
     break;
   case viewerModeTranslateUV:
