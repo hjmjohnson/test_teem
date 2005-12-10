@@ -103,7 +103,7 @@ void
 TriPlane::sampling(unsigned int axisIdx, float smpl) {
 
   axisIdx = AIR_MIN(axisIdx, 2);
-  _size[axisIdx] = AIR_CAST(unsigned int, pow(2, smpl)*_shape->size[0]);
+  _size[axisIdx] = AIR_CAST(unsigned int, pow((float)2, smpl)*_shape->size[0]);
   if (0 != axisIdx) {
     plane[0]->resolution(_size[1], _size[2]);
     plane[0]->update();
