@@ -39,26 +39,26 @@ TriPlane::TriPlane(const Volume *vol) : Group(3) {
 
   float tmpW[4], umpW[4], tmpI[4], umpI[4];
   ELL_4V_SET(tmpI, 0.0, 0.0, 0.0, 1.0);
-  ELL_4MV_MUL(tmpW, _shape->ItoW, tmpI);
+  ELL_4MV_MUL_TT(tmpW, float, _shape->ItoW, tmpI);
   ELL_4V_HOMOG(_origW, tmpW);
   fprintf(stderr, "%s: tmpW=(%g,%g,%g,%g) --> _origW=(%g,%g,%g)\n", me,
           tmpW[0], tmpW[1], tmpW[2], tmpW[3],
           _origW[0], _origW[1], _origW[2]);
 
   ELL_4V_SET(umpI, 1, 0, 0, 1);
-  ELL_4MV_MUL(umpW, _shape->ItoW, umpI);
+  ELL_4MV_MUL_TT(umpW, float, _shape->ItoW, umpI);
   ELL_4V_HOMOG(umpW, umpW);
   ELL_3V_SUB(_interW[0], umpW, _origW);
   ELL_3V_SCALE(_edgeW[0], _shape->size[0]-1, _interW[0]);
 
   ELL_4V_SET(umpI, 0, 1, 0, 1);
-  ELL_4MV_MUL(umpW, _shape->ItoW, umpI);
+  ELL_4MV_MUL_TT(umpW, float, _shape->ItoW, umpI);
   ELL_4V_HOMOG(umpW, umpW);
   ELL_3V_SUB(_interW[1], umpW, _origW);
   ELL_3V_SCALE(_edgeW[1], _shape->size[1]-1, _interW[1]);
 
   ELL_4V_SET(umpI, 0, 0, 1, 1);
-  ELL_4MV_MUL(umpW, _shape->ItoW, umpI);
+  ELL_4MV_MUL_TT(umpW, tmp, _shape->ItoW, umpI);
   ELL_4V_HOMOG(umpW, umpW);
   ELL_3V_SUB(_interW[2], umpW, _origW);
   ELL_3V_SCALE(_edgeW[2], _shape->size[2]-1, _interW[2]);
@@ -71,19 +71,19 @@ TriPlane::TriPlane(const Volume *vol) : Group(3) {
   plane[0]->volume(vol);
   plane[0]->edgeUSet(_edgeW[1]);
   plane[0]->edgeVSet(_edgeW[2]);
-  position(0, AIR_CAST(unsigned int, _size[0]/2));
+  position(0, static_cast<float>(_size[0]/2));
 
   object[1] = plane[1] = new Plane(_size[0], _size[2]);
   plane[1]->volume(vol);
   plane[1]->edgeUSet(_edgeW[0]);
   plane[1]->edgeVSet(_edgeW[2]);
-  position(1, AIR_CAST(unsigned int, _size[1]/2));
+  position(1, static_cast<float>(_size[1]/2));
 
   object[2] = plane[2] = new Plane(_size[0], _size[1]);
   plane[2]->volume(vol);
   plane[2]->edgeUSet(_edgeW[0]);
   plane[2]->edgeVSet(_edgeW[1]);
-  position(2, AIR_CAST(unsigned int, _size[2]/2));
+  position(2, static_cast<float>(_size[2]/2));
 
   plane[0]->lightingUse(false);
   plane[1]->lightingUse(false);
@@ -100,10 +100,10 @@ TriPlane::~TriPlane() {
 }
 
 void
-TriPlane::sampling(unsigned int axisIdx, float smpl) {
+TriPlane::sampling(unsigned int axisIdx, double smpl) {
 
   axisIdx = AIR_MIN(axisIdx, 2);
-  _size[axisIdx] = AIR_CAST(unsigned int, pow((float)2, smpl)*_shape->size[0]);
+  _size[axisIdx] = AIR_CAST(unsigned int, pow(2.0, smpl)*_shape->size[0]);
   if (0 != axisIdx) {
     plane[0]->resolution(_size[1], _size[2]);
     plane[0]->update();
@@ -121,7 +121,7 @@ TriPlane::sampling(unsigned int axisIdx, float smpl) {
 
 const gageShape *TriPlane::shape() const { return _shape; }
 
-float TriPlane::sampling(unsigned int ai) const { return _sampling[ai]; }
+double TriPlane::sampling(unsigned int ai) const { return _sampling[ai]; }
 
 void
 TriPlane::position(unsigned int planeIdx, float pos) {
@@ -131,7 +131,7 @@ TriPlane::position(unsigned int planeIdx, float pos) {
   // fprintf(stderr, "%s(%u, %g): -------------------\n", me, planeIdx, pos);
   planeIdx = AIR_MIN(planeIdx, 2);
   _posI[planeIdx] = pos;
-  ELL_3V_SCALE_ADD2(vec, 1.0, _origW, _posI[planeIdx], _interW[planeIdx]);
+  ELL_3V_SCALE_ADD2(vec, 1.0f, _origW, _posI[planeIdx], _interW[planeIdx]);
   plane[planeIdx]->originSet(vec);
   // HEY: this is lame: we should be able to always do simply
   // plane[planeIdx]->update(), but there's a problem on the

@@ -103,27 +103,27 @@ Viewer::camera(float frX, float frY, float frZ,
 
 }
 
-float Viewer::fromX() { return _camera->from[0]; }
-float Viewer::fromY() { return _camera->from[1]; }
-float Viewer::fromZ() { return _camera->from[2]; }
+float Viewer::fromX() { return static_cast<float>(_camera->from[0]); }
+float Viewer::fromY() { return static_cast<float>(_camera->from[1]); }
+float Viewer::fromZ() { return static_cast<float>(_camera->from[2]); }
 void Viewer::fromX(float x) { _camera->from[0] = x; cameraUpdate(); }
 void Viewer::fromY(float y) { _camera->from[1] = y; cameraUpdate(); }
 void Viewer::fromZ(float z) { _camera->from[2] = z; cameraUpdate(); }
-float Viewer::atX() { return _camera->at[0]; }
-float Viewer::atY() { return _camera->at[1]; }
-float Viewer::atZ() { return _camera->at[2]; }
+float Viewer::atX() { return static_cast<float>(_camera->at[0]); }
+float Viewer::atY() { return static_cast<float>(_camera->at[1]); }
+float Viewer::atZ() { return static_cast<float>(_camera->at[2]); }
 void Viewer::atX(float x) { _camera->at[0] = x; cameraUpdate(); }
 void Viewer::atY(float y) { _camera->at[1] = y; cameraUpdate(); }
 void Viewer::atZ(float z) { _camera->at[2] = z; cameraUpdate(); }
-float Viewer::upX() { return _camera->up[0]; }
-float Viewer::upY() { return _camera->up[1]; }
-float Viewer::upZ() { return _camera->up[2]; }
+float Viewer::upX() { return static_cast<float>(_camera->up[0]); }
+float Viewer::upY() { return static_cast<float>(_camera->up[1]); }
+float Viewer::upZ() { return static_cast<float>(_camera->up[2]); }
 void Viewer::upX(float x) { _camera->up[0] = x; cameraUpdate(); }
 void Viewer::upY(float y) { _camera->up[1] = y; cameraUpdate(); }
 void Viewer::upZ(float z) { _camera->up[2] = z; cameraUpdate(); }
-float Viewer::fovy() { return _camera->fov; }
-float Viewer::neer() { return _camera->neer; }
-float Viewer::faar() { return _camera->faar; }
+float Viewer::fovy() { return static_cast<float>(_camera->fov); }
+float Viewer::neer() { return static_cast<float>(_camera->neer); }
+float Viewer::faar() { return static_cast<float>(_camera->faar); }
 void Viewer::fovy(float a) { _camera->fov = a; cameraUpdate(); }
 void Viewer::neer(float n) { _camera->neer = n; cameraUpdate(); }
 void Viewer::faar(float f) { _camera->faar = f; cameraUpdate(); }
@@ -153,11 +153,13 @@ Viewer::cameraReset() {
              _camera->at[1], _camera->at[2]);
   ELL_3V_SET(_camera->up, 0, 0, 1);
   _camera->aspect = (double)w()/h();
-  fovY = 2*sqrt((float)3)*180.0*atan2((max[1] - min[1])/2, (float)_camera->from[0])/AIR_PI;
-  fovZ = 2*sqrt((float)3)*180.0*atan2((max[2] - min[2])/2, (float)_camera->from[0])/AIR_PI;
+  fovY = 2*sqrt(3)*180*atan2((max[1] - min[1])/2,
+                             static_cast<float>(_camera->from[0]))/AIR_PI;
+  fovZ = 2*sqrt(3)*180*atan2((max[2] - min[2])/2,
+                             static_cast<float>(_camera->from[0]))/AIR_PI;
   _camera->fov = AIR_MAX(fovY, fovZ);
-  _camera->neer = -sqrt((float)3)*1.001*(cmax - cmin)/2;
-  _camera->faar = sqrt((float)3)*1.001*(cmax - cmin)/2;
+  _camera->neer = -sqrt(3.0f)*1.001f*(cmax - cmin)/2.0f;
+  _camera->faar = sqrt(3.0f)*1.001f*(cmax - cmin)/2.0f;
   cameraUpdate();
   return;
 
@@ -442,8 +444,8 @@ Viewer::motion(int button, int shift, int x, int y, int dx, int dy) {
     fprintf(stderr, "%s: button %d motion @ %d %d (%d %d) (%s)\n", me,
             button, x, y, dx, dy, airEnumStr(viewerMode, _mode));
   }
-  double angle = (atan2((float)x - (float)w()/2, (float)y - (float)h()/2) 
-                  - atan2((float)x+dx - (float)w()/2, (float)y+dy - (float)h()/2));
+  double angle = (atan2(x - w()/2.0f, y - h()/2.0f) 
+                  - atan2(x+dx - w()/2.0f, y+dy - h()/2.0f));
   if (angle > AIR_PI) {
     angle -= 2*AIR_PI;
   } else if (angle < -AIR_PI) {
@@ -457,7 +459,7 @@ Viewer::motion(int button, int shift, int x, int y, int dx, int dy) {
                            _camera->vRange[0], _camera->vRange[1]);
   switch(_mode) {
   case viewerModeFov:
-    _camera->fov *= pow((float)3,(float)-angle);
+    _camera->fov *= pow(3.0,-angle);
     _camera->fov = AIR_MIN(179, _camera->fov);
     cameraUpdate();
     break;
@@ -524,7 +526,7 @@ Viewer::motion(int button, int shift, int x, int y, int dx, int dy) {
   case viewerModeDolly:
     ELL_3V_SUB(toEye, _camera->from, _camera->at);
     ELL_3V_NORM(toEye, toEye, oldDist);
-    newDist = oldDist*pow((float)3,(float)-angle);
+    newDist = oldDist*pow(3.0,-angle);
     _camera->fov = 2*180*atan(oldDist*tan(AIR_PI*_camera->fov/(2*180))
                               /newDist)/AIR_PI;
     _camera->dist *= newDist/oldDist;
@@ -532,8 +534,8 @@ Viewer::motion(int button, int shift, int x, int y, int dx, int dy) {
     cameraUpdate();
     break;
   case viewerModeDepth:
-    _camera->neer *= pow((float)3,(float)angle);
-    _camera->faar *= pow((float)3,(float)angle);
+    _camera->neer *= pow(3.0,angle);
+    _camera->faar *= pow(3.0,angle);
     cameraUpdate();
     break;
   case viewerModeTranslateUV:

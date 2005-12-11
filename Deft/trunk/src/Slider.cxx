@@ -238,7 +238,7 @@ Slider::fastUpdate() {
 void
 Slider::fastUpdate(int val) {
   
-  this->_fastUp->value(val);
+  this->_fastUp->value(val ? true : false);
 }
 
 void

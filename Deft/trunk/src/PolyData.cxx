@@ -84,7 +84,6 @@ PolyData::query() const {
 void
 PolyData::probe(const Gage *gage) {
   // char me[]="PolyData::probe";
-  double xx, yy, zz;
   double *answerAll[128]; // TERRIBLE
   unsigned int length[128]; // TERRIBLE
   /*
@@ -132,9 +131,10 @@ PolyData::probe(const Gage *gage) {
   unsigned int N = lpld()->vertNum;
   const limnVrt *vert = lpld()->vert;
   for (unsigned int I=0; I<N; I++) {
-    xx = vert[I].xyzw[0] / vert[I].xyzw[3];
-    yy = vert[I].xyzw[1] / vert[I].xyzw[3];
-    zz = vert[I].xyzw[2] / vert[I].xyzw[3];
+    gage_t xx, yy, zz;
+    xx = static_cast<gage_t>(vert[I].xyzw[0] / vert[I].xyzw[3]);
+    yy = static_cast<gage_t>(vert[I].xyzw[1] / vert[I].xyzw[3]);
+    zz = static_cast<gage_t>(vert[I].xyzw[2] / vert[I].xyzw[3]);
     _valid[I] = !gage->probe(answerAll, xx, yy, zz);
     for (unsigned int qi=0; qi<_values.size(); qi++) {
       answerAll[qi] += length[qi];

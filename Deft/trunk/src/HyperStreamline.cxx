@@ -214,7 +214,7 @@ HyperStreamline::stopAniso(int aniso, double thresh) {
 
 void
 HyperStreamline::stopAnisoDo(bool doit) {
-  bool olddo = _tfx->stop & (1 << tenFiberStopAniso);
+  bool olddo = (_tfx->stop & (1 << tenFiberStopAniso)) ? true : false;
   if (olddo != doit) {
     if (doit) {
       tenFiberStopOn(_tfx, tenFiberStopAniso); 
@@ -234,7 +234,7 @@ HyperStreamline::stopHalfLength(double maxHalfLength) {
 
 void
 HyperStreamline::stopHalfLengthDo(bool doit) { 
-  bool olddo = _tfx->stop & (1 << tenFiberStopLength);
+  bool olddo = (_tfx->stop & (1 << tenFiberStopLength)) ? true : false;
   if (olddo != doit) {
     if (doit) {
       tenFiberStopOn(_tfx, tenFiberStopLength); 
@@ -254,7 +254,7 @@ HyperStreamline::stopHalfStepNum(unsigned int steps) {
 
 void
 HyperStreamline::stopHalfStepNumDo(bool doit) {
-  bool olddo = _tfx->stop & (1 << tenFiberStopNumSteps);
+  bool olddo = (_tfx->stop & (1 << tenFiberStopNumSteps)) ? true : false;
   if (olddo != doit) {
     if (doit) {
       tenFiberStopOn(_tfx, tenFiberStopNumSteps); 
@@ -274,7 +274,7 @@ HyperStreamline::stopConfidence(double conf) {
 
 void
 HyperStreamline::stopConfidenceDo(bool doit) {
-  bool olddo = _tfx->stop & (1 << tenFiberStopConfidence);
+  bool olddo = (_tfx->stop & (1 << tenFiberStopConfidence)) ? true : false;
   if (olddo != doit) {
     if (doit) {
       tenFiberStopOn(_tfx, tenFiberStopConfidence); 
@@ -409,7 +409,8 @@ HyperStreamline::updateFiberGeometry() {
          nrrdSave(fname, _fiber[seedIdx]->nvert, NULL);
       */
       for (unsigned int vertIdx=0; vertIdx<vertNum; vertIdx++) {
-        ELL_3V_COPY(_lpldFibers->vert[vertTotalIdx].xyzw, vert + 3*vertIdx);
+        ELL_3V_COPY_TT(_lpldFibers->vert[vertTotalIdx].xyzw, float,
+                       vert + 3*vertIdx);
         _lpldFibers->vert[vertTotalIdx].xyzw[3] = 1.0;
         ELL_3V_SET(_lpldFibers->vert[vertTotalIdx].norm, 0, 0, 0);
         ELL_4V_SET(_lpldFibers->vert[vertTotalIdx].rgba, 255, 255, 255, 255);
@@ -545,13 +546,13 @@ HyperStreamline::updateTubeGeometry() {
                             _tubeRadius, pnorm,
                             shift, tang);
           limnVrt *outVrt = _lpldTubes->vert + outVertTotalIdx;
-          ELL_3V_COPY(outVrt->xyzw, pcoord);
+          ELL_3V_COPY_TT(outVrt->xyzw, float, pcoord);
           /*
             fprintf(stderr, "      (%g,%g,%g)\n",
             outVrt->xyzw[0], outVrt->xyzw[1], outVrt->xyzw[2]);
           */
           outVrt->xyzw[3] = 1.0;
-          ELL_3V_COPY(outVrt->norm, pnorm);
+          ELL_3V_COPY(outVrt->norm, float, pnorm);
           if (inVertIdx<_lpldFibers->vcnt[fi]-1) {
             _lpldTubes->indx[outIndxIdx++] = outVertTotalIdx;
             _lpldTubes->indx[outIndxIdx++] = outVertTotalIdx + _tubeFacet;

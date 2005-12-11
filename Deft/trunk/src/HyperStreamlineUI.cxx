@@ -250,7 +250,7 @@ HyperStreamlineUI::colorQuantity_cb(fltk::Choice *menu,
 }
 
 void
-HyperStreamlineUI::compute_cb(fltk::Button *but, HyperStreamlineUI *ui) {
+HyperStreamlineUI::compute_cb(fltk::Button *, HyperStreamlineUI *ui) {
 
   unsigned int seedNum = ui->_tglyph->glyphPositionsGet(ui->_nseeds);
   if (seedNum) {
