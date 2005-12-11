@@ -35,7 +35,7 @@ main(int, char **argv) {
   me = argv[0];
 
   Deft::Scene *scene = new Deft::Scene();
-  scene->bgColor(0.1, 0.15, 0.2);
+  scene->bgColor(0.1f, 0.15f, 0.2f);
   Deft::Viewer *viewer = new Deft::Viewer(scene, 640, 480);
   viewer->camera(3, 4, 5,
                  0, 0, 0,
@@ -48,7 +48,7 @@ main(int, char **argv) {
   viewer->helpPrint();
 
   limnPolyData *pld = limnPolyDataNew();
-  limnPolyDataSpiralSuperquadric(pld, 0.2, 0.4, 50, 50);
+  limnPolyDataSpiralSuperquadric(pld, 0.2f, 0.4f, 50, 50);
   Deft::PolyData *surf = new Deft::PolyData(pld, true);
   surf->wireframe(true);
   surf->visible(true);

@@ -143,7 +143,7 @@ Actor::draw() {
   if (useActorT) {
     float tmpMat[16];
     glPushMatrix();
-    ELL_4M_TRANSPOSE(tmpMat, actorT);
+    ELL_4M_TRANSPOSE_TT(tmpMat, float, actorT);
     glMultMatrixf(tmpMat);
   }
   if (useNormalize) {
@@ -261,7 +261,8 @@ Actor::compile() {
 void
 Actor::boundsGet(float min[3], float max[3]) {
   unsigned int vi, vertNum;
-  double vertB[4], vertC[4];
+  double vertB[4];
+  float vertC[3];
   limnVertex *vertex;
   limnVrt *vrt;
 
@@ -281,7 +282,7 @@ Actor::boundsGet(float min[3], float max[3]) {
       } else {
         ELL_4MV_MUL(vertB, actorT, vrt[vi].xyzw);
       }
-      ELL_4V_HOMOG(vertC, vertB);
+      ELL_34V_HOMOG_TT(vertC, float, vertB);
       if (!vi) {
         ELL_3V_COPY(min, vertC);
         ELL_3V_COPY(max, vertC);

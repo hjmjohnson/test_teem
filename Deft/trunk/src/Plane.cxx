@@ -177,15 +177,17 @@ Plane::update() {
     ret = true;
     float norm[3], tmp;
     ELL_3V_CROSS(norm, _edgeU, _edgeV);
-    ELL_3V_NORM(norm, norm, tmp);
+    ELL_3V_NORM_TT(norm, float, norm, tmp);
     unsigned int vertIdx = 0;
     for (unsigned int vIdx=0; vIdx<_resolutionV; vIdx++) {
-      float vv = AIR_AFFINE(0, vIdx, _resolutionV-1, 0.0, 1.0);
+      float vv = static_cast<float>(AIR_AFFINE(0, vIdx, _resolutionV-1,
+                                               0.0, 1.0));
       for (unsigned int uIdx=0; uIdx<_resolutionU; uIdx++) {
-        float uu = AIR_AFFINE(0, uIdx, _resolutionU-1, 0.0, 1.0);
+        float uu = static_cast<float>(AIR_AFFINE(0, uIdx, _resolutionU-1,
+                                                 0.0, 1.0));
         ELL_3V_SCALE_ADD3(_lpldOwn->vert[vertIdx].xyzw,
-                          1.0, _origin, uu, _edgeU, vv, _edgeV);
-        _lpldOwn->vert[vertIdx].xyzw[3] = 1.0;
+                          1.0f, _origin, uu, _edgeU, vv, _edgeV);
+        _lpldOwn->vert[vertIdx].xyzw[3] = 1.0f;
         ELL_3V_COPY(_lpldOwn->vert[vertIdx].norm, norm);
         ++vertIdx;
       }

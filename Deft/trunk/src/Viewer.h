@@ -81,8 +81,8 @@ public:
   void helpPrint();
   void reshape(int w, int h);  // glut-like
   void draw();
-  float drawTime() const { return _scene->drawTime(); }
-  float totalTime() const { return _scene->totalTime(); }
+  double drawTime() const { return _scene->drawTime(); }
+  double totalTime() const { return _scene->totalTime(); }
   void screenDump();
   int handle(int event);       // dispatches to keyboard, mouse, and motion
   void keyboard(char key, int x, int y);  // glut-like

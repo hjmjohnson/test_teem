@@ -79,26 +79,26 @@ public:
   void stopAnisoDo(bool doit);
   int stopAnisoType() const { return _tfx->anisoStopType; }
   double stopAnisoThreshold() const { return _tfx->anisoThresh; }
-  bool stopAnisoDo() const { return _tfx->stop 
-                               & (1 << tenFiberStopAniso); }
+  bool stopAnisoDo() const { 
+    return (_tfx->stop & (1 << tenFiberStopAniso)) ? true : false; }
 
   void stopHalfLength(double maxHalfLength);
   void stopHalfLengthDo(bool doit);
   double stopHalfLength() const { return _tfx->maxHalfLen; }
-  bool stopHalfLengthDo() const { return _tfx->stop 
-                                    & (1 << tenFiberStopLength); }
+  bool stopHalfLengthDo() const {
+    return (_tfx->stop & (1 << tenFiberStopLength)) ? true : false; }
 
   void stopHalfStepNum(unsigned int steps);
   void stopHalfStepNumDo(bool doit);
   unsigned int stopHalfStepNum() const { return _tfx->maxNumSteps; }
-  bool stopHalfStepNumDo() const { return _tfx->stop 
-                                     & (1 << tenFiberStopNumSteps); }
+  bool stopHalfStepNumDo() const {
+    return (_tfx->stop & (1 << tenFiberStopNumSteps)) ? true : false; }
 
   void stopConfidence(double conf);
   void stopConfidenceDo(bool doit);
   double stopConfidence() const { return _tfx->confThresh; }
-  bool stopConfidenceDo() const { return  _tfx->stop 
-                                    & (1 << tenFiberStopConfidence); }
+  bool stopConfidenceDo() const {
+    return (_tfx->stop & (1 << tenFiberStopConfidence)) ? true : false; }
 
   void stopReset();
 

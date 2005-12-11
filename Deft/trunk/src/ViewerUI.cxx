@@ -181,18 +181,18 @@ ViewerUI::screenDumpButton_cb(fltk::Button *, ViewerUI *ui) {
 void
 ViewerUI::cameraInput_cb(fltk::FloatInput *, ViewerUI *ui) {
 
-  ui->_viewer->fromX(ui->_fromXInput->fvalue());
-  ui->_viewer->fromY(ui->_fromYInput->fvalue());
-  ui->_viewer->fromZ(ui->_fromZInput->fvalue());
-  ui->_viewer->atX(ui->_atXInput->fvalue());
-  ui->_viewer->atY(ui->_atYInput->fvalue());
-  ui->_viewer->atZ(ui->_atZInput->fvalue());
-  ui->_viewer->upX(ui->_upXInput->fvalue());
-  ui->_viewer->upY(ui->_upYInput->fvalue());
-  ui->_viewer->upZ(ui->_upZInput->fvalue());
-  ui->_viewer->fovy(ui->_fovyInput->fvalue());
-  ui->_viewer->neer(ui->_neerInput->fvalue());
-  ui->_viewer->faar(ui->_faarInput->fvalue());
+  ui->_viewer->fromX(static_cast<float>(ui->_fromXInput->fvalue()));
+  ui->_viewer->fromY(static_cast<float>(ui->_fromYInput->fvalue()));
+  ui->_viewer->fromZ(static_cast<float>(ui->_fromZInput->fvalue()));
+  ui->_viewer->atX(static_cast<float>(ui->_atXInput->fvalue()));
+  ui->_viewer->atY(static_cast<float>(ui->_atYInput->fvalue()));
+  ui->_viewer->atZ(static_cast<float>(ui->_atZInput->fvalue()));
+  ui->_viewer->upX(static_cast<float>(ui->_upXInput->fvalue()));
+  ui->_viewer->upY(static_cast<float>(ui->_upYInput->fvalue()));
+  ui->_viewer->upZ(static_cast<float>(ui->_upZInput->fvalue()));
+  ui->_viewer->fovy(static_cast<float>(ui->_fovyInput->fvalue()));
+  ui->_viewer->neer(static_cast<float>(ui->_neerInput->fvalue()));
+  ui->_viewer->faar(static_cast<float>(ui->_faarInput->fvalue()));
   ui->_viewer->redraw();
 }
 

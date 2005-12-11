@@ -48,8 +48,8 @@ public:
 
   // log_2 of sampling factor for each axis, which means that
   // for plane 0 you have to modify samplines 1 and 2
-  void sampling(unsigned int axisIdx, float smpl);
-  float sampling(unsigned int axisIdx) const;
+  void sampling(unsigned int axisIdx, double smpl);
+  double sampling(unsigned int axisIdx) const;
 
   // conveniences to *set* all planes' Gage
   void kernel(int which, const NrrdKernelSpec *ksp);
@@ -70,7 +70,8 @@ public:
   ~TriPlane();
 private:
   gageShape *_shape;
-  float _origW[3], _interW[3][3], _edgeW[3][3], _posI[3], _sampling[3];
+  float _origW[3], _interW[3][3], _edgeW[3][3], _posI[3];
+  double _sampling[3];
   unsigned int _size[3];  // # samples along each axis
 };
 

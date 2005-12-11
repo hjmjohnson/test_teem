@@ -39,10 +39,10 @@ Scene::Scene() {
   ELL_3V_SET(_bgColor, 0, 0, 0);
   lit = limnLightNew();
   limnLightAmbientSet(lit, 1.0, 1.0, 1.0);
-  limnLightSet(lit, 0,    /* which */
-               AIR_TRUE,  /* in viewspace */
-               0.9, 0.9, 0.9,   /* r g b */
-               1, -1, -4);  /* x y z */
+  limnLightSet(lit, 0,              /* which */
+               AIR_TRUE,            /* in viewspace */
+               0.9f, 0.9f, 0.9f,    /* r g b */
+               1.0f, -1.0f, -4.0f); /* x y z */
   _lastTime = _totalTime = _drawTime = 0;
   actorArr = airArrayNew((void**)(&actor), NULL,
                          sizeof(Actor*), arrayIncr);
@@ -221,7 +221,7 @@ Scene::draw() {
   // have to be built into the lights...
   glShadeModel(GL_SMOOTH);
   GLfloat tmpv[4] = {0,0,0,1};
-  ELL_3V_SCALE(tmpv, 0.1, lit->amb);
+  ELL_3V_SCALE(tmpv, 0.1f, lit->amb);
   glLightModelfv(GL_LIGHT_MODEL_AMBIENT, tmpv);
   for (lightIdx=0; lightIdx<8; lightIdx++) {
     if (lit->on[lightIdx]) {
@@ -232,7 +232,7 @@ Scene::draw() {
       ELL_3V_SET(tmpv, 0, 0, 0);
       glLightfv(GL_LIGHT0 + lightIdx, GL_AMBIENT, tmpv);
       /* ELL_3V_SCALE(tmpv, 0.8, lit->col[lightIdx]); */
-      ELL_3V_SCALE(tmpv, 1.0, lit->col[lightIdx]);
+      ELL_3V_SCALE(tmpv, 1.0f, lit->col[lightIdx]);
       glLightfv(GL_LIGHT0 + lightIdx, GL_DIFFUSE, tmpv);
       glLightfv(GL_LIGHT0 + lightIdx, GL_SPECULAR, lit->col[lightIdx]);
     } else {
@@ -241,19 +241,19 @@ Scene::draw() {
   }
 
   // set materials (until scene objects have their own materials)
-  GLfloat mat_zero[] = {0, 0, 0, 0};
+  GLfloat mat_zero[] = {0.0f, 0.0f, 0.0f, 0.0f};
   /* YOOHOO changed for van gogh 
-  GLfloat mat_ambient[] = {0.1, 0.1, 0.1, 1.0};
+  GLfloat mat_ambient[] = {0.1f, 0.1f, 0.1f, 1.0f};
   // may be over-ridden with glColorMaterial 
-  GLfloat mat_diffuse[] = {0.7, 0.7, 0.7, 1.0};
-  GLfloat mat_specular[] = {0.3, 0.3, 0.3, 1.0};
+  GLfloat mat_diffuse[] = {0.7f, 0.7f, 0.7f, 1.0f};
+  GLfloat mat_specular[] = {0.3f, 0.3f, 0.3f, 1.0f};
   */
-  GLfloat mat_ambient[] = {0.7, 0.7, 0.7, 1.0};
+  GLfloat mat_ambient[] = {0.7f, 0.7f, 0.7f, 1.0f};
   // may be over-ridden with glColorMaterial 
-  GLfloat mat_diffuse[] = {0.3, 0.3, 0.3, 1.0};
-  GLfloat mat_specular[] = {0.0, 0.0, 0.0, 1.0};
+  GLfloat mat_diffuse[] = {0.3f, 0.3f, 0.3f, 1.0f};
+  GLfloat mat_specular[] = {0.0f, 0.0f, 0.0f, 1.0f};
 
-  GLfloat mat_shininess[] = {70.0};
+  GLfloat mat_shininess[] = {70.0f};
   glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
   glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
   glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);

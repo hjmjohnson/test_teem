@@ -173,15 +173,15 @@ TensorGlyph::volumeSet(const Nrrd *nten) {
    [6]  [7]  [8]     [0][2]   [1][2]   [2][2]
   */
   if (AIR_EXISTS(nten->measurementFrame[0][0])) {
-    _measrFrame[0] = nten->measurementFrame[0][0];
-    _measrFrame[1] = nten->measurementFrame[1][0];
-    _measrFrame[2] = nten->measurementFrame[2][0];
-    _measrFrame[3] = nten->measurementFrame[0][1];
-    _measrFrame[4] = nten->measurementFrame[1][1];
-    _measrFrame[5] = nten->measurementFrame[2][1];
-    _measrFrame[6] = nten->measurementFrame[0][2];
-    _measrFrame[7] = nten->measurementFrame[1][2];
-    _measrFrame[8] = nten->measurementFrame[2][2];
+    _measrFrame[0] = static_cast<float>(nten->measurementFrame[0][0]);
+    _measrFrame[1] = static_cast<float>(nten->measurementFrame[1][0]);
+    _measrFrame[2] = static_cast<float>(nten->measurementFrame[2][0]);
+    _measrFrame[3] = static_cast<float>(nten->measurementFrame[0][1]);
+    _measrFrame[4] = static_cast<float>(nten->measurementFrame[1][1]);
+    _measrFrame[5] = static_cast<float>(nten->measurementFrame[2][1]);
+    _measrFrame[6] = static_cast<float>(nten->measurementFrame[0][2]);
+    _measrFrame[7] = static_cast<float>(nten->measurementFrame[1][2]);
+    _measrFrame[8] = static_cast<float>(nten->measurementFrame[2][2]);
   } else {
     ELL_3M_IDENTITY_SET(_measrFrame);
   }
@@ -591,7 +591,7 @@ TensorGlyph::dataBasicUpdate() {
       float *dataLine = dataCache + num*DATA_IDX_NUM;
       dataLine[ANISO_DATA_IDX] = aniso[idx];
       dataLine[MASK_DATA_IDX] = tenWorld[0];
-      dataLine[DATAIDX_DATA_IDX] = idx;
+      dataLine[DATAIDX_DATA_IDX] = static_cast<float>(idx);
       if (_posData) {
         ELL_3V_COPY(dataLine + POS_DATA_IDX, _posData + idx*_inPosDataStride);
       } else {
@@ -603,12 +603,13 @@ TensorGlyph::dataBasicUpdate() {
           tmp /= (_gshape->size)[d];
         }
         gageShapeItoW(_gshape, pW, pI);
-        ELL_3V_COPY(dataLine + POS_DATA_IDX, pW);
+        ELL_3V_COPY_TT(dataLine + POS_DATA_IDX, float, pW);
       }
       if (_clampEvalUse) {
-        (dataLine + EVAL_DATA_IDX)[0] = AIR_MAX(_clampEval, eval[0]);
-        (dataLine + EVAL_DATA_IDX)[1] = AIR_MAX(_clampEval, eval[1]);
-        (dataLine + EVAL_DATA_IDX)[2] = AIR_MAX(_clampEval, eval[2]);
+        ELL_3V_SET_TT(dataLine + EVAL_DATA_IDX, float,
+                      AIR_MAX(_clampEval, eval[0]),
+                      AIR_MAX(_clampEval, eval[1]),
+                      AIR_MAX(_clampEval, eval[2]));
       } else {
         ELL_3V_COPY(dataLine + EVAL_DATA_IDX, eval);
       }
@@ -724,15 +725,16 @@ TensorGlyph::dataBaryIdxUpdate() {
       case tenGlyphTypeCylinder:
       case tenGlyphTypeSphere:
         if (cp2 >= cl2) {
-          dataLine[BARYIDX_DATA_IDX] = 1;
+          dataLine[BARYIDX_DATA_IDX] = static_cast<float>(1);
         } else {
-          dataLine[BARYIDX_DATA_IDX] = _baryRes;
+          dataLine[BARYIDX_DATA_IDX] = static_cast<float>(_baryRes);
         }
         break;
       case tenGlyphTypeSuperquad:
         cpIdx = airIndexClamp(0.0, cp1, 1.0, _baryRes);
         clIdx = airIndexClamp(0.0, cl1, 1.0, _baryRes);
-        dataLine[BARYIDX_DATA_IDX] = cpIdx + _baryRes*clIdx;
+        dataLine[BARYIDX_DATA_IDX] =
+          static_cast<float>(cpIdx + _baryRes*clIdx);
         break;
       }
     }
@@ -760,17 +762,17 @@ TensorGlyph::dataRGBUpdate() {
       float *dataLine = dataCache + ii*DATA_IDX_NUM;
       float *eval = dataLine + EVAL_DATA_IDX;
       ell_q_3v_rotate_f(evec, dataLine + QUAT_DATA_IDX, evecPre);
-      float R = AIR_ABS(evec[0]);
-      float G = AIR_ABS(evec[1]);
-      float B = AIR_ABS(evec[2]);
+      double R = AIR_ABS(evec[0]);
+      double G = AIR_ABS(evec[1]);
+      double B = AIR_ABS(evec[2]);
       /* desaturate by rgbMaxSat */
       R = AIR_AFFINE(0.0, _rgbMaxSat, 1.0, _rgbIsoGray, R);
       G = AIR_AFFINE(0.0, _rgbMaxSat, 1.0, _rgbIsoGray, G);
       B = AIR_AFFINE(0.0, _rgbMaxSat, 1.0, _rgbIsoGray, B);
       /* desaturate some by rgbAniso */
       tenAnisoCalc_f(aniso, eval);
-      float rgbAniso = aniso[_rgbAnisoType];
-      float tmp = AIR_AFFINE(0.0, rgbAniso, 1.0, _rgbIsoGray, R);
+      double rgbAniso = aniso[_rgbAnisoType];
+      double tmp = AIR_AFFINE(0.0, rgbAniso, 1.0, _rgbIsoGray, R);
       R = AIR_AFFINE(0.0, _rgbModulate, 1.0, R, tmp);
       tmp = AIR_AFFINE(0.0, rgbAniso, 1.0, _rgbIsoGray, G);
       G = AIR_AFFINE(0.0, _rgbModulate, 1.0, G, tmp);
@@ -780,10 +782,10 @@ TensorGlyph::dataRGBUpdate() {
       R = AIR_CLAMP(0.0, R, 1.0);
       G = AIR_CLAMP(0.0, G, 1.0);
       B = AIR_CLAMP(0.0, B, 1.0);
-      R = pow(R, (float)_rgbGamma);
-      G = pow(G, (float)_rgbGamma);
-      B = pow(B, (float)_rgbGamma);
-      ELL_3V_SET(dataLine + RGB_DATA_IDX, R, G, B);
+      R = pow(R, _rgbGamma);
+      G = pow(G, _rgbGamma);
+      B = pow(B, _rgbGamma);
+      ELL_3V_SET_TT(dataLine + RGB_DATA_IDX, float, R, G, B);
     }
     flag[flagDataSorted] = false;
     flag[flagRGBParm] = false;
@@ -863,22 +865,22 @@ TensorGlyph::glyphPaletteUpdate() {
       list[_baryRes] = surf->compileDisplayList();
       break;
     case tenGlyphTypeSuperquad:
-      float alpha, beta;
+      double alpha, beta;
       for (unsigned int cpIdx=0; cpIdx<_baryRes; cpIdx++) {
-        float cp = NRRD_CELL_POS(0.0, 1.0, _baryRes, cpIdx);
+        double cp = NRRD_CELL_POS(0.0, 1.0, _baryRes, cpIdx);
         for (unsigned int clIdx=0; clIdx<_baryRes; clIdx++) {
-          float cl = NRRD_CELL_POS(0.0, 1.0, _baryRes, clIdx);
+          double cl = NRRD_CELL_POS(0.0, 1.0, _baryRes, clIdx);
           if (cl + cp > 1) {
             continue;
           }
           if (cl > cp) {
             trnsf = ZtoX;
-            alpha = pow(1-cp, (float)_superquadSharpness);
-            beta = pow(1-cl, (float)_superquadSharpness);
+            alpha = pow(1-cp, _superquadSharpness);
+            beta = pow(1-cl, _superquadSharpness);
           } else {
             trnsf = ident;
-            alpha = pow(1-cl, (float)_superquadSharpness);
-            beta = pow(1-cp, (float)_superquadSharpness);
+            alpha = pow(1-cl, _superquadSharpness);
+            beta = pow(1-cp, _superquadSharpness);
           }
           limnPolyDataSpiralSuperquadric(lpld, alpha, beta,
                                          2*_glyphRes, _glyphRes);
@@ -956,6 +958,7 @@ TensorGlyph::drawImmediate() {
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
   }
+  float glyphScale = static_cast<float>(_glyphScale);
   for (unsigned int ii=0; ii<_activeNum; ii++) {
     float *dataLine = (float*)(_nDataCache->data) + ii*DATA_IDX_NUM;
     float *rgb = dataLine + RGB_DATA_IDX;
@@ -972,7 +975,7 @@ TensorGlyph::drawImmediate() {
     }
     glTranslatef(pos[0], pos[1], pos[2]);
     glRotatef(180*angle/AIR_PI, axis[0], axis[1], axis[2]);
-    glScalef(_glyphScale*eval[0], _glyphScale*eval[1], _glyphScale*eval[2]);
+    glScalef(glyphScale*eval[0], glyphScale*eval[1], glyphScale*eval[2]);
     glCallList(list[baryIdx]);
     glPopMatrix();
     _glyphsDrawnNum++;
