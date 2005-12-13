@@ -552,7 +552,7 @@ HyperStreamline::updateTubeGeometry() {
             outVrt->xyzw[0], outVrt->xyzw[1], outVrt->xyzw[2]);
           */
           outVrt->xyzw[3] = 1.0;
-          ELL_3V_COPY(outVrt->norm, float, pnorm);
+          ELL_3V_COPY_TT(outVrt->norm, float, pnorm);
           if (inVertIdx<_lpldFibers->vcnt[fi]-1) {
             _lpldTubes->indx[outIndxIdx++] = outVertTotalIdx;
             _lpldTubes->indx[outIndxIdx++] = outVertTotalIdx + _tubeFacet;

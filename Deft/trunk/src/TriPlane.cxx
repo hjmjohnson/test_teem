@@ -58,7 +58,7 @@ TriPlane::TriPlane(const Volume *vol) : Group(3) {
   ELL_3V_SCALE(_edgeW[1], _shape->size[1]-1, _interW[1]);
 
   ELL_4V_SET(umpI, 0, 0, 1, 1);
-  ELL_4MV_MUL_TT(umpW, tmp, _shape->ItoW, umpI);
+  ELL_4MV_MUL_TT(umpW, float, _shape->ItoW, umpI);
   ELL_4V_HOMOG(umpW, umpW);
   ELL_3V_SUB(_interW[2], umpW, _origW);
   ELL_3V_SCALE(_edgeW[2], _shape->size[2]-1, _interW[2]);
