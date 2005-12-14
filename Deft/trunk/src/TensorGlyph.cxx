@@ -72,6 +72,28 @@ TensorGlyph::TensorGlyph() {
     flag[fi] = false;
   }
 
+  // these bogus initial settings are just to make sure that
+  // the real settings don't involve uninitialized variables
+  _cleanEdge = false;
+  _glyphType = tenGlyphTypeUnknown;
+  _anisoType = tenAnisoUnknown;
+  _glyphRes = 0;
+  _baryRes = 0;
+  _rgbAnisoType = tenAnisoUnknown;
+  _rgbEvec = 3;
+  _rgbMaxSat = -1;
+  _rgbIsoGray = -1;
+  _rgbGamma = -1;
+  _rgbModulate = -1;
+  _glyphScale = -1;
+  _anisoThreshMin = -1;
+  _anisoThresh = -1;
+  _clampEvalUse = true;
+  _clampEval = -1;
+  _superquadSharpness = -1;
+  _maskThresh = -1;
+  _skipNegEval = false;
+
   dynamic(false);
   cleanEdge(true);
   glyphType(tenGlyphTypeBox);
@@ -86,6 +108,7 @@ TensorGlyph::TensorGlyph() {
   clampEvalUse(false);
   clampEval(0.0);
   superquadSharpness(3.0);
+  skipNegativeEigenvalues(true);
   
   ELL_3M_IDENTITY_SET(_measrFrame);
   _gshape = NULL;

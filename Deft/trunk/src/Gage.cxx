@@ -71,6 +71,7 @@ void
 
 Gage::Gage() {
   _gctx = gageContextNew();
+  // gageParmSet(_gctx, gageParmVerbose, 10);
   _pvl = NULL;
 }
 

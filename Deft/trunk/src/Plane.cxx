@@ -40,6 +40,13 @@ Plane::Plane(unsigned int resU, unsigned int resV) { // sets _lpldOwn
     _flag[fi] = false;
   }
 
+  // bogus initialization to avoid unitialized value (valgrind) warnings
+  _resolutionU = 0;
+  _resolutionV = 0;
+  ELL_3V_SET(_origin, AIR_NAN, AIR_NAN, AIR_NAN);
+  ELL_3V_SET(_edgeU, AIR_NAN, AIR_NAN, AIR_NAN);
+  ELL_3V_SET(_edgeV, AIR_NAN, AIR_NAN, AIR_NAN);
+
   resolution(resU, resV);
   origin(-1, -1, 0);
   edgeU(2, 0, 0);
