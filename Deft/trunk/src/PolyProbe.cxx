@@ -24,6 +24,8 @@
 
 #include "PolyProbe.h"
 
+// #include <iostream>
+
 enum {
   flagUnknown,
   flagGeometry,
@@ -31,7 +33,7 @@ enum {
   flagQueryColor,
   flagQueryAlphaMask,
   flagQuery,
-  flagGageParms,
+  flagGageKernels,
   flagGageContext,
   flagProbedValues,
   flagColorMap,
@@ -54,7 +56,7 @@ PolyProbe::PolyProbe() : PolyData(limnPolyDataNew(), true) {
   // char me[]="PolyProbe::PolyProbe";
 
   for (unsigned int fi=flagUnknown+1; fi<flagLast; fi++) {
-    _flag[fi] = true;
+    _flag[fi] = false;
   }
 
   _gage = new Gage();
@@ -91,7 +93,7 @@ PolyProbe::volume(const Volume *vol) {
 void
 PolyProbe::kernel(int which, const NrrdKernelSpec *ksp) {
   _gage->kernel(which, ksp);
-  _flag[flagGageParms] = true;
+  _flag[flagGageKernels] = true;
 }
 
 const NrrdKernelSpec *
@@ -102,7 +104,7 @@ PolyProbe::kernel(int which) const {
 void
 PolyProbe::kernelReset() { 
   _gage->kernelReset();
-  _flag[flagGageParms] = true;
+  _flag[flagGageKernels] = true;
 }
 
 void
@@ -147,7 +149,7 @@ PolyProbe::colorQuantity(int quantity) {
     _queryColor.resize(2);
     _queryColor[0] = tenGageTheta;
     _queryColor[1] = tenGageCa2;
-    strcat(fname, "Cmap/isobow4-2D.nrrd");
+    strcat(fname, "cmap/isobow4-2D.nrrd");
     lret = nrrdLoad(_nlut2D, fname, NULL);
     _cmap->lut2D(_nlut2D);
     _cmap->min2D0(0);
@@ -158,7 +160,7 @@ PolyProbe::colorQuantity(int quantity) {
   case colorQuantityMode:
     _queryColor.resize(1);
     _queryColor[0] = tenGageTheta;
-    strcat(fname, "Cmap/isobow4-1D.nrrd");
+    strcat(fname, "cmap/isobow4-1D.nrrd");
     lret = nrrdLoad(_nlut1D, fname, NULL);
     _cmap->lut1D(_nlut1D);
     _cmap->min1D(0);
@@ -167,7 +169,7 @@ PolyProbe::colorQuantity(int quantity) {
   case colorQuantityFA:
     _queryColor.resize(1);
     _queryColor[0] = tenGageFA;
-    strcat(fname, "Cmap/gray.nrrd");
+    strcat(fname, "cmap/gray.nrrd");
     lret = nrrdLoad(_nrmap1D, fname, NULL);
     _cmap->rmap1D(_nrmap1D);
     _cmap->min1D(0);
@@ -177,7 +179,7 @@ PolyProbe::colorQuantity(int quantity) {
     _queryColor.resize(2);
     _queryColor[0] = tenGageCl2;
     _queryColor[1] = tenGageCp2;
-    strcat(fname, "Cmap/clcp.nrrd");
+    strcat(fname, "cmap/clcp.nrrd");
     lret = nrrdLoad(_nlut2D, fname, NULL);
     _cmap->lut2D(_nlut2D);
     _cmap->min2D0(0);
@@ -188,7 +190,7 @@ PolyProbe::colorQuantity(int quantity) {
   case colorQuantityCl:
     _queryColor.resize(1);
     _queryColor[0] = tenGageCl2;
-    strcat(fname, "Cmap/gray.nrrd");
+    strcat(fname, "cmap/gray.nrrd");
     lret = nrrdLoad(_nrmap1D, fname, NULL);
     _cmap->rmap1D(_nrmap1D);
     _cmap->min1D(0);
@@ -197,7 +199,7 @@ PolyProbe::colorQuantity(int quantity) {
   case colorQuantityCp:
     _queryColor.resize(1);
     _queryColor[0] = tenGageCp2;
-    strcat(fname, "Cmap/gray.nrrd");
+    strcat(fname, "cmap/gray.nrrd");
     lret = nrrdLoad(_nrmap1D, fname, NULL);
     _cmap->rmap1D(_nrmap1D);
     _cmap->min1D(0);
@@ -206,7 +208,7 @@ PolyProbe::colorQuantity(int quantity) {
   case colorQuantityCa:
     _queryColor.resize(1);
     _queryColor[0] = tenGageCa2;
-    strcat(fname, "Cmap/gray.nrrd");
+    strcat(fname, "cmap/gray.nrrd");
     lret = nrrdLoad(_nrmap1D, fname, NULL);
     _cmap->rmap1D(_nrmap1D);
     _cmap->min1D(0);
@@ -373,8 +375,12 @@ PolyProbe::update(bool geometryChanged) {
     _flag[flagQueryAlphaMask] = false;
     _flag[flagQuery] = true;
   }
+  /*
+  std::cerr << me << ": _flag[flagQuery] = " << _flag[flagQuery] << std::endl;
+  std::cerr << me << ": _flag[flagGageKernels] = " << _flag[flagGageKernels] << std::endl;
+  */
   if (_flag[flagQuery]
-      || _flag[flagGageParms]) {
+      || _flag[flagGageKernels]) {
     /*
     fprintf(stderr, "%s: _gage->update(): %u %u %u\n", me, 
             (unsigned int)(_gage->query().size()),
@@ -383,7 +389,7 @@ PolyProbe::update(bool geometryChanged) {
     */
     _gage->update();
     _flag[flagQuery] = false;
-    _flag[flagGageParms] = false;
+    _flag[flagGageKernels] = false;
     _flag[flagGageContext] = true;
   }
   if (_flag[flagGeometry]

@@ -103,6 +103,11 @@ HyperStreamline::HyperStreamline(const Nrrd *nten) {
     _flag[fi] = false;
   }
 
+  // bogus initialized to use of unitialized variables
+  _tubeDo = true;
+  _tubeFacet = 0;
+  _tubeRadius = -1;
+
   // default fiber context settings
   fiberType(tenFiberTypeEvec1);
   stopConfidence(0.5);
