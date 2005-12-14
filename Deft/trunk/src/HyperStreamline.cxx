@@ -107,6 +107,8 @@ HyperStreamline::HyperStreamline(const Nrrd *nten) {
   _tubeDo = true;
   _tubeFacet = 0;
   _tubeRadius = -1;
+  _seedNum = 0;
+  _fiberVertexNum = 0;
 
   // default fiber context settings
   fiberType(tenFiberTypeEvec1);
