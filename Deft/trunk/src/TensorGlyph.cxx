@@ -776,7 +776,7 @@ TensorGlyph::dataRGBUpdate() {
   if (flag[flagDataSorted]
       || flag[flagRGBParm]) {
     float *dataCache = (float*)(_nDataCache->data);
-    float aniso[TEN_ANISO_MAX];
+    float aniso[TEN_ANISO_MAX+1];
     float evecPre[3], evec[3];
 
     ELL_3V_SET(evecPre, 0, 0, 0);

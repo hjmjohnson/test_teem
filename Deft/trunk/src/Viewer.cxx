@@ -153,9 +153,9 @@ Viewer::cameraReset() {
              _camera->at[1], _camera->at[2]);
   ELL_3V_SET(_camera->up, 0, 0, 1);
   _camera->aspect = (double)w()/h();
-  fovY = 2*sqrt(3)*180*atan2((max[1] - min[1])/2,
+  fovY = 2*sqrt(3.0f)*180*atan2((max[1] - min[1])/2,
                              static_cast<float>(_camera->from[0]))/AIR_PI;
-  fovZ = 2*sqrt(3)*180*atan2((max[2] - min[2])/2,
+  fovZ = 2*sqrt(3.0f)*180*atan2((max[2] - min[2])/2,
                              static_cast<float>(_camera->from[0]))/AIR_PI;
   _camera->fov = AIR_MAX(fovY, fovZ);
   _camera->neer = -sqrt(3.0f)*1.001f*(cmax - cmin)/2.0f;

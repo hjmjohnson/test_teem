@@ -253,7 +253,7 @@ TriPlaneUI::position_cb(Slider *slider, TriPlaneUI *ui) {
   unsigned int pli;
 
   for (pli=0; ui->_positionSlider[pli] != slider; pli++);
-  ui->_triplane->position(pli, slider->value());
+  ui->_triplane->position(pli, static_cast<float>(slider->value()));
   ui->redraw();
 }
 
@@ -282,7 +282,7 @@ TriPlaneUI::colorQuantity_cb(fltk::Choice *menu, TriPlaneUI *ui) {
 void
 TriPlaneUI::bright_cb(fltk::ValueSlider *val, TriPlaneUI *ui) {
 
-  ui->_triplane->brightness(val->value());
+  ui->_triplane->brightness(static_cast<float>(val->value()));
   ui->_triplane->update();
   ui->redraw();
 }
