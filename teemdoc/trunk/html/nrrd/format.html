@@ -1961,6 +1961,23 @@ The possible values for <tt>&lt;<i>kind[i]</i>&gt;</tt> are as follows.
 Prior to the release of Teem 1.9, numerous kinds were added; future kinds
 will be added with more skepticism and caution.
 
+<p>
+
+As NRRD files can represent sampled functions, images, fields, or maps
+of various types, one has to keep in mind the difference between axes
+which represent the <b>domain</b> of the function (or, an independent
+variable), versus the <b>range</b> of the function (or, a dependent
+variable).  The only kinds below which represent a domain are:
+
+<ul>
+<li> "<tt>domain</tt>"
+<li> "<tt>space</tt>"
+<li> "<tt>time</tt>"
+</ul>
+
+All other kinds represent the range of the function or image.
+
+
 <table border=1>
 <tr>
   <td><b>&lt;<i>kind[i]</i>&gt;</b>
