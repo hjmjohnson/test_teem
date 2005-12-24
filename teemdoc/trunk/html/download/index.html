@@ -96,6 +96,48 @@ href="http://lists.sourceforge.net/lists/listinfo/teem-coders"><tt>teem-coders</
 
 <tr>
   <td align=left valign=middle>
+    <font size="+1">teem-1.9.0</font><br>
+    <small>(Released: December 24, 2005)</small><br>
+
+Source:
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.9.0-src.tar.gz?download">Unix</a>
+| Windows
+
+<br>
+
+Pre-built: 
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.8.0-darwin.32.tar.gz?download">32-bit Darwin</a>
+
+<p>
+    <a href="http://sourceforge.net/project/showfiles.php?group_id=85445&package_id=88412&release_id=380683">List of all files</a><br>
+
+
+  <td>
+  <td align=left>
+<a href="http://sourceforge.net/project/shownotes.php?release_id=380683&group_id=85445">Big changes</a>:
+<ul>
+<li> <a href="../nrrd/index.html"><b>nrrd</b></a>/:
+API <b>changes</b> associated with big switch from signed to unsigned integral
+types for all variables for which it made sense; renaming of all var-args
+using functions to end with "_va", addition of the measurement frame field
+(and NRRD0005 magic) to NRRD files; new implementation of resampler
+(based on NrrdResampleContext)
+
+<li> <a href="../ten/index.html"><b>ten</b></a>/:
+New API for doing tensor estimation, based on the new tenEstimateContext.
+This will be the place for doing non-linear estimation, but currently contains
+a stable and reliable implementation of linear-least-squares fitting, including
+ability to estimate B0 images from DWIs; new tenDWMRIKeyValueParse() function
+for parsing key/value pairs associated with DWI.
+
+</ul>
+
+<tr><td><hr noshade><td><td>
+
+<!--  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+
+<tr>
+  <td align=left valign=middle>
     <font size="+1">teem-1.8.0</font><br>
     <small>(Released: March 7, 2005)</small><br>
 
