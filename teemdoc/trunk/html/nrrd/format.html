@@ -97,7 +97,13 @@ recommendations of readers and writers of this format.  Because the
 <b>nrrd</b> library also supports PNG, PPM, PGM, and plain text files,
 see also <a href="otherformat.html">NRRD-Compatible File Formats</a>
 to see how comments embedded in these files can be used to store the
-field definitions that normally comprise the NRRD header. --> Since this
+field definitions that normally comprise the NRRD header. -->
+It has been updated to reflect the latest version of the format, 
+supported by Teem version 1.9 and later.
+
+<p>
+
+Since this
 document aims to be a self-contained reference for the NRRD file
 format, some of the material here repeats ideas found elsewhere in the
 <a href="index.html"><b>nrrd</b></a> documentation.  Besides defining
@@ -1952,7 +1958,8 @@ separate from the other (spatial) axes of the nrrd.
 <p>
 
 The possible values for <tt>&lt;<i>kind[i]</i>&gt;</tt> are as follows.
-With time, more different kind values are apt to be added.
+Prior to the release of Teem 1.9, numerous kinds were added; future kinds
+will be added with more skepticism and caution.
 
 <table border=1>
 <tr>
@@ -1977,9 +1984,33 @@ With time, more different kind values are apt to be added.
 <tr>
   <td>"<tt>list</tt>"
   <td>(none)
-  <td>The sample along this axis are components of coordinates of non-scalar
+  <td>The samples along this axis are coordinates or coefficients of non-scalar
       quantities, such as a 20-dimensional vector.  Basically: "it makes
       <b>no</b> sense to resample or blur along this axis".
+<tr>
+  <td>"<tt>point</tt>"
+  <td>(none)
+  <td>Specialized form of <tt>list</tt>:
+      samples along this axis are coordinates of a point.
+<tr>
+  <td>"<tt>vector</tt>"
+  <td>(none)
+  <td>Specialized form of <tt>list</tt>:
+      samples along this axis are coefficients of a vector, likely
+      a contravariant vector.
+<tr>
+  <td>"<tt>covariant-vector</tt>"
+  <td>(none)
+  <td>Specialized form of <tt>list</tt>:
+      samples along this axis are coefficients of a covariant vector,
+      such as a gradient of a scalar field.
+<tr>
+  <td>"<tt>normal</tt>"
+  <td>(none)
+  <td>Specialized form of <tt>list</tt>:
+      samples along this axis are coefficients of a nominally
+      unit-length covariant vector (though no efforts are made at the level
+      of the NRRD file reader/writer to verify or assert this).
 <tr>
   <td>"<tt>stub</tt>"
   <td>1
@@ -2002,22 +2033,58 @@ With time, more different kind values are apt to be added.
   <td>"<tt>3-color</tt>"
   <td>3
   <td>A 3-vector whose components are color values
+
+
+<tr>
+  <td>"<tt>RGB-color</tt>"
+  <td>3
+  <td>Specialized form of "<tt>3-color</tt>": samples are red, green, and
+      blue values, in that order
+<tr>
+  <td>"<tt>HSV-color</tt>"
+  <td>3
+  <td>Specialized form of "<tt>3-color</tt>": samples are hue, saturation, and
+      value values, in that order.
+<tr>
+  <td>"<tt>XYZ-color</tt>"
+  <td>3
+  <td>Specialized form of "<tt>3-color</tt>": samples are the X, Y, and Z 
+      coefficients (in that order) of the
+      <a href="http://en.wikipedia.org/wiki/CIE_1931_color_space">CIE
+      XYZ colorspace</a>
 <tr>
   <td>"<tt>4-color</tt>"
   <td>4
   <td>Any 4-vector of colors (ordering of R, G, B, and A are not imposed)
+
+<tr>
+  <td>"<tt>RGBA-color</tt>"
+  <td>4
+  <td>Specialized form of "<tt>4-color</tt>": the values are red, green, blue,
+  and alpha, in that order.
+
 <tr>
   <td>"<tt>3-vector</tt>"
   <td>3
   <td>Any 3-vector
 <tr>
+  <td>"<tt>3-gradient</tt>"
+  <td>3
+  <td>A 3-vector which is known to be covariant
+<tr>
   <td>"<tt>3-normal</tt>"
   <td>3
-  <td>A 3-vector which is assumed to have unit L2 norm
+  <td>A (covariant) 3-vector which is assumed to have unit L2 norm
 <tr>
   <td>"<tt>4-vector</tt>"
   <td>4
   <td>Any 4-vector
+<tr>
+  <td>"<tt>quaternion</tt>"
+  <td>4
+  <td>The (w,x,y,z) coefficients of a quaternion, in that order,
+      with no normalization assumed, where w is the real coefficient,
+      and x,y,z are imaginary.
 <tr>
   <td>"<tt>2D-symmetric-matrix</tt>"
   <td>3
@@ -2060,7 +2127,7 @@ With time, more different kind values are apt to be added.
   <td>Mask value with components of 3D matrix:<br>
       mask Mxx Mxy Mxz Myx Myy Myz Mzx Mzy Mzz
 <tr>
-  <td>"<tt>???</tt>" or "<tt>none</tt>"
+  <td>"<tt>???</tt>", "<tt>none</tt>"
   <td>(none)
   <td>Kind information for this axis is unknown or not representable
 </table>
