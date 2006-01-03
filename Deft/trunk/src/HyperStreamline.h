@@ -100,6 +100,12 @@ public:
   bool stopConfidenceDo() const {
     return (_tfx->stop & (1 << tenFiberStopConfidence)) ? true : false; }
 
+  void stopRadius(double conf);
+  void stopRadiusDo(bool doit);
+  double stopRadius() const { return _tfx->minRadius; }
+  bool stopRadiusDo() const {
+    return (_tfx->stop & (1 << tenFiberStopRadius)) ? true : false; }
+
   void stopReset();
 
   // HEY: try again taking a std::vector<float[3]>: failed because

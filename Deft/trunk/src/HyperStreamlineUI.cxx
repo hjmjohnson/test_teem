@@ -49,7 +49,7 @@ const char kernelStr[6][128] = {
 HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
                                      TriPlane *tplane, Viewer *vw) {
   // char me[]="HyperStreamlineUI::HyperStreamlineUI";
-  const unsigned int W = 400, H = 320, lineH = 20;
+  const unsigned int W = 400, H = 364, lineH = 20;
   unsigned int winy=0, incy=0;
   const char *defStr;
   int defVal;
@@ -181,6 +181,21 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   winy += incy;
   winy += 5;
 
+  _stopRadiusButton = new fltk::CheckButton(5, winy, W/10, lineH,
+                                            "Radius of Curvature");
+  _stopRadiusButton->value(_hsline->stopRadiusDo());
+  _stopRadiusButton->callback((fltk::Callback*)_stopButton_cb, this);
+  _stopRadiusSlider = new Deft::Slider(5, winy, W, incy=40);
+  _stopRadiusSlider->align(fltk::ALIGN_LEFT);
+  _stopRadiusSlider->range(0.0, 1.0);
+  _stopRadiusSlider->step(0.01);
+  _stopRadiusSlider->fastUpdate(0);
+  _stopRadiusSlider->value(_hsline->stopRadius());
+  _stopRadiusSlider->callback((fltk::Callback*)_stopSlider_cb, this);
+
+  winy += incy;
+  winy += 5;
+
   _stopConfidenceButton = new fltk::CheckButton(5, winy, W/10, lineH,
                                                 "Confidence mask");
   _stopConfidenceButton->value(_hsline->stopConfidenceDo());
@@ -204,6 +219,20 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _kernelMenu->value(((fltk::Group*)_kernelMenu)
                      ->find(_kernelMenu->find(kernelStr[kernelTent])));
 
+  _integrationMenu = new fltk::Choice(15*W/20, winy, W/5, incy=lineH,
+                                      "integration");
+  for (unsigned int ii=tenFiberIntgUnknown+1;
+       ii<tenFiberIntgLast; ii++) {
+    _integrationMenu->add(airEnumStr(tenFiberIntg, ii), this);
+  }
+  _integrationMenu->callback((fltk::Callback*)(integration_cb), this);
+  _integrationMenu->value(((fltk::Group*)_integrationMenu)
+                     ->find(_integrationMenu
+                            ->find(airEnumStr(tenFiberIntg,
+                                              tenFiberIntgRK4))));
+
+  // winy += incy;
+  // fprintf(stderr, "!%s: winy = %d\n", me, winy);
   _win->end();
 
   _nseeds = nrrdNew();
@@ -337,6 +366,13 @@ HyperStreamlineUI::_stopButton_cb(fltk::CheckButton *but,
     } else {
       ui->_hsline->stopConfidenceDo(false);
     }
+  } else if (but == ui->_stopRadiusButton) {
+    if (but->value()) {
+      ui->_hsline->stopRadius(ui->_stopRadiusSlider->value());
+      ui->_hsline->stopRadiusDo(true);
+    } else {
+      ui->_hsline->stopRadiusDo(false);
+    }
   }
   ui->redraw();
 }
@@ -360,6 +396,8 @@ HyperStreamlineUI::_stopSlider_cb(Deft::Slider *slider,
     ui->_hsline->stopHalfStepNum(slider->valueUI());
   } else if (slider == ui->_stopConfidenceSlider) {
     ui->_hsline->stopConfidence(slider->value());
+  } else if (slider == ui->_stopRadiusSlider) {
+    ui->_hsline->stopRadius(slider->value());
   }
   ui->redraw();
 }
@@ -395,6 +433,13 @@ HyperStreamlineUI::kernel_cb(fltk::Choice *menu, HyperStreamlineUI *ui) {
     break;
   }
   ui->_hsline->kernel(ui->_ksp);
+  ui->redraw();
+}
+
+void
+HyperStreamlineUI::integration_cb(fltk::Choice *menu, HyperStreamlineUI *ui) {
+
+  ui->_hsline->integration(airEnumVal(tenFiberIntg, menu->item()->label()));
   ui->redraw();
 }
 

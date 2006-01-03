@@ -100,8 +100,14 @@ private:
   fltk::CheckButton *_stopConfidenceButton;
   Deft::Slider *_stopConfidenceSlider;
   
+  fltk::CheckButton *_stopRadiusButton;
+  Deft::Slider *_stopRadiusSlider;
+  
   fltk::Choice *_kernelMenu;
   static void kernel_cb(fltk::Choice *menu, HyperStreamlineUI *ui);
+
+  fltk::Choice *_integrationMenu;
+  static void integration_cb(fltk::Choice *menu, HyperStreamlineUI *ui);
 };
 
 } /* namespace Deft */
