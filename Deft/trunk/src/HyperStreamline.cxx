@@ -293,6 +293,26 @@ HyperStreamline::stopConfidenceDo(bool doit) {
 }
 
 void
+HyperStreamline::stopRadius(double conf) {
+  char me[]="HyperStreamline::stopRadius", *err;
+  if (tenFiberStopSet(_tfx, tenFiberStopRadius, conf)) { ERROR; }
+  _flag[flagFiberParm] = true;
+}
+
+void
+HyperStreamline::stopRadiusDo(bool doit) {
+  bool olddo = (_tfx->stop & (1 << tenFiberStopRadius)) ? true : false;
+  if (olddo != doit) {
+    if (doit) {
+      tenFiberStopOn(_tfx, tenFiberStopRadius); 
+    } else {
+      tenFiberStopOff(_tfx, tenFiberStopRadius); 
+    }
+    _flag[flagFiberParm] = true;
+  }
+}
+
+void
 HyperStreamline::stopReset() { tenFiberStopReset(_tfx); }
 
 void
