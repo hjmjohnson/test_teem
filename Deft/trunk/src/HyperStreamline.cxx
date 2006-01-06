@@ -572,6 +572,7 @@ HyperStreamline::updateTubeGeometry() {
         limnVrt *outVrt;
         // -------------------------------------- BEGIN initial endcap
         if (0 == inVertIdx) {
+          unsigned int startIdx = outVertTotalIdx;
           fprintf(stderr, "%s: ---------- BEGIN initial endcap\n", me);
           for (unsigned int ei=0; ei<_endFacet; ei++) {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
@@ -594,15 +595,16 @@ HyperStreamline::updateTubeGeometry() {
                                    -step/2, tang,
                                    _tubeRadius, outVrt->norm);
               outVrt->xyzw[3] = 1.0;
-              fprintf(stderr, ". %u\n", outVertTotalIdx);
+              fprintf(stderr, ". %u (%g %g %g)\n", outVertTotalIdx,
+                      outVrt->xyzw[0], outVrt->xyzw[1], outVrt->xyzw[2]);
               outVertTotalIdx++;
             }
           }
           for (unsigned int pi=1; pi<_tubeFacet; pi++) {
             fprintf(stderr, "indx[%u,%u] = %u %u\n",
-                    outIndxIdx, outIndxIdx+1, 0, pi);
-            _lpldTubes->indx[outIndxIdx++] = outVertTotalIdx;
-            _lpldTubes->indx[outIndxIdx++] = outVertTotalIdx + pi;
+                    outIndxIdx, outIndxIdx+1, startIdx, startIdx + pi);
+            _lpldTubes->indx[outIndxIdx++] = startIdx;
+            _lpldTubes->indx[outIndxIdx++] = startIdx + pi;
           }
           for (unsigned int ei=0; ei<_endFacet; ei++) {
             /* at the highest ei we're actually linking with the first 
@@ -610,11 +612,13 @@ HyperStreamline::updateTubeGeometry() {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
               fprintf(stderr, "indx[%u,%u] = %u %u\n",
                       outIndxIdx, outIndxIdx+1,
-                      ((ei + 0) * _tubeFacet) + pi,
-                      ((ei + 1) * _tubeFacet) + pi);
-              _lpldTubes->indx[outIndxIdx++] = (outVertTotalIdx + pi
+                      (startIdx + pi
+                       + (ei + 0)*_tubeFacet),
+                      (startIdx + pi
+                       + (ei + 1)*_tubeFacet));
+              _lpldTubes->indx[outIndxIdx++] = (startIdx + pi
                                                 + (ei + 0)*_tubeFacet);
-              _lpldTubes->indx[outIndxIdx++] = (outVertTotalIdx + pi
+              _lpldTubes->indx[outIndxIdx++] = (startIdx + pi
                                                 + (ei + 1)*_tubeFacet);
             }
           }
@@ -633,7 +637,8 @@ HyperStreamline::updateTubeGeometry() {
                                _tubeRadius, outVrt->norm,
                                shift, tang);
           outVrt->xyzw[3] = 1.0;
-          fprintf(stderr, ". %u\n", outVertTotalIdx);
+          fprintf(stderr, ". %u (%g %g %g)\n", outVertTotalIdx,
+                  outVrt->xyzw[0], outVrt->xyzw[1], outVrt->xyzw[2]);
           fprintf(stderr, "indx[%u,%u] = %u %u\n",
                   outIndxIdx, outIndxIdx+1,
                   outVertTotalIdx, outVertTotalIdx + _tubeFacet);
