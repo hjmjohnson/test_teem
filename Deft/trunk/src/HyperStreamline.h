@@ -128,7 +128,7 @@ public:
 private:
   bool _flag[128], _tubeDo, _capColorDo;
   Nrrd *_nseeds;
-  unsigned int _seedNum, _fiberVertexNum, _primNum, _tubeFacet;
+  unsigned int _seedNum, _fiberVertexNum, _primNum, _tubeFacet, _endFacet;
   Volume *_volume;
   double _tubeRadius;
   limnPolyData *_lpldFibers, *_lpldTubes;
