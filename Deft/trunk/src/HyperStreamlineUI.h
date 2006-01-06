@@ -74,6 +74,8 @@ private:
   static void compute_cb(fltk::Button *but, HyperStreamlineUI *ui);
   fltk::Button *_tubeDoButton;
   static void tubeDo_cb(fltk::CheckButton *but, HyperStreamlineUI *ui);
+  fltk::CheckButton *_stopColorDoButton;
+  static void stopColorDo_cb(fltk::CheckButton *but, HyperStreamlineUI *ui);
   fltk::CheckButton *_wireframeButton;
   static void wireframe_cb(fltk::CheckButton *but, HyperStreamlineUI *ui);
   fltk::ValueInput *_tubeFacetInput;

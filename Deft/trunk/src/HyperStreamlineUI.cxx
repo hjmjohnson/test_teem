@@ -72,10 +72,10 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _visibleButton->callback((fltk::Callback*)visible_cb, this);
   _visibleButton->value(_hsline->visible());
 
-  _computeButton = new fltk::Button(4*W/20, winy, W/6, lineH, "Initialize");
+  _computeButton = new fltk::Button(7*W/40, winy, W/6, lineH, "Initialize");
   _computeButton->callback((fltk::Callback*)compute_cb, this);
 
-  _colorQuantityMenu = new fltk::Choice(20*W/40, winy, 9*W/40, lineH, "Color");
+  _colorQuantityMenu = new fltk::Choice(18*W/40, winy, 9*W/40, lineH, "Color");
   for (unsigned int qi=colorQuantityUnknown+1; qi<colorQuantityLast; qi++) {
     _colorQuantityMenu->add(airEnumStr(colorQuantity, qi), this);
   }
@@ -84,7 +84,12 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _colorQuantityMenu->value(((fltk::Group*)_colorQuantityMenu)
                             ->find(_colorQuantityMenu->find(defStr)));
 
-  _wireframeButton = new fltk::CheckButton(17*W/20, winy, W/8,
+  _stopColorDoButton = new fltk::CheckButton(28*W/40, winy, W/8,
+                                           lineH, "Tips");
+  _stopColorDoButton->callback((fltk::Callback*)stopColorDo_cb, this);
+  _stopColorDoButton->value(_hsline->stopColorDo());
+
+  _wireframeButton = new fltk::CheckButton(34*W/40, winy, W/8,
                                            lineH, "Wire");
   _wireframeButton->callback((fltk::Callback*)wireframe_cb, this);
   _wireframeButton->value(_hsline->wireframe());
@@ -319,7 +324,16 @@ HyperStreamlineUI::tubeRadius_cb(Slider *slider, HyperStreamlineUI *ui) {
 }
 
 void
-HyperStreamlineUI::wireframe_cb(fltk::CheckButton *but, HyperStreamlineUI *ui) {
+HyperStreamlineUI::stopColorDo_cb(fltk::CheckButton *but,
+                                  HyperStreamlineUI *ui) {
+
+  ui->_hsline->stopColorDo(but->value());
+  ui->redraw();
+}
+
+void
+HyperStreamlineUI::wireframe_cb(fltk::CheckButton *but,
+                                HyperStreamlineUI *ui) {
 
   ui->_hsline->wireframe(but->value());
   ui->_viewer->redraw();

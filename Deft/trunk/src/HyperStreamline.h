@@ -118,15 +118,20 @@ public:
   int colorQuantity();
 
   void tubeDo(bool doit);
-  void tubeFacet(unsigned int facet);
-  void tubeRadius(double radius);
   bool tubeDo() const { return _tubeDo; }
+
+  void stopColorDo(bool doit);
+  bool stopColorDo() const { return _stopColorDo; }
+
+  void tubeFacet(unsigned int facet);
   unsigned int tubeFacet() const { return _tubeFacet; }
+
+  void tubeRadius(double radius);
   double tubeRadius() const { return _tubeRadius; }
 
   void update();
 private:
-  bool _flag[128], _tubeDo, _capColorDo;
+  bool _flag[128], _tubeDo, _stopColorDo;
   Nrrd *_nseeds;
   unsigned int _seedNum, _fiberVertexNum, _primNum, _tubeFacet, _endFacet;
   Volume *_volume;

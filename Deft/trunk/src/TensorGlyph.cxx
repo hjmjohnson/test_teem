@@ -72,42 +72,39 @@ TensorGlyph::TensorGlyph() {
     flag[fi] = false;
   }
 
-  // these bogus initial settings are just to make sure that
-  // the real settings don't involve uninitialized variables
+  dynamic(false);
   _cleanEdge = false;
+  cleanEdge(true);
   _glyphType = tenGlyphTypeUnknown;
+  glyphType(tenGlyphTypeBox);
   _anisoType = tenAnisoUnknown;
+  anisoType(tenAniso_FA);
   _glyphRes = 0;
+  glyphResolution(10);
   _baryRes = 0;
+  barycentricResolution(12);
   _rgbAnisoType = tenAnisoUnknown;
   _rgbEvec = 3;
   _rgbMaxSat = -1;
   _rgbIsoGray = -1;
   _rgbGamma = -1;
   _rgbModulate = -1;
-  _glyphScale = -1;
-  _anisoThreshMin = -1;
-  _anisoThresh = -1;
-  _clampEvalUse = true;
-  _clampEval = -1;
-  _superquadSharpness = -1;
-  _maskThresh = -1;
-  _skipNegEval = false;
-
-  dynamic(false);
-  cleanEdge(true);
-  glyphType(tenGlyphTypeBox);
-  anisoType(tenAniso_FA);
-  glyphResolution(10);
-  barycentricResolution(12);
   rgbParmSet(tenAniso_Cl1, 0, 1, 1.0, 1.5, 0.8);
+  _glyphScale = -1;
   glyphScale(1.0);
+  _anisoThreshMin = -1;
   anisoThreshMin(0.0);
+  _anisoThresh = -1;
   anisoThresh(0.5);
+  _maskThresh = -1;
   maskThresh(0.5);
+  _clampEvalUse = true;
   clampEvalUse(false);
+  _clampEval = -1;
   clampEval(0.0);
+  _superquadSharpness = -1;
   superquadSharpness(3.0);
+  _skipNegEval = false;
   skipNegativeEigenvalues(true);
   
   ELL_3M_IDENTITY_SET(_measrFrame);

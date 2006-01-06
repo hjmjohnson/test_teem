@@ -103,11 +103,6 @@ HyperStreamline::HyperStreamline(const Nrrd *nten) {
     _flag[fi] = false;
   }
 
-  // bogus initialization to avoid use of unitialized variables
-  _tubeDo = true;
-  _tubeFacet = 0;
-  _endFacet = 0;
-  _tubeRadius = -1;
   _seedNum = 0;
   _fiberVertexNum = 0;
 
@@ -130,8 +125,14 @@ HyperStreamline::HyperStreamline(const Nrrd *nten) {
   dynamic_cast<PolyProbe*>(this)->evecRgbIsoGray(1.0);
   dynamic_cast<PolyProbe*>(this)->evecRgbMaxSat(1.0);
   brightness(1.0);
+  _tubeDo = true;
   tubeDo(false);
+  _stopColorDo = false;
+  stopColorDo(true);
+  _tubeFacet = 0;
+  _endFacet = 0;
   tubeFacet(4);
+  _tubeRadius = -1;
   tubeRadius(0.01);
 
   // TERRIBLE: playing dangerous games with ownership of _lpldOwn...
@@ -325,6 +326,14 @@ HyperStreamline::tubeDo(bool doit) {
 }
 
 void
+HyperStreamline::stopColorDo(bool doit) {
+  if (_stopColorDo != doit) {
+    _stopColorDo = doit;
+    _flag[flagFiberStopColorDo] = true;
+  }
+}
+
+void
 HyperStreamline::tubeFacet(unsigned int facet) {
   facet = AIR_MAX(3, facet);
   if (_tubeFacet != facet) {
@@ -391,7 +400,8 @@ HyperStreamline::updateFiberGeometry() {
                         _fiber[seedIdx]->seedPos)) { ERROR; }
       _fiber[seedIdx]->whyNowhere = _tfx->whyNowhere;
       if (tenFiberStopUnknown == _fiber[seedIdx]->whyNowhere) {
-        /* hooray, we did get somewhere */
+        /* the seed point was valid, and the fiber halves may have
+           progressed, but itis possible that the fiber has 1 vertex! */
         _fiber[seedIdx]->primIdx = primNum++;
         _fiber[seedIdx]->halfLen[0] = _tfx->halfLen[0];
         _fiber[seedIdx]->halfLen[1] = _tfx->halfLen[1];
@@ -401,8 +411,15 @@ HyperStreamline::updateFiberGeometry() {
         vertTotalNum += _fiber[seedIdx]->nvert->axis[1].size;
         _fiber[seedIdx]->whyStop[0] = _tfx->whyStop[0];
         _fiber[seedIdx]->whyStop[1] = _tfx->whyStop[1];
+        /*
+        fprintf(stderr, "%s: fiber[%u] len = %u (%s/%s)\n", me,
+                seedIdx,
+                AIR_CAST(unsigned int, _fiber[seedIdx]->nvert->axis[1].size),
+                airEnumStr(tenFiberStop, _fiber[seedIdx]->whyStop[0]),
+                airEnumStr(tenFiberStop, _fiber[seedIdx]->whyStop[1]));
+        */
       } else {
-        /* sadly, we got nowhere */
+        /* the seed point was a non-starter- things died immediately */
         _fiber[seedIdx]->primIdx = AIR_CAST(unsigned int, -1);
         _fiber[seedIdx]->halfLen[0] = AIR_NAN;
         _fiber[seedIdx]->halfLen[1] = AIR_NAN;
@@ -476,8 +493,8 @@ void
 HyperStreamline::updateFiberColor() {
   char me[]="HyperStreamline::updateFiberColor";
   if (_flag[flagFiberGeometry]
-      || _flag[flagColorMap]) {
-    fprintf(stderr, "!%s: hello\n", me);
+      || _flag[flagColorMap]
+      || _flag[flagFiberStopColorDo]) { // may have to refresh endpoint colors
     _lpldOwn = _lpldFibers;   // TERRIBLE ...
     dynamic_cast<PolyProbe*>(this)->update(true);
     _flag[flagFiberGeometry] = false;
@@ -686,10 +703,34 @@ HyperStreamline::updateTubeGeometry() {
 void
 HyperStreamline::updateFiberStopColor() {
   char me[]="HyperStreamline::updateFiberStopColor";
+  unsigned char stcol[TEN_FIBER_STOP_MAX+1][4] = {
+    {0, 0, 0, 255},       /* tenFiberStopUnknown */
+    {110, 110, 30, 255},  /* tenFiberStopAniso */
+    {255, 0, 255, 255},   /* tenFiberStopLength */
+    {0, 255, 255, 255},   /* tenFiberStopNumSteps */
+    {30, 30, 30, 255},    /* tenFiberStopConfidence */
+    {255, 0, 255, 255},   /* tenFiberStopRadius */
+    {0, 0, 0, 255}};      /* tenFiberStopBounds */
+
+  limnVrt *inVrt;
   if (_flag[flagFiberColor]
       || _flag[flagFiberStopColorDo]) {
-    fprintf(stderr, "!%s: hello\n", me);
-
+    if (_stopColorDo) {
+      unsigned int inVertTotalIdx = 0;
+      for (unsigned int fi=0; fi<_lpldFibers->primNum; fi++) {
+        for (unsigned int inVertIdx=0;
+             inVertIdx<_lpldFibers->vcnt[fi];
+             inVertIdx++) {
+          inVrt = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx];
+          if (0 == inVertIdx) {
+            ELL_4V_COPY(inVrt->rgba, stcol[_fiber[fi]->whyStop[0]]);
+          } else if (inVertIdx == _lpldFibers->vcnt[fi]-1) {
+            ELL_4V_COPY(inVrt->rgba, stcol[_fiber[fi]->whyStop[1]]);
+          }
+          inVertTotalIdx++;
+        }
+      }
+    }
     _flag[flagFiberColor] = false;
     _flag[flagFiberStopColorDo] = false;
     _flag[flagFiberStopColor] = true;
