@@ -499,7 +499,6 @@ HyperStreamline::updateTubeAllocated() {
     }
     limnPolyDataAlloc(_lpldTubes,
                       tubeVertNum, tubeIndxNum, _lpldFibers->primNum);
-    fprintf(stderr, "!%s: ----- hello %u %u\n", me, tubeVertNum, tubeIndxNum);
     _flag[flagTubeFacet] = false;
     _flag[flagFiberVertexNum] = false;
     _flag[flagTubeAllocated] = true;
@@ -508,7 +507,7 @@ HyperStreamline::updateTubeAllocated() {
 
 void
 HyperStreamline::updateTubeGeometry() {
-  char me[]="HyperStreamline::updateTubeGeometry";
+  // char me[]="HyperStreamline::updateTubeGeometry";
   if (_flag[flagTubeRadius]
       || _flag[flagTubeAllocated]
       || _flag[flagFiberGeometry]) {
@@ -545,12 +544,17 @@ HyperStreamline::updateTubeGeometry() {
           back = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx-1];
           scl = 0.5;
         }
-        ELL_3V_SUB(tang, forw->xyzw, back->xyzw);
-        ELL_3V_NORM(tang, tang, step);
-        step *= scl;  /* step now length of distance between input verts, 
-                         which may be different from nominal fiber step
-                         size because of anisoSpeed stuff */
-        if (0 == inVertIdx) {
+        if (1 == _lpldFibers->vcnt[fi]) {
+          ELL_3V_SET(tang, 0, 0, 1); // completely arbitrary, as it must be
+          step = 0;
+        } else {
+          ELL_3V_SUB(tang, forw->xyzw, back->xyzw);
+          ELL_3V_NORM(tang, tang, step);
+          step *= scl;  /* step now length of distance between input verts, 
+                           which may be different from nominal fiber step
+                           size because of anisoSpeed stuff */
+        }
+        if (0 == inVertIdx || 1 == _lpldFibers->vcnt[fi]) {
           ell_3v_perp_d(perp, tang);
         } else {
           // transport last perp forwards
@@ -560,20 +564,10 @@ HyperStreamline::updateTubeGeometry() {
         ELL_3V_NORM(perp, perp, tmp);
         ELL_3V_CROSS(pimp, perp, tang);
         // (perp, pimp, tang) is a left-handed frame, on purpose
-        /*
-        fprintf(stderr, "%s(%u,%u): (%g,%g,%g): "
-                "(%g,%g,%g) (%g,%g,%g) (%g,%g,%g)\n",
-              me, fi, inVertIdx, 
-              inVrt->xyzw[0], inVrt->xyzw[1], inVrt->xyzw[2],
-              tang[0], tang[1], tang[2],
-              perp[0], perp[1], perp[2],
-              pimp[0], pimp[2], pimp[2]);
-        */
         limnVrt *outVrt;
         // -------------------------------------- BEGIN initial endcap
         if (0 == inVertIdx) {
           unsigned int startIdx = outVertTotalIdx;
-          fprintf(stderr, "%s: ---------- BEGIN initial endcap\n", me);
           for (unsigned int ei=0; ei<_endFacet; ei++) {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
               double costh, sinth, cosph, sinph;
@@ -595,14 +589,10 @@ HyperStreamline::updateTubeGeometry() {
                                    -step/2, tang,
                                    _tubeRadius, outVrt->norm);
               outVrt->xyzw[3] = 1.0;
-              fprintf(stderr, ". %u (%g %g %g)\n", outVertTotalIdx,
-                      outVrt->xyzw[0], outVrt->xyzw[1], outVrt->xyzw[2]);
               outVertTotalIdx++;
             }
           }
           for (unsigned int pi=1; pi<_tubeFacet; pi++) {
-            fprintf(stderr, "indx[%u,%u] = %u %u\n",
-                    outIndxIdx, outIndxIdx+1, startIdx, startIdx + pi);
             _lpldTubes->indx[outIndxIdx++] = startIdx;
             _lpldTubes->indx[outIndxIdx++] = startIdx + pi;
           }
@@ -610,12 +600,6 @@ HyperStreamline::updateTubeGeometry() {
             /* at the highest ei we're actually linking with the first 
                row of vertices at the start of the tube */
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
-              fprintf(stderr, "indx[%u,%u] = %u %u\n",
-                      outIndxIdx, outIndxIdx+1,
-                      (startIdx + pi
-                       + (ei + 0)*_tubeFacet),
-                      (startIdx + pi
-                       + (ei + 1)*_tubeFacet));
               _lpldTubes->indx[outIndxIdx++] = (startIdx + pi
                                                 + (ei + 0)*_tubeFacet);
               _lpldTubes->indx[outIndxIdx++] = (startIdx + pi
@@ -624,7 +608,6 @@ HyperStreamline::updateTubeGeometry() {
           }
         }
         // -------------------------------------- END initial endcap
-        fprintf(stderr, "%s: ---------- BEGIN tube\n", me);
         for (unsigned int pi=0; pi<_tubeFacet; pi++) {
           double shift = AIR_AFFINE(-0.5, pi, _tubeFacet-0.5, -step/2, step/2);
           double cosa = cost[pi];
@@ -637,11 +620,6 @@ HyperStreamline::updateTubeGeometry() {
                                _tubeRadius, outVrt->norm,
                                shift, tang);
           outVrt->xyzw[3] = 1.0;
-          fprintf(stderr, ". %u (%g %g %g)\n", outVertTotalIdx,
-                  outVrt->xyzw[0], outVrt->xyzw[1], outVrt->xyzw[2]);
-          fprintf(stderr, "indx[%u,%u] = %u %u\n",
-                  outIndxIdx, outIndxIdx+1,
-                  outVertTotalIdx, outVertTotalIdx + _tubeFacet);
           _lpldTubes->indx[outIndxIdx++] = outVertTotalIdx;
           _lpldTubes->indx[outIndxIdx++] = outVertTotalIdx + _tubeFacet;
           outVertTotalIdx++;
@@ -649,7 +627,6 @@ HyperStreamline::updateTubeGeometry() {
         unsigned int tubeEndIdx = outVertTotalIdx;
         // -------------------------------------- BEGIN final endcap
         if (inVertIdx == _lpldFibers->vcnt[fi]-1) {
-          fprintf(stderr, "%s: ---------- BEGIN final endcap\n", me);
           for (unsigned int ei=0; ei<_endFacet; ei++) {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
               double costh, sinth, cosph, sinph;
@@ -670,8 +647,6 @@ HyperStreamline::updateTubeGeometry() {
                                    1, inVrt->xyzw,
                                    step/2, tang,
                                    _tubeRadius, outVrt->norm);
-              fprintf(stderr, ". %u (%g, %g %g)\n", outVertTotalIdx,
-                      outVrt->xyzw[0], outVrt->xyzw[1], outVrt->xyzw[2]);
               outVrt->xyzw[3] = 1.0;
               outVertTotalIdx++;
             }
@@ -682,18 +657,10 @@ HyperStreamline::updateTubeGeometry() {
                                1, inVrt->xyzw,
                                step/2, tang,
                                _tubeRadius, outVrt->norm);
-          fprintf(stderr, "! %u (%g, %g %g)\n", outVertTotalIdx,
-                  outVrt->xyzw[0], outVrt->xyzw[1], outVrt->xyzw[2]);
           outVrt->xyzw[3] = 1.0;
           outVertTotalIdx++;
           for (unsigned int ei=0; ei<_endFacet-1; ei++) {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
-              fprintf(stderr, "indx[%u,%u] = %u %u\n",
-                      outIndxIdx, outIndxIdx+1,
-                      (tubeEndIdx + pi
-                       + (ei + 0)*_tubeFacet),
-                      (tubeEndIdx + pi
-                       + (ei + 1)*_tubeFacet));
               _lpldTubes->indx[outIndxIdx++] = (tubeEndIdx + pi
                                                 + (ei + 0)*_tubeFacet);
               _lpldTubes->indx[outIndxIdx++] = (tubeEndIdx + pi
@@ -701,12 +668,6 @@ HyperStreamline::updateTubeGeometry() {
             }
           }
           for (unsigned int pi=0; pi<_tubeFacet; pi++) {
-            fprintf(stderr, "indx[%u,%u] = %u %u\n",
-                    outIndxIdx, outIndxIdx+1,
-                    (tubeEndIdx + pi
-                     + (_endFacet - 1)*_tubeFacet),
-                    (tubeEndIdx
-                     + (_endFacet - 0)*_tubeFacet));
             _lpldTubes->indx[outIndxIdx++] = (tubeEndIdx + pi
                                               + (_endFacet - 1)*_tubeFacet);
             _lpldTubes->indx[outIndxIdx++] = (tubeEndIdx
@@ -717,8 +678,6 @@ HyperStreamline::updateTubeGeometry() {
         inVertTotalIdx++;
       }
     }
-    fprintf(stderr, "%s: outVertTotalIdx = %u\n", me, outVertTotalIdx);
-    fprintf(stderr, "%s: outIndxIdx = %u\n", me, outIndxIdx);
     _flag[flagTubeRadius] = false;
     _flag[flagTubeGeometry] = true;
   }
@@ -739,7 +698,7 @@ HyperStreamline::updateFiberStopColor() {
 
 void
 HyperStreamline::updateTubeColor() {
-  char me[]="HyperStreamline::updateTubeColor";
+  // char me[]="HyperStreamline::updateTubeColor";
   if (_flag[flagTubeAllocated]
       || _flag[flagFiberStopColor]) {
     unsigned int inVertTotalIdx = 0;
@@ -754,14 +713,12 @@ HyperStreamline::updateTubeColor() {
           for (unsigned int ei=0; ei<_endFacet; ei++) {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
               outVrt = _lpldTubes->vert + outVertTotalIdx;
-              fprintf(stderr, "%s: %u start color\n", me, outVertTotalIdx);
               ELL_4V_COPY(outVrt->rgba, inVrt->rgba);
               outVertTotalIdx++;
             }
           }
         }
         for (unsigned int pi=0; pi<_tubeFacet; pi++) {
-          fprintf(stderr, "%s: %u tube\n", me, outVertTotalIdx);
           outVrt = _lpldTubes->vert + outVertTotalIdx;
           ELL_4V_COPY(outVrt->rgba, inVrt->rgba);
           outVertTotalIdx++;
@@ -769,14 +726,12 @@ HyperStreamline::updateTubeColor() {
         if (inVertIdx == _lpldFibers->vcnt[fi]-1) {
           for (unsigned int ei=0; ei<_endFacet; ei++) {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
-              fprintf(stderr, "%s: %u end color\n", me, outVertTotalIdx);
               outVrt = _lpldTubes->vert + outVertTotalIdx;
               ELL_4V_COPY(outVrt->rgba, inVrt->rgba);
               outVertTotalIdx++;
             }
           }
           outVrt = _lpldTubes->vert + outVertTotalIdx;
-          fprintf(stderr, "%s: %u end color\n", me, outVertTotalIdx);
           ELL_4V_COPY(outVrt->rgba, inVrt->rgba);
           outVertTotalIdx++;
         }
