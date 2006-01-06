@@ -48,7 +48,7 @@ main(int, char **argv) {
   viewer->helpPrint();
 
   limnPolyData *pld = limnPolyDataNew();
-  limnPolyDataSpiralSuperquadric(pld, 0.2f, 0.4f, 50, 50);
+  limnPolyDataSpiralSuperquadric(pld, 0.5f, 0.5f, 41, 22);
   Deft::PolyData *surf = new Deft::PolyData(pld, true);
   surf->wireframe(true);
   surf->visible(true);
