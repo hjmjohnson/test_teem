@@ -45,7 +45,7 @@ const char kernelStr[6][128] = {
   "BC:1,0"
 };
 
-char labelBuff[3][128] = {"position 0", "position 1", "position 2"};
+char labelBuff[4][128] = {"All", "Axis 0", "Axis 1", "Axis 2"};
 
 TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
   // char me[]="TriPlaneUI::TriPlaneUI";
@@ -65,13 +65,23 @@ TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
 
   // ----------------------------------
   for (unsigned int pli=0; pli<=3; pli++) {
-    _visibleButton[pli] = new fltk::CheckButton(5, winy, W/8, lineH, "Show");
+    _visibleButton[pli] = new fltk::CheckButton(0, winy,
+                                                W/8, lineH, 
+                                                labelBuff[pli]);
     _visibleButton[pli]->callback((fltk::Callback*)visible_cb, this);
     _visibleButton[pli]->value(!pli
                                ? _triplane->visible()
                                : _triplane->plane[pli-1]->visible());
 
-    _colorQuantityMenu[pli] = new fltk::Choice(3*W/20, winy, 9*W/40, lineH);
+    _wireframeButton[pli] = new fltk::CheckButton(14*W/100, winy,
+                                                  W/5, lineH, "Wire");
+    _wireframeButton[pli]->callback((fltk::Callback*)wireframe_cb, this);
+    _wireframeButton[pli]->value(!pli
+                                 ? _triplane->wireframe()
+                                 : _triplane->plane[pli-1]->wireframe());
+
+    _colorQuantityMenu[pli] = new fltk::Choice(37*W/100, winy,
+                                               22*W/100, lineH, "Color");
     for (unsigned int qi=colorQuantityUnknown+1; qi<colorQuantityLast; qi++) {
       _colorQuantityMenu[pli]->add(airEnumStr(colorQuantity, qi), this);
     }
@@ -85,7 +95,8 @@ TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
                                             ->find(def)));
     }
 
-    _sampleSlider[pli] = new fltk::ValueSlider(18*W/40, winy, W/4, incy=lineH,
+    _sampleSlider[pli] = new fltk::ValueSlider(67*W/100, winy,
+                                               33*W/100, incy=lineH,
                                                "Grid");
     _sampleSlider[pli]->range(-1, 2.5);
     _sampleSlider[pli]->step(0.01);
@@ -98,23 +109,45 @@ TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
                               ? _triplane->sampling(0)
                               : _triplane->sampling(pli-1));
 
-    _wireframeButton[pli] = new fltk::CheckButton(15*W/20, winy, W/5,
-                                                  lineH, "Wire");
-    _wireframeButton[pli]->callback((fltk::Callback*)wireframe_cb, this);
-    _wireframeButton[pli]->value(!pli
-                                 ? _triplane->wireframe()
-                                 : _triplane->plane[pli-1]->wireframe());
+    _glyphsDoButton[pli] = new fltk::CheckButton(0, winy + lineH,
+                                                 W/5, lineH, "Glyph");
+    _glyphsDoButton[pli]->callback((fltk::Callback*)glyphsDo_cb, this);
+    _glyphsDoButton[pli]->value(!pli
+                                ? _triplane->glyphsDo(0)
+                                : _triplane->glyphsDo(pli-1));
+
+    _tractsDoButton[pli] = new fltk::CheckButton(14*W/100, winy + lineH,
+                                                 W/5, lineH, "Tract");
+    _tractsDoButton[pli]->callback((fltk::Callback*)tractsDo_cb, this);
+    _tractsDoButton[pli]->value(!pli
+                                ? _triplane->tractsDo(0)
+                                : _triplane->tractsDo(pli-1));
+
+    _seedSampleSlider[pli] = new fltk::ValueSlider(28*W/100, winy + lineH,
+                                                   13*W/40, incy=lineH
+                                                   /*, "Seed" */);
+    _seedSampleSlider[pli]->range(-1, 2.5);
+    _seedSampleSlider[pli]->step(0.01);
+    _seedSampleSlider[pli]->align(fltk::ALIGN_LEFT);
+    _seedSampleSlider[pli]->box(fltk::THIN_DOWN_BOX);
+    _seedSampleSlider[pli]->color(fltk::GRAY40);
+    _seedSampleSlider[pli]->when(fltk::WHEN_RELEASE);
+    _seedSampleSlider[pli]->callback((fltk::Callback*)seedSample_cb, this);
+    _seedSampleSlider[pli]->value(!pli
+                                  ? _triplane->seedSampling(0)
+                                  : _triplane->seedSampling(pli-1));
 
     winy += lineH;
 
     if (pli) {
-      _positionSlider[pli-1] = new Slider(0, winy, W, incy=40,
-                                          labelBuff[pli-1]);
+      _positionSlider[pli-1] = new Slider(0, winy, W, incy=40);
       _positionSlider[pli-1]->align(fltk::ALIGN_LEFT);
       _positionSlider[pli-1]->range(0.0, tp->shape()->size[pli-1]-1);
       _positionSlider[pli-1]->fastUpdate(1);
       _positionSlider[pli-1]->callback((fltk::Callback*)position_cb, this);
       _positionSlider[pli-1]->value(_triplane->position(pli-1));
+      winy += incy;
+    } else {
       winy += incy;
     }
     winy += 10;
@@ -217,6 +250,42 @@ TriPlaneUI::wireframe_cb(fltk::CheckButton *but, TriPlaneUI *ui) {
 }
 
 void
+TriPlaneUI::glyphsDo_cb(fltk::CheckButton *but, TriPlaneUI *ui) {
+  unsigned int pli;
+
+  for (pli=0; ui->_glyphsDoButton[pli] != but; pli++);
+  if (!pli) {
+    ui->_triplane->glyphsDo(1, but->value());
+    ui->_triplane->glyphsDo(2, but->value());
+    ui->_triplane->glyphsDo(3, but->value());
+    ui->_glyphsDoButton[1]->value(but->value());
+    ui->_glyphsDoButton[2]->value(but->value());
+    ui->_glyphsDoButton[3]->value(but->value());
+  } else {
+    ui->_triplane->glyphsDo(pli-1, but->value());
+  }
+  ui->redraw();
+}
+
+void
+TriPlaneUI::tractsDo_cb(fltk::CheckButton *but, TriPlaneUI *ui) {
+  unsigned int pli;
+
+  for (pli=0; ui->_tractsDoButton[pli] != but; pli++);
+  if (!pli) {
+    ui->_triplane->tractsDo(1, but->value());
+    ui->_triplane->tractsDo(2, but->value());
+    ui->_triplane->tractsDo(3, but->value());
+    ui->_tractsDoButton[1]->value(but->value());
+    ui->_tractsDoButton[2]->value(but->value());
+    ui->_tractsDoButton[3]->value(but->value());
+  } else {
+    ui->_triplane->tractsDo(pli-1, but->value());
+  }
+  ui->redraw();
+}
+
+void
 TriPlaneUI::alphaMaskQuantity_cb(fltk::Choice *menu, TriPlaneUI *ui) {
   // char me[]="TriPlaneUI::alphaMaskQuantity_cb";
   unsigned int qi;
@@ -243,6 +312,25 @@ TriPlaneUI::sample_cb(fltk::ValueSlider *val, TriPlaneUI *ui) {
     ui->_sampleSlider[3]->value(val->value());
   } else {
     ui->_triplane->sampling(pli-1, val->value());
+  }
+  ui->redraw();
+}
+
+void
+TriPlaneUI::seedSample_cb(fltk::ValueSlider *val, TriPlaneUI *ui) {
+  unsigned int pli;
+
+  for (pli=0; ui->_seedSampleSlider[pli] != val; pli++);
+  fprintf(stderr, "TriPlaneUI::seedSample_cb(%u): %g\n", pli, val->value());
+  if (!pli) {
+    ui->_triplane->seedSampling(0, val->value());
+    ui->_triplane->seedSampling(1, val->value());
+    ui->_triplane->seedSampling(2, val->value());
+    ui->_seedSampleSlider[1]->value(val->value());
+    ui->_seedSampleSlider[2]->value(val->value());
+    ui->_seedSampleSlider[3]->value(val->value());
+  } else {
+    ui->_triplane->seedSampling(pli-1, val->value());
   }
   ui->redraw();
 }

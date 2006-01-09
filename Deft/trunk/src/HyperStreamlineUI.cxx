@@ -49,7 +49,7 @@ const char kernelStr[6][128] = {
 HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
                                      TriPlane *tplane, Viewer *vw) {
   // char me[]="HyperStreamlineUI::HyperStreamlineUI";
-  const unsigned int W = 400, H = 364, lineH = 20;
+  const unsigned int W = 400, H = 389, lineH = 20;
   unsigned int winy=0, incy=0;
   const char *defStr;
   int defVal;
@@ -68,14 +68,28 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   winy += 3;
 
   // ----------------------------------
+  _computeButton = new fltk::Button(2*W/40, winy,
+                                    W/6, incy=lineH, "Initialize");
+  _computeButton->callback((fltk::Callback*)compute_cb, this);
+
+  winy += incy;
+  winy += 3;
+
   _visibleButton = new fltk::CheckButton(5, winy, W/4, incy=lineH, "Show");
   _visibleButton->callback((fltk::Callback*)visible_cb, this);
   _visibleButton->value(_hsline->visible());
 
-  _computeButton = new fltk::Button(7*W/40, winy, W/6, lineH, "Initialize");
-  _computeButton->callback((fltk::Callback*)compute_cb, this);
+  _wireframeButton = new fltk::CheckButton(7*W/40, winy, W/8,
+                                           lineH, "Wire");
+  _wireframeButton->callback((fltk::Callback*)wireframe_cb, this);
+  _wireframeButton->value(_hsline->wireframe());
 
-  _colorQuantityMenu = new fltk::Choice(18*W/40, winy, 9*W/40, lineH, "Color");
+  _colorButton = new fltk::CheckButton(13*W/40, winy, W/8,
+                                       lineH, "Color");
+  _colorButton->callback((fltk::Callback*)color_cb, this);
+  _colorButton->value(_hsline->color());
+
+  _colorQuantityMenu = new fltk::Choice(18*W/40, winy, 10*W/40, lineH);
   for (unsigned int qi=colorQuantityUnknown+1; qi<colorQuantityLast; qi++) {
     _colorQuantityMenu->add(airEnumStr(colorQuantity, qi), this);
   }
@@ -84,15 +98,10 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _colorQuantityMenu->value(((fltk::Group*)_colorQuantityMenu)
                             ->find(_colorQuantityMenu->find(defStr)));
 
-  _stopColorDoButton = new fltk::CheckButton(28*W/40, winy, W/8,
+  _stopColorDoButton = new fltk::CheckButton(30*W/40, winy, W/8,
                                            lineH, "Tips");
   _stopColorDoButton->callback((fltk::Callback*)stopColorDo_cb, this);
   _stopColorDoButton->value(_hsline->stopColorDo());
-
-  _wireframeButton = new fltk::CheckButton(34*W/40, winy, W/8,
-                                           lineH, "Wire");
-  _wireframeButton->callback((fltk::Callback*)wireframe_cb, this);
-  _wireframeButton->value(_hsline->wireframe());
 
   winy += incy;
   winy += 3;
@@ -145,8 +154,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
     _stopAnisoTypeMenu->value(((fltk::Group*)_stopAnisoTypeMenu)
                               ->find(_stopAnisoTypeMenu->find(defStr)));
   }
-  _stopAnisoThresholdSlider = 
-    new Deft::Slider(5, winy, W, incy=40);
+  _stopAnisoThresholdSlider = new Deft::Slider(0, winy, W, incy=40);
   _stopAnisoThresholdSlider->align(fltk::ALIGN_LEFT);
   _stopAnisoThresholdSlider->range(0.0, 1.0);
   _stopAnisoThresholdSlider->fastUpdate(0);
@@ -160,7 +168,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
                                                 "Half Length");
   _stopHalfLengthButton->value(_hsline->stopHalfLengthDo());
   _stopHalfLengthButton->callback((fltk::Callback*)_stopButton_cb, this);
-  _stopHalfLengthSlider = new Deft::Slider(5, winy, W, incy=40);
+  _stopHalfLengthSlider = new Deft::Slider(0, winy, W, incy=40);
   _stopHalfLengthSlider->align(fltk::ALIGN_LEFT);
   _stopHalfLengthSlider->range(0.01, 10);
   _stopHalfLengthSlider->step(0.001);
@@ -175,7 +183,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
                                                  "Half #Steps");
   _stopHalfStepNumButton->value(_hsline->stopHalfStepNumDo());
   _stopHalfStepNumButton->callback((fltk::Callback*)_stopButton_cb, this);
-  _stopHalfStepNumSlider = new Deft::Slider(5, winy, W, incy=40);
+  _stopHalfStepNumSlider = new Deft::Slider(0, winy, W, incy=40);
   _stopHalfStepNumSlider->align(fltk::ALIGN_LEFT);
   _stopHalfStepNumSlider->range(1, 300);
   _stopHalfStepNumSlider->step(1);
@@ -190,9 +198,9 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
                                             "Radius of Curvature");
   _stopRadiusButton->value(_hsline->stopRadiusDo());
   _stopRadiusButton->callback((fltk::Callback*)_stopButton_cb, this);
-  _stopRadiusSlider = new Deft::Slider(5, winy, W, incy=40);
+  _stopRadiusSlider = new Deft::Slider(0, winy, W, incy=40);
   _stopRadiusSlider->align(fltk::ALIGN_LEFT);
-  _stopRadiusSlider->range(0.0, 1.0);
+  _stopRadiusSlider->range(0.0, 5.0);
   _stopRadiusSlider->step(0.01);
   _stopRadiusSlider->fastUpdate(0);
   _stopRadiusSlider->value(_hsline->stopRadius());
@@ -205,7 +213,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
                                                 "Confidence mask");
   _stopConfidenceButton->value(_hsline->stopConfidenceDo());
   _stopConfidenceButton->callback((fltk::Callback*)_stopButton_cb, this);
-  _stopConfidenceSlider = new Deft::Slider(5, winy, W, incy=40);
+  _stopConfidenceSlider = new Deft::Slider(0, winy, W, incy=40);
   _stopConfidenceSlider->align(fltk::ALIGN_LEFT);
   _stopConfidenceSlider->range(0.0, 1.0);
   _stopConfidenceSlider->step(0.01);
@@ -216,7 +224,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   winy += incy;
   winy += 5;
 
-  _kernelMenu = new fltk::Choice(6*W/20, winy, W/5, incy=lineH, "kernel");
+  _kernelMenu = new fltk::Choice(6*W/50, winy, 8*W/50, incy=lineH, "Kernel");
   for (unsigned int ki=kernelUnknown+1; ki<kernelLast; ki++) {
     _kernelMenu->add(kernelStr[ki], this);
   }
@@ -224,17 +232,27 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _kernelMenu->value(((fltk::Group*)_kernelMenu)
                      ->find(_kernelMenu->find(kernelStr[kernelTent])));
 
-  _integrationMenu = new fltk::Choice(15*W/20, winy, W/5, incy=lineH,
-                                      "integration");
+  _integrationMenu = new fltk::Choice(18*W/50, winy, 10*W/50, incy=lineH,
+                                      "Intg");
   for (unsigned int ii=tenFiberIntgUnknown+1;
        ii<tenFiberIntgLast; ii++) {
     _integrationMenu->add(airEnumStr(tenFiberIntg, ii), this);
   }
   _integrationMenu->callback((fltk::Callback*)(integration_cb), this);
   _integrationMenu->value(((fltk::Group*)_integrationMenu)
-                     ->find(_integrationMenu
-                            ->find(airEnumStr(tenFiberIntg,
-                                              tenFiberIntgRK4))));
+                          ->find(_integrationMenu
+                                 ->find(airEnumStr(tenFiberIntg,
+                                                   _hsline->integration()))));
+
+  _brightSlider = new fltk::ValueSlider(33*W/50, winy, 16*W/50, incy=lineH,
+                                        "Bright");
+  _brightSlider->callback((fltk::Callback*)(bright_cb), this);
+  _brightSlider->range(0.3, 1.9);
+  _brightSlider->step(0.01);
+  _brightSlider->value(_hsline->brightness());
+  _brightSlider->align(fltk::ALIGN_LEFT);
+  _brightSlider->box(fltk::THIN_DOWN_BOX);
+  _brightSlider->color(fltk::GRAY40);
 
   // winy += incy;
   // fprintf(stderr, "!%s: winy = %d\n", me, winy);
@@ -339,6 +357,19 @@ HyperStreamlineUI::wireframe_cb(fltk::CheckButton *but,
   ui->_viewer->redraw();
 }
 
+void
+HyperStreamlineUI::color_cb(fltk::CheckButton *but,
+                            HyperStreamlineUI *ui) {
+  /*
+  fprintf(stderr, "!%s: _hsline->color(%s)\n", 
+          "HyperStreamlineUI::color_cb", 
+          but->value() ? "true" : "false");
+  */
+  ui->_hsline->color(but->value());
+  dynamic_cast<PolyProbe*>(ui->_hsline)->update(false);
+  ui->redraw();
+}
+
 void 
 HyperStreamlineUI::step_cb(Slider *slider, HyperStreamlineUI *ui) {
 
@@ -403,15 +434,25 @@ void
 HyperStreamlineUI::_stopSlider_cb(Deft::Slider *slider, 
                                   HyperStreamlineUI *ui) {
   if (slider == ui->_stopAnisoThresholdSlider) {
-    ui->_hsline->stopAniso(ui->_hsline->stopAnisoType(), slider->value());
+    if (ui->_hsline->stopAnisoDo()) {
+      ui->_hsline->stopAniso(ui->_hsline->stopAnisoType(), slider->value());
+    }
   } else if (slider == ui->_stopHalfLengthSlider) {
-    ui->_hsline->stopHalfLength(slider->value());
+    if (ui->_hsline->stopHalfLengthDo()) {
+      ui->_hsline->stopHalfLength(slider->value());
+    }
   } else if (slider == ui->_stopHalfStepNumSlider) {
-    ui->_hsline->stopHalfStepNum(slider->valueUI());
+    if (ui->_hsline->stopHalfStepNumDo()) {
+      ui->_hsline->stopHalfStepNum(slider->valueUI());
+    }
   } else if (slider == ui->_stopConfidenceSlider) {
-    ui->_hsline->stopConfidence(slider->value());
+    if (ui->_hsline->stopConfidenceDo()) {
+      ui->_hsline->stopConfidence(slider->value());
+    }
   } else if (slider == ui->_stopRadiusSlider) {
-    ui->_hsline->stopRadius(slider->value());
+    if (ui->_hsline->stopRadiusDo()) {
+      ui->_hsline->stopRadius(slider->value());
+    }
   }
   ui->redraw();
 }
@@ -454,6 +495,14 @@ void
 HyperStreamlineUI::integration_cb(fltk::Choice *menu, HyperStreamlineUI *ui) {
 
   ui->_hsline->integration(airEnumVal(tenFiberIntg, menu->item()->label()));
+  ui->redraw();
+}
+
+void
+HyperStreamlineUI::bright_cb(fltk::ValueSlider *val, HyperStreamlineUI *ui) {
+
+  ui->_hsline->brightness(static_cast<float>(val->value()));
+  dynamic_cast<PolyProbe*>(ui->_hsline)->update(false);
   ui->redraw();
 }
 

@@ -51,12 +51,22 @@ public:
   void sampling(unsigned int axisIdx, double smpl);
   double sampling(unsigned int axisIdx) const;
 
-  // conveniences to *set* all planes' Gage
+  // sampling for seed planes
+  void seedSampling(unsigned int axisIdx, double smpl);
+  double seedSampling(unsigned int axisIdx) const;
+
+  // conveniences to *set* all planes' (regular and seed) Gage
   void kernel(int which, const NrrdKernelSpec *ksp);
   void colorQuantity(int quantity);
   void alphaMaskQuantity(int quantity);
   void alphaMaskThreshold(double thresh);
   void update();
+
+  void glyphsDo(unsigned int axisIdx, bool doit);
+  bool glyphsDo(unsigned int axisIdx) const;
+  
+  void tractsDo(unsigned int axisIdx, bool doit);
+  bool tractsDo(unsigned int axisIdx) const;
   
   // conveniences for operating on all planes' Cmap
   void brightness(float);
@@ -65,14 +75,16 @@ public:
   void position(unsigned int planeIdx, float);
   float position(unsigned int planeIdx) const;
   
-  Plane *plane[3];
+  Plane *plane[3];     /* the planes we draw */
+  Plane *seedPlane[3]; /* the planes used for seed points */
 
   ~TriPlane();
 private:
   gageShape *_shape;
   float _origW[3], _interW[3][3], _edgeW[3][3], _posI[3];
-  double _sampling[3];
-  unsigned int _size[3];  // # samples along each axis
+  double _sampling[3], _seedSampling[3];
+  bool _glyphsDo[3], _tractsDo[3];
+  unsigned int _size[3], _seedSize[3];  // # samples along each axis
 };
 
 } /* namespace Deft */

@@ -58,14 +58,23 @@ private:
   fltk::CheckButton *_visibleButton[4];
   static void visible_cb(fltk::CheckButton *but, TriPlaneUI *ui);
 
+  fltk::CheckButton *_wireframeButton[4];
+  static void wireframe_cb(fltk::CheckButton *but, TriPlaneUI *ui);
+
   fltk::Choice *_colorQuantityMenu[4];
   static void colorQuantity_cb(fltk::Choice *menu, TriPlaneUI *ui);
 
   fltk::ValueSlider *_sampleSlider[4];
   static void sample_cb(fltk::ValueSlider *val, TriPlaneUI *ui);
 
-  fltk::CheckButton *_wireframeButton[4];
-  static void wireframe_cb(fltk::CheckButton *but, TriPlaneUI *ui);
+  fltk::ValueSlider *_seedSampleSlider[4];
+  static void seedSample_cb(fltk::ValueSlider *val, TriPlaneUI *ui);
+
+  fltk::CheckButton *_glyphsDoButton[4];
+  static void glyphsDo_cb(fltk::CheckButton *but, TriPlaneUI *ui);
+
+  fltk::CheckButton *_tractsDoButton[4];
+  static void tractsDo_cb(fltk::CheckButton *but, TriPlaneUI *ui);
 
   Slider *_positionSlider[3];
   static void position_cb(Slider *slider, TriPlaneUI *ui);

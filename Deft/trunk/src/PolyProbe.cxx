@@ -110,9 +110,20 @@ PolyProbe::kernelReset() {
 void
 PolyProbe::color(bool doit) {
 
+  /*
+  fprintf(stderr, "!%s: _colorDoit = %s, doit = %s\n", 
+          "PolyProbe::color", 
+          _colorDoit ? "true" : "false",
+          doit ? "true" : "false");
+  */
   if (_colorDoit != doit) {
     _colorDoit = doit;
     _flag[flagQueryColor] = true;
+    /*
+    fprintf(stderr, "!%s: _flag[flagQueryColor] = %s\n", 
+            "PolyProbe::color", 
+            _flag[flagQueryColor] ? "true" : "false");
+    */
   }
 }
 
@@ -147,23 +158,23 @@ PolyProbe::colorQuantity(int quantity) {
     break;
   case colorQuantityModeFA:
     _queryColor.resize(2);
-    _queryColor[0] = tenGageTheta;
+    _queryColor[0] = tenGageModeWarp;
     _queryColor[1] = tenGageCa2;
     strcat(fname, "cmap/isobow4-2D.nrrd");
     lret = nrrdLoad(_nlut2D, fname, NULL);
     _cmap->lut2D(_nlut2D);
-    _cmap->min2D0(0);
+    _cmap->min2D0(-1);
     _cmap->max2D0(1);
     _cmap->min2D1(0);
     _cmap->max2D1(1);
     break;
   case colorQuantityMode:
     _queryColor.resize(1);
-    _queryColor[0] = tenGageTheta;
+    _queryColor[0] = tenGageModeWarp;
     strcat(fname, "cmap/isobow4-1D.nrrd");
     lret = nrrdLoad(_nlut1D, fname, NULL);
     _cmap->lut1D(_nlut1D);
-    _cmap->min1D(0);
+    _cmap->min1D(-1);
     _cmap->max1D(1);
     break;
   case colorQuantityFA:
@@ -252,6 +263,7 @@ PolyProbe::brightness(double br) {
   // char me[]="void PolyProbe::brightness";
 
   if (_brightness != br) {
+    // fprintf(stderr, "!%s: %g\n", me, br);
     _brightness = br;
     _flag[flagBrightness] = true;
   }
@@ -352,11 +364,11 @@ PolyProbe::update(bool geometryChanged) {
   // own polydata has changed?  Shouldn't it have a way of knowing?
   _flag[flagGeometry] = geometryChanged;
   /*
-  std::cerr << me << ": _flag[flagPlane] = " << _flag[flagPlane] << std::endl;
-
-  std::cerr << me << ": _flag[flagQueryColor,flagQueryAlphaMask] = "
-            << _flag[flagQueryColor] << "," 
-            << _flag[flagQueryAlphaMask] << std::endl;
+  fprintf(stderr, "!%s: _flag[flagQueryColor,flagQueryAlphaMask] = %s,%s\n",
+          me, _flag[flagQueryColor] ? "true" : "false",
+          _flag[flagQueryAlphaMask] ? "true" : "false");
+  fprintf(stderr, "!%s: _colorDoit = %s\n", 
+          me, _colorDoit ? "true" : "false");
   */
   if (_flag[flagQueryColor]
       || _flag[flagQueryAlphaMask]) {
@@ -411,15 +423,23 @@ PolyProbe::update(bool geometryChanged) {
     _flag[flagInitialRGBA] = true;
   }
   /*
-  fprintf(stderr, "%s: _flag[flagBrightness] = %s,  = %s\n", me, 
+  fprintf(stderr, "!%s: _flag[flagBrightness] = %s; %s; %u\n", me, 
           _flag[flagBrightness] ? "true" : "false",
-          _flag[flagInitialRGBA] ? "true" : "false");
+          _flag[flagInitialRGBA] ? "true" : "false",
+          (unsigned int)(_gage->query().size()));
   */
   if (_flag[flagBrightness]
       || _flag[flagInitialRGBA]) {
     _brightnessLutSet(_brightness);
-    if (_gage->query().size()) {
+    if (_colorDoit) {
       dynamic_cast<PolyData*>(this)->RGBLut(_brightnessLut);
+    } else {
+      // this was the solution to the uncolored fibers being a random
+      // color: I had forgotten that the RGBLut was what actually set the
+      // vertex RGB from the "initial" (colormap output) RGB.  Lacking
+      // a colormap, no assignment was done, and they were never otherwise
+      // set, so the vertex RGB were bogus
+      dynamic_cast<PolyData*>(this)->RGBSet(255, 255, 255);
     }
     _flag[flagBrightness] = false;
   }

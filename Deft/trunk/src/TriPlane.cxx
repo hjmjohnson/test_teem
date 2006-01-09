@@ -63,31 +63,56 @@ TriPlane::TriPlane(const Volume *vol) : Group(3) {
   ELL_3V_SUB(_interW[2], umpW, _origW);
   ELL_3V_SCALE(_edgeW[2], _shape->size[2]-1, _interW[2]);
 
-  _sampling[0] = 0.0; _size[0] = _shape->size[0];
-  _sampling[1] = 0.0; _size[1] = _shape->size[1];
-  _sampling[2] = 0.0; _size[2] = _shape->size[2];
+  _sampling[0] = _seedSampling[0] = 0.0;
+  _sampling[1] = _seedSampling[1] = 0.0;
+  _sampling[2] = _seedSampling[2] = 0.0;
+  _size[0] = _seedSize[0] = _shape->size[0];
+  _size[1] = _seedSize[1] = _shape->size[1];
+  _size[2] = _seedSize[2] = _shape->size[2];
+  _glyphsDo[0] = false;
+  _glyphsDo[1] = false;
+  _glyphsDo[2] = false;
+  _tractsDo[0] = false;
+  _tractsDo[1] = false;
+  _tractsDo[2] = false;
 
   object[0] = plane[0] = new Plane(_size[1], _size[2]);
+  seedPlane[0] = new Plane(_size[1], _size[2]);
   plane[0]->volume(vol);
+  seedPlane[0]->volume(vol);
   plane[0]->edgeUSet(_edgeW[1]);
+  seedPlane[0]->edgeUSet(_edgeW[1]);
   plane[0]->edgeVSet(_edgeW[2]);
+  seedPlane[0]->edgeVSet(_edgeW[2]);
   position(0, static_cast<float>(_size[0]/2));
 
   object[1] = plane[1] = new Plane(_size[0], _size[2]);
+  seedPlane[1] = new Plane(_size[0], _size[2]);
   plane[1]->volume(vol);
+  seedPlane[1]->volume(vol);
   plane[1]->edgeUSet(_edgeW[0]);
+  seedPlane[1]->edgeUSet(_edgeW[0]);
   plane[1]->edgeVSet(_edgeW[2]);
+  seedPlane[1]->edgeVSet(_edgeW[2]);
   position(1, static_cast<float>(_size[1]/2));
 
   object[2] = plane[2] = new Plane(_size[0], _size[1]);
+  seedPlane[2] = new Plane(_size[0], _size[1]);
   plane[2]->volume(vol);
+  seedPlane[2]->volume(vol);
   plane[2]->edgeUSet(_edgeW[0]);
+  seedPlane[2]->edgeUSet(_edgeW[0]);
   plane[2]->edgeVSet(_edgeW[1]);
+  seedPlane[2]->edgeVSet(_edgeW[1]);
   position(2, static_cast<float>(_size[2]/2));
 
   plane[0]->lightingUse(false);
   plane[1]->lightingUse(false);
   plane[2]->lightingUse(false);
+
+  seedPlane[0]->visible(false);
+  seedPlane[1]->visible(false);
+  seedPlane[2]->visible(false);
 
   plane[0]->brightness(1.2);
   plane[1]->brightness(1.2);
@@ -103,6 +128,7 @@ void
 TriPlane::sampling(unsigned int axisIdx, double smpl) {
 
   axisIdx = AIR_MIN(axisIdx, 2);
+  // HEY: GK worries about the index 0 at the end of the next line ???
   _size[axisIdx] = AIR_CAST(unsigned int, pow(2.0, smpl)*_shape->size[0]);
   if (0 != axisIdx) {
     plane[0]->resolution(_size[1], _size[2]);
@@ -119,9 +145,32 @@ TriPlane::sampling(unsigned int axisIdx, double smpl) {
   _sampling[axisIdx] = smpl;
 }
 
+void
+TriPlane::seedSampling(unsigned int axisIdx, double smpl) {
+
+  axisIdx = AIR_MIN(axisIdx, 2);
+  _seedSize[axisIdx] = AIR_CAST(unsigned int, pow(2.0, smpl)*_shape->size[0]);
+  if (0 != axisIdx) {
+    seedPlane[0]->resolution(_size[1], _size[2]);
+    seedPlane[0]->update();
+  }
+  if (1 != axisIdx) {
+    seedPlane[1]->resolution(_size[0], _size[2]);
+    seedPlane[1]->update();
+  }
+  if (2 != axisIdx) {
+    seedPlane[2]->resolution(_size[0], _size[1]);
+    seedPlane[1]->update();
+  }
+  _seedSampling[axisIdx] = smpl;
+}
+
 const gageShape *TriPlane::shape() const { return _shape; }
 
 double TriPlane::sampling(unsigned int ai) const { return _sampling[ai]; }
+double TriPlane::seedSampling(unsigned int ai) const { 
+  return _seedSampling[ai]; 
+}
 
 void
 TriPlane::position(unsigned int planeIdx, float pos) {
@@ -133,6 +182,7 @@ TriPlane::position(unsigned int planeIdx, float pos) {
   _posI[planeIdx] = pos;
   ELL_3V_SCALE_ADD2(vec, 1.0f, _origW, _posI[planeIdx], _interW[planeIdx]);
   plane[planeIdx]->originSet(vec);
+  seedPlane[planeIdx]->originSet(vec);
   // HEY: this is lame: we should be able to always do simply
   // plane[planeIdx]->update(), but there's a problem on the
   // first time through ...
@@ -140,11 +190,13 @@ TriPlane::position(unsigned int planeIdx, float pos) {
     // fprintf(stderr, "%s: colorQuantity = %d\n", me, plane[planeIdx]->colorQuantity());
     // do vert update, probe, cmap
     plane[planeIdx]->update();
+    seedPlane[planeIdx]->update();
     // fprintf(stderr, "%s(%u): vert,probe,cmap updated\n", me, planeIdx);
   } else {
     // fprintf(stderr, "%s: simple vert update\n", me);
     // just do vert update
     ((Plane*)plane[planeIdx])->update();
+    ((Plane*)seedPlane[planeIdx])->update();
     // fprintf(stderr, "%s(%u): vert updated\n", me, planeIdx);
   }    
 }
@@ -160,6 +212,9 @@ TriPlane::kernel(int which, const NrrdKernelSpec *ksp) {
   plane[0]->kernel(which, ksp);
   plane[1]->kernel(which, ksp);
   plane[2]->kernel(which, ksp);
+  seedPlane[0]->kernel(which, ksp);
+  seedPlane[1]->kernel(which, ksp);
+  seedPlane[2]->kernel(which, ksp);
 }
 
 void
@@ -187,6 +242,34 @@ TriPlane::alphaMaskThreshold(double thresh) {
 }
 
 void
+TriPlane::glyphsDo(unsigned int axisIdx, bool doit) {
+
+  axisIdx = AIR_MIN(axisIdx, 2);
+  _glyphsDo[axisIdx] = doit;
+}
+
+bool
+TriPlane::glyphsDo(unsigned int axisIdx) const {
+
+  axisIdx = AIR_MIN(axisIdx, 2);
+  return _glyphsDo[axisIdx];
+}
+
+void
+TriPlane::tractsDo(unsigned int axisIdx, bool doit) {
+
+  axisIdx = AIR_MIN(axisIdx, 2);
+  _tractsDo[axisIdx] = doit;
+}
+
+bool
+TriPlane::tractsDo(unsigned int axisIdx) const {
+
+  axisIdx = AIR_MIN(axisIdx, 2);
+  return _tractsDo[axisIdx];
+}
+
+void
 TriPlane::brightness(float br) {
 
   plane[0]->brightness(br);
@@ -200,6 +283,9 @@ TriPlane::update() {
   plane[0]->update();
   plane[1]->update();
   plane[2]->update();
+  seedPlane[0]->update();
+  seedPlane[1]->update();
+  seedPlane[2]->update();
 }
 
 

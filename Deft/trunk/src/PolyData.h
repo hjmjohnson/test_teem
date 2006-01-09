@@ -70,8 +70,11 @@ public:
   // set vertex alpha from _nrgba alpha via alpha mask
   void alphaMask(unsigned int valuesIdx, double thresh);
 
-  // set vertex RGB from _nrgba alpha with given per-component look-up table
+  // set vertex RGB from _nrgba with given per-component look-up table
   void RGBLut(unsigned char lut[256]);
+
+  // set vertex RGB to this
+  void RGBSet(unsigned char R, unsigned char G, unsigned char B);
   
   void drawImmediate();
   void boundsGet(float min[3], float max[3]) const;
