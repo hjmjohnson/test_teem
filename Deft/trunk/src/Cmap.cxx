@@ -159,6 +159,7 @@ Cmap::map(Nrrd *nrgba, const Values *val) const {
 
   if (1 == val->item().size()) {
     if (1 == val->length()) {
+      nrrdSave("input.nrrd", val->nrrd(), NULL);
       key = NRRD;
       switch(_mode1D) {
       case cmapMode1DGrayMinMax:

@@ -962,6 +962,7 @@ void
 TensorGlyph::drawImmediate() {
   // char me[]="TensorGlyph::drawImmediate";
   unsigned int *list, baryIdx;
+  float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
   
   // HEY need to implement dynamic
 
@@ -976,7 +977,9 @@ TensorGlyph::drawImmediate() {
   }
   if (_colorUse) {
     glEnable(GL_COLOR_MATERIAL);
-    glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+  } else {
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, white);
   }
   float glyphScale = static_cast<float>(_glyphScale);
   for (unsigned int ii=0; ii<_activeNum; ii++) {
@@ -989,10 +992,10 @@ TensorGlyph::drawImmediate() {
     float angle = ell_q_to_aa_f(axis, quat);  // not currently a bottle-neck
     baryIdx = (unsigned int)(dataLine[BARYIDX_DATA_IDX]);
 
-    glPushMatrix();
     if (_colorUse) {
       glColor3fv(rgb);
     }
+    glPushMatrix();
     glTranslatef(pos[0], pos[1], pos[2]);
     glRotatef(180*angle/AIR_PI, axis[0], axis[1], axis[2]);
     glScalef(glyphScale*eval[0], glyphScale*eval[1], glyphScale*eval[2]);
@@ -1010,7 +1013,10 @@ TensorGlyph::drawImmediate() {
   flag[flagGlyphScale] = false;
   flag[flagGlyphPalette] = false;
   flag[flagActiveSet] = false;
-
+  /*
+  fprintf(stderr, "!%s: done (_colorUse = %s)\n", me, 
+          _colorUse ? "true" : "false");
+  */
 }
 
 unsigned int

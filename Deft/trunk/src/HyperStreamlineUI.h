@@ -44,7 +44,7 @@ class DEFT_EXPORT HyperStreamlineUI {
 public: 
   // TERRIBLE: it is a total hack to be taking pointers to TensorGlyph
   // and TriPlane here; HyperStreamline and TensorGlyph really need to
-  // be peers with some kind of bi-directional communication mediated
+  // be peers, with some kind of bi-directional communication mediated
   // by a higher authority
   explicit HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
                              TriPlane *tplane, Viewer *vw);
@@ -68,6 +68,10 @@ private:
 
   fltk::CheckButton *_visibleButton;
   static void visible_cb(fltk::CheckButton *but, HyperStreamlineUI *ui);
+  fltk::CheckButton *_wireframeButton;
+  static void wireframe_cb(fltk::CheckButton *but, HyperStreamlineUI *ui);
+  fltk::CheckButton *_colorButton;
+  static void color_cb(fltk::CheckButton *but, HyperStreamlineUI *ui);
   fltk::Choice *_colorQuantityMenu;
   static void colorQuantity_cb(fltk::Choice *menu, HyperStreamlineUI *ui);
   fltk::Button *_computeButton;
@@ -76,8 +80,6 @@ private:
   static void tubeDo_cb(fltk::CheckButton *but, HyperStreamlineUI *ui);
   fltk::CheckButton *_stopColorDoButton;
   static void stopColorDo_cb(fltk::CheckButton *but, HyperStreamlineUI *ui);
-  fltk::CheckButton *_wireframeButton;
-  static void wireframe_cb(fltk::CheckButton *but, HyperStreamlineUI *ui);
   fltk::ValueInput *_tubeFacetInput;
   static void tubeFacet_cb(fltk::ValueInput *val, HyperStreamlineUI *ui);
   Deft::Slider *_tubeRadiusSlider;
@@ -110,6 +112,9 @@ private:
 
   fltk::Choice *_integrationMenu;
   static void integration_cb(fltk::Choice *menu, HyperStreamlineUI *ui);
+
+  fltk::ValueSlider *_brightSlider;
+  static void bright_cb(fltk::ValueSlider *val, HyperStreamlineUI *ui);
 };
 
 } /* namespace Deft */

@@ -250,8 +250,27 @@ PolyData::RGBLut(unsigned char lut[256]) {
 }
 
 void
+PolyData::RGBSet(unsigned char R, unsigned char G, unsigned char B) {
+  char me[]="PolyData::RGBSet";
+
+  if (!_lpldOwn) {
+    fprintf(stderr, "%s: can't modify data that is not owned\n", me);
+    return;
+  }
+
+  size_t N = _lpldOwn->vertNum;
+  limnVrt *vert = _lpldOwn->vert;
+  for (size_t I=0; I<N; I++) {
+    vert[I].rgba[0] = R;
+    vert[I].rgba[1] = G;
+    vert[I].rgba[2] = B;
+  }
+  changed();
+}
+
+void
 PolyData::drawImmediate() {
-  // char me[]="PolyData::drawImmediate";
+  char me[]="PolyData::drawImmediate";
   limnVrt *vrt;
   const limnPolyData *lpld = this->lpld();
   int glWhat;
@@ -263,6 +282,7 @@ PolyData::drawImmediate() {
     GL_QUADS,          /* 4: limnPrimitiveQuads */
     GL_LINE_STRIP      /* 5: limnPrimitiveLineStrip */
   };
+  float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
   if (!( _visible && lpld )) {
     /* there's nothing to render here */
@@ -280,6 +300,11 @@ PolyData::drawImmediate() {
             lpld->vert[I].rgba[2], lpld->vert[I].rgba[3]);
             } */
 
+  /*
+  fprintf(stderr, "!%s: HELLO _colorUse = %s\n", me,
+          _colorUse ? "true" : "false");
+  fprintf(stderr, "!%s: _compiling = %s\n", me, _compiling ? "true" : "false");
+  */
   vrt = lpld->vert;
   if (_transformUse) {
     float tmpMat[16];
@@ -293,11 +318,12 @@ PolyData::drawImmediate() {
   if (_colorUse) {
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+  } else {
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, white);
+    // glColor4fv(white);
   }
   if (_lightingUse) {
     glEnable(GL_LIGHTING);
-  } else {
-    glDisable(GL_LIGHTING);
   }
   if (!_compiling) {
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -322,6 +348,10 @@ PolyData::drawImmediate() {
   } else {
     glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
   }
+  /*
+  fprintf(stderr, "!%s: _colorUse = %s\n", me, _colorUse ? "true" : "false");
+  fprintf(stderr, "!%s: _compiling = %s\n", me, _compiling ? "true" : "false");
+  */
   if (!_compiling) {
     for (unsigned int primIdx=0; primIdx<lpld->primNum; primIdx++) {
       vertCnt = lpld->vcnt[primIdx];
@@ -351,6 +381,9 @@ PolyData::drawImmediate() {
     if (_colorUse) {
       glDisableClientState(GL_COLOR_ARRAY);
     }
+  }
+  if (_lightingUse) {
+    glDisable(GL_LIGHTING);
   }
   if (_colorUse) {
     glDisable(GL_COLOR_MATERIAL);

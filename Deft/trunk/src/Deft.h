@@ -129,7 +129,7 @@ enum {
 ** treats that information.  On the other hand, colorQuantityCl and
 ** colorQuantityCp set queries of tenGageCl2 and tenGageCp2, but both
 ** use the same (user-supplied) colormap.  So this really conveys
-** something about a combination of a query and a coloring. Plus- this
+** something about a combination of a query and a coloring. Plus- these
 ** are currently all tensor-specific, which is stupid.
 */
 enum {

@@ -110,9 +110,9 @@ HyperStreamline::HyperStreamline(const Nrrd *nten) {
   fiberType(tenFiberTypeEvec1);
   stopConfidence(0.5);
   stopAniso(tenAniso_Cl2, 0.3);
-  step(0.01);
+  step(0.5);
   stopHalfStepNum(30);
-  integration(tenFiberIntgRK4);
+  integration(tenFiberIntgMidpoint);
   NrrdKernelSpec *ksp = nrrdKernelSpecNew();
   nrrdKernelSpecParse(ksp, "tent");
   kernel(ksp);
@@ -133,7 +133,7 @@ HyperStreamline::HyperStreamline(const Nrrd *nten) {
   _endFacet = 0;
   tubeFacet(4);
   _tubeRadius = -1;
-  tubeRadius(0.01);
+  tubeRadius(0.5);
 
   // TERRIBLE: playing dangerous games with ownership of _lpldOwn...
   limnPolyDataNix(_lpldOwn);
@@ -476,9 +476,9 @@ HyperStreamline::updateFiberGeometry() {
 
 void
 HyperStreamline::colorQuantity(int quantity) {
-  char me[]="HyperStreamline::colorQuantity";
+  // char me[]="HyperStreamline::colorQuantity";
   if (colorQuantity() != quantity) {
-    fprintf(stderr, "!%s: hello\n", me);
+    // fprintf(stderr, "!%s: hello\n", me);
     dynamic_cast<PolyProbe*>(this)->colorQuantity(quantity);
     _flag[flagColorMap] = true;
   }
@@ -490,8 +490,25 @@ HyperStreamline::colorQuantity() {
 }
 
 void
+HyperStreamline::brightness(double br) {
+  // char me[]="void PolyProbe::brightness";
+  limnPolyData *lpldTmp;
+
+  if (_brightness != br) {
+    // fprintf(stderr, "!%s: %g\n", me, br);
+    _brightness = br;
+    lpldTmp = _lpldOwn; // TERRIBLE ...
+    _lpldOwn = _lpldFibers;
+    dynamic_cast<PolyProbe*>(this)->brightness(_brightness);
+    dynamic_cast<PolyProbe*>(this)->update(false);
+    _lpldOwn = lpldTmp;
+    _flag[flagColorMap] = true;
+  }
+}
+
+void
 HyperStreamline::updateFiberColor() {
-  char me[]="HyperStreamline::updateFiberColor";
+  // char me[]="HyperStreamline::updateFiberColor";
   if (_flag[flagFiberGeometry]
       || _flag[flagColorMap]
       || _flag[flagFiberStopColorDo]) { // may have to refresh endpoint colors
@@ -505,7 +522,7 @@ HyperStreamline::updateFiberColor() {
 
 void
 HyperStreamline::updateTubeAllocated() {
-  char me[]="HyperStreamline::updateTubeAllocated";
+  // char me[]="HyperStreamline::updateTubeAllocated";
   if (_flag[flagTubeFacet]
       || _flag[flagFiberVertexNum]) {
     unsigned int tubeVertNum = 0;
@@ -702,15 +719,15 @@ HyperStreamline::updateTubeGeometry() {
 
 void
 HyperStreamline::updateFiberStopColor() {
-  char me[]="HyperStreamline::updateFiberStopColor";
+  // char me[]="HyperStreamline::updateFiberStopColor";
   unsigned char stcol[TEN_FIBER_STOP_MAX+1][4] = {
-    {0, 0, 0, 255},       /* tenFiberStopUnknown */
-    {110, 110, 30, 255},  /* tenFiberStopAniso */
-    {255, 0, 255, 255},   /* tenFiberStopLength */
-    {0, 255, 255, 255},   /* tenFiberStopNumSteps */
-    {30, 30, 30, 255},    /* tenFiberStopConfidence */
-    {255, 0, 255, 255},   /* tenFiberStopRadius */
-    {0, 0, 0, 255}};      /* tenFiberStopBounds */
+    {  0,   0,   0, 255},  /* tenFiberStopUnknown */
+    {255, 255, 255, 255},  /* tenFiberStopAniso: white */
+    {255,   0, 255, 255},  /* tenFiberStopLength: magenta */
+    {  0, 255, 255, 255},  /* tenFiberStopNumSteps: cyan */
+    {128, 128, 128, 255},  /* tenFiberStopConfidence: gray */
+    {255, 255,   0, 255},  /* tenFiberStopRadius: yellow */
+    {  0,   0,   0, 255}}; /* tenFiberStopBounds: black */
 
   limnVrt *inVrt;
   if (_flag[flagFiberColor]

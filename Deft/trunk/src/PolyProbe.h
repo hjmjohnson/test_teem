@@ -89,7 +89,6 @@ private:
   bool _colorDoit, _alphaMaskDoit;
   int _colorQuantity, _alphaMaskQuantity;
   std::vector<int> _queryColor, _queryAlphaMask;
-  // _query[0] and [1] get reset with every update()
   std::vector<std::vector<int> > _query;
   unsigned char _brightnessLut[256];
   void _brightnessLutSet(double br);

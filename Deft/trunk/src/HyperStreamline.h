@@ -117,6 +117,10 @@ public:
   void colorQuantity(int quantity);
   int colorQuantity();
 
+  // overrides PolyProbe's
+  void brightness(double brightness);
+  double brightness() const { return _brightness; }
+
   void tubeDo(bool doit);
   bool tubeDo() const { return _tubeDo; }
 
@@ -135,7 +139,7 @@ private:
   Nrrd *_nseeds;
   unsigned int _seedNum, _fiberVertexNum, _primNum, _tubeFacet, _endFacet;
   Volume *_volume;
-  double _tubeRadius;
+  double _tubeRadius, _brightness;
   limnPolyData *_lpldFibers, *_lpldTubes;
 
   // HEY: I tried making a vector of the class itself, and the

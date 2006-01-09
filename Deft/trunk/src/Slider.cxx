@@ -94,22 +94,22 @@ Slider::slider_cb(fltk::Widget *w, void *data) {
 Slider::Slider(int x, int y, int w, int h, const char *label) :
 fltk::Group(x, y, w, h, 0) {
   // char labelBuff[AIR_STRLEN_SMALL];
-  int marg = 0, butt = 20;
+  int marg = 0, butt = 20, NN = 6;
   int sub_h = AIR_ROUNDUP((h - 3*marg)/2.0);
-  int sub_w = AIR_ROUNDUP((w - 5*marg)/4.0);
+  int sub_w = AIR_ROUNDUP((w - 5*marg)/NN);
 
   // sprintf(labelBuff, "@s+3%s", label);
   _label = new fltk::Group(x, y, 2*sub_w, sub_h, label);
   // _label->copy_label(labelBuff);
   _label->align(fltk::ALIGN_INSIDE);
 
-  _min = new fltk::Input(x + 2*sub_w + 3*marg - butt, y + marg,
+  _min = new fltk::Input(x + (NN-2)*sub_w + 3*marg - butt, y + marg,
                          sub_w, sub_h);
   // _min->box(fltk::THIN_DOWN_BOX);
   _min->callback(Slider::range_cb, (void*)this);
   _min->when(fltk::WHEN_ENTER_KEY|fltk::WHEN_NOT_CHANGED);
   
-  _max = new fltk::Input(x + 3*sub_w + 4*marg - butt, y + marg,
+  _max = new fltk::Input(x + (NN-1)*sub_w + 4*marg - butt, y + marg,
                          sub_w, sub_h);
   // _max->box(fltk::THIN_DOWN_BOX);
   _max->callback(Slider::range_cb, (void*)this);
@@ -127,8 +127,9 @@ fltk::Group(x, y, w, h, 0) {
   _input->callback(Slider::input_cb, (void*)this);
   _input->when(fltk::WHEN_ENTER_KEY|fltk::WHEN_NOT_CHANGED);
   
-  _slider = new fltk::Slider(x + w - 3*sub_w - 3*marg, y + h - marg - sub_h,
-                             3*sub_w + 2*marg, sub_h);
+  _slider = new fltk::Slider(x + w - (NN-1)*sub_w - 3*marg,
+                             y + h - marg - sub_h,
+                             (NN-1)*sub_w + 2*marg, sub_h);
   _slider->callback(Slider::slider_cb, (void*)this);
   _slider->labeltype(fltk::NO_LABEL);
   _slider->when(fltk::WHEN_CHANGED | fltk::WHEN_RELEASE);
