@@ -82,7 +82,6 @@ protected:
   void _init();
   const limnPolyData *_lpld;      // cannot limnPolyDataNix()
   limnPolyData *_lpldOwn;         //   can  limnPolyDataNix()
-
   Nrrd *_nrgba; // initial RGBA cache
 
   std::vector<bool> _valid;

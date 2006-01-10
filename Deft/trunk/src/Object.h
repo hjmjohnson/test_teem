@@ -88,7 +88,7 @@ public:
   void transformSet(const float mat[16]);
   void transformGet(float mat[16]) const;
 
-  double drawTime() const;
+  double drawTime() const { return _drawTime; }
 
   // callbacks
   void postDrawCallback(Callback *cb, void *data);

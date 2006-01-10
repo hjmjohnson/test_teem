@@ -46,6 +46,7 @@ public:
   int fastUpdate();
   void fastUpdate(int);
   void callback(fltk::Callback *, void*);
+  void color(fltk::Color);
   fltk::Callback *callback();
 private:
   fltk::Callback *_callback;

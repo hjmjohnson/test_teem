@@ -230,8 +230,6 @@ Object::transformGet(float mat[16]) const {
   }
 }
 
-double Object::drawTime() const { return _drawTime; }
-
 void
 Object::postDrawCallback(Callback *cb, void *data) {
 

@@ -134,12 +134,30 @@ public:
   double tubeRadius() const { return _tubeRadius; }
 
   void update();
+
+  unsigned int seedNum() const { return _seedNum; }
+  unsigned int fiberNum() const { return _fiberNum; }
+  unsigned int fiberVertexNum() const { return _fiberVertexNum; }
+  double fiberAllocatedTime() const { return _fiberAllocatedTime; }
+  double fiberGeometryTime() const { return _fiberGeometryTime; }
+  double fiberColorTime() const { return _fiberColorTime; }
+  double fiberStopColorTime() const { return _fiberStopColorTime; }
+  double tubeAllocatedTime() const { return _tubeAllocatedTime; }
+  double tubeGeometryTime() const { return _tubeGeometryTime; }
+  double tubeColorTime() const { return _tubeColorTime; }
 private:
   bool _flag[128], _tubeDo, _stopColorDo;
   Nrrd *_nseeds;
-  unsigned int _seedNum, _fiberVertexNum, _primNum, _tubeFacet, _endFacet;
+  unsigned int _seedNum, _fiberNum,  _fiberVertexNum, _tubeFacet, _endFacet;
   Volume *_volume;
-  double _tubeRadius, _brightness;
+  double _tubeRadius, _brightness,
+    _fiberAllocatedTime,
+    _fiberGeometryTime,
+    _fiberColorTime,
+    _fiberStopColorTime,
+    _tubeAllocatedTime,
+    _tubeGeometryTime,
+    _tubeColorTime;
   limnPolyData *_lpldFibers, *_lpldTubes;
 
   // HEY: I tried making a vector of the class itself, and the
