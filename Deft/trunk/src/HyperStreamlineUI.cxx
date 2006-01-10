@@ -46,10 +46,13 @@ const char kernelStr[6][128] = {
   "BC:1,0"
 };
 
+char _deftTubesDrawnPerSecondStr[]="K tubes / second drawn";
+char _deftLinesDrawnPerSecondStr[]="K polylines / second drawn";
+
 HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
                                      TriPlane *tplane, Viewer *vw) {
   // char me[]="HyperStreamlineUI::HyperStreamlineUI";
-  const unsigned int W = 400, H = 389, lineH = 20;
+  const unsigned int W=400, H=549, lineH=20;
   unsigned int winy=0, incy=0;
   const char *defStr;
   int defVal;
@@ -58,6 +61,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _tglyph = tglyph;
   _tplane = tplane;
   _viewer = vw;
+  _hsline->postDrawCallback((Callback*)(postDraw_cb), this);
 
   _ksp = nrrdKernelSpecNew();
 
@@ -128,7 +132,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
 
   _stepSlider = new Deft::Slider(0, winy, W, incy=40, "Step Size");
   _stepSlider->align(fltk::ALIGN_LEFT);
-  _stepSlider->range(0.0, 1.0);
+  _stepSlider->range(0.0, 2*_hsline->step());
   _stepSlider->fastUpdate(0);
   _stepSlider->value(_hsline->step());
   _stepSlider->callback((fltk::Callback*)(step_cb), this);
@@ -157,6 +161,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _stopAnisoThresholdSlider = new Deft::Slider(0, winy, W, incy=40);
   _stopAnisoThresholdSlider->align(fltk::ALIGN_LEFT);
   _stopAnisoThresholdSlider->range(0.0, 1.0);
+  _stopAnisoThresholdSlider->color(0xFFFFFF00);
   _stopAnisoThresholdSlider->fastUpdate(0);
   _stopAnisoThresholdSlider->value(_hsline->stopAnisoThreshold());
   _stopAnisoThresholdSlider->callback((fltk::Callback*)_stopSlider_cb, this);
@@ -171,6 +176,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _stopHalfLengthSlider = new Deft::Slider(0, winy, W, incy=40);
   _stopHalfLengthSlider->align(fltk::ALIGN_LEFT);
   _stopHalfLengthSlider->range(0.01, 10);
+  _stopHalfLengthSlider->color(0xFF00FF00);
   _stopHalfLengthSlider->step(0.001);
   _stopHalfLengthSlider->fastUpdate(0);
   _stopHalfLengthSlider->value(_hsline->stopHalfLength());
@@ -186,6 +192,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _stopHalfStepNumSlider = new Deft::Slider(0, winy, W, incy=40);
   _stopHalfStepNumSlider->align(fltk::ALIGN_LEFT);
   _stopHalfStepNumSlider->range(1, 300);
+  _stopHalfStepNumSlider->color(0x00FFFF00);
   _stopHalfStepNumSlider->step(1);
   _stopHalfStepNumSlider->fastUpdate(0);
   _stopHalfStepNumSlider->valueUI(_hsline->stopHalfStepNum());
@@ -201,6 +208,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _stopRadiusSlider = new Deft::Slider(0, winy, W, incy=40);
   _stopRadiusSlider->align(fltk::ALIGN_LEFT);
   _stopRadiusSlider->range(0.0, 5.0);
+  _stopRadiusSlider->color(0xFFFF0000);
   _stopRadiusSlider->step(0.01);
   _stopRadiusSlider->fastUpdate(0);
   _stopRadiusSlider->value(_hsline->stopRadius());
@@ -216,6 +224,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _stopConfidenceSlider = new Deft::Slider(0, winy, W, incy=40);
   _stopConfidenceSlider->align(fltk::ALIGN_LEFT);
   _stopConfidenceSlider->range(0.0, 1.0);
+  _stopConfidenceSlider->color(0x8F8F8F00);
   _stopConfidenceSlider->step(0.01);
   _stopConfidenceSlider->fastUpdate(0);
   _stopConfidenceSlider->value(_hsline->stopConfidence());
@@ -254,7 +263,60 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
   _brightSlider->box(fltk::THIN_DOWN_BOX);
   _brightSlider->color(fltk::GRAY40);
 
-  // winy += incy;
+  winy += incy;
+  winy += 10;
+
+  _pathsNumOutput = new fltk::Output(W/2, winy, W/4, incy=lineH,
+                                     "# paths");
+  _pathsNumOutput->box(fltk::NO_BOX);
+
+  winy += incy;
+  winy += 2;
+  
+  _vertsNumOutput = new fltk::Output(W/2, winy, W/4, incy=lineH,
+                                     "# K vertices");
+  _vertsNumOutput->box(fltk::NO_BOX);
+
+  winy += incy;
+  winy += 2;
+  
+  _pathsPerSecondOutput = new fltk::Output(W/2, winy, W/4, incy=lineH,
+                                           "paths / second computed");
+  _pathsPerSecondOutput->box(fltk::NO_BOX);
+
+  winy += incy;
+  winy += 2;
+  
+  _vertsPerSecondOutput = new fltk::Output(W/2, winy, W/4, incy=lineH,
+                                           "K vertices / second computed");
+  _vertsPerSecondOutput->box(fltk::NO_BOX);
+
+  winy += incy;
+  winy += 2;
+  
+  _tubesPerSecondOutput = new fltk::Output(W/2, winy, W/4, incy=lineH,
+                                           "tubes / second wrapped");
+  _tubesPerSecondOutput->box(fltk::NO_BOX);
+
+  winy += incy;
+  winy += 2;
+  
+  _drawnPerSecondOutput = new fltk::Output(W/2, winy, W/4, incy=lineH,
+                                           (_hsline->tubeDo()
+                                            ? _deftTubesDrawnPerSecondStr
+                                            : _deftLinesDrawnPerSecondStr));
+  _drawnPerSecondOutput->box(fltk::NO_BOX);
+
+  winy += incy;
+  winy += 2;
+  
+  _vertsDrawnPerSecondOutput = new fltk::Output(W/2, winy, W/4, incy=lineH,
+                                                "M vertices / second drawn");
+  _vertsDrawnPerSecondOutput->box(fltk::NO_BOX);
+
+  winy += incy;
+  winy += 2;
+  
   // fprintf(stderr, "!%s: winy = %d\n", me, winy);
   _win->end();
 
@@ -275,17 +337,50 @@ HyperStreamlineUI::show() {
 
 void
 HyperStreamlineUI::redraw() {
+  char buff[AIR_STRLEN_MED];
   // char me[]="HyperStreamlineUI::redraw";
   
   _hsline->update();
   _viewer->redraw();
+
+  sprintf(buff, "%u", _hsline->fiberNum());
+  _pathsNumOutput->value(buff);
+  sprintf(buff, "%g", _hsline->fiberVertexNum()/1000.0);
+  _vertsNumOutput->value(buff);
+  double computeTime = (_hsline->fiberAllocatedTime()
+                        + _hsline->fiberAllocatedTime()
+                        + _hsline->fiberGeometryTime()
+                        + _hsline->fiberColorTime()
+                        + _hsline->fiberStopColorTime());
+  sprintf(buff, "%g", _hsline->fiberNum()/computeTime);
+  _pathsPerSecondOutput->value(buff);
+  sprintf(buff, "%g", _hsline->fiberVertexNum()/(computeTime*1000.0));
+  _vertsPerSecondOutput->value(buff);
+  if (_hsline->tubeDo()) {
+    double tubeTime = (_hsline->tubeAllocatedTime()
+                       + _hsline->tubeGeometryTime()
+                       + _hsline->tubeColorTime());
+    sprintf(buff, "%g", _hsline->fiberNum()/tubeTime);
+    _tubesPerSecondOutput->value(buff);
+  } else {
+    _tubesPerSecondOutput->value("");
+  }
 }
 
 void
 HyperStreamlineUI::visible_cb(fltk::CheckButton *but,
                               HyperStreamlineUI *ui) {
+  char buff[AIR_STRLEN_MED];
+
+  if (!ui->_hsline->visible() && ui->_hsline->fiberNum()) {
+    sprintf(buff, "%g",
+            ui->_hsline->fiberNum()/(1000*ui->_hsline->drawTime()));
+    ui->_drawnPerSecondOutput->value(buff);
+  } else {
+    ui->_drawnPerSecondOutput->value("");
+  }
   ui->_hsline->visible(but->value());
-  ui->_viewer->redraw();
+  ui->redraw();
 }
 
 void
@@ -317,6 +412,10 @@ void
 HyperStreamlineUI::tubeDo_cb(fltk::CheckButton *but, HyperStreamlineUI *ui) {
   
   ui->_hsline->tubeDo(but->value());
+  ui->_drawnPerSecondOutput->label(but->value()
+                                   ? _deftTubesDrawnPerSecondStr
+                                   : _deftLinesDrawnPerSecondStr);
+  ui->_drawnPerSecondOutput->relayout();
   ui->redraw();
 }
 
@@ -354,7 +453,7 @@ HyperStreamlineUI::wireframe_cb(fltk::CheckButton *but,
                                 HyperStreamlineUI *ui) {
 
   ui->_hsline->wireframe(but->value());
-  ui->_viewer->redraw();
+  ui->redraw();
 }
 
 void
@@ -504,6 +603,25 @@ HyperStreamlineUI::bright_cb(fltk::ValueSlider *val, HyperStreamlineUI *ui) {
   ui->_hsline->brightness(static_cast<float>(val->value()));
   dynamic_cast<PolyProbe*>(ui->_hsline)->update(false);
   ui->redraw();
+}
+
+void
+HyperStreamlineUI::postDraw_cb(HyperStreamline *hsline,
+                               HyperStreamlineUI *ui) {
+  char buff[AIR_STRLEN_MED];
+
+  if (hsline->visible() && hsline->fiberNum()) {
+    sprintf(buff, "%g",
+            ui->_hsline->fiberNum()/(1000*ui->_hsline->drawTime()));
+    ui->_drawnPerSecondOutput->value(buff);
+    sprintf(buff, "%g",
+            ui->_hsline->fiberVertexNum()/(1000000*ui->_hsline->drawTime()));
+    ui->_vertsDrawnPerSecondOutput->value(buff);
+  } else {
+    ui->_drawnPerSecondOutput->value("");
+    ui->_vertsDrawnPerSecondOutput->value("");
+  }
+
 }
 
 } /* namespace Deft */

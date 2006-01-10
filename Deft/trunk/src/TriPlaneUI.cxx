@@ -49,7 +49,7 @@ char labelBuff[4][128] = {"All", "Axis 0", "Axis 1", "Axis 2"};
 
 TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
   // char me[]="TriPlaneUI::TriPlaneUI";
-  const unsigned int W = 400, H = 307, lineH = 20;
+  const unsigned int W=400, H=325, lineH=20;
   unsigned int winy, incy;
   const char *def;
 
@@ -189,14 +189,13 @@ TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
   winy += lineH;
   winy += 10;
 
-  _kernelMenu = new fltk::Choice(10*W/20, winy, W/5, incy=lineH, "kernel");
+  _kernelMenu = new fltk::Choice(6*W/50, winy, 8*W/50, incy=lineH, "Kernel");
   for (unsigned int ki=kernelUnknown+1; ki<kernelLast; ki++) {
     _kernelMenu->add(kernelStr[ki], this);
   }
   _kernelMenu->callback((fltk::Callback*)(kernel_cb), this);
   _kernelMenu->value(((fltk::Group*)_kernelMenu)
                      ->find(_kernelMenu->find(kernelStr[kernelTent])));
-
 }
 
 TriPlaneUI::~TriPlaneUI() {

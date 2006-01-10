@@ -36,7 +36,7 @@
 #include <fltk/CheckButton.h>
 #include <fltk/ValueInput.h>
 #include <fltk/ValueSlider.h>
-// #include <fltk/Output.h>
+#include <fltk/Output.h>
 
 namespace Deft {
 
@@ -115,6 +115,15 @@ private:
 
   fltk::ValueSlider *_brightSlider;
   static void bright_cb(fltk::ValueSlider *val, HyperStreamlineUI *ui);
+
+  fltk::Output *_pathsNumOutput;
+  fltk::Output *_vertsNumOutput;
+  fltk::Output *_pathsPerSecondOutput;
+  fltk::Output *_vertsPerSecondOutput;
+  fltk::Output *_tubesPerSecondOutput;
+  fltk::Output *_drawnPerSecondOutput;
+  fltk::Output *_vertsDrawnPerSecondOutput;
+  static void postDraw_cb(HyperStreamline *hsline, HyperStreamlineUI *ui);
 };
 
 } /* namespace Deft */

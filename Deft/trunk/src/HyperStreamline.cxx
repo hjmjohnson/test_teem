@@ -104,13 +104,14 @@ HyperStreamline::HyperStreamline(const Nrrd *nten) {
   }
 
   _seedNum = 0;
+  _fiberNum = 0;
   _fiberVertexNum = 0;
 
   // default fiber context settings
   fiberType(tenFiberTypeEvec1);
   stopConfidence(0.5);
   stopAniso(tenAniso_Cl2, 0.3);
-  step(0.5);
+  step(1);
   stopHalfStepNum(30);
   integration(tenFiberIntgMidpoint);
   NrrdKernelSpec *ksp = nrrdKernelSpecNew();
@@ -134,6 +135,14 @@ HyperStreamline::HyperStreamline(const Nrrd *nten) {
   tubeFacet(4);
   _tubeRadius = -1;
   tubeRadius(0.5);
+
+  _fiberAllocatedTime = 0;
+  _fiberGeometryTime = 0;
+  _fiberColorTime = 0;
+  _fiberStopColorTime = 0;
+  _tubeAllocatedTime = 0;
+  _tubeGeometryTime = 0;
+  _tubeColorTime = 0;
 
   // TERRIBLE: playing dangerous games with ownership of _lpldOwn...
   limnPolyDataNix(_lpldOwn);
@@ -369,6 +378,7 @@ HyperStreamline::updateFiberAllocated() {
   if (_flag[flagSeedNum]) {
     // fprintf(stderr, "!%s: hello\n", me);
     // currently allocate more when needed, and never free
+    double time0 = airTime();
     if (_seedNum > _fiber.size()) {
       size_t sizeOld = _fiber.size();
       _fiber.resize(_seedNum);
@@ -380,6 +390,7 @@ HyperStreamline::updateFiberAllocated() {
     }
     _flag[flagSeedNum] = false;
     _flag[flagFiberAllocated] = true;
+    _fiberAllocatedTime = airTime() - time0;
   }
 }
 
@@ -391,9 +402,10 @@ HyperStreamline::updateFiberGeometry() {
   if (_flag[flagFiberAllocated]
       || _flag[flagSeedPositions]
       || _flag[flagFiberContext]) {
+    double time0 = airTime();
     float *pos = static_cast<float*>(_nseeds->data);
     unsigned int vertTotalNum = 0;
-    unsigned int primNum = 0;
+    _fiberNum = 0;
     for (unsigned int seedIdx=0; seedIdx<_seedNum; seedIdx++) {
       ELL_3V_COPY(_fiber[seedIdx]->seedPos, pos + 3*seedIdx);
       if (tenFiberTrace(_tfx, _fiber[seedIdx]->nvert, 
@@ -401,8 +413,8 @@ HyperStreamline::updateFiberGeometry() {
       _fiber[seedIdx]->whyNowhere = _tfx->whyNowhere;
       if (tenFiberStopUnknown == _fiber[seedIdx]->whyNowhere) {
         /* the seed point was valid, and the fiber halves may have
-           progressed, but itis possible that the fiber has 1 vertex! */
-        _fiber[seedIdx]->primIdx = primNum++;
+           progressed, but it is possible that the fiber has 1 vertex! */
+        _fiber[seedIdx]->primIdx = _fiberNum++;
         _fiber[seedIdx]->halfLen[0] = _tfx->halfLen[0];
         _fiber[seedIdx]->halfLen[1] = _tfx->halfLen[1];
         _fiber[seedIdx]->seedIdx = _tfx->numSteps[0];
@@ -432,7 +444,7 @@ HyperStreamline::updateFiberGeometry() {
     }
     
     // allocate all polylines 
-    limnPolyDataAlloc(_lpldFibers, vertTotalNum, vertTotalNum, primNum);
+    limnPolyDataAlloc(_lpldFibers, vertTotalNum, vertTotalNum, _fiberNum);
     if (_fiberVertexNum != vertTotalNum) {
       _fiberVertexNum = vertTotalNum;
       _flag[flagFiberVertexNum] = true;
@@ -440,7 +452,7 @@ HyperStreamline::updateFiberGeometry() {
     
     // NOTE: we index through the seed points to iterate through fibers,
     // but primIdx only increments for the seedpoints that went somewhere.
-    // So, primIdx should end at primNum (calculated above) for last fiber
+    // So, primIdx should end at _fiberNum (calculated above) for last fiber
     unsigned int primIdx = 0;
     unsigned int vertTotalIdx = 0;
     // char fname[128];
@@ -471,6 +483,7 @@ HyperStreamline::updateFiberGeometry() {
     _flag[flagSeedPositions] = false;
     _flag[flagFiberContext] = false;
     _flag[flagFiberGeometry] = true;
+    _fiberGeometryTime = airTime() - time0;
   }
 }
 
@@ -512,11 +525,13 @@ HyperStreamline::updateFiberColor() {
   if (_flag[flagFiberGeometry]
       || _flag[flagColorMap]
       || _flag[flagFiberStopColorDo]) { // may have to refresh endpoint colors
+    double time0 = airTime();
     _lpldOwn = _lpldFibers;   // TERRIBLE ...
     dynamic_cast<PolyProbe*>(this)->update(true);
     _flag[flagFiberGeometry] = false;
     _flag[flagColorMap] = false;
     _flag[flagFiberColor] = true;
+    _fiberColorTime = airTime() - time0;
   }
 }
 
@@ -525,6 +540,7 @@ HyperStreamline::updateTubeAllocated() {
   // char me[]="HyperStreamline::updateTubeAllocated";
   if (_flag[flagTubeFacet]
       || _flag[flagFiberVertexNum]) {
+    double time0 = airTime();
     unsigned int tubeVertNum = 0;
     unsigned int tubeIndxNum = 0;
     for (unsigned int fi=0; fi<_lpldFibers->primNum; fi++) {
@@ -536,6 +552,7 @@ HyperStreamline::updateTubeAllocated() {
     _flag[flagTubeFacet] = false;
     _flag[flagFiberVertexNum] = false;
     _flag[flagTubeAllocated] = true;
+    _tubeAllocatedTime = airTime() - time0;
   }
 }
 
@@ -545,6 +562,7 @@ HyperStreamline::updateTubeGeometry() {
   if (_flag[flagTubeRadius]
       || _flag[flagTubeAllocated]
       || _flag[flagFiberGeometry]) {
+    double time0 = airTime();
     std::vector<double> cost(_tubeFacet);
     std::vector<double> sint(_tubeFacet);
     for (unsigned int pi=0; pi<_tubeFacet; pi++) {
@@ -714,6 +732,7 @@ HyperStreamline::updateTubeGeometry() {
     }
     _flag[flagTubeRadius] = false;
     _flag[flagTubeGeometry] = true;
+    _tubeGeometryTime = airTime() - time0;
   }
 }
 
@@ -732,6 +751,7 @@ HyperStreamline::updateFiberStopColor() {
   limnVrt *inVrt;
   if (_flag[flagFiberColor]
       || _flag[flagFiberStopColorDo]) {
+    double time0 = airTime();
     if (_stopColorDo) {
       unsigned int inVertTotalIdx = 0;
       for (unsigned int fi=0; fi<_lpldFibers->primNum; fi++) {
@@ -748,6 +768,7 @@ HyperStreamline::updateFiberStopColor() {
         }
       }
     }
+    _fiberStopColorTime = airTime() - time0;
     _flag[flagFiberColor] = false;
     _flag[flagFiberStopColorDo] = false;
     _flag[flagFiberStopColor] = true;
@@ -759,6 +780,7 @@ HyperStreamline::updateTubeColor() {
   // char me[]="HyperStreamline::updateTubeColor";
   if (_flag[flagTubeAllocated]
       || _flag[flagFiberStopColor]) {
+    double time0 = airTime();
     unsigned int inVertTotalIdx = 0;
     unsigned int outVertTotalIdx = 0;
     limnVrt *inVrt, *outVrt;
@@ -798,6 +820,7 @@ HyperStreamline::updateTubeColor() {
     }
     _flag[flagTubeAllocated] = false;
     _flag[flagTubeColor] = true;
+    _tubeColorTime = airTime() - time0;
   }
 }
 

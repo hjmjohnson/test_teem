@@ -253,4 +253,9 @@ Slider::callback() {
   return _callback;
 }
 
+void
+Slider::color(fltk::Color col) {
+  _slider->color(col);
+}
+
 }

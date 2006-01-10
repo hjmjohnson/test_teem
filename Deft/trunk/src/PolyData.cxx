@@ -36,6 +36,7 @@ PolyData::PolyData(const limnPolyData *lpld) {
 
   _lpld = lpld;
   _lpldOwn = NULL;
+  _drawTime = 0;
   _init();
 }
 
@@ -394,7 +395,6 @@ PolyData::drawImmediate() {
   if (_transformUse) {
     glPopMatrix();
   }
-
   return;
 }
 
