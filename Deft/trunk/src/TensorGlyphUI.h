@@ -41,12 +41,14 @@ class DEFT_EXPORT TensorGlyphUI {
 public:
   explicit TensorGlyphUI(TensorGlyph *tg, Viewer *vw);
   ~TensorGlyphUI();
+  void add(TensorGlyph *tg);
+  // HEY: no remove?
   void show();
   void redraw();
 
 private:
   // we do not own these 
-  TensorGlyph *_tglyph;
+  std::vector<TensorGlyph*> _tglyph;  // first is master, rest are slaves
   Viewer *_viewer;
 
   fltk::Window *_win;  

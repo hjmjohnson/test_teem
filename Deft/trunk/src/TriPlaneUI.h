@@ -87,6 +87,9 @@ private:
   fltk::ValueSlider *_alphaMaskThresholdSlider;
   static void alphaMaskThreshold_cb(fltk::ValueSlider *val, TriPlaneUI *ui);
 
+  Slider *_seedAnisoThreshSlider;
+  static void seedAnisoThresh_cb(Slider *slider, TriPlaneUI *ui);
+
   fltk::Choice *_kernelMenu;
   static void kernel_cb(fltk::Choice *menu, TriPlaneUI *ui);
 

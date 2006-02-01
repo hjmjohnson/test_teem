@@ -40,9 +40,10 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   const unsigned int W = 400, H = 307, lineH = 20;
   unsigned int winy, incy;
   const char *def;
-
-  _tglyph = tg;
-  _tglyph->postDrawCallback((Callback*)(postDraw_cb), this);
+  
+  _tglyph.resize(1);
+  _tglyph[0] = tg;
+  _tglyph[0]->postDrawCallback((Callback*)(postDraw_cb), this);
   _viewer = vw;
 
   winy = 0;
@@ -56,7 +57,7 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _visibleButton = new fltk::CheckButton(5, winy, W/4, incy=lineH,
                                          "Show Glyphs");
   _visibleButton->callback((fltk::Callback*)visible_cb, this);
-  _visibleButton->value(_tglyph->visible());
+  _visibleButton->value(_tglyph[0]->visible());
 
   // ----------------------------------
   _glyphTypeMenu = new fltk::Choice(3*W/8, winy, W/5, incy=lineH,
@@ -66,7 +67,7 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _glyphTypeMenu->add(airEnumStr(tenGlyphType, tenGlyphTypeCylinder), this);
   _glyphTypeMenu->add(airEnumStr(tenGlyphType, tenGlyphTypeSuperquad), this);
   _glyphTypeMenu->callback((fltk::Callback*)(glyphType_cb), this);
-  def = airEnumStr(tenGlyphType, _tglyph->glyphType());
+  def = airEnumStr(tenGlyphType, _tglyph[0]->glyphType());
   fltk::Group *tgroup = (fltk::Group*)(_glyphTypeMenu);
   _glyphTypeMenu->value(tgroup->find(_glyphTypeMenu->find(def)));
 
@@ -79,7 +80,7 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _glyphColorMenu->add("(Mode,FA)", this);
   _glyphColorMenu->add("White", this);
   // _glyphColorMenu->callback((fltk::Callback*)(glyphColor_cb), this);
-  // def = airEnumStr(tenGlyphType, _tglyph->glyphType());
+  // def = airEnumStr(tenGlyphType, _tglyph[0]->glyphType());
   // fltk::Group *tgroup = (fltk::Group*)(_glyphTypeMenu);
   // _glyphTypeMenu->value(tgroup->find(_glyphTypeMenu->find(def)));
 
@@ -93,7 +94,7 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _anisoTypeMenu->add(airEnumStr(tenAniso, tenAniso_Cp2), this);
   _anisoTypeMenu->add(airEnumStr(tenAniso, tenAniso_Ca2), this);
   _anisoTypeMenu->callback((fltk::Callback*)(anisoType_cb), this);
-  def = airEnumStr(tenAniso, _tglyph->anisoType());
+  def = airEnumStr(tenAniso, _tglyph[0]->anisoType());
   tgroup = (fltk::Group*)(_anisoTypeMenu);
   _anisoTypeMenu->value(tgroup->find(_anisoTypeMenu->find(def)));
 
@@ -103,7 +104,7 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _glyphResInput->callback((fltk::Callback*)(glyphRes_cb), this);
   _glyphResInput->range(2, 30);
   _glyphResInput->step(1);
-  _glyphResInput->value(_tglyph->glyphResolution());
+  _glyphResInput->value(_tglyph[0]->glyphResolution());
 
   // ----------------------------------
   _superquadSharpnessInput = new fltk::ValueInput(7*W/8, winy, W/10, lineH,
@@ -113,7 +114,7 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _superquadSharpnessInput->range(0.0, 5.0);
   _superquadSharpnessInput->step(0.1);
   _superquadSharpnessInput->linesize(0.1);
-  _superquadSharpnessInput->value(_tglyph->superquadSharpness());
+  _superquadSharpnessInput->value(_tglyph[0]->superquadSharpness());
 
   winy += incy;
   winy += 10;
@@ -122,9 +123,9 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _glyphScaleSlider = new Deft::Slider(0, winy, W, incy=40, 
                                         "Glyph Scaling");
   _glyphScaleSlider->align(fltk::ALIGN_LEFT);
-  _glyphScaleSlider->range(0.0, 2*_tglyph->glyphScale());
+  _glyphScaleSlider->range(0.0, 2*_tglyph[0]->glyphScale());
   _glyphScaleSlider->fastUpdate(1);
-  _glyphScaleSlider->value(_tglyph->glyphScale());
+  _glyphScaleSlider->value(_tglyph[0]->glyphScale());
   _glyphScaleSlider->callback((fltk::Callback*)(glyphScale_cb), this);
 
   winy += incy;
@@ -134,9 +135,9 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _anisoThreshSlider = new Deft::Slider(0, winy, W, incy=40, 
                                          "Anisotropy Threshold");
   _anisoThreshSlider->align(fltk::ALIGN_LEFT);
-  _anisoThreshSlider->range(_tglyph->anisoThreshMin(), 1.0);
+  _anisoThreshSlider->range(_tglyph[0]->anisoThreshMin(), 1.0);
   _anisoThreshSlider->fastUpdate(1);
-  _anisoThreshSlider->value(_tglyph->anisoThresh());
+  _anisoThreshSlider->value(_tglyph[0]->anisoThresh());
   _anisoThreshSlider->callback((fltk::Callback*)(anisoThresh_cb), this);
 
   winy += incy;
@@ -148,7 +149,7 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _anisoThreshMinSlider->align(fltk::ALIGN_LEFT);
   _anisoThreshMinSlider->range(0.0, 1.0);
   _anisoThreshMinSlider->fastUpdate(0);
-  _anisoThreshMinSlider->value(_tglyph->anisoThreshMin());
+  _anisoThreshMinSlider->value(_tglyph[0]->anisoThreshMin());
   _anisoThreshMinSlider->callback((fltk::Callback*)(anisoThreshMin_cb), this);
 
   winy += incy;
@@ -192,6 +193,13 @@ TensorGlyphUI::~TensorGlyphUI() {
 }
 
 void
+TensorGlyphUI::add(TensorGlyph *tg) {
+  
+  _tglyph.resize(_tglyph.size()+1);
+  _tglyph[_tglyph.size()-1] = tg;
+}
+
+void
 TensorGlyphUI::show() {
   
   _win->show();
@@ -201,12 +209,16 @@ void
 TensorGlyphUI::redraw() {
   char buff[AIR_STRLEN_MED];
   
-  _tglyph->update();
+  for (unsigned int idx=0; idx<_tglyph.size(); idx++) {
+    if (_tglyph[idx]->visible()) {
+      _tglyph[idx]->update();
+    }
+  }
   _viewer->redraw();
-  if (_tglyph->visible()) {
-    sprintf(buff, "%u", _tglyph->glyphsDrawnNum());
+  if (_tglyph[0]->visible()) {
+    sprintf(buff, "%u", _tglyph[0]->glyphsDrawnNum());
     _drawnNumOutput->value(buff);
-    sprintf(buff, "%u", _tglyph->polygonsPerGlyph());
+    sprintf(buff, "%u", _tglyph[0]->polygonsPerGlyph());
     _polygonsPerGlyphOutput->value(buff);
   } else {
     _drawnNumOutput->value("");
@@ -219,21 +231,27 @@ TensorGlyphUI::redraw() {
 void
 TensorGlyphUI::visible_cb(fltk::CheckButton *but, TensorGlyphUI *ui) {
 
-  ui->_tglyph->visible(but->value());
+  // do not set visibility for slaves
+  ui->_tglyph[0]->visible(but->value());
   ui->redraw();
 }
 
 void
 TensorGlyphUI::anisoType_cb(fltk::Choice *menu, TensorGlyphUI *ui) {
 
-  ui->_tglyph->anisoType(airEnumVal(tenAniso, menu->item()->label()));
+  for (unsigned int idx=0; idx<ui->_tglyph.size(); idx++) {
+    ui->_tglyph[idx]->anisoType(airEnumVal(tenAniso, menu->item()->label()));
+  }
   ui->redraw();
 }
 
 void
 TensorGlyphUI::glyphType_cb(fltk::Choice *menu, TensorGlyphUI *ui) {
 
-  ui->_tglyph->glyphType(airEnumVal(tenGlyphType, menu->item()->label()));
+  for (unsigned int idx=0; idx<ui->_tglyph.size(); idx++) {
+    ui->_tglyph[idx]->glyphType(airEnumVal(tenGlyphType,
+                                           menu->item()->label()));
+  }
   ui->redraw();
 }
 
@@ -243,7 +261,9 @@ TensorGlyphUI::glyphRes_cb(fltk::ValueInput *val, TensorGlyphUI *ui) {
   if ((unsigned int)val->value() < 2) {
     val->value(2);
   }
-  ui->_tglyph->glyphResolution((unsigned int)val->value());
+  for (unsigned int idx=0; idx<ui->_tglyph.size(); idx++) {
+    ui->_tglyph[idx]->glyphResolution((unsigned int)val->value());
+  }
   ui->redraw();
 }
 
@@ -251,31 +271,39 @@ void
 TensorGlyphUI::superquadSharpness_cb(fltk::ValueInput *val,
                                      TensorGlyphUI *ui) {
 
-  ui->_tglyph->superquadSharpness(val->value());
+  for (unsigned int idx=0; idx<ui->_tglyph.size(); idx++) {
+    ui->_tglyph[idx]->superquadSharpness(val->value());
+  }
   ui->redraw();
 }
 
 void
 TensorGlyphUI::glyphScale_cb(Slider *slider, TensorGlyphUI *ui) {
 
-  ui->_tglyph->glyphScale(slider->value());
+  for (unsigned int idx=0; idx<ui->_tglyph.size(); idx++) {
+    ui->_tglyph[idx]->glyphScale(slider->value());
+  }
   ui->redraw();
 }
 
 void
 TensorGlyphUI::anisoThresh_cb(Slider *slider, TensorGlyphUI *ui) {
 
-  if (slider->value() != ui->_tglyph->anisoThresh()) {
-    ui->_tglyph->anisoThresh(slider->value());
-    ui->redraw();
+  for (unsigned int idx=0; idx<ui->_tglyph.size(); idx++) {
+    if (slider->value() != ui->_tglyph[idx]->anisoThresh()) {
+      ui->_tglyph[idx]->anisoThresh(slider->value());
+    }
   }
+  ui->redraw();
 }
 
 void
 TensorGlyphUI::anisoThreshMin_cb(Slider *slider, TensorGlyphUI *ui) {
 
   ui->_anisoThreshSlider->range(slider->value(), 1);
-  ui->_tglyph->anisoThreshMin(slider->value());
+  for (unsigned int idx=0; idx<ui->_tglyph.size(); idx++) {
+    ui->_tglyph[idx]->anisoThreshMin(slider->value());
+  }
   ui->redraw();
 }
 
@@ -305,14 +333,14 @@ void
 TensorGlyphUI::_hest_cb(fltk::Button *, TensorGlyphUI *ui) {
 
   fprintf(stderr, "-g %s -gsc %g -gr %d -sh %g", 
-          airEnumStr(tenGlyphType, ui->_tglyph->glyphType()),
-          ui->_tglyph->glyphScale(),
-          ui->_tglyph->glyphResolution(),
-          ui->_tglyph->superquadSharpness());
+          airEnumStr(tenGlyphType, ui->_tglyph[0]->glyphType()),
+          ui->_tglyph[0]->glyphScale(),
+          ui->_tglyph[0]->glyphResolution(),
+          ui->_tglyph[0]->superquadSharpness());
   fprintf(stderr, " -a %s -atrm %g -atr %g \\\n", 
-          airEnumStr(tenAniso, ui->_tglyph->anisoType()),
-          ui->_tglyph->anisoThreshMin(),
-          ui->_tglyph->anisoThresh());
+          airEnumStr(tenAniso, ui->_tglyph[0]->anisoType()),
+          ui->_tglyph[0]->anisoThreshMin(),
+          ui->_tglyph[0]->anisoThresh());
 }
 
 

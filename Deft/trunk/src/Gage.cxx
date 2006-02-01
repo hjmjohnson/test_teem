@@ -70,6 +70,7 @@ void
 };
 
 Gage::Gage() {
+  _item.resize(0);
   _gctx = gageContextNew();
   _pvl = NULL;
 }
@@ -139,6 +140,15 @@ Gage::query(int item) {
   _item.resize(1);
   _item[0].resize(1);
   _item[0][0] = item;
+}
+
+bool
+Gage::querySet() const {
+  unsigned int alen = 0;
+  for (unsigned int ii=0; ii<_item.size(); ii++) {
+    alen += _item[ii].size();
+  }
+  return alen > 0;
 }
 
 unsigned int

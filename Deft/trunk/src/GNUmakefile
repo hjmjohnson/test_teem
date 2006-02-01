@@ -8,7 +8,7 @@ OBJS = Volume.o Object.o Group.o \
        PolyData.o PolyProbe.o \
        TriPlane.o TriPlaneUI.o
 
-all: Deft_dti Deft_sqd
+all: Deft_dti Deft_sqd Deft_push
 
 Cmap.o: Values.o
 PolyProbe.o: PolyData.o
@@ -43,6 +43,14 @@ Deft_dti: $(OBJS) main-dti.o
 
 Deft_sqd: $(OBJS) main-sqd.o
 	c++ -O3 -W -Wall -o $@  $(OBJS) main-sqd.o \
+	  -L/sw/lib -L/usr/local/lib -L/Users/gk/teem/darwin.32/lib \
+	  -lfltk -lfltk_gl \
+	  -framework Carbon -lGLEW -framework OpenGL -framework AGL \
+          -lteem -lpng -lz -lm -lobjc
+	/Developer/Tools/Rez -t APPL -o $@  /usr/local/src/fltk/FL/mac.r
+
+Deft_push: $(OBJS) main-push.o
+	c++ -O3 -W -Wall -o $@  $(OBJS) main-push.o \
 	  -L/sw/lib -L/usr/local/lib -L/Users/gk/teem/darwin.32/lib \
 	  -lfltk -lfltk_gl \
 	  -framework Carbon -lGLEW -framework OpenGL -framework AGL \

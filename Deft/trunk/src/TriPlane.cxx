@@ -26,7 +26,7 @@
 
 namespace Deft {
 
-TriPlane::TriPlane(const Volume *vol) : Group(3) {
+TriPlane::TriPlane(const Volume *vol) : Group(6) {
   char me[]="TriPlane::TriPlane", *err;
 
   fprintf(stderr, "%s(%u): kind = %p\n", me, __LINE__, vol->kind());
@@ -76,8 +76,20 @@ TriPlane::TriPlane(const Volume *vol) : Group(3) {
   _tractsDo[1] = false;
   _tractsDo[2] = false;
 
-  object[0] = plane[0] = new Plane(_size[1], _size[2]);
-  seedPlane[0] = new Plane(_size[1], _size[2]);
+  plane[0] = new Plane(_size[1], _size[2]);
+  seedPlane[0] = new Plane(_seedSize[1], _seedSize[2]);
+  plane[1] = new Plane(_size[0], _size[2]);
+  seedPlane[1] = new Plane(_seedSize[0], _seedSize[2]);
+  plane[2] = new Plane(_size[0], _size[1]);
+  seedPlane[2] = new Plane(_seedSize[0], _seedSize[1]);
+
+  fprintf(stderr, "!%s: plane[0,1,2] = %p %p %p\n", me, 
+          plane[0], plane[1], plane[2]);
+  fprintf(stderr, "!%s: seedPlane[0,1,2] = %p %p %p\n", me, 
+          seedPlane[0], seedPlane[1], seedPlane[2]);
+
+  plane[0]->color(true);
+  seedPlane[0]->color(false);
   plane[0]->volume(vol);
   seedPlane[0]->volume(vol);
   plane[0]->edgeUSet(_edgeW[1]);
@@ -86,8 +98,8 @@ TriPlane::TriPlane(const Volume *vol) : Group(3) {
   seedPlane[0]->edgeVSet(_edgeW[2]);
   position(0, static_cast<float>(_size[0]/2));
 
-  object[1] = plane[1] = new Plane(_size[0], _size[2]);
-  seedPlane[1] = new Plane(_size[0], _size[2]);
+  plane[1]->color(true);
+  seedPlane[1]->color(false);
   plane[1]->volume(vol);
   seedPlane[1]->volume(vol);
   plane[1]->edgeUSet(_edgeW[0]);
@@ -96,8 +108,8 @@ TriPlane::TriPlane(const Volume *vol) : Group(3) {
   seedPlane[1]->edgeVSet(_edgeW[2]);
   position(1, static_cast<float>(_size[1]/2));
 
-  object[2] = plane[2] = new Plane(_size[0], _size[1]);
-  seedPlane[2] = new Plane(_size[0], _size[1]);
+  plane[2]->color(true);
+  seedPlane[2]->color(false);
   plane[2]->volume(vol);
   seedPlane[2]->volume(vol);
   plane[2]->edgeUSet(_edgeW[0]);
@@ -110,26 +122,64 @@ TriPlane::TriPlane(const Volume *vol) : Group(3) {
   plane[1]->lightingUse(false);
   plane[2]->lightingUse(false);
 
-  seedPlane[0]->visible(false);
-  seedPlane[1]->visible(false);
-  seedPlane[2]->visible(false);
-
+  seedPlane[0]->visible(true);
+  seedPlane[1]->visible(true);
+  seedPlane[2]->visible(true);
+  seedPlane[0]->wireframe(true);
+  seedPlane[1]->wireframe(true);
+  seedPlane[2]->wireframe(true);
+  
   plane[0]->brightness(1.2);
   plane[1]->brightness(1.2);
   plane[2]->brightness(1.2);
 
+  glyph[0] = new TensorGlyph();
+  glyph[1] = new TensorGlyph();
+  glyph[2] = new TensorGlyph();
+  glyph[0]->dynamic(true);
+  glyph[1]->dynamic(true);
+  glyph[2]->dynamic(true);
+  glyph[0]->visible(_glyphsDo[0]);
+  glyph[1]->visible(_glyphsDo[1]);
+  glyph[2]->visible(_glyphsDo[2]);
+  seedPlane[0]->noColorQuery(tenGageTensor);
+  seedPlane[1]->noColorQuery(tenGageTensor);
+  seedPlane[2]->noColorQuery(tenGageTensor);
+
+  _seedTenFloat[0] = nrrdNew();
+  _seedTenFloat[1] = nrrdNew();
+  _seedTenFloat[2] = nrrdNew();
+
+  // this is what makes the main planes be the things that are drawn
+  object[0] = plane[0];
+  object[1] = plane[1];
+  object[2] = plane[2];
+
+  object[3] = glyph[0];
+  object[4] = glyph[1];
+  object[5] = glyph[2];
+  /*
+  object[3] = seedPlane[0];
+  object[4] = seedPlane[1];
+  object[5] = seedPlane[2];
+  */
 }
 
 TriPlane::~TriPlane() {
   
+  // HEY: there is stuff to go here!
+
+  nrrdNuke(_seedTenFloat[0]);
+  nrrdNuke(_seedTenFloat[1]);
+  nrrdNuke(_seedTenFloat[2]);
 }
 
 void
 TriPlane::sampling(unsigned int axisIdx, double smpl) {
 
   axisIdx = AIR_MIN(axisIdx, 2);
-  // HEY: GK worries about the index 0 at the end of the next line ???
-  _size[axisIdx] = AIR_CAST(unsigned int, pow(2.0, smpl)*_shape->size[0]);
+  _size[axisIdx] = AIR_CAST(unsigned int,
+                            pow(2.0, smpl)*_shape->size[axisIdx]);
   if (0 != axisIdx) {
     plane[0]->resolution(_size[1], _size[2]);
     plane[0]->update();
@@ -149,18 +199,19 @@ void
 TriPlane::seedSampling(unsigned int axisIdx, double smpl) {
 
   axisIdx = AIR_MIN(axisIdx, 2);
-  _seedSize[axisIdx] = AIR_CAST(unsigned int, pow(2.0, smpl)*_shape->size[0]);
+  _seedSize[axisIdx] = AIR_CAST(unsigned int,
+                                pow(2.0, smpl)*_shape->size[axisIdx]);
   if (0 != axisIdx) {
-    seedPlane[0]->resolution(_size[1], _size[2]);
+    seedPlane[0]->resolution(_seedSize[1], _seedSize[2]);
     seedPlane[0]->update();
   }
   if (1 != axisIdx) {
-    seedPlane[1]->resolution(_size[0], _size[2]);
+    seedPlane[1]->resolution(_seedSize[0], _seedSize[2]);
     seedPlane[1]->update();
   }
   if (2 != axisIdx) {
-    seedPlane[2]->resolution(_size[0], _size[1]);
-    seedPlane[1]->update();
+    seedPlane[2]->resolution(_seedSize[0], _seedSize[1]);
+    seedPlane[2]->update();
   }
   _seedSampling[axisIdx] = smpl;
 }
@@ -173,32 +224,65 @@ double TriPlane::seedSampling(unsigned int ai) const {
 }
 
 void
-TriPlane::position(unsigned int planeIdx, float pos) {
-  // char me[]="TriPlane::position";
+TriPlane::position(unsigned int pIdx, float pos) {
+  char me[]="TriPlane::position";
   float vec[3];
 
-  // fprintf(stderr, "%s(%u, %g): -------------------\n", me, planeIdx, pos);
-  planeIdx = AIR_MIN(planeIdx, 2);
-  _posI[planeIdx] = pos;
-  ELL_3V_SCALE_ADD2(vec, 1.0f, _origW, _posI[planeIdx], _interW[planeIdx]);
-  plane[planeIdx]->originSet(vec);
-  seedPlane[planeIdx]->originSet(vec);
+  fprintf(stderr, "%s(%u, %g): -------------------\n", me, pIdx, pos);
+  pIdx = AIR_MIN(pIdx, 2);
+  _posI[pIdx] = pos;
+  ELL_3V_SCALE_ADD2(vec, 1.0f, _origW, _posI[pIdx], _interW[pIdx]);
+  plane[pIdx]->originSet(vec);
+  seedPlane[pIdx]->originSet(vec);
   // HEY: this is lame: we should be able to always do simply
-  // plane[planeIdx]->update(), but there's a problem on the
+  // plane[pIdx]->update(), but there's a problem on the
   // first time through ...
-  if (plane[planeIdx]->colorQuantity()) {
-    // fprintf(stderr, "%s: colorQuantity = %d\n", me, plane[planeIdx]->colorQuantity());
-    // do vert update, probe, cmap
-    plane[planeIdx]->update();
-    seedPlane[planeIdx]->update();
-    // fprintf(stderr, "%s(%u): vert,probe,cmap updated\n", me, planeIdx);
+  fprintf(stderr, "!%s: plane[%u]->colorQuantity = %d\n", me, pIdx,
+          plane[pIdx]->colorQuantity());
+  plane[pIdx]->update();
+#if 0
+  if (plane[pIdx]->visible() && plane[pIdx]->colorQuantity()) {
+    plane[pIdx]->update(true);
   } else {
-    // fprintf(stderr, "%s: simple vert update\n", me);
-    // just do vert update
-    ((Plane*)plane[planeIdx])->update();
-    ((Plane*)seedPlane[planeIdx])->update();
-    // fprintf(stderr, "%s(%u): vert updated\n", me, planeIdx);
-  }    
+    fprintf(stderr, "!%s: plane[%u] simple vert update\n", me, pIdx);
+    plane[pIdx]->update(false);
+  }
+#endif
+  seedPlane[pIdx]->update();
+  if (_glyphsDo[pIdx]) {
+    fprintf(stderr, "!%s: seedPlane[%u] full update\n", me, pIdx);
+    this->glyphsUpdate(pIdx);
+  }
+}
+
+void
+TriPlane::glyphsUpdate(unsigned int pIdx) {
+
+  if (_glyphsDo[pIdx]) {
+    nrrdConvert(_seedTenFloat[pIdx],
+                seedPlane[pIdx]->values()[0]->nrrd(), 
+                nrrdTypeFloat);
+    glyph[pIdx]->dataSet(_seedTenFloat[pIdx]->axis[1].size,
+                         static_cast<float*>(_seedTenFloat[pIdx]->data),
+                         7,
+                         seedPlane[pIdx]->polyData()->vert[0].xyzw,
+                         // HEY: this is != sizeof(limnVrt), which means
+                         // that limnVrt is failing to be as compact as
+                         // desired.  Yet more reason to move limn to 
+                         // per-attribute arrays...
+                         &(seedPlane[pIdx]->polyData()->vert[1].xyzw[0])
+                         - &(seedPlane[pIdx]->polyData()->vert[0].xyzw[0]),
+                         NULL);
+    glyph[pIdx]->update();
+  }
+}
+
+void
+TriPlane::seedAnisoThresh(double aniso) {
+
+  this->glyph[0]->anisoThresh(aniso);
+  this->glyph[1]->anisoThresh(aniso);
+  this->glyph[2]->anisoThresh(aniso);
 }
 
 float TriPlane::position(unsigned int planeIdx) const { 
@@ -245,7 +329,14 @@ void
 TriPlane::glyphsDo(unsigned int axisIdx, bool doit) {
 
   axisIdx = AIR_MIN(axisIdx, 2);
+  bool old = _glyphsDo[axisIdx];
   _glyphsDo[axisIdx] = doit;
+  glyph[axisIdx]->visible(_glyphsDo[axisIdx]);
+  if (old != doit && doit) {
+    // this is a hack to force update of the seedPlane tensor data,
+    // since right now TriPlane lacks a full flag[] machinery
+    this->position(axisIdx, this->position(axisIdx));
+  }
 }
 
 bool
@@ -286,6 +377,9 @@ TriPlane::update() {
   seedPlane[0]->update();
   seedPlane[1]->update();
   seedPlane[2]->update();
+  this->glyphsUpdate(0);
+  this->glyphsUpdate(1);
+  this->glyphsUpdate(2);
 }
 
 

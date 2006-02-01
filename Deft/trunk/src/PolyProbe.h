@@ -50,6 +50,13 @@ public:
   void colorQuantity(int quantity);
   int colorQuantity() const { return _colorQuantity; }
 
+  // this sets an item, and says to use no colormap
+  // HEY: need something for general-length queries
+  void noColorQuery(int item);
+
+  // returns the current query
+  std::vector<std::vector<int> > query() const { return _gage->query(); }
+
   // for alpha masking, both the quantity and threshold have
   // to be indicated explicitly
   // Note: this used to take a proper gage-style std::vector<int> query,
@@ -88,7 +95,7 @@ private:
   bool _flag[DEFT_FLAG_NUM_MAX];
   bool _colorDoit, _alphaMaskDoit;
   int _colorQuantity, _alphaMaskQuantity;
-  std::vector<int> _queryColor, _queryAlphaMask;
+  std::vector<int> _queryColor, _queryNoColor, _queryAlphaMask;
   std::vector<std::vector<int> > _query;
   unsigned char _brightnessLut[256];
   void _brightnessLutSet(double br);

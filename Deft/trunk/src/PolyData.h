@@ -48,17 +48,25 @@ public:
 
   /*
   ** For now, probing with gage is a method of this class (as opposed
-  ** to others) basically because the limnPolyData is our protected
+  ** to another) basically because the limnPolyData is our protected
   ** info, and the allocation of per-vertex values are also our
-  ** business.  So, the std::vector of Values exactly mirrors the
-  ** outer vector of the Deft::Gage std::vector<std::vector<int>> item,
-  ** and the std::vector of ints inside the Value mirrors the
-  ** inner vector of the Deft::Gage item
+  ** business.
+  **
+  ** The "_values" std::vector of Values exactly mirrors the outer
+  ** vector of the Deft::Gage std::vector<std::vector<int>> item, and
+  ** the std::vector of ints inside the Value mirrors the inner vector
+  ** of the Deft::Gage item
   */
   void probe(const Gage *gage);
 
   // for learning the query from whence _values came
   std::vector<std::vector<int> > query() const;
+
+  // for learning the values themselves
+  std::vector<const Values *> values() const;
+
+  // for learning the polydata
+  const limnPolyData *polyData() const;
 
   /* 
   ** HEY: weird- the color(), alphaMask(), and RGBLut() methods are
