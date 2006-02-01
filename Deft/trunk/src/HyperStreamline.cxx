@@ -91,7 +91,7 @@ enum {
 
 HyperStreamline::HyperStreamline(const Nrrd *nten) {
   char me[]="HyperStreamline::HyperStreamline", *err;
-  
+
   _tfx = tenFiberContextNew(nten);
   if (!_tfx) {
     ERROR;
@@ -107,7 +107,14 @@ HyperStreamline::HyperStreamline(const Nrrd *nten) {
   _fiberNum = 0;
   _fiberVertexNum = 0;
 
+  // TERRIBLE: playing dangerous games with ownership of _lpldOwn...
+  limnPolyDataNix(_lpldOwn);
+  _lpldFibers = limnPolyDataNew();
+  _lpldOwn = _lpldFibers;
+  _lpldTubes = limnPolyDataNew();
+
   // default fiber context settings
+  this->color(true);
   fiberType(tenFiberTypeEvec1);
   stopConfidence(0.5);
   stopAniso(tenAniso_Cl2, 0.3);
@@ -143,12 +150,6 @@ HyperStreamline::HyperStreamline(const Nrrd *nten) {
   _tubeAllocatedTime = 0;
   _tubeGeometryTime = 0;
   _tubeColorTime = 0;
-
-  // TERRIBLE: playing dangerous games with ownership of _lpldOwn...
-  limnPolyDataNix(_lpldOwn);
-  _lpldFibers = limnPolyDataNew();
-  _lpldOwn = _lpldFibers;
-  _lpldTubes = limnPolyDataNew();
 }
 
 HyperStreamline::~HyperStreamline() {
@@ -462,10 +463,8 @@ HyperStreamline::updateFiberGeometry() {
       }
       unsigned int vertNum = _fiber[seedIdx]->nvert->axis[1].size;
       double *vert = static_cast<double*>(_fiber[seedIdx]->nvert->data);
-      /* 
-         sprintf(fname, "fiber-%03u.nrrd", seedIdx);
-         nrrdSave(fname, _fiber[seedIdx]->nvert, NULL);
-      */
+      // sprintf(fname, "fiber-%03u.nrrd", seedIdx);
+      // nrrdSave(fname, _fiber[seedIdx]->nvert, NULL);
       for (unsigned int vertIdx=0; vertIdx<vertNum; vertIdx++) {
         ELL_3V_COPY_TT(_lpldFibers->vert[vertTotalIdx].xyzw, float,
                        vert + 3*vertIdx);
@@ -489,9 +488,9 @@ HyperStreamline::updateFiberGeometry() {
 
 void
 HyperStreamline::colorQuantity(int quantity) {
-  // char me[]="HyperStreamline::colorQuantity";
+  char me[]="HyperStreamline::colorQuantity";
   if (colorQuantity() != quantity) {
-    // fprintf(stderr, "!%s: hello\n", me);
+    fprintf(stderr, "!%s: hello %d\n", me, quantity);
     dynamic_cast<PolyProbe*>(this)->colorQuantity(quantity);
     _flag[flagColorMap] = true;
   }

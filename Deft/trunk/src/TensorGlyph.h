@@ -50,43 +50,48 @@ public:
                const float *posData, unsigned int posStride,
                float measurementFrame[9]);
   void dynamic(bool dyn);
-  bool dynamic();
+  bool dynamic() const { return _dynamic; }
   void anisoType(int aniso);
-  int anisoType();
+  int anisoType() const { return _anisoType; }
   void maskThresh(double maskThresh);
-  double maskThresh();
+  double maskThresh() const { return _maskThresh; }
   void clampEval(double clamp);
-  double clampEval();
+  double clampEval() const { return _clampEval; }
   void clampEvalUse(bool clampUse);
-  bool clampEvalUse();
+  bool clampEvalUse() const { return _clampEvalUse; }
   void skipNegativeEigenvalues(bool skip);
-  bool skipNegativeEigenvalues();
+  bool skipNegativeEigenvalues() const { return _skipNegEval; }
   void anisoThreshMin(double anisoThreshMin);
-  double anisoThreshMin();
+  double anisoThreshMin() const { return _anisoThreshMin; }
   void anisoThresh(double anisoThresh);
-  double anisoThresh();
+  double anisoThresh() const { return _anisoThresh; }
   void rgbParmSet(int aniso, unsigned int evec,
                   double maxSat, double isoGray,
                   double gamma, double modulate);
   // void cmapSet(Nrrd *rmap, int aniso, int anisoSat);
   void glyphType(int glyphType);
-  int glyphType();
+  int glyphType() const { return _glyphType; }
   void cleanEdge(bool cleanEdge);
-  bool cleanEdge();
+  bool cleanEdge() const { return _cleanEdge; }
   void superquadSharpness(double sharpness);
-  double superquadSharpness();
+  double superquadSharpness() const { return _superquadSharpness; }
   void glyphResolution(unsigned int res);
-  unsigned int glyphResolution();
+  unsigned int glyphResolution() const { return _glyphRes; }
   void barycentricResolution(unsigned int res);
-  unsigned int barycentricResolution();
+  unsigned int barycentricResolution() const { return _baryRes; }
   void glyphScale(double scale);
-  double glyphScale();
+  double glyphScale() const { return _glyphScale; }
+  
+  // have to learn from another glyph instance, and not the UI,
+  // or else the objects would depend on the UI
+  // HEY: isn't there some other C++ idiomatic way of expressing this?
+  void parmCopy(TensorGlyph *src);
 
   void update();
   void drawImmediate();
-  unsigned int glyphsDrawnNum();
+  unsigned int glyphsDrawnNum() const { return _glyphsDrawnNum; }
   unsigned int glyphPositionsGet(Nrrd *npos);
-  unsigned int polygonsPerGlyph();
+  unsigned int polygonsPerGlyph() const { return _polygonsPerGlyph; }
   void boundsGet(float min[3], float max[3]) const;
 
 private:

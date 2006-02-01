@@ -223,10 +223,18 @@ main(int argc, char **argv) {
   // shouldn't doing so be optional?
   triplane->alphaMaskQuantity(Deft::alphaMaskQuantityConfidence);
   triplane->visible(false);
+  scene->groupAdd(triplane);
+
+  // HEY, WRONG: totally wrong place to be doing this
+  triplane->glyph[0]->parmCopy(glyph);
+  triplane->glyph[1]->parmCopy(glyph);
+  triplane->glyph[2]->parmCopy(glyph);
+  glyphUI->add(triplane->glyph[0]);
+  glyphUI->add(triplane->glyph[1]);
+  glyphUI->add(triplane->glyph[2]);
 
   Deft::TriPlaneUI *planeUI = new Deft::TriPlaneUI(triplane, viewer);
   planeUI->show();
-  scene->groupAdd(triplane);
 
   // --------------------------------------------------
 

@@ -257,8 +257,6 @@ TensorGlyph::dynamic(bool dyn) {
   }
 }
 
-bool TensorGlyph::dynamic() { return _dynamic; }
-
 void
 TensorGlyph::anisoType(int aniso) {
 
@@ -268,8 +266,6 @@ TensorGlyph::anisoType(int aniso) {
   }
   return;
 }
-
-int TensorGlyph::anisoType() { return _anisoType; }
 
 void
 TensorGlyph::maskThresh(double maskThr) {
@@ -281,8 +277,6 @@ TensorGlyph::maskThresh(double maskThr) {
   return;
 }
 
-double TensorGlyph::maskThresh() { return _maskThresh; }
-
 void
 TensorGlyph::skipNegativeEigenvalues(bool skip) {
 
@@ -292,8 +286,6 @@ TensorGlyph::skipNegativeEigenvalues(bool skip) {
   }
   return;
 }
-
-bool TensorGlyph::skipNegativeEigenvalues() { return _skipNegEval; }
 
 void
 TensorGlyph::clampEval(double clamp) {
@@ -305,8 +297,6 @@ TensorGlyph::clampEval(double clamp) {
   return;
 }
 
-double TensorGlyph::clampEval() { return _clampEval; }
-
 void
 TensorGlyph::clampEvalUse(bool clampUse) {
 
@@ -316,8 +306,6 @@ TensorGlyph::clampEvalUse(bool clampUse) {
   }
   return;
 }
-
-bool TensorGlyph::clampEvalUse() { return _clampEvalUse; }
 
 void
 TensorGlyph::anisoThreshMin(double thrMin) {
@@ -329,13 +317,11 @@ TensorGlyph::anisoThreshMin(double thrMin) {
   return;
 }
 
-double TensorGlyph::anisoThreshMin() { return _anisoThreshMin; }
-
 void
 TensorGlyph::anisoThresh(double thr) {
   char me[]="TensorGlyph::anisoThreshSet";
 
-  if (thr < _anisoThreshMin) {
+  if (!_dynamic && thr < _anisoThreshMin) {
     fprintf(stderr, "%s: clamping aniso thresh %g to thresh min %g\n", me,
             thr, _anisoThreshMin);
     thr = _anisoThreshMin;
@@ -346,8 +332,6 @@ TensorGlyph::anisoThresh(double thr) {
   }
   return;
 }
-
-double TensorGlyph::anisoThresh() { return _anisoThresh; }
 
 void
 TensorGlyph::rgbParmSet(int aniso, unsigned int evec,
@@ -381,8 +365,6 @@ TensorGlyph::glyphType(int gtype) {
   return;
 }
 
-int TensorGlyph::glyphType() { return _glyphType; }
-
 void
 TensorGlyph::superquadSharpness(double sharpness) {
 
@@ -392,8 +374,6 @@ TensorGlyph::superquadSharpness(double sharpness) {
   }
   return;
 }
-
-double TensorGlyph::superquadSharpness() { return _superquadSharpness; }
 
 void
 TensorGlyph::glyphResolution(unsigned int res) {
@@ -405,8 +385,6 @@ TensorGlyph::glyphResolution(unsigned int res) {
   return;
 }
 
-unsigned int TensorGlyph::glyphResolution() { return _glyphRes; }
-
 void
 TensorGlyph::barycentricResolution(unsigned int res) {
 
@@ -416,8 +394,6 @@ TensorGlyph::barycentricResolution(unsigned int res) {
   }
   return;
 }
-
-unsigned int TensorGlyph::barycentricResolution() { return _baryRes; }
 
 void
 TensorGlyph::cleanEdge(bool clean) {
@@ -429,8 +405,6 @@ TensorGlyph::cleanEdge(bool clean) {
   return;
 }
 
-bool TensorGlyph::cleanEdge() { return _cleanEdge; }
-
 void
 TensorGlyph::glyphScale(double scale) {
 
@@ -441,7 +415,29 @@ TensorGlyph::glyphScale(double scale) {
   return;
 }
 
-double TensorGlyph::glyphScale() { return _glyphScale; }
+void
+TensorGlyph::parmCopy(TensorGlyph *src) {
+
+  // this->dynamic(src->dynamic());
+  this->anisoType(src->anisoType());
+  this->maskThresh(src->maskThresh());
+  this->clampEval(src->clampEval());
+  this->clampEvalUse(src->clampEvalUse());
+  this->skipNegativeEigenvalues(src->skipNegativeEigenvalues());
+  this->anisoThreshMin(src->anisoThreshMin());
+  this->anisoThresh(src->anisoThresh());
+  /*  ???
+  void rgbParmSet(int aniso, unsigned int evec,
+                  double maxSat, double isoGray,
+                  double gamma, double modulate);
+  */
+  this->glyphType(src->glyphType());
+  this->cleanEdge(src->cleanEdge());
+  this->superquadSharpness(src->superquadSharpness());
+  this->glyphResolution(src->glyphResolution());
+  this->barycentricResolution(src->barycentricResolution());
+  this->glyphScale(src->glyphScale());
+}
 
 void
 TensorGlyph::anisoCacheUpdate() {
@@ -585,19 +581,23 @@ TensorGlyph::dataBasicUpdate() {
     float eval[3], evec[9], evecT[9], quat[4];
     const float *tenMeasr;
     float *dataCache = (float*)(_nDataCache->data);
-    float *aniso = (float*)(_nAnisoCache->data);
+    float *aniso = (_dynamic
+                    ? NULL
+                    : (float*)(_nAnisoCache->data));
     float measrFrameT[9], matMeasr[9], matWorld[9], tenWorld[7];
 
     ELL_3M_TRANSPOSE(measrFrameT, _measrFrame);
-    nn = nrrdElementNumber(_nAnisoCache);
+    nn = _inDataNum;
     num = 0;
     for (idx=0; idx<nn; idx++) {
       tenMeasr = _tenData + idx*_inTenDataStride;
-      if (!( tenMeasr[0] >= _maskThresh )) {
-        continue;
-      }
-      if (!( aniso[idx] >= _anisoThreshMin )) {
-        continue;
+      if (!_dynamic) {
+        if (!( tenMeasr[0] >= _maskThresh )) {
+          continue;
+        }
+        if (!( aniso[idx] >= _anisoThreshMin )) {
+          continue;
+        }
       }
       TEN_T2M(matMeasr, tenMeasr);
       ell_3m_mul_f(matWorld, _measrFrame, matMeasr);
@@ -605,11 +605,15 @@ TensorGlyph::dataBasicUpdate() {
       tenWorld[0] = tenMeasr[0];
       TEN_M2T(tenWorld, matWorld);
       tenEigensolve_f(eval, evec, tenWorld);
-      if (_skipNegEval && eval[2] < 0) {
+      if (!_dynamic && _skipNegEval && eval[2] < 0) {
         continue;
       }
       float *dataLine = dataCache + num*DATA_IDX_NUM;
-      dataLine[ANISO_DATA_IDX] = aniso[idx];
+      if (_dynamic) {
+        dataLine[ANISO_DATA_IDX] = tenAnisoEval_f(eval, _anisoType);
+      } else {
+        dataLine[ANISO_DATA_IDX] = aniso[idx];
+      }
       dataLine[MASK_DATA_IDX] = tenWorld[0];
       dataLine[DATAIDX_DATA_IDX] = static_cast<float>(idx);
       if (_posData) {
@@ -638,7 +642,6 @@ TensorGlyph::dataBasicUpdate() {
       ELL_4V_COPY(dataLine + QUAT_DATA_IDX, quat);
       num++;
     }
-    fprintf(stderr, "!%s: _maxNum = %u; num = %u\n", me, _maxNum, num);
     flag[flagDataAllocated] = false;
     flag[flagClampEval] = false;
     flag[flagClampEvalUse] = false;
@@ -691,7 +694,7 @@ TensorGlyph::activeNumUpdate() {
   if (flag[flagAnisoThresh]
       || flag[flagDataSorted]) {
     if (_dynamic) {
-      _activeNum = 0;
+      _activeNum = _maxNum;
     } else {
       float *dataCache = (float*)(_nDataCache->data);
 
@@ -964,8 +967,6 @@ TensorGlyph::drawImmediate() {
   unsigned int *list, baryIdx;
   float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
   
-  // HEY need to implement dynamic
-
   _glyphsDrawnNum = 0;
   if (!( _nList && _nList->data && _nDataCache && _nDataCache->data )) {
     return;
@@ -988,6 +989,17 @@ TensorGlyph::drawImmediate() {
     float *eval = dataLine + EVAL_DATA_IDX;
     float *pos = dataLine + POS_DATA_IDX;
     float *quat = dataLine + QUAT_DATA_IDX;
+    if (_dynamic) {
+      if (!( dataLine[MASK_DATA_IDX] >= _maskThresh )) {
+        continue;
+      }
+      if (!( dataLine[ANISO_DATA_IDX] >= _anisoThresh )) {
+        continue;
+      }
+      if (_skipNegEval && eval[2] < 0) {
+        continue;
+      }
+    }
     float axis[3];
     float angle = ell_q_to_aa_f(axis, quat);  // not currently a bottle-neck
     baryIdx = (unsigned int)(dataLine[BARYIDX_DATA_IDX]);
@@ -1020,12 +1032,6 @@ TensorGlyph::drawImmediate() {
 }
 
 unsigned int
-TensorGlyph::glyphsDrawnNum() {
-
-  return _glyphsDrawnNum;
-}
-
-unsigned int
 TensorGlyph::glyphPositionsGet(Nrrd *npos) {
   char me[]="TensorGlyph::glyphPositionsGet", *err;
   
@@ -1045,12 +1051,6 @@ TensorGlyph::glyphPositionsGet(Nrrd *npos) {
     ELL_3V_COPY(pos + 3*ii, dataLine + POS_DATA_IDX);
   }
   return _activeNum;
-}
-
-unsigned int
-TensorGlyph::polygonsPerGlyph() {
-
-  return _polygonsPerGlyph;
 }
 
 void

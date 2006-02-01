@@ -49,7 +49,7 @@ char labelBuff[4][128] = {"All", "Axis 0", "Axis 1", "Axis 2"};
 
 TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
   // char me[]="TriPlaneUI::TriPlaneUI";
-  const unsigned int W=400, H=325, lineH=20;
+  const unsigned int W=400, H=365, lineH=20;
   unsigned int winy, incy;
   const char *def;
 
@@ -153,6 +153,17 @@ TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
     winy += 10;
   }
 
+  _seedAnisoThreshSlider = new Deft::Slider(0, winy, W, incy=40, 
+                                            "Seed Aniso Thresh");
+  _seedAnisoThreshSlider->align(fltk::ALIGN_LEFT);
+  _seedAnisoThreshSlider->range(0.0, 1.0);
+  _seedAnisoThreshSlider->fastUpdate(1);
+  _seedAnisoThreshSlider->value(_triplane->seedAnisoThresh());
+  _seedAnisoThreshSlider->callback((fltk::Callback*)(seedAnisoThresh_cb),
+                                   this);
+  winy += incy;
+  winy += 10;
+
   _alphaMaskQuantityMenu = new fltk::Choice(7*W/80, winy, W/7, lineH, "Mask");
   for (unsigned int qi=alphaMaskQuantityUnknown+1;
        qi<alphaMaskQuantityLast;
@@ -222,7 +233,9 @@ TriPlaneUI::visible_cb(fltk::CheckButton *but, TriPlaneUI *ui) {
 
   for (pli=0; ui->_visibleButton[pli] != but; pli++);
   if (!pli) {
-    ui->_triplane->visible(but->value());
+    ui->_triplane->plane[0]->visible(but->value());
+    ui->_triplane->plane[1]->visible(but->value());
+    ui->_triplane->plane[2]->visible(but->value());
     ui->_visibleButton[1]->value(but->value());
     ui->_visibleButton[2]->value(but->value());
     ui->_visibleButton[3]->value(but->value());
@@ -254,9 +267,9 @@ TriPlaneUI::glyphsDo_cb(fltk::CheckButton *but, TriPlaneUI *ui) {
 
   for (pli=0; ui->_glyphsDoButton[pli] != but; pli++);
   if (!pli) {
+    ui->_triplane->glyphsDo(0, but->value());
     ui->_triplane->glyphsDo(1, but->value());
     ui->_triplane->glyphsDo(2, but->value());
-    ui->_triplane->glyphsDo(3, but->value());
     ui->_glyphsDoButton[1]->value(but->value());
     ui->_glyphsDoButton[2]->value(but->value());
     ui->_glyphsDoButton[3]->value(but->value());
@@ -316,20 +329,28 @@ TriPlaneUI::sample_cb(fltk::ValueSlider *val, TriPlaneUI *ui) {
 }
 
 void
-TriPlaneUI::seedSample_cb(fltk::ValueSlider *val, TriPlaneUI *ui) {
+TriPlaneUI::seedSample_cb(fltk::ValueSlider *sld, TriPlaneUI *ui) {
   unsigned int pli;
 
-  for (pli=0; ui->_seedSampleSlider[pli] != val; pli++);
-  fprintf(stderr, "TriPlaneUI::seedSample_cb(%u): %g\n", pli, val->value());
+  for (pli=0; ui->_seedSampleSlider[pli] != sld; pli++);
   if (!pli) {
-    ui->_triplane->seedSampling(0, val->value());
-    ui->_triplane->seedSampling(1, val->value());
-    ui->_triplane->seedSampling(2, val->value());
-    ui->_seedSampleSlider[1]->value(val->value());
-    ui->_seedSampleSlider[2]->value(val->value());
-    ui->_seedSampleSlider[3]->value(val->value());
+    ui->_triplane->seedSampling(0, sld->value());
+    ui->_triplane->seedSampling(1, sld->value());
+    ui->_triplane->seedSampling(2, sld->value());
+    ui->_seedSampleSlider[1]->value(sld->value());
+    ui->_seedSampleSlider[2]->value(sld->value());
+    ui->_seedSampleSlider[3]->value(sld->value());
+    ui->_triplane->glyphsUpdate(0);
+    ui->_triplane->glyphsUpdate(1);
+    ui->_triplane->glyphsUpdate(2);
   } else {
-    ui->_triplane->seedSampling(pli-1, val->value());
+    ui->_triplane->seedSampling(pli-1, sld->value());
+    // HEY: this logic doesn't belong here! 
+    for (unsigned int ii=0; ii<=2; ii++) {
+      if (ii != pli-1) {
+        ui->_triplane->glyphsUpdate(ii);
+      }
+    }
   }
   ui->redraw();
 }
@@ -363,6 +384,13 @@ TriPlaneUI::colorQuantity_cb(fltk::Choice *menu, TriPlaneUI *ui) {
     ui->_triplane->plane[pli-1]->colorQuantity(qi);
     ui->_triplane->plane[pli-1]->update();
   }
+  ui->redraw();
+}
+
+void
+TriPlaneUI::seedAnisoThresh_cb(Slider *slider, TriPlaneUI *ui) {
+
+  ui->_triplane->seedAnisoThresh(slider->value());
   ui->redraw();
 }
 

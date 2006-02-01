@@ -82,6 +82,24 @@ PolyData::query() const {
   return ret;
 }
 
+std::vector<const Values *>
+PolyData::values() const {
+  std::vector<const Values *> ret;
+
+  ret.resize(_values.size());
+  for (unsigned int qi=0; qi<ret.size(); qi++) {
+    ret[qi] = _values[qi];
+  }
+  return ret;
+}
+
+const limnPolyData *
+PolyData::polyData() const {
+
+  return _lpldOwn ? _lpldOwn : _lpld;
+}
+
+
 void
 PolyData::probe(const Gage *gage) {
   // char me[]="PolyData::probe";
@@ -160,7 +178,8 @@ PolyData::color(unsigned int valuesIdx, const Cmap *cmap) {
     return;
   }
   /*
-  std::cerr << me << ": _values.size() = " << _values.size() << std::endl;
+  fprintf(stderr, "!%s: _values.size() = %u\n", me,
+          (unsigned int)(_values.size()));
   fprintf(stderr, "%s: _nrgba->data = %p, _values[%u] = %p\n", me,
           _nrgba->data, valuesIdx, _values[valuesIdx]);
   */
@@ -185,7 +204,7 @@ PolyData::alphaMask(unsigned int valuesIdx, double thresh) {
   char me[]="PolyData::alphaMask";
 
   if (!_lpldOwn) {
-    fprintf(stderr, "%s: can't modify data that is not owned\n", me);
+    fprintf(stderr, "%s(%p): can't modify data that is not owned\n", me, this);
     return;
   }
   if (!_values[valuesIdx]->length()) {
@@ -232,7 +251,7 @@ PolyData::RGBLut(unsigned char lut[256]) {
   char me[]="PolyData::RGBLut";
 
   if (!_lpldOwn) {
-    fprintf(stderr, "%s: can't modify data that is not owned\n", me);
+    fprintf(stderr, "%s(%p): can't modify data that is not owned\n", me, this);
     return;
   }
   unsigned char *rgba = AIR_CAST(unsigned char*, _nrgba->data);
@@ -255,7 +274,7 @@ PolyData::RGBSet(unsigned char R, unsigned char G, unsigned char B) {
   char me[]="PolyData::RGBSet";
 
   if (!_lpldOwn) {
-    fprintf(stderr, "%s: can't modify data that is not owned\n", me);
+    fprintf(stderr, "%s(%p): can't modify data that is not owned\n", me, this);
     return;
   }
 
@@ -271,7 +290,7 @@ PolyData::RGBSet(unsigned char R, unsigned char G, unsigned char B) {
 
 void
 PolyData::drawImmediate() {
-  char me[]="PolyData::drawImmediate";
+  // char me[]="PolyData::drawImmediate";
   limnVrt *vrt;
   const limnPolyData *lpld = this->lpld();
   int glWhat;

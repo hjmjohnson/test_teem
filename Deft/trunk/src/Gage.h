@@ -57,6 +57,7 @@ public:
   void query(std::vector<int> item);
   void query(int item);
   std::vector<std::vector<int> > query() const { return _item; }
+  bool querySet() const;
 
   // learning about answer lengths
   unsigned int answerLength(int item) const;

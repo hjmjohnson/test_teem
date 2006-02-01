@@ -202,7 +202,6 @@ Plane::update() {
     _flag[flagOrigin] = false;
     _flag[flagEdge] = false;
   }
-  // have to always call this update, in case there were gage changes...
   ret |= dynamic_cast<PolyProbe*>(this)->update(ret);
   if (ret) {
     changed(); // have to explicitly indicate vertex data change

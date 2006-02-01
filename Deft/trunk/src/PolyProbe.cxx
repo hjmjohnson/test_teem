@@ -31,6 +31,7 @@ enum {
   flagGeometry,
   flagVolume,
   flagQueryColor,
+  flagQueryNoColor,
   flagQueryAlphaMask,
   flagQuery,
   flagGageKernels,
@@ -64,10 +65,11 @@ PolyProbe::PolyProbe() : PolyData(limnPolyDataNew(), true) {
   _query.resize(2);
   _colorQuantity = colorQuantityUnknown;
   _queryColor.clear();
+  _queryNoColor.clear();
   _queryAlphaMask.clear();
   _brightnessLutSet(_brightness = 1);
-  _colorDoit = true;
-  _alphaMaskDoit = true;
+  _colorDoit = false;
+  _alphaMaskDoit = false;
   _alphaMaskQuantity = alphaMaskQuantityUnknown;
   _alphaMaskThreshold = 0.5;
   _nlut2D = nrrdNew();
@@ -125,6 +127,17 @@ PolyProbe::color(bool doit) {
             _flag[flagQueryColor] ? "true" : "false");
     */
   }
+}
+
+void
+PolyProbe::noColorQuery(int item) {
+  
+  // HEY: need a way to test no change from last time
+  
+  this->color(false);
+  _queryNoColor.resize(1);
+  _queryNoColor[0] = item;
+  _flag[flagQueryNoColor] = true;
 }
 
 void
@@ -357,25 +370,26 @@ PolyProbe::evecRgbMaxSat(double maxSat) {
 
 bool
 PolyProbe::update(bool geometryChanged) {
-  // char me[]="PolyProbe::update";
+  char me[]="PolyProbe::update";
   bool ret = false;
 
   // well this is weird- the polyprobe class has to be told when its
   // own polydata has changed?  Shouldn't it have a way of knowing?
   _flag[flagGeometry] = geometryChanged;
   /*
-  fprintf(stderr, "!%s: _flag[flagQueryColor,flagQueryAlphaMask] = %s,%s\n",
-          me, _flag[flagQueryColor] ? "true" : "false",
+  fprintf(stderr, "!%s(%p): _flag[QueryColor,QueryAlphaMask] = %s,%s\n",
+          me, this, _flag[flagQueryColor] ? "true" : "false",
           _flag[flagQueryAlphaMask] ? "true" : "false");
   fprintf(stderr, "!%s: _colorDoit = %s\n", 
           me, _colorDoit ? "true" : "false");
   */
   if (_flag[flagQueryColor]
+      || _flag[flagQueryNoColor]
       || _flag[flagQueryAlphaMask]) {
     if (_colorDoit) {
       _query[0] = _queryColor;
     } else {
-      _query[0].clear();
+      _query[0] = _queryNoColor;
     }
     if (_alphaMaskDoit) {
       _query[1] = _queryAlphaMask;
@@ -384,38 +398,57 @@ PolyProbe::update(bool geometryChanged) {
     }
     _gage->query(_query);
     _flag[flagQueryColor] = false;
+    _flag[flagQueryNoColor] = false;
     _flag[flagQueryAlphaMask] = false;
     _flag[flagQuery] = true;
   }
   /*
-  std::cerr << me << ": _flag[flagQuery] = " << _flag[flagQuery] << std::endl;
-  std::cerr << me << ": _flag[flagGageKernels] = " << _flag[flagGageKernels] << std::endl;
+  fprintf(stderr, "!%s: _flag[flagQuery], _flag[flagGageKernels] = %s %s\n",me,
+          _flag[flagQuery] ? "true" : "false",
+          _flag[flagGageKernels] ? "true" : "false");
   */
   if (_flag[flagQuery]
       || _flag[flagGageKernels]) {
     /*
-    fprintf(stderr, "%s: _gage->update(): %u %u %u\n", me, 
+    fprintf(stderr, "!%s: _gage->update(): %u %u %u\n", me, 
             (unsigned int)(_gage->query().size()),
             (unsigned int)(_gage->query()[0].size()),
             (unsigned int)(_gage->query()[1].size()));
     */
-    _gage->update();
+    if (_gage->querySet()) {
+      _gage->update();
+    }
     _flag[flagQuery] = false;
     _flag[flagGageKernels] = false;
     _flag[flagGageContext] = true;
   }
+  /*
+  fprintf(stderr, "!%s(%s,%s): visible = %s, _queryNoColor.size() = %u\n", me,
+          _flag[flagGeometry] ? "true" : "false",
+          _flag[flagGageContext] ? "true" : "false",
+          this->visible() ? "true" : "false",
+          (unsigned int)(_queryNoColor.size()));
+  */
   if (_flag[flagGeometry]
       || _flag[flagGageContext]) {
-    if (_gage->query().size()) {
+    if (_gage->querySet()) {
       probe(_gage);
     }
     _flag[flagGeometry] = false;
     _flag[flagGageContext] = false;
     _flag[flagProbedValues] = true;
   }
+  /*
+  fprintf(stderr, "!%s(%s,%s): _colorDoit = %s, _gage->query().size() = %u\n",
+          me,
+          _flag[flagProbedValues] ? "true" : "false",
+          _flag[flagColorMap] ? "true" : "false",
+          _colorDoit ? "true" : "false",
+          (unsigned int)(_gage->query().size()));
+  */
   if (_flag[flagProbedValues]
       || _flag[flagColorMap]) {
-    if (_colorDoit && _gage->query().size()) {
+    if (_gage->querySet()) {
       dynamic_cast<PolyData*>(this)->color(0, _cmap);
     }
     _flag[flagProbedValues] = false;
