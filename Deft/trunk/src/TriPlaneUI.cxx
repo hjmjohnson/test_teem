@@ -228,7 +228,7 @@ TriPlaneUI::redraw() {
 
 void
 TriPlaneUI::visible_cb(fltk::CheckButton *but, TriPlaneUI *ui) {
-  char me[]="TriPlaneUI::visible_cb";
+  // char me[]="TriPlaneUI::visible_cb";
   unsigned int pli;
 
   for (pli=0; ui->_visibleButton[pli] != but; pli++);
@@ -345,12 +345,12 @@ TriPlaneUI::seedSample_cb(fltk::ValueSlider *sld, TriPlaneUI *ui) {
     ui->_triplane->seedSampling(0, sld->value());
     ui->_triplane->seedSampling(1, sld->value());
     ui->_triplane->seedSampling(2, sld->value());
-    ui->_seedSampleSlider[1]->value(sld->value());
-    ui->_seedSampleSlider[2]->value(sld->value());
-    ui->_seedSampleSlider[3]->value(sld->value());
     ui->_triplane->glyphsUpdate(0);
     ui->_triplane->glyphsUpdate(1);
     ui->_triplane->glyphsUpdate(2);
+    ui->_seedSampleSlider[1]->value(sld->value());
+    ui->_seedSampleSlider[2]->value(sld->value());
+    ui->_seedSampleSlider[3]->value(sld->value());
   } else {
     ui->_triplane->seedSampling(pli-1, sld->value());
     // HEY: this logic doesn't belong here! 

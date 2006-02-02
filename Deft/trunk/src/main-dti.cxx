@@ -244,14 +244,25 @@ main(int argc, char **argv) {
 
   // --------------------------------------------------
 
-  Deft::HyperStreamline *hsline = new Deft::HyperStreamline(nin);
+  Deft::HyperStreamline *hsline = new Deft::HyperStreamline(vol);
   hsline->lightingUse(false);
   hsline->colorQuantity(Deft::colorQuantityRgbLinear);
   hsline->alphaMask(false);
   Deft::HyperStreamlineUI *hslineUI = 
     new Deft::HyperStreamlineUI(hsline, glyph, triplane, viewer);
-  hslineUI->show();
   scene->objectAdd(hsline);
+
+  // HEY, WRONG: totally wrong place to be doing this
+  /*
+  triplane->hsline[0]->parmCopy(hsline);
+  triplane->hsline[1]->parmCopy(hsline);
+  triplane->hsline[2]->parmCopy(hsline);
+  hslineUI->add(triplane->hsline[0]);
+  hslineUI->add(triplane->hsline[1]);
+  hslineUI->add(triplane->hsline[2]);
+  */
+
+  hslineUI->show();
 
   // --------------------------------------------------
 

@@ -423,7 +423,7 @@ TensorGlyph::parmCopy(TensorGlyph *src) {
   this->clampEvalUse(src->clampEvalUse());
   this->skipNegativeEigenvalues(src->skipNegativeEigenvalues());
   this->anisoThreshMin(src->anisoThreshMin());
-  this->anisoThresh(src->anisoThresh());
+  this->anisoThresh(src->anisoThresh()); // this is okay for initial set-up
   /*  ???
   void rgbParmSet(int aniso, unsigned int evec,
                   double maxSat, double isoGray,

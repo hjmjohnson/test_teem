@@ -57,7 +57,7 @@ public:
 
 class DEFT_EXPORT HyperStreamline : public PolyProbe {
 public: 
-  explicit HyperStreamline(const Nrrd *nten);
+  explicit HyperStreamline(const Volume *vol);
   ~HyperStreamline();
 
   void fiberType(int type);
@@ -106,6 +106,10 @@ public:
   bool stopRadiusDo() const {
     return (_tfx->stop & (1 << tenFiberStopRadius)) ? true : false; }
 
+  void stopStubDo(bool doit);
+  bool stopStubDo() const {
+    return (_tfx->stop & (1 << tenFiberStopStub)) ? true : false; }
+
   void stopReset();
 
   // HEY: try again taking a std::vector<float[3]>: failed because
@@ -133,6 +137,11 @@ public:
   void tubeRadius(double radius);
   double tubeRadius() const { return _tubeRadius; }
 
+  // have to learn from another hsline instance, and not the UI,
+  // or else the objects would depend on the UI
+  // HEY: isn't there some other C++ idiomatic way of expressing this?
+  void parmCopy(HyperStreamline *src);
+
   void update();
 
   unsigned int seedNum() const { return _seedNum; }
@@ -149,7 +158,7 @@ private:
   bool _flag[128], _tubeDo, _stopColorDo;
   Nrrd *_nseeds;
   unsigned int _seedNum, _fiberNum,  _fiberVertexNum, _tubeFacet, _endFacet;
-  Volume *_volume;
+  const Volume *_volume;
   double _tubeRadius, _brightness,
     _fiberAllocatedTime,
     _fiberGeometryTime,

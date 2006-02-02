@@ -49,12 +49,13 @@ public:
   explicit HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
                              TriPlane *tplane, Viewer *vw);
   ~HyperStreamlineUI();
+  void add(HyperStreamline *hs);  // HEY: no remove?
   void show();
   void redraw();
 
 private:
   // we do not own any of these
-  HyperStreamline *_hsline;
+  std::vector<HyperStreamline *> _hsline; // first is master, rest are slaves
   TensorGlyph *_tglyph;
   TriPlane *_tplane;
   Viewer *_viewer;

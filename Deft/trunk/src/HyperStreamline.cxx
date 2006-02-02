@@ -89,10 +89,10 @@ enum {
   fprintf(stderr, "%s: trouble modifying the fiber context:\n%s\n", me, err); \
   free(err); exit(1)
 
-HyperStreamline::HyperStreamline(const Nrrd *nten) {
+HyperStreamline::HyperStreamline(const Volume *vol) {
   char me[]="HyperStreamline::HyperStreamline", *err;
 
-  _tfx = tenFiberContextNew(nten);
+  _tfx = tenFiberContextNew(vol->nrrd());
   if (!_tfx) {
     ERROR;
   }
@@ -120,11 +120,12 @@ HyperStreamline::HyperStreamline(const Nrrd *nten) {
   stopAniso(tenAniso_Cl2, 0.3);
   step(1);
   stopHalfStepNum(30);
+  stopStubDo(true);
   integration(tenFiberIntgMidpoint);
   NrrdKernelSpec *ksp = nrrdKernelSpecNew();
   nrrdKernelSpecParse(ksp, "tent");
   kernel(ksp);
-  _volume = new Volume(tenGageKind, nten);
+  _volume = vol;
   volume(_volume);
   dynamic_cast<PolyProbe*>(this)->kernel(gageKernel00, ksp);
   _nseeds = nrrdNew();
@@ -164,6 +165,8 @@ HyperStreamline::~HyperStreamline() {
   limnPolyDataNix(_lpldTubes);
   nrrdNuke(_nseeds);
 }
+
+
 
 void
 HyperStreamline::seedsSet(const Nrrd *nseeds) {
@@ -325,6 +328,19 @@ HyperStreamline::stopRadiusDo(bool doit) {
 }
 
 void
+HyperStreamline::stopStubDo(bool doit) {
+  bool olddo = (_tfx->stop & (1 << tenFiberStopStub)) ? true : false;
+  if (olddo != doit) {
+    if (doit) {
+      tenFiberStopOn(_tfx, tenFiberStopStub); 
+    } else {
+      tenFiberStopOff(_tfx, tenFiberStopStub); 
+    }
+    _flag[flagFiberParm] = true;
+  }
+}
+
+void
 HyperStreamline::stopReset() { tenFiberStopReset(_tfx); }
 
 void
@@ -359,6 +375,43 @@ HyperStreamline::tubeRadius(double radius) {
     _tubeRadius = radius;
     _flag[flagTubeRadius] = true;
   }
+}
+
+void
+HyperStreamline::parmCopy(HyperStreamline *src) {
+
+  this->fiberType(src->fiberType());
+  this->integration(src->integration());
+  this->step(src->step());
+  this->puncture(src->puncture());
+  this->kernel(src->kernel());
+
+  // have to do it in this order, because setting the stop parameters
+  // implicitly turns on that stop method
+  this->stopAniso(src->stopAnisoType(), src->stopAnisoThreshold());
+  this->stopAnisoDo(src->stopAnisoDo());
+
+  this->stopHalfLength(src->stopHalfLength());
+  this->stopHalfLengthDo(src->stopHalfLengthDo());
+
+  this->stopHalfStepNum(src->stopHalfStepNum());
+  this->stopHalfStepNumDo(src->stopHalfStepNumDo());
+
+  this->stopConfidence(src->stopConfidence());
+  this->stopConfidenceDo(src->stopConfidenceDo());
+
+  this->stopRadius(src->stopRadius());
+  this->stopRadiusDo(src->stopRadiusDo());
+
+  this->stopStubDo(src->stopStubDo());
+
+  this->colorQuantity(src->colorQuantity());
+  this->brightness(src->brightness());
+  this->tubeDo(src->tubeDo());
+  this->stopColorDo(src->stopColorDo());
+  this->tubeFacet(src->tubeFacet());
+  this->tubeRadius(src->tubeRadius());
+
 }
 
 void
@@ -413,8 +466,6 @@ HyperStreamline::updateFiberGeometry() {
                         _fiber[seedIdx]->seedPos)) { ERROR; }
       _fiber[seedIdx]->whyNowhere = _tfx->whyNowhere;
       if (tenFiberStopUnknown == _fiber[seedIdx]->whyNowhere) {
-        /* the seed point was valid, and the fiber halves may have
-           progressed, but it is possible that the fiber has 1 vertex! */
         _fiber[seedIdx]->primIdx = _fiberNum++;
         _fiber[seedIdx]->halfLen[0] = _tfx->halfLen[0];
         _fiber[seedIdx]->halfLen[1] = _tfx->halfLen[1];
@@ -424,15 +475,16 @@ HyperStreamline::updateFiberGeometry() {
         vertTotalNum += _fiber[seedIdx]->nvert->axis[1].size;
         _fiber[seedIdx]->whyStop[0] = _tfx->whyStop[0];
         _fiber[seedIdx]->whyStop[1] = _tfx->whyStop[1];
-        /*
+
         fprintf(stderr, "%s: fiber[%u] len = %u (%s/%s)\n", me,
                 seedIdx,
                 AIR_CAST(unsigned int, _fiber[seedIdx]->nvert->axis[1].size),
                 airEnumStr(tenFiberStop, _fiber[seedIdx]->whyStop[0]),
                 airEnumStr(tenFiberStop, _fiber[seedIdx]->whyStop[1]));
-        */
+
       } else {
-        /* the seed point was a non-starter- things died immediately */
+        /* the seed point was a non-starter- either things died
+           immediately, or it was a stub fiber */
         _fiber[seedIdx]->primIdx = AIR_CAST(unsigned int, -1);
         _fiber[seedIdx]->halfLen[0] = AIR_NAN;
         _fiber[seedIdx]->halfLen[1] = AIR_NAN;
@@ -458,9 +510,11 @@ HyperStreamline::updateFiberGeometry() {
     unsigned int vertTotalIdx = 0;
     // char fname[128];
     for (unsigned int seedIdx=0; seedIdx<_seedNum; seedIdx++) {
-      if (tenFiberStopUnknown != _fiber[seedIdx]->whyNowhere) {
+
+      if (!(tenFiberStopUnknown == _fiber[seedIdx]->whyNowhere)) {
         continue; // no primIdx++
       }
+
       unsigned int vertNum = _fiber[seedIdx]->nvert->axis[1].size;
       double *vert = static_cast<double*>(_fiber[seedIdx]->nvert->data);
       // sprintf(fname, "fiber-%03u.nrrd", seedIdx);
@@ -737,7 +791,7 @@ HyperStreamline::updateTubeGeometry() {
 
 void
 HyperStreamline::updateFiberStopColor() {
-  // char me[]="HyperStreamline::updateFiberStopColor";
+  char me[]="HyperStreamline::updateFiberStopColor";
   unsigned char stcol[TEN_FIBER_STOP_MAX+1][4] = {
     {  0,   0,   0, 255},  /* tenFiberStopUnknown */
     {255, 255, 255, 255},  /* tenFiberStopAniso: white */
@@ -762,6 +816,10 @@ HyperStreamline::updateFiberStopColor() {
             ELL_4V_COPY(inVrt->rgba, stcol[_fiber[fi]->whyStop[0]]);
           } else if (inVertIdx == _lpldFibers->vcnt[fi]-1) {
             ELL_4V_COPY(inVrt->rgba, stcol[_fiber[fi]->whyStop[1]]);
+          }
+          if (inVrt->rgba[3] < 255) {
+            fprintf(stderr, "!%s: fi=%u, inVertIdx=%u, inVertTotalIdx=%u\n", 
+                    me, fi, inVertIdx, inVertTotalIdx);
           }
           inVertTotalIdx++;
         }
