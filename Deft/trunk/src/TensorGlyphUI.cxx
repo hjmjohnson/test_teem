@@ -289,11 +289,12 @@ TensorGlyphUI::glyphScale_cb(Slider *slider, TensorGlyphUI *ui) {
 void
 TensorGlyphUI::anisoThresh_cb(Slider *slider, TensorGlyphUI *ui) {
 
-  for (unsigned int idx=0; idx<ui->_tglyph.size(); idx++) {
-    if (slider->value() != ui->_tglyph[idx]->anisoThresh()) {
-      ui->_tglyph[idx]->anisoThresh(slider->value());
-    }
+  // For the time being, this applies ONLY to the first attached tglyph
+  // for (unsigned int idx=0; idx<ui->_tglyph.size(); idx++) {
+  if (slider->value() != ui->_tglyph[0]->anisoThresh()) {
+    ui->_tglyph[0]->anisoThresh(slider->value());
   }
+  // }
   ui->redraw();
 }
 

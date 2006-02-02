@@ -26,7 +26,7 @@
 
 namespace Deft {
 
-TriPlane::TriPlane(const Volume *vol) : Group(6) {
+TriPlane::TriPlane(const Volume *vol) : Group(9) {
   char me[]="TriPlane::TriPlane", *err;
 
   fprintf(stderr, "%s(%u): kind = %p\n", me, __LINE__, vol->kind());
@@ -156,25 +156,33 @@ TriPlane::TriPlane(const Volume *vol) : Group(6) {
   _seedTenFloat[1] = nrrdNew();
   _seedTenFloat[2] = nrrdNew();
 
-  // this is what makes the main planes be the things that are drawn
+  hsline[0] = new HyperStreamline(vol);
+  hsline[1] = new HyperStreamline(vol);
+  hsline[2] = new HyperStreamline(vol);
+  hsline[0]->visible(false);
+  hsline[1]->visible(false);
+  hsline[2]->visible(false);
+
+  // this is what determines what will be drawn 
   object[0] = plane[0];
   object[1] = plane[1];
   object[2] = plane[2];
-
   object[3] = glyph[0];
   object[4] = glyph[1];
   object[5] = glyph[2];
-  /*
-  object[3] = seedPlane[0];
-  object[4] = seedPlane[1];
-  object[5] = seedPlane[2];
-  */
+  object[6] = hsline[0];
+  object[7] = hsline[1];
+  object[8] = hsline[2];
+
 }
 
 TriPlane::~TriPlane() {
   
   // HEY: there is stuff to go here!
 
+  delete hsline[0];
+  delete hsline[1];
+  delete hsline[2];
   nrrdNuke(_seedTenFloat[0]);
   nrrdNuke(_seedTenFloat[1]);
   nrrdNuke(_seedTenFloat[2]);
@@ -231,7 +239,7 @@ double TriPlane::seedSampling(unsigned int ai) const {
 
 void
 TriPlane::position(unsigned int pIdx, float pos) {
-  char me[]="TriPlane::position";
+  // char me[]="TriPlane::position";
   float vec[3];
 
   /*

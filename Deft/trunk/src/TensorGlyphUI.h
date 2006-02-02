@@ -41,8 +41,7 @@ class DEFT_EXPORT TensorGlyphUI {
 public:
   explicit TensorGlyphUI(TensorGlyph *tg, Viewer *vw);
   ~TensorGlyphUI();
-  void add(TensorGlyph *tg);
-  // HEY: no remove?
+  void add(TensorGlyph *tg); // HEY: no remove?
   void show();
   void redraw();
 

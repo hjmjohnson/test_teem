@@ -29,6 +29,7 @@
 #include "Group.h"
 #include "Plane.h"
 #include "TensorGlyph.h"
+#include "HyperStreamline.h"
 
 namespace Deft {
 
@@ -85,6 +86,7 @@ public:
   Plane *plane[3];       /* the planes we draw */
   Plane *seedPlane[3];   /* the planes used for seed points */
   TensorGlyph *glyph[3];
+  HyperStreamline *hsline[3];
 
   ~TriPlane();
 private:
