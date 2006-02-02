@@ -65,7 +65,7 @@ enum {
 };
 
 TensorGlyph::TensorGlyph() {
-  char me[]="TensorGlyph::TensorGlyph";
+  // char me[]="TensorGlyph::TensorGlyph";
 
   // initialize all the flags
   for (unsigned int fi=flagUnknown+1; fi<flagLast; fi++) {
@@ -121,8 +121,6 @@ TensorGlyph::TensorGlyph() {
   _nAnisoCache = nrrdNew();
   _nDataCache = nrrdNew();
   _nList = nrrdNew();
-  fprintf(stderr, "!%s: \n ------\n nList = %p/%p, nDataCache = %p/%p\n", me,
-          _nList, _nList->data, _nDataCache, _nDataCache->data);
 }
 
 void
@@ -566,7 +564,7 @@ TensorGlyph::dataAllocatedUpdate() {
 
 void
 TensorGlyph::dataBasicUpdate() {
-  char me[]="TensorGlyph::dataBasicUpdate";
+  // char me[]="TensorGlyph::dataBasicUpdate";
 
   this->dataAllocatedUpdate();
 
