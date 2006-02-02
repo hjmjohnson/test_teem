@@ -370,19 +370,19 @@ PolyProbe::evecRgbMaxSat(double maxSat) {
 
 bool
 PolyProbe::update(bool geometryChanged) {
-  char me[]="PolyProbe::update";
+  // char me[]="PolyProbe::update";
   bool ret = false;
 
   // well this is weird- the polyprobe class has to be told when its
   // own polydata has changed?  Shouldn't it have a way of knowing?
   _flag[flagGeometry] = geometryChanged;
-
+  /*
   fprintf(stderr, "!%s(%p): _flag[QueryColor,QueryAlphaMask] = %s,%s\n",
           me, this, _flag[flagQueryColor] ? "true" : "false",
           _flag[flagQueryAlphaMask] ? "true" : "false");
   fprintf(stderr, "!%s: _colorDoit = %s\n", 
           me, _colorDoit ? "true" : "false");
-
+  */
   if (_flag[flagQueryColor]
       || _flag[flagQueryNoColor]
       || _flag[flagQueryAlphaMask]) {
@@ -402,19 +402,19 @@ PolyProbe::update(bool geometryChanged) {
     _flag[flagQueryAlphaMask] = false;
     _flag[flagQuery] = true;
   }
-
+  /*
   fprintf(stderr, "!%s: _flag[flagQuery], _flag[flagGageKernels] = %s %s\n",me,
           _flag[flagQuery] ? "true" : "false",
           _flag[flagGageKernels] ? "true" : "false");
-
+  */
   if (_flag[flagQuery]
       || _flag[flagGageKernels]) {
-
+    /*
     fprintf(stderr, "!%s: _gage->update(): %u %u %u\n", me, 
             (unsigned int)(_gage->query().size()),
             (unsigned int)(_gage->query()[0].size()),
             (unsigned int)(_gage->query()[1].size()));
-
+    */
     if (_gage->querySet()) { // NOT ->query().size()
       _gage->update();
     }
@@ -422,13 +422,13 @@ PolyProbe::update(bool geometryChanged) {
     _flag[flagGageKernels] = false;
     _flag[flagGageContext] = true;
   }
-
+  /*
   fprintf(stderr, "!%s(%s,%s): visible = %s, _queryNoColor.size() = %u\n", me,
           _flag[flagGeometry] ? "true" : "false",
           _flag[flagGageContext] ? "true" : "false",
           this->visible() ? "true" : "false",
           (unsigned int)(_queryNoColor.size()));
-
+  */
   if (_flag[flagGeometry]
       || _flag[flagGageContext]) {
     if (_gage->querySet()) { // NOT ->query().size()

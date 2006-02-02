@@ -234,8 +234,10 @@ TriPlane::position(unsigned int pIdx, float pos) {
   char me[]="TriPlane::position";
   float vec[3];
 
+  /*
   fprintf(stderr, "!%s(%u, %g): visible %s -------------------\n",
           me, pIdx, pos, plane[pIdx]->visible() ? "true" : "false");
+  */
   pIdx = AIR_MIN(pIdx, 2);
   _posI[pIdx] = pos;
   ELL_3V_SCALE_ADD2(vec, 1.0f, _origW, _posI[pIdx], _interW[pIdx]);
