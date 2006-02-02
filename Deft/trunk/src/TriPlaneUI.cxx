@@ -228,7 +228,7 @@ TriPlaneUI::redraw() {
 
 void
 TriPlaneUI::visible_cb(fltk::CheckButton *but, TriPlaneUI *ui) {
-  // char me[]="TriPlaneUI::visible_cb";
+  char me[]="TriPlaneUI::visible_cb";
   unsigned int pli;
 
   for (pli=0; ui->_visibleButton[pli] != but; pli++);
@@ -236,11 +236,19 @@ TriPlaneUI::visible_cb(fltk::CheckButton *but, TriPlaneUI *ui) {
     ui->_triplane->plane[0]->visible(but->value());
     ui->_triplane->plane[1]->visible(but->value());
     ui->_triplane->plane[2]->visible(but->value());
+    if (but->value()) {
+      ui->_triplane->position(0, ui->_triplane->position(0));
+      ui->_triplane->position(1, ui->_triplane->position(1));
+      ui->_triplane->position(2, ui->_triplane->position(2));
+    }
     ui->_visibleButton[1]->value(but->value());
     ui->_visibleButton[2]->value(but->value());
     ui->_visibleButton[3]->value(but->value());
   } else {
     ui->_triplane->plane[pli-1]->visible(but->value());
+    if (but->value()) {
+      ui->_triplane->position(pli-1, ui->_triplane->position(pli-1));
+    }
   }
   ui->redraw();
 }

@@ -56,7 +56,7 @@ main(int argc, char **argv) {
     anisoThresh, anisoThreshMin, glyphScale, sqdSharp;
   int size[2], ortho, rght, atrel, glyphType, glyphFacetRes;
   Nrrd *_nin=NULL, *nin=NULL, *nPos=NULL;
-  int aniso;
+  int aniso, camkeep;
 
   mop = airMopNew();
 
@@ -113,6 +113,10 @@ main(int argc, char **argv) {
              "normally: near, image, and far plane distances are relative to "
              "the *at* point, instead of the eye point, "
              "but for Deft, this is always true");
+  hestOptAdd(&hopt, "usecam", NULL, airTypeInt, 0, 0, &camkeep, NULL,
+             "hack: by default, a camera reset is done to put the volume "
+             "in view. Use this to say that the camera specified by the "
+             "flags above should be preserved and used");
   hestOptAdd(&hopt, "bg", "R G B", airTypeFloat, 3, 3, bg, "0.1 0.12 0.14",
              "background color");
   hestOptAdd(&hopt, "is", "su sv", airTypeInt, 2, 2, size, "640 480",
@@ -159,10 +163,12 @@ main(int argc, char **argv) {
   Deft::Scene *scene = new Deft::Scene();
   scene->bgColor(bg[0], bg[1], bg[2]);
   Deft::Viewer *viewer = new Deft::Viewer(scene, size[0], size[1]);
-  viewer->camera(fr[0], fr[1], fr[2],
-                 at[0], at[1], at[2],
-                 up[0], up[1], up[2],
-                 fovy, neer, faar);
+  if (camkeep) {
+    viewer->camera(fr[0], fr[1], fr[2],
+                   at[0], at[1], at[2],
+                   up[0], up[1], up[2],
+                   fovy, neer, faar);
+  }
   viewer->resizable(viewer);
   viewer->end();
   char *fakeArgv[2] = {"Deft", NULL};
@@ -252,6 +258,10 @@ main(int argc, char **argv) {
   fltk::flush();
   glyph->update();
   fltk::redraw();
+
+  if (!camkeep) {
+    viewer->cameraReset();
+  }
 
   /*
   fprintf(stderr, "%s: glGetString(GL_VERSION) = %s\n",

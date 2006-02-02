@@ -488,9 +488,9 @@ HyperStreamline::updateFiberGeometry() {
 
 void
 HyperStreamline::colorQuantity(int quantity) {
-  char me[]="HyperStreamline::colorQuantity";
+  // char me[]="HyperStreamline::colorQuantity";
   if (colorQuantity() != quantity) {
-    fprintf(stderr, "!%s: hello %d\n", me, quantity);
+    // fprintf(stderr, "!%s: hello %d\n", me, quantity);
     dynamic_cast<PolyProbe*>(this)->colorQuantity(quantity);
     _flag[flagColorMap] = true;
   }

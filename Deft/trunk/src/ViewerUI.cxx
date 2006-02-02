@@ -244,7 +244,7 @@ ViewerUI::postDraw_cb(Viewer *, ViewerUI *ui) {
 void
 ViewerUI::_hest_cb(fltk::Button *, ViewerUI *ui) {
 
-  printf("-fr %g %g %g -at %g %g %g \\\n"
+  printf("-usecam -fr %g %g %g -at %g %g %g \\\n"
          "-up %g %g %g -rh %s-ar \\\n"
          "-dn %g -df %g -fv %g -is %d %d \\\n",
          ui->_viewer->fromX(),

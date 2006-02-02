@@ -85,19 +85,35 @@ Plane::resolutionV() {
 
 void
 Plane::origin(float X, float Y, float Z) {
-  
+
+  /*
+  ** This, ultimately was the trick to make the following sequence work:
+  ** 1) turn on probe plane
+  ** 2) turn off plane
+  ** 3) move plane
+  ** 4) turn on plane
+  ** The problem was that vertex colors were wrong, because probing had
+  ** not been done with the move (because its faster to not do the 
+  ** probing/coloring when the plane is not visible).  So, the solution
+  ** was to restate the slice position when its made visible, to trigger
+  ** probe and color, but that only works when flagOrigin is always turned
+  ** on, without the cleverness that detects when the origin is unchanged.
   if (_origin[0] != X
       || _origin[1] != Y
       || _origin[2] != Z) {
-    ELL_3V_SET(_origin, X, Y, Z);
-    _flag[flagOrigin] = true;
+  */
+  ELL_3V_SET(_origin, X, Y, Z);
+  _flag[flagOrigin] = true;
+  /*
   }
+  */
 }
 
 void
 Plane::originSet(const float vec[3]) {
 
   origin(vec[0], vec[1], vec[2]);
+  _flag[flagOrigin] = true;
 }
 
 void
@@ -153,8 +169,8 @@ Plane::edgeVGet(float vec[3]) {
 }
 
 bool
-Plane::update() {
-  // char me[]="Plane::update";
+Plane::updateGeometry() {
+  // char me[]="Plane::updateGeometry";
   bool ret = false;
 
   /*
@@ -202,6 +218,18 @@ Plane::update() {
     _flag[flagOrigin] = false;
     _flag[flagEdge] = false;
   }
+  if (ret) {
+    changed(); // have to explicitly indicate vertex data change
+  }
+  return ret;
+}
+
+bool
+Plane::update() {
+  char me[]="Plane::update";
+
+  bool ret = this->updateGeometry();
+  fprintf(stderr, "!%s: updating, ret %s\n", me, ret ? "true" : "false");
   ret |= dynamic_cast<PolyProbe*>(this)->update(ret);
   if (ret) {
     changed(); // have to explicitly indicate vertex data change
