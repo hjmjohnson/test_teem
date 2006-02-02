@@ -88,12 +88,12 @@ public:
   void parmCopy(TensorGlyph *src);
 
   void update();
-  void drawImmediate();
   unsigned int glyphsDrawnNum() const { return _glyphsDrawnNum; }
-  unsigned int glyphPositionsGet(Nrrd *npos);
   unsigned int polygonsPerGlyph() const { return _polygonsPerGlyph; }
-  void boundsGet(float min[3], float max[3]) const;
 
+  void drawImmediate();
+  unsigned int verticesGet(Nrrd *npos);
+  void boundsGet(float min[3], float max[3]) const;
 private:
   // flags for managing state
   bool flag[DEFT_FLAG_NUM_MAX];

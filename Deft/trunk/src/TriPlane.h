@@ -79,6 +79,7 @@ public:
 
   // HEY: this is a symptom of some stupidity
   void glyphsUpdate(unsigned int planeIdx);
+  void tractsUpdate(unsigned int planeIdx);
 
   void seedAnisoThresh(double aniso);
   double seedAnisoThresh() const { return glyph[0]->anisoThresh(); }
@@ -94,7 +95,7 @@ private:
   float _origW[3], _interW[3][3], _edgeW[3][3], _posI[3];
   double _sampling[3], _seedSampling[3];
   bool _glyphsDo[3], _tractsDo[3];
-  Nrrd *_seedTenFloat[3];
+  Nrrd *_seedTenFloat[3], *_seedPosFloat[3];
   unsigned int _size[3], _seedSize[3];  // # samples along each axis
 };
 

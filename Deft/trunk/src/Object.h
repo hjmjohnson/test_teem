@@ -55,6 +55,9 @@ public:
   void draw();
   virtual void drawImmediate()=0;
 
+  // for getting vertices out of things
+  virtual unsigned int verticesGet(Nrrd *npos)=0;
+
   // For learning the axis-aligned bounding box
   virtual void boundsGet(float min[3], float max[3]) const =0;
 

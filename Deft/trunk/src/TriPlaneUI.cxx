@@ -348,6 +348,9 @@ TriPlaneUI::seedSample_cb(fltk::ValueSlider *sld, TriPlaneUI *ui) {
     ui->_triplane->glyphsUpdate(0);
     ui->_triplane->glyphsUpdate(1);
     ui->_triplane->glyphsUpdate(2);
+    ui->_triplane->tractsUpdate(0);
+    ui->_triplane->tractsUpdate(1);
+    ui->_triplane->tractsUpdate(2);
     ui->_seedSampleSlider[1]->value(sld->value());
     ui->_seedSampleSlider[2]->value(sld->value());
     ui->_seedSampleSlider[3]->value(sld->value());
@@ -357,6 +360,7 @@ TriPlaneUI::seedSample_cb(fltk::ValueSlider *sld, TriPlaneUI *ui) {
     for (unsigned int ii=0; ii<=2; ii++) {
       if (ii != pli-1) {
         ui->_triplane->glyphsUpdate(ii);
+        ui->_triplane->tractsUpdate(ii);
       }
     }
   }

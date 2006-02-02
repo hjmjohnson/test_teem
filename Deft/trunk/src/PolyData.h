@@ -85,6 +85,7 @@ public:
   void RGBSet(unsigned char R, unsigned char G, unsigned char B);
   
   void drawImmediate();
+  unsigned int verticesGet(Nrrd *npos);
   void boundsGet(float min[3], float max[3]) const;
 protected:
   void _init();
