@@ -249,18 +249,16 @@ main(int argc, char **argv) {
   hsline->colorQuantity(Deft::colorQuantityRgbLinear);
   hsline->alphaMask(false);
   Deft::HyperStreamlineUI *hslineUI = 
-    new Deft::HyperStreamlineUI(hsline, glyph, triplane, viewer);
+    new Deft::HyperStreamlineUI(hsline, glyph, viewer);
   scene->objectAdd(hsline);
 
   // HEY, WRONG: totally wrong place to be doing this
-  /*
   triplane->hsline[0]->parmCopy(hsline);
   triplane->hsline[1]->parmCopy(hsline);
   triplane->hsline[2]->parmCopy(hsline);
   hslineUI->add(triplane->hsline[0]);
   hslineUI->add(triplane->hsline[1]);
   hslineUI->add(triplane->hsline[2]);
-  */
 
   hslineUI->show();
 

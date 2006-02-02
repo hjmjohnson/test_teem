@@ -1045,8 +1045,8 @@ TensorGlyph::drawImmediate() {
 }
 
 unsigned int
-TensorGlyph::glyphPositionsGet(Nrrd *npos) {
-  char me[]="TensorGlyph::glyphPositionsGet", *err;
+TensorGlyph::verticesGet(Nrrd *npos) {
+  char me[]="TensorGlyph::verticesGet", *err;
   
   if (0 == _activeNum) {
     return 0;

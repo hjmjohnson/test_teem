@@ -167,8 +167,6 @@ HyperStreamline::~HyperStreamline() {
   nrrdNuke(_nseeds);
 }
 
-
-
 void
 HyperStreamline::seedsSet(const Nrrd *nseeds) {
   char me[]="HyperStreamline::seedsSet";
@@ -176,7 +174,7 @@ HyperStreamline::seedsSet(const Nrrd *nseeds) {
 
   // HEY: type and size checks!
   if (nseeds) {
-    if (nrrdCopy(_nseeds, nseeds)) {
+    if (nrrdConvert(_nseeds, nseeds, nrrdTypeFloat)) {
       fprintf(stderr, "%s: trouble:\n%s", me, biffGetDone(NRRD));
     }
     seedNumNew = _nseeds->axis[1].size;
@@ -476,8 +474,9 @@ HyperStreamline::updateFiberGeometry() {
         vertTotalNum += _fiber[seedIdx]->nvert->axis[1].size;
         _fiber[seedIdx]->whyStop[0] = _tfx->whyStop[0];
         _fiber[seedIdx]->whyStop[1] = _tfx->whyStop[1];
-	/*
-        fprintf(stderr, "!%s: A fiber[%u/%u] (%p) len = %u (%u+%u) (%s/%s)\n", me,
+        /*
+        fprintf(stderr, "!%s: A fiber[%u/%u] (%p) "
+                "len = %u (%u+%u) (%s/%s)\n", me,
                 seedIdx, _fiber[seedIdx]->primIdx,
 		&(_fiber[seedIdx]),
                 AIR_CAST(unsigned int, _fiber[seedIdx]->nvert->axis[1].size),
@@ -485,7 +484,7 @@ HyperStreamline::updateFiberGeometry() {
 		_fiber[seedIdx]->stepNum[1],
                 airEnumStr(tenFiberStop, _fiber[seedIdx]->whyStop[0]),
                 airEnumStr(tenFiberStop, _fiber[seedIdx]->whyStop[1]));
-	*/
+        */
       } else {
         /* the seed point was a non-starter- either things died
            immediately, or it was a stub fiber */
@@ -804,7 +803,7 @@ HyperStreamline::updateTubeGeometry() {
 
 void
 HyperStreamline::updateFiberStopColor() {
-  char me[]="HyperStreamline::updateFiberStopColor";
+  // char me[]="HyperStreamline::updateFiberStopColor";
   unsigned char stcol[TEN_FIBER_STOP_MAX+1][4] = {
     {  0,   0,   0, 255},  /* tenFiberStopUnknown */
     {255, 255, 255, 255},  /* tenFiberStopAniso: white */
@@ -813,7 +812,7 @@ HyperStreamline::updateFiberStopColor() {
     {128, 128, 128, 255},  /* tenFiberStopConfidence: gray */
     {255, 255,   0, 255},  /* tenFiberStopRadius: yellow */
     {  0,   0,   0, 255},  /* tenFiberStopBounds: black */
-    { 25, 255,  25, 255}}; /* tenFiberStopStub: wacky color, should never see */
+    { 25, 255,  25, 255}}; /* tenFiberStopStub: wacky, should never see */
 
   limnVrt *inVrt;
   if (_flag[flagFiberColor]

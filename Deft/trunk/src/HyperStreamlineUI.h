@@ -28,9 +28,8 @@
 #include "Deft.h"
 #include "Viewer.h"
 #include "Slider.h"
-#include "TensorGlyph.h"
-#include "TriPlane.h"
 #include "HyperStreamline.h"
+#include "Object.h"
 
 #include <fltk/Choice.h>
 #include <fltk/CheckButton.h>
@@ -46,8 +45,7 @@ public:
   // and TriPlane here; HyperStreamline and TensorGlyph really need to
   // be peers, with some kind of bi-directional communication mediated
   // by a higher authority
-  explicit HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
-                             TriPlane *tplane, Viewer *vw);
+  explicit HyperStreamlineUI(HyperStreamline *hs, Object *vobj, Viewer *vw);
   ~HyperStreamlineUI();
   void add(HyperStreamline *hs);  // HEY: no remove?
   void show();
@@ -56,8 +54,7 @@ public:
 private:
   // we do not own any of these
   std::vector<HyperStreamline *> _hsline; // first is master, rest are slaves
-  TensorGlyph *_tglyph;
-  TriPlane *_tplane;
+  Object *_vobj;
   Viewer *_viewer;
 
   NrrdKernelSpec *_ksp; // owned

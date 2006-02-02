@@ -82,12 +82,12 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
   seedPlane[1] = new Plane(_seedSize[0], _seedSize[2]);
   plane[2] = new Plane(_size[0], _size[1]);
   seedPlane[2] = new Plane(_seedSize[0], _seedSize[1]);
-
+  /*
   fprintf(stderr, "!%s: plane[0,1,2] = %p %p %p\n", me, 
           plane[0], plane[1], plane[2]);
   fprintf(stderr, "!%s: seedPlane[0,1,2] = %p %p %p\n", me, 
           seedPlane[0], seedPlane[1], seedPlane[2]);
-
+  */
   plane[0]->color(true);
   plane[0]->alphaMask(true);
   seedPlane[0]->color(false);
@@ -155,10 +155,16 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
   _seedTenFloat[0] = nrrdNew();
   _seedTenFloat[1] = nrrdNew();
   _seedTenFloat[2] = nrrdNew();
+  _seedPosFloat[0] = nrrdNew();
+  _seedPosFloat[1] = nrrdNew();
+  _seedPosFloat[2] = nrrdNew();
 
   hsline[0] = new HyperStreamline(vol);
   hsline[1] = new HyperStreamline(vol);
   hsline[2] = new HyperStreamline(vol);
+  hsline[0]->visible(_tractsDo[0]);
+  hsline[1]->visible(_tractsDo[1]);
+  hsline[2]->visible(_tractsDo[2]);
   hsline[0]->visible(false);
   hsline[1]->visible(false);
   hsline[2]->visible(false);
@@ -186,6 +192,9 @@ TriPlane::~TriPlane() {
   nrrdNuke(_seedTenFloat[0]);
   nrrdNuke(_seedTenFloat[1]);
   nrrdNuke(_seedTenFloat[2]);
+  nrrdNuke(_seedPosFloat[0]);
+  nrrdNuke(_seedPosFloat[1]);
+  nrrdNuke(_seedPosFloat[2]);
 }
 
 void
@@ -256,9 +265,10 @@ TriPlane::position(unsigned int pIdx, float pos) {
   } else {
     plane[pIdx]->updateGeometry();
   }
-  if (_glyphsDo[pIdx]) {
+  if (_glyphsDo[pIdx] || _tractsDo[pIdx]) {
     seedPlane[pIdx]->update();
     this->glyphsUpdate(pIdx);
+    this->tractsUpdate(pIdx);
   } else {
     seedPlane[pIdx]->updateGeometry();
   }
@@ -283,6 +293,16 @@ TriPlane::glyphsUpdate(unsigned int pIdx) {
                          - &(seedPlane[pIdx]->polyData()->vert[0].xyzw[0]),
                          NULL);
     glyph[pIdx]->update();
+  }
+}
+
+void
+TriPlane::tractsUpdate(unsigned int pIdx) {
+
+  if (_tractsDo[pIdx]) {
+    seedPlane[pIdx]->verticesGet(_seedPosFloat[pIdx]);
+    hsline[pIdx]->seedsSet(_seedPosFloat[pIdx]);
+    hsline[pIdx]->update();
   }
 }
 
@@ -348,18 +368,24 @@ TriPlane::glyphsDo(unsigned int axisIdx, bool doit) {
   }
 }
 
+void
+TriPlane::tractsDo(unsigned int axisIdx, bool doit) {
+
+  axisIdx = AIR_MIN(axisIdx, 2);
+  bool old = _tractsDo[axisIdx];
+  _tractsDo[axisIdx] = doit;
+  hsline[axisIdx]->visible(_tractsDo[axisIdx]);
+  if (old != doit && doit) {
+    // this is a hack to force update (see above) ...
+    this->position(axisIdx, this->position(axisIdx));
+  }
+}
+
 bool
 TriPlane::glyphsDo(unsigned int axisIdx) const {
 
   axisIdx = AIR_MIN(axisIdx, 2);
   return _glyphsDo[axisIdx];
-}
-
-void
-TriPlane::tractsDo(unsigned int axisIdx, bool doit) {
-
-  axisIdx = AIR_MIN(axisIdx, 2);
-  _tractsDo[axisIdx] = doit;
 }
 
 bool
@@ -389,6 +415,9 @@ TriPlane::update() {
   this->glyphsUpdate(0);
   this->glyphsUpdate(1);
   this->glyphsUpdate(2);
+  this->tractsUpdate(0);
+  this->tractsUpdate(1);
+  this->tractsUpdate(2);
 }
 
 

@@ -102,7 +102,7 @@ PolyData::polyData() const {
 
 void
 PolyData::probe(const Gage *gage) {
-  char me[]="PolyData::probe";
+  // char me[]="PolyData::probe";
   double *answerAll[128]; // TERRIBLE
   unsigned int length[128]; // TERRIBLE
   /*
@@ -286,6 +286,25 @@ PolyData::RGBSet(unsigned char R, unsigned char G, unsigned char B) {
     vert[I].rgba[2] = B;
   }
   changed();
+}
+
+unsigned int
+PolyData::verticesGet(Nrrd *npos) {
+  char me[]="PolyData::verticesGet", *err;
+  
+  const limnPolyData *lpld = this->polyData();
+  if (nrrdMaybeAlloc_va(npos, nrrdTypeFloat, 2,
+                        AIR_CAST(size_t, 3),
+                        AIR_CAST(size_t, lpld->vertNum))) {
+    err = biffGetDone(NRRD);
+    fprintf(stderr, "%s: couldn't allocate output:\n%s", me, err);
+    free(err); exit(1);
+  }
+  float *pos = static_cast<float *>(npos->data);
+  for (unsigned int ii=0; ii<lpld->vertNum; ii++) {
+    ELL_34V_HOMOG(pos + 3*ii, lpld->vert[ii].xyzw);
+  }
+  return lpld->vertNum;
 }
 
 void

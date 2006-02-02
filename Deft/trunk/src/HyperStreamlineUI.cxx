@@ -49,8 +49,8 @@ const char kernelStr[6][128] = {
 char _deftTubesDrawnPerSecondStr[]="K tubes / second drawn";
 char _deftLinesDrawnPerSecondStr[]="K polylines / second drawn";
 
-HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
-                                     TriPlane *tplane, Viewer *vw) {
+HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, Object *vobj,
+                                     Viewer *vw) {
   // char me[]="HyperStreamlineUI::HyperStreamlineUI";
   const unsigned int W=400, H=549, lineH=20;
   unsigned int winy=0, incy=0;
@@ -59,8 +59,7 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, TensorGlyph *tglyph,
 
   _hsline.resize(1);
   _hsline[0] = hs;
-  _tglyph = tglyph;
-  _tplane = tplane;
+  _vobj = vobj;
   _viewer = vw;
   _hsline[0]->postDrawCallback((Callback*)(postDraw_cb), this);
 
@@ -331,6 +330,13 @@ HyperStreamlineUI::~HyperStreamlineUI() {
 }
 
 void
+HyperStreamlineUI::add(HyperStreamline *hs) {
+  
+  _hsline.resize(_hsline.size()+1);
+  _hsline[_hsline.size()-1] = hs;
+}
+
+void
 HyperStreamlineUI::show() {
   
   _win->show();
@@ -341,7 +347,9 @@ HyperStreamlineUI::redraw() {
   char buff[AIR_STRLEN_MED];
   // char me[]="HyperStreamlineUI::redraw";
   
-  _hsline[0]->update();
+  for (unsigned int idx=0; idx<_hsline.size(); idx++) {
+    _hsline[idx]->update();
+  }
   _viewer->redraw();
 
   sprintf(buff, "%u", _hsline[0]->fiberNum());
@@ -393,14 +401,16 @@ HyperStreamlineUI::colorQuantity_cb(fltk::Choice *menu,
   for (qi=colorQuantityUnknown+1;
        strcmp(menu->item()->label(), airEnumStr(colorQuantity, qi));
        qi++);
-  ui->_hsline[0]->colorQuantity(qi);
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->colorQuantity(qi);
+  }
   ui->redraw();
 }
 
 void
 HyperStreamlineUI::compute_cb(fltk::Button *, HyperStreamlineUI *ui) {
 
-  unsigned int seedNum = ui->_tglyph->glyphPositionsGet(ui->_nseeds);
+  unsigned int seedNum = ui->_vobj->verticesGet(ui->_nseeds);
   if (seedNum) {
     ui->_hsline[0]->seedsSet(ui->_nseeds);
   } else {
@@ -412,7 +422,9 @@ HyperStreamlineUI::compute_cb(fltk::Button *, HyperStreamlineUI *ui) {
 void
 HyperStreamlineUI::tubeDo_cb(fltk::CheckButton *but, HyperStreamlineUI *ui) {
   
-  ui->_hsline[0]->tubeDo(but->value());
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->tubeDo(but->value());
+  }
   ui->_drawnPerSecondOutput->label(but->value()
                                    ? _deftTubesDrawnPerSecondStr
                                    : _deftLinesDrawnPerSecondStr);
@@ -425,12 +437,14 @@ HyperStreamlineUI::tubeFacet_cb(fltk::ValueInput *val, HyperStreamlineUI *ui) {
   char me[]="HyperStreamlineUI::tubeFacet_cb";
   fprintf(stderr, "%s(%u): %g\n", me,
           ui->_hsline[0]->tubeFacet(), val->value());
-  if (val->value() - ui->_hsline[0]->tubeFacet() <= 1.0) {
-    ui->_hsline[0]->tubeFacet(static_cast<unsigned int>(val->value()));
-  } else {
-    fprintf(stderr, "%s(%u): denying rapid increase to %g\n",
-            me, ui->_hsline[0]->tubeFacet(), val->value());
-    val->value(ui->_hsline[0]->tubeFacet());
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    if (val->value() - ui->_hsline[idx]->tubeFacet() <= 1.0) {
+      ui->_hsline[idx]->tubeFacet(static_cast<unsigned int>(val->value()));
+    } else {
+      fprintf(stderr, "%s(%u): denying rapid increase to %g\n",
+              me, ui->_hsline[idx]->tubeFacet(), val->value());
+      val->value(ui->_hsline[idx]->tubeFacet());
+    }
   }
   ui->redraw();
 }
@@ -438,7 +452,9 @@ HyperStreamlineUI::tubeFacet_cb(fltk::ValueInput *val, HyperStreamlineUI *ui) {
 void 
 HyperStreamlineUI::tubeRadius_cb(Slider *slider, HyperStreamlineUI *ui) {
 
-  ui->_hsline[0]->tubeRadius(slider->value());
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->tubeRadius(slider->value());
+  }
   ui->redraw();
 }
 
@@ -446,7 +462,9 @@ void
 HyperStreamlineUI::stopColorDo_cb(fltk::CheckButton *but,
                                   HyperStreamlineUI *ui) {
 
-  ui->_hsline[0]->stopColorDo(but->value());
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->stopColorDo(but->value());
+  }
   ui->redraw();
 }
 
@@ -454,7 +472,9 @@ void
 HyperStreamlineUI::wireframe_cb(fltk::CheckButton *but,
                                 HyperStreamlineUI *ui) {
 
-  ui->_hsline[0]->wireframe(but->value());
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->wireframe(but->value());
+  }
   ui->redraw();
 }
 
@@ -466,58 +486,65 @@ HyperStreamlineUI::color_cb(fltk::CheckButton *but,
           "HyperStreamlineUI::color_cb", 
           but->value() ? "true" : "false");
   */
-  ui->_hsline[0]->color(but->value());
-  dynamic_cast<PolyProbe*>(ui->_hsline[0])->update(false);
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->color(but->value());
+    dynamic_cast<PolyProbe*>(ui->_hsline[idx])->update(false);
+  }
   ui->redraw();
 }
 
 void 
 HyperStreamlineUI::step_cb(Slider *slider, HyperStreamlineUI *ui) {
 
-  ui->_hsline[0]->step(slider->value());
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->step(slider->value());
+  }
   ui->redraw();
 }
 
 void
 HyperStreamlineUI::_stopButton_cb(fltk::CheckButton *but,
                                   HyperStreamlineUI *ui) {
-  if (but == ui->_stopAnisoButton) {
-    if (but->value()) {
-      int aniso = airEnumVal(tenAniso,
-                             ui->_stopAnisoTypeMenu->item()->label());
-      ui->_hsline[0]->stopAniso(aniso,
-                             ui->_stopAnisoThresholdSlider->value());
-      ui->_hsline[0]->stopAnisoDo(true);
-    } else {
-      ui->_hsline[0]->stopAnisoDo(false);
-    }
-  } else if (but == ui->_stopHalfLengthButton) {
-    if (but->value()) {
-      ui->_hsline[0]->stopHalfLength(ui->_stopHalfLengthSlider->value());
-      ui->_hsline[0]->stopHalfLengthDo(true);
-    } else {
-      ui->_hsline[0]->stopHalfLengthDo(false);
-    }
-  } else if (but == ui->_stopHalfStepNumButton) {
-    if (but->value()) {
-      ui->_hsline[0]->stopHalfStepNum(ui->_stopHalfStepNumSlider->valueUI());
-      ui->_hsline[0]->stopHalfStepNumDo(true);
-    } else {
-      ui->_hsline[0]->stopHalfStepNumDo(false);
-    }
-  } else if (but == ui->_stopConfidenceButton) {
-    if (but->value()) {
-      ui->_hsline[0]->stopConfidence(ui->_stopConfidenceSlider->value());
-      ui->_hsline[0]->stopConfidenceDo(true);
-    } else {
-      ui->_hsline[0]->stopConfidenceDo(false);
-    }
-  } else if (but == ui->_stopRadiusButton) {
-    if (but->value()) {
-      ui->_hsline[0]->stopRadius(ui->_stopRadiusSlider->value());
-      ui->_hsline[0]->stopRadiusDo(true);
-    } else {
-      ui->_hsline[0]->stopRadiusDo(false);
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    if (but == ui->_stopAnisoButton) {
+      if (but->value()) {
+        int aniso = airEnumVal(tenAniso,
+                               ui->_stopAnisoTypeMenu->item()->label());
+        ui->_hsline[idx]->stopAniso(aniso,
+                                  ui->_stopAnisoThresholdSlider->value());
+        ui->_hsline[idx]->stopAnisoDo(true);
+      } else {
+        ui->_hsline[idx]->stopAnisoDo(false);
+      }
+    } else if (but == ui->_stopHalfLengthButton) {
+      if (but->value()) {
+        ui->_hsline[idx]->stopHalfLength(ui->_stopHalfLengthSlider->value());
+        ui->_hsline[idx]->stopHalfLengthDo(true);
+      } else {
+        ui->_hsline[idx]->stopHalfLengthDo(false);
+      }
+    } else if (but == ui->_stopHalfStepNumButton) {
+      if (but->value()) {
+        ui->_hsline[idx]->stopHalfStepNum(ui->_stopHalfStepNumSlider
+                                          ->valueUI());
+        ui->_hsline[idx]->stopHalfStepNumDo(true);
+      } else {
+        ui->_hsline[idx]->stopHalfStepNumDo(false);
+      }
+    } else if (but == ui->_stopConfidenceButton) {
+      if (but->value()) {
+        ui->_hsline[idx]->stopConfidence(ui->_stopConfidenceSlider->value());
+        ui->_hsline[idx]->stopConfidenceDo(true);
+      } else {
+        ui->_hsline[idx]->stopConfidenceDo(false);
+      }
+    } else if (but == ui->_stopRadiusButton) {
+      if (but->value()) {
+        ui->_hsline[idx]->stopRadius(ui->_stopRadiusSlider->value());
+        ui->_hsline[idx]->stopRadiusDo(true);
+      } else {
+        ui->_hsline[idx]->stopRadiusDo(false);
+      }
     }
   }
   ui->redraw();
@@ -526,34 +553,38 @@ HyperStreamlineUI::_stopButton_cb(fltk::CheckButton *but,
 void
 HyperStreamlineUI::_stopAnisoType_cb(fltk::Choice *menu,
                                      HyperStreamlineUI *ui) {
-  ui->_hsline[0]->stopAniso(airEnumVal(tenAniso, menu->item()->label()),
-                         ui->_hsline[0]->stopAnisoThreshold());
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->stopAniso(airEnumVal(tenAniso, menu->item()->label()),
+                                ui->_hsline[idx]->stopAnisoThreshold());
+  }
   ui->redraw();
 }
 
 void
 HyperStreamlineUI::_stopSlider_cb(Deft::Slider *slider, 
                                   HyperStreamlineUI *ui) {
-  if (slider == ui->_stopAnisoThresholdSlider) {
-    if (ui->_hsline[0]->stopAnisoDo()) {
-      ui->_hsline[0]->stopAniso(ui->_hsline[0]->stopAnisoType(),
-                                slider->value());
-    }
-  } else if (slider == ui->_stopHalfLengthSlider) {
-    if (ui->_hsline[0]->stopHalfLengthDo()) {
-      ui->_hsline[0]->stopHalfLength(slider->value());
-    }
-  } else if (slider == ui->_stopHalfStepNumSlider) {
-    if (ui->_hsline[0]->stopHalfStepNumDo()) {
-      ui->_hsline[0]->stopHalfStepNum(slider->valueUI());
-    }
-  } else if (slider == ui->_stopConfidenceSlider) {
-    if (ui->_hsline[0]->stopConfidenceDo()) {
-      ui->_hsline[0]->stopConfidence(slider->value());
-    }
-  } else if (slider == ui->_stopRadiusSlider) {
-    if (ui->_hsline[0]->stopRadiusDo()) {
-      ui->_hsline[0]->stopRadius(slider->value());
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    if (slider == ui->_stopAnisoThresholdSlider) {
+      if (ui->_hsline[idx]->stopAnisoDo()) {
+        ui->_hsline[idx]->stopAniso(ui->_hsline[idx]->stopAnisoType(),
+                                  slider->value());
+      }
+    } else if (slider == ui->_stopHalfLengthSlider) {
+      if (ui->_hsline[idx]->stopHalfLengthDo()) {
+        ui->_hsline[idx]->stopHalfLength(slider->value());
+      }
+    } else if (slider == ui->_stopHalfStepNumSlider) {
+      if (ui->_hsline[idx]->stopHalfStepNumDo()) {
+        ui->_hsline[idx]->stopHalfStepNum(slider->valueUI());
+      }
+    } else if (slider == ui->_stopConfidenceSlider) {
+      if (ui->_hsline[idx]->stopConfidenceDo()) {
+        ui->_hsline[idx]->stopConfidence(slider->value());
+      }
+    } else if (slider == ui->_stopRadiusSlider) {
+      if (ui->_hsline[idx]->stopRadiusDo()) {
+        ui->_hsline[idx]->stopRadius(slider->value());
+      }
     }
   }
   ui->redraw();
@@ -589,22 +620,29 @@ HyperStreamlineUI::kernel_cb(fltk::Choice *menu, HyperStreamlineUI *ui) {
     ELL_3V_SET(ui->_ksp->parm, 1, 0.333333, 0.33333);
     break;
   }
-  ui->_hsline[0]->kernel(ui->_ksp);
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->kernel(ui->_ksp);
+  }
   ui->redraw();
 }
 
 void
 HyperStreamlineUI::integration_cb(fltk::Choice *menu, HyperStreamlineUI *ui) {
 
-  ui->_hsline[0]->integration(airEnumVal(tenFiberIntg, menu->item()->label()));
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->integration(airEnumVal(tenFiberIntg, 
+                                             menu->item()->label()));
+  }
   ui->redraw();
 }
 
 void
 HyperStreamlineUI::bright_cb(fltk::ValueSlider *val, HyperStreamlineUI *ui) {
 
-  ui->_hsline[0]->brightness(static_cast<float>(val->value()));
-  dynamic_cast<PolyProbe*>(ui->_hsline[0])->update(false);
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->brightness(static_cast<float>(val->value()));
+    dynamic_cast<PolyProbe*>(ui->_hsline[idx])->update(false);
+  }
   ui->redraw();
 }
 
