@@ -89,6 +89,7 @@ TriPlane::TriPlane(const Volume *vol) : Group(6) {
           seedPlane[0], seedPlane[1], seedPlane[2]);
 
   plane[0]->color(true);
+  plane[0]->alphaMask(true);
   seedPlane[0]->color(false);
   plane[0]->volume(vol);
   seedPlane[0]->volume(vol);
@@ -99,6 +100,7 @@ TriPlane::TriPlane(const Volume *vol) : Group(6) {
   position(0, static_cast<float>(_size[0]/2));
 
   plane[1]->color(true);
+  plane[1]->alphaMask(true);
   seedPlane[1]->color(false);
   plane[1]->volume(vol);
   seedPlane[1]->volume(vol);
@@ -109,6 +111,7 @@ TriPlane::TriPlane(const Volume *vol) : Group(6) {
   position(1, static_cast<float>(_size[1]/2));
 
   plane[2]->color(true);
+  plane[2]->alphaMask(true);
   seedPlane[2]->color(false);
   plane[2]->volume(vol);
   seedPlane[2]->volume(vol);
@@ -118,13 +121,16 @@ TriPlane::TriPlane(const Volume *vol) : Group(6) {
   seedPlane[2]->edgeVSet(_edgeW[1]);
   position(2, static_cast<float>(_size[2]/2));
 
+  seedPlane[0]->visible(false);
+  seedPlane[1]->visible(false);
+  seedPlane[2]->visible(false);
   plane[0]->lightingUse(false);
   plane[1]->lightingUse(false);
   plane[2]->lightingUse(false);
 
-  seedPlane[0]->visible(true);
-  seedPlane[1]->visible(true);
-  seedPlane[2]->visible(true);
+  seedPlane[0]->visible(false);
+  seedPlane[1]->visible(false);
+  seedPlane[2]->visible(false);
   seedPlane[0]->wireframe(true);
   seedPlane[1]->wireframe(true);
   seedPlane[2]->wireframe(true);
@@ -228,30 +234,23 @@ TriPlane::position(unsigned int pIdx, float pos) {
   char me[]="TriPlane::position";
   float vec[3];
 
-  fprintf(stderr, "%s(%u, %g): -------------------\n", me, pIdx, pos);
+  fprintf(stderr, "!%s(%u, %g): visible %s -------------------\n",
+          me, pIdx, pos, plane[pIdx]->visible() ? "true" : "false");
   pIdx = AIR_MIN(pIdx, 2);
   _posI[pIdx] = pos;
   ELL_3V_SCALE_ADD2(vec, 1.0f, _origW, _posI[pIdx], _interW[pIdx]);
   plane[pIdx]->originSet(vec);
   seedPlane[pIdx]->originSet(vec);
-  // HEY: this is lame: we should be able to always do simply
-  // plane[pIdx]->update(), but there's a problem on the
-  // first time through ...
-  fprintf(stderr, "!%s: plane[%u]->colorQuantity = %d\n", me, pIdx,
-          plane[pIdx]->colorQuantity());
-  plane[pIdx]->update();
-#if 0
-  if (plane[pIdx]->visible() && plane[pIdx]->colorQuantity()) {
-    plane[pIdx]->update(true);
+  if (plane[pIdx]->visible()) {
+    plane[pIdx]->update();
   } else {
-    fprintf(stderr, "!%s: plane[%u] simple vert update\n", me, pIdx);
-    plane[pIdx]->update(false);
+    plane[pIdx]->updateGeometry();
   }
-#endif
-  seedPlane[pIdx]->update();
   if (_glyphsDo[pIdx]) {
-    fprintf(stderr, "!%s: seedPlane[%u] full update\n", me, pIdx);
+    seedPlane[pIdx]->update();
     this->glyphsUpdate(pIdx);
+  } else {
+    seedPlane[pIdx]->updateGeometry();
   }
 }
 

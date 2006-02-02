@@ -55,6 +55,7 @@ public:
   void edgeVGet(float vec[3]);
   
   // returns false when update was a no-up
+  bool updateGeometry();  // no probingg
   bool update();
 
 private:
