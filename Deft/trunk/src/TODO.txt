@@ -1,4 +1,4 @@
-Steve:
+SP:
 - GUI w/ tabs
 - Perspective limit -> rotation block
 - mouse/camera interactions unintuitive
@@ -46,7 +46,7 @@ DWI radial glyphs
 tensor glyphs colored by tensor fit residual
 draw starkPlanes with 2D texture map to get real Bilinear interpolation
 
-CF: show anatomical T2 scan (maybe even at different resolution) on slices
+CFW: show anatomical T2 scan (maybe even at different resolution) on slices
 from DoDTI: seed many fibers, but only show a subset of them
 
 3D Widget: Floating plane with frame- needed for real exploration
@@ -58,10 +58,10 @@ of arrays of vertices. this is the only scalable way to handle
 optional per-vertex attributes (originally motivated by need for 
 floating point texture coords) ...
 
-ennis: 1) On quit, perhaps consider and option to save the current state.
+DBE: 1) On quit, perhaps consider and option to save the current state.
 --> maybe hest all UI windows on destruction?
 
-ennis: 2) On open consider being able to arrange windows so they are
+DBE: 2) On open consider being able to arrange windows so they are
    non-overlapping.  This might require polling the native screen
    resolution ...
 --> look again into setting window position
@@ -82,10 +82,10 @@ the CANCEL button: need separate GUI and CPU threads
 
 ?? add tenGage item for position, so that it can be passed to TensorGlyph
 
-ennis: For animations: consider a command-line parsing window (or prompt)
+DBE: For animations: consider a command-line parsing window (or prompt)
 that can take new parameters while the program is running
 
-ennis: 5) There is a limitation on the FOV value of 180 but when trying to
+DBE: 5) There is a limitation on the FOV value of 180 but when trying to
    set it to 180 when trouble shooting (4) I obtain the following at
    the terminal prompt 
 --> ... not sure what to do with this
@@ -100,8 +100,6 @@ to letting OpenGL do the clipping)
 
 this seems broken:
 ~/stark/stark -i ~/tmp/raw_20_iso-ten.nhdr -a fa -gsc 1000 -g box -gsc 1000 -gr 7 -sh 2.5 -a FA -atrm 0.4 -atr 0.807692 -fr 1266.1 815.977 328.215 -at -25.7043 9.94346 42.8054 -up -0.160881 -0.0901787 0.982845 -rh -ar -dn -177.713 -df 177.713 -fv 3.15968 -is 640 480
-
-fix update() hack in TriPlane::position
 
 improve utility and usage of stark::Volume; stark by putting a gageShape
 in as a private member...
@@ -118,7 +116,7 @@ some minimal smarts about not using a huge or tiny glyph scaling
 
 glyphs: size normalization, shape exaggeration
 
-ennis: 3) You need a much cooler application Icon.  You should take this up
+DBE: 3) You need a much cooler application Icon.  You should take this up
    with sales and marketing.  Or perhaps, the icon is consistent with
    the applications name.
 --> ... very OS-specific, alas ...
