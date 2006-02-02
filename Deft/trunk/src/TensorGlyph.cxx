@@ -891,7 +891,7 @@ TensorGlyph::glyphPaletteUpdate() {
         double cp = NRRD_CELL_POS(0.0, 1.0, _baryRes, cpIdx);
         for (unsigned int clIdx=0; clIdx<_baryRes; clIdx++) {
           double cl = NRRD_CELL_POS(0.0, 1.0, _baryRes, clIdx);
-          if (cl + cp > 1) {
+          if (cpIdx + clIdx > _baryRes-1) {
             continue;
           }
           if (cl > cp) {
@@ -907,6 +907,12 @@ TensorGlyph::glyphPaletteUpdate() {
                                          2*_glyphRes, _glyphRes);
           limnPolyDataTransform_f(lpld, trnsf);
           list[cpIdx + _baryRes*clIdx] = surf->compileDisplayList();
+	  /*
+	  fprintf(stderr, "!%s: list[cpIdx + _baryRes*clIdx] = "
+		  "list[%u + _%u*%u] = list[%u] = %u\n", me,
+		  cpIdx, _baryRes, clIdx, cpIdx + _baryRes*clIdx, 
+		  list[cpIdx + _baryRes*clIdx]);
+	  */
         }
       }
       break;
@@ -970,6 +976,11 @@ TensorGlyph::drawImmediate() {
     return;
   }
 
+  if (nListIsEmpty()) {
+    // the initial call to glyphPaletteUpdate() may have been for naught,
+    // if there was no working GL context at the time.  This fixes that.
+    this->update();
+  }
   list = (unsigned int *)(_nList->data);
   if (_normalizeUse) {
     glEnable(GL_NORMALIZE);
@@ -1009,6 +1020,10 @@ TensorGlyph::drawImmediate() {
     glTranslatef(pos[0], pos[1], pos[2]);
     glRotatef(180*angle/AIR_PI, axis[0], axis[1], axis[2]);
     glScalef(glyphScale*eval[0], glyphScale*eval[1], glyphScale*eval[2]);
+    /*
+    fprintf(stderr, "!%s: glCallList(list[%u] = %u)\n", me,
+	    baryIdx, list[baryIdx]);
+    */
     glCallList(list[baryIdx]);
     glPopMatrix();
     _glyphsDrawnNum++;
