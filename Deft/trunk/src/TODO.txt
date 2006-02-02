@@ -1,0 +1,256 @@
+Steve:
+- GUI w/ tabs
+- Perspective limit -> rotation block
+- mouse/camera interactions unintuitive
+- top-level menu, including file->open
+- shell
+- high-level parameter settings:
+  set thresh so that I see 100 glyphs on this plane
+
+remove GUI elements not working
+
+glyphs on planes: need to spatially separate from plane
+fibers: seed at plane
+
+glyphs: colored by starkCmap
+glyphs: skip negative eigenvalues button
+
+picking on slices
+fibers: seed at pick point
+
+fibers: fast iterative method for principal eigenvalue
+fibers: graceful handling of node-centered volumes
+fibers: different fiber tractography algorithms, with GUI menu
+fibers: hest button
+fibers: export to Lauren's format
+fibers: as with glyphs: sort and display based on per-fiber measures
+fibers: glyphs on a subset of vertices (like Lauren did)
+
+translate-U, translate-V
+command click in left edge translates from and at along view vector
+
+colorQuantities which are NOT simple anisotropy or RGB: things like
+trace and gradient which require quantization range, and the GUI for that.
+ - do I need a per-plane window/level interface?
+
+OpenGL: anti-aliasing, large image save
+camera paths + animation
+
+viewer: turn on overlays to show special camera motions when cursor
+   enters boundary of view window
+
+DWI image inspector
+DWI -> tensor estimation
+DWI radial glyphs
+
+tensor glyphs colored by tensor fit residual
+draw starkPlanes with 2D texture map to get real Bilinear interpolation
+
+CF: show anatomical T2 scan (maybe even at different resolution) on slices
+from DoDTI: seed many fibers, but only show a subset of them
+
+3D Widget: Floating plane with frame- needed for real exploration
+
+starkTriPlaneUI: "hest" button
+
+limn: restructure limnPolyData to have arrays of attributes, instead
+of arrays of vertices. this is the only scalable way to handle
+optional per-vertex attributes (originally motivated by need for 
+floating point texture coords) ...
+
+ennis: 1) On quit, perhaps consider and option to save the current state.
+--> maybe hest all UI windows on destruction?
+
+ennis: 2) On open consider being able to arrange windows so they are
+   non-overlapping.  This might require polling the native screen
+   resolution ...
+--> look again into setting window position
+
+try to make sure eigensystems are not being computed multiple times
+(once for RGB, one for alpha mask)
+ - this is in fact currently happening- for RGB(linear) masked by Cl, 
+   gage measures tensors, which tenEvecRGB colors, but gage also did
+   the eigenvalues, to get Cl.  Answer: tenEvecRGB should have a version
+   that takes precomputed eval+evec
+
+----------------
+
+fibers: optimise re-use of allocated memory
+fibers: lit lines
+
+the CANCEL button: need separate GUI and CPU threads
+
+?? add tenGage item for position, so that it can be passed to TensorGlyph
+
+ennis: For animations: consider a command-line parsing window (or prompt)
+that can take new parameters while the program is running
+
+ennis: 5) There is a limitation on the FOV value of 180 but when trying to
+   set it to 180 when trouble shooting (4) I obtain the following at
+   the terminal prompt 
+--> ... not sure what to do with this
+
+test if answerCopy stuff is useful
+
+glyphs clipped by planes- best if they are not drawn at all (as opposed
+to letting OpenGL do the clipping)
+ - really, all objects need to know about all clipping planes (or other
+   clipping things) when they're drawing themselves so that they decide
+   if they should be doing anything differently
+
+this seems broken:
+~/stark/stark -i ~/tmp/raw_20_iso-ten.nhdr -a fa -gsc 1000 -g box -gsc 1000 -gr 7 -sh 2.5 -a FA -atrm 0.4 -atr 0.807692 -fr 1266.1 815.977 328.215 -at -25.7043 9.94346 42.8054 -up -0.160881 -0.0901787 0.982845 -rh -ar -dn -177.713 -df 177.713 -fv 3.15968 -is 640 480
+
+fix update() hack in TriPlane::position
+
+improve utility and usage of stark::Volume; stark by putting a gageShape
+in as a private member...
+
+figure out how to represent kernels in the UI: TriPlanesUI needed to
+learn the kernel from the TriPlanes, in order to set the kernel menu
+correctly...
+
+triplane: should be savvy about RAS orientation
+
+picking on glyphs to get read-out
+
+some minimal smarts about not using a huge or tiny glyph scaling
+
+glyphs: size normalization, shape exaggeration
+
+ennis: 3) You need a much cooler application Icon.  You should take this up
+   with sales and marketing.  Or perhaps, the icon is consistent with
+   the applications name.
+--> ... very OS-specific, alas ...
+
+implement everything here:
+http://www.csit.fsu.edu/~yagi/project/log.html
+
+ability to blend between two images on one plane
+time-varying data
+glyph palette of limnSurfaces, instead of display lists, for simple glyphs
+limn3DContour: shift from using limnObjects to limnTrisurfs
+starkScene : actor airArray --> Object std::list
+
+local mirror of OpenGL state
+
+EXCEPTIONS!!!
+
+add RGB/XYZ axes to viewer (as in SCIRun)
+
+like Slicer or SPM/DoDTI: 2D display of cutting planes. 
+
+features I miss from DTInspect.tcl:
+- color glyphs by anisotropy
+- anisotropy isosurfaces, colored by evec1 or another anisotropy,
+  optionally cut by planes
+- axis-aligned cutting planes clipped to anisotropy isosurface
+- entities themselves control whether they are cut by the planes
+- glyphs seeding on cutting planes, colored by evec1 or another anisotropy,
+  culled by anisotropy isosurface
+
+other non-essential DTInspect features:
+- all things had variable opacity
+- glyph geometry could be clipped to aniso isosurfaces
+
+glDrawElements --> glDrawRangeElements
+zooming -> reduce rotation speed
+picking objects
+rotating objects
+only use glColorMaterial when appropriate
+low-res version of actor geometry for updates during rotation and other
+  parameter updates
+
+all things DWI and HARD
+
+openGL questions:
+how expensive is it to set new vertex array pointers?
+how clever are you about re-using/recycling polygonal topology
+
+---------------
+from earlier musings:
+
+what I really want in a slicer/exploration tool
+
+- all the old slicer capabilities- but better queries- pixel locations
+  are described in terms of axis min and max where available, dragging shows
+  length in image space (and maybe worldspace), with ability to, say, measure
+  radii of circular streaks.  
+
+- also- why not have a glyph, or neighborhood of glyphs, pop up and track the
+  cursor?
+
+- better colormaps, contrast/gamma, and display methods- have to enable
+  RGB display of tensor datasets, for example.
+
+- COLOR-PICKER, COLORMAP EDITOR (uni-varite and bi-variate)
+
+- ability to show correct aspect ratio pixels, if spacing is known
+
+- ability to show correct centering, if it is known.
+
+- projection generation and query - nice display of what quantity is
+  being shown
+
+- histogram generation and query - clicking on the histogram image
+  tells you the value and the hits, dragging horizontally gives you a
+  value interval, and the fraction of voxels included, etc.  Resizing
+  vertically re-draws same histogram, resizing horizontally potentially
+  re-histograms same data.
+
+- interface to cropping and quantizing: cropping based on dragging
+  selection things around in a slice window, quantizing based on
+  dragging things around in a histogram window.
+
+- interface to resampler
+
+- dual-domain probing with joint histograms- should be able to
+  scribble/annotate a slice, have those be persistant and save-able,
+  with scribblings mapped into a joint histogram.  This implies the
+  services of vprobe and gage, with awareness of the kind of the data.
+  Option to super-sample paths in image with gage, versus interpolate
+  between values at grid points.  Option to draw a whole grid (perhaps
+  with some kind of color coding) in slice domain, and see what it maps
+  to in the jhisto domain.
+
+- some sort of visual nrrd catalog identifying: dimension, sizes, date,
+  and maybe some kind of provenance
+
+- 3D vis I really need:
+  - view-point picker (camera) that doesn't suck
+  - ability to have arbitrarily oriented cutting planes- perhaps even just
+    3-D rotatation but viewing only the screen-defined plane 
+  - ability to do off-axis cropping would be nice too
+  - isosurfacing- can't say if I require polygons or not ...
+  - lighting-set designer based on isosurfaces or spheres
+  - more open-ended stuff- glyphs, streamlines, colormapped isosurfaces,
+    glyphs seeded by streamlines or culled by isosurfaces, ...
+
+In a 3-D tool for hypothesis generation and testing, its nice to be able to
+put the colors of one derived quantity onto the isosurfaces of another.
+This however raises the issue of how do you organize the relationship between
+volumes and their derived quantities, and how can you flexibly expand the
+vocabulary of derived quantities and their computation.  Is this only
+operating on whole volumes?  Point-based?  Should it be based on gage?
+
+- would be nice to have a shell in which unu commands were available
+
+-------------------------------------
+
+things to do on slices (axis-aligned or not)
+ - modify parameters that control mapping of underlying nrrd to 8-big RGB
+ - save 8-bit RGB as PNG
+ - save underlying data as nrrd
+ - usual point-queries of values (showing world-space position when known)
+ - measure distances
+ - selecting bounding boxes
+ - dual-domain probing, scribbling, and gridding (probe with gridlines)
+   in a histogram of the volume from which the slice came
+ - local glyphs (or small set of glyphs) for enhanced probing
+ - rotate cutting plane in 3D
+
+
+more far-out:
+ - something that facilitates simple image registration: putting two
+images in the same windows, and being able to interact with position
+of images by keyboard or by mouse
