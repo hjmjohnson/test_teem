@@ -102,11 +102,11 @@ PolyData::polyData() const {
 
 void
 PolyData::probe(const Gage *gage) {
-  // char me[]="PolyData::probe";
+  char me[]="PolyData::probe";
   double *answerAll[128]; // TERRIBLE
   unsigned int length[128]; // TERRIBLE
   /*
-  fprintf(stderr, "%s: gage->query().size() = %u\n", me, 
+  fprintf(stderr, "!%s: gage->query().size() = %u\n", me, 
           AIR_CAST(unsigned int, gage->query().size()));
   */
   if (0 == gage->query().size()) {
@@ -117,24 +117,24 @@ PolyData::probe(const Gage *gage) {
   // indicate the allocated size of all the values
   if (query() != gage->query()
       || lpld()->vertNum != _valid.size()) {
-    // fprintf(stderr, "%s: deleting new values\n", me);
+    // fprintf(stderr, "!%s: deleting new values\n", me);
     _valuesClear();    
   }
 
   // allocate new values if needed
   if (!_values.size()) {
-    // fprintf(stderr, "%s: allocating new values\n", me);
+    // fprintf(stderr, "!%s: allocating new values\n", me);
     _valid.resize(lpld()->vertNum);
     _values.resize(gage->query().size());
     /*
-    fprintf(stderr, "%s: &_values=%p, _values.size()=%u\n", me,
+    fprintf(stderr, "!%s: &_values=%p, _values.size()=%u\n", me,
             &_values, AIR_CAST(unsigned int, _values.size()));
     */
     for (unsigned int qi=0; qi<_values.size(); qi++) {
       _values[qi] = new Values(lpld()->vertNum, gage->volume()->kind(),
                                gage->query()[qi]);
       /*
-      fprintf(stderr, "%s: _values[%u]->nrrd()->data = %p\n", me, qi,
+      fprintf(stderr, "!%s: _values[%u]->nrrd()->data = %p\n", me, qi,
               _values[qi]->nrrd()->data);
       */
     }
@@ -142,9 +142,9 @@ PolyData::probe(const Gage *gage) {
   
   for (unsigned int qi=0; qi<_values.size(); qi++) {
     answerAll[qi] = _values[qi]->data();
-    // fprintf(stderr, "%s: answerAll[%u] = %p\n", me, qi, answerAll[qi]);
+    // fprintf(stderr, "!%s: answerAll[%u] = %p\n", me, qi, answerAll[qi]);
     length[qi] = _values[qi]->length();
-    // fprintf(stderr, "%s: length[%u] = %u\n", me, qi, length[qi]);
+    // fprintf(stderr, "!%s: length[%u] = %u\n", me, qi, length[qi]);
   }
       
   unsigned int N = lpld()->vertNum;
@@ -180,7 +180,7 @@ PolyData::color(unsigned int valuesIdx, const Cmap *cmap) {
   /*
   fprintf(stderr, "!%s: _values.size() = %u\n", me,
           (unsigned int)(_values.size()));
-  fprintf(stderr, "%s: _nrgba->data = %p, _values[%u] = %p\n", me,
+  fprintf(stderr, "!%s: _nrgba->data = %p, _values[%u] = %p\n", me,
           _nrgba->data, valuesIdx, _values[valuesIdx]);
   */
   if (!_values[valuesIdx]->length()) {
@@ -311,11 +311,11 @@ PolyData::drawImmediate() {
 
   /* {
     unsigned int I = 5370;
-    fprintf(stderr, "%s: vert[%u].rgba = (%u,%u,%u,%u)\n",
+    fprintf(stderr, "!%s: vert[%u].rgba = (%u,%u,%u,%u)\n",
             me, I, lpld->vert[I].rgba[0], lpld->vert[I].rgba[1],
             lpld->vert[I].rgba[2], lpld->vert[I].rgba[3]);
     I == 5350;
-    fprintf(stderr, "%s: vert[%u].rgba = (%u,%u,%u,%u)\n",
+    fprintf(stderr, "!%s: vert[%u].rgba = (%u,%u,%u,%u)\n",
             me, I, lpld->vert[I].rgba[0], lpld->vert[I].rgba[1],
             lpld->vert[I].rgba[2], lpld->vert[I].rgba[3]);
             } */
@@ -430,7 +430,7 @@ PolyData::boundsGet(float min[3], float max[3]) const {
     vertNum = lpld->vertNum;
     for (vi=0; vi<vertNum; vi++) {
       /*
-      fprintf(stderr, "%s: xyzw[%u] = (%g,%g,%g,%g)", me, vi,
+      fprintf(stderr, "!%s: xyzw[%u] = (%g,%g,%g,%g)", me, vi,
               vrt[vi].xyzw[0], vrt[vi].xyzw[1],
               vrt[vi].xyzw[2], vrt[vi].xyzw[3]);
       */
