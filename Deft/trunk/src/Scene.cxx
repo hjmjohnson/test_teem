@@ -44,8 +44,6 @@ Scene::Scene() {
                0.9f, 0.9f, 0.9f,    /* r g b */
                1.0f, -1.0f, -4.0f); /* x y z */
   _lastTime = _totalTime = _drawTime = 0;
-  actorArr = airArrayNew((void**)(&actor), NULL,
-                         sizeof(Actor*), arrayIncr);
   objectArr = airArrayNew((void**)(&object), NULL,
                           sizeof(Object*), arrayIncr);
   groupArr = airArrayNew((void**)(&group), NULL,
@@ -54,7 +52,6 @@ Scene::Scene() {
 
 Scene::~Scene() {
   lit = limnLightNix(lit);
-  airArrayNuke(actorArr);
   airArrayNuke(objectArr);
 }
 
@@ -88,32 +85,6 @@ Scene::lightUpdate(limnCamera *cam) {
     free(err); return;
   }
   return;
-}
-
-int
-Scene::actorAdd(Actor *newActor) {
-  char me[]="Scene::actorAdd";
-  unsigned int actIdx;
-  
-  for (actIdx=0; actIdx<actorArr->len; actIdx++) {
-    if (actor[actIdx] == newActor) {
-      fprintf(stderr, "%s: already have actor in slot %d\n", me, actIdx);
-      return -1;
-    }
-  }
-
-  for (actIdx=0; actIdx<actorArr->len; actIdx++) {
-    if (!actor[actIdx]) {
-      /* this actor slot is unused */
-      break;
-    }
-  }
-  if (actIdx >= actorArr->len) {
-    actIdx = airArrayLenIncr(actorArr, 1);
-  }
-  actor[actIdx] = newActor;
-  
-  return actIdx; 
 }
 
 int
@@ -166,15 +137,6 @@ Scene::groupAdd(Group *newGroup) {
   group[grpIdx] = newGroup;
 
   return grpIdx; 
-}
-
-Actor *
-Scene::actorRemove(int actIdx) {
-  Actor *ret;
-
-  ret = actor[actIdx];
-  actor[actIdx] = NULL;
-  return ret;
 }
 
 Object *
@@ -263,9 +225,6 @@ Scene::draw() {
   glMaterialfv(GL_BACK, GL_SPECULAR, mat_zero);
   glMaterialfv(GL_BACK, GL_SHININESS, mat_zero);
 
-  for (unsigned int actIdx=0; actIdx<actorArr->len; actIdx++) {
-    actor[actIdx]->draw();
-  }
   for (unsigned int objIdx=0; objIdx<objectArr->len; objIdx++) {
     object[objIdx]->draw();
   }
@@ -293,19 +252,6 @@ Scene::boundsGet(float gmin[3], float gmax[3]) const {
   float min[3], max[3];
   bool beenSet = false;
 
-
-  // fprintf(stderr, "%s: actorArr->len = %u\n", me, actorArr->len);
-  for (unsigned int actIdx=0; actIdx<actorArr->len; actIdx++) {
-    actor[actIdx]->boundsGet(min, max);
-    if (!beenSet) {
-      ELL_3V_COPY(gmin, min);
-      ELL_3V_COPY(gmax, max);
-      beenSet = true;
-    } else {
-      ELL_3V_MIN(gmin, gmin, min);
-      ELL_3V_MAX(gmax, gmax, max);
-    }
-  }
   for (unsigned int objIdx=0; objIdx<objectArr->len; objIdx++) {
     object[objIdx]->boundsGet(min, max);
     if (!beenSet) {

@@ -7,10 +7,9 @@ SP:
 - high-level parameter settings:
   set thresh so that I see 100 glyphs on this plane
 
-remove GUI elements not working
+debug segfault when seeding grid changes with fibers-on-planes
 
 glyphs on planes: need to spatially separate from plane
-fibers: seed at plane
 
 glyphs: colored by starkCmap
 glyphs: skip negative eigenvalues button
@@ -22,9 +21,9 @@ fibers: fast iterative method for principal eigenvalue
 fibers: graceful handling of node-centered volumes
 fibers: different fiber tractography algorithms, with GUI menu
 fibers: hest button
-fibers: export to Lauren's format
+fibers: export to LoD's format
 fibers: as with glyphs: sort and display based on per-fiber measures
-fibers: glyphs on a subset of vertices (like Lauren did)
+fibers: glyphs on a subset of vertices (like LoD did)
 
 translate-U, translate-V
 command click in left edge translates from and at along view vector

@@ -509,7 +509,10 @@ HyperStreamline::updateFiberGeometry() {
     }
     
     // allocate all polylines; _fiberNum == primNum
-    limnPolyDataAlloc(_lpldFibers, vertTotalNum, vertTotalNum, _fiberNum);
+    limnPolyDataAlloc(_lpldFibers, 
+                      (1 << limnPolyDataInfoRGBA)
+                      | (1 << limnPolyDataInfoNorm),
+                      vertTotalNum, vertTotalNum, _fiberNum);
     if (_fiberVertexNum != vertTotalNum) {
       _fiberVertexNum = vertTotalNum;
       _flag[flagFiberVertexNum] = true;
@@ -532,11 +535,11 @@ HyperStreamline::updateFiberGeometry() {
       // sprintf(fname, "fiber-%03u.nrrd", seedIdx);
       // nrrdSave(fname, _fiber[seedIdx]->nvert, NULL);
       for (unsigned int vertIdx=0; vertIdx<vertNum; vertIdx++) {
-        ELL_3V_COPY_TT(_lpldFibers->vert[vertTotalIdx].xyzw, float,
+        ELL_3V_COPY_TT(_lpldFibers->xyzw + 4*vertTotalIdx, float,
                        vert + 3*vertIdx);
-        _lpldFibers->vert[vertTotalIdx].xyzw[3] = 1.0;
-        ELL_3V_SET(_lpldFibers->vert[vertTotalIdx].norm, 0, 0, 0);
-        ELL_4V_SET(_lpldFibers->vert[vertTotalIdx].rgba, 255, 255, 255, 255);
+        (_lpldFibers->xyzw + 4*vertTotalIdx)[3] = 1.0;
+        ELL_3V_SET(_lpldFibers->norm + 3*vertTotalIdx, 0, 0, 0);
+        ELL_4V_SET(_lpldFibers->rgba + 4*vertTotalIdx, 255, 255, 255, 255);
         _lpldFibers->indx[vertTotalIdx] = vertTotalIdx;
         vertTotalIdx++;
       }
@@ -609,10 +612,14 @@ HyperStreamline::updateTubeAllocated() {
     unsigned int tubeVertNum = 0;
     unsigned int tubeIndxNum = 0;
     for (unsigned int primIdx=0; primIdx<_lpldFibers->primNum; primIdx++) {
-      tubeVertNum += _tubeFacet*(2*_endFacet + _lpldFibers->vcnt[primIdx]) + 1;
-      tubeIndxNum += 2*_tubeFacet*(2*_endFacet + _lpldFibers->vcnt[primIdx] + 1)-2;
+      tubeVertNum += _tubeFacet*(2*_endFacet
+                                 + _lpldFibers->vcnt[primIdx]) + 1;
+      tubeIndxNum += 2*_tubeFacet*(2*_endFacet
+                                   + _lpldFibers->vcnt[primIdx] + 1)-2;
     }
     limnPolyDataAlloc(_lpldTubes,
+                      (1 << limnPolyDataInfoRGBA)
+                      | (1 << limnPolyDataInfoNorm),
                       tubeVertNum, tubeIndxNum, _lpldFibers->primNum);
     _flag[flagTubeFacet] = false;
     _flag[flagFiberVertexNum] = false;
@@ -645,27 +652,29 @@ HyperStreamline::updateTubeGeometry() {
       for (unsigned int inVertIdx=0;
            inVertIdx<_lpldFibers->vcnt[primIdx];
            inVertIdx++) {
-        limnVrt *forw, *inVrt, *back;
+        unsigned int forwIdx, backIdx;
         double tang[3], tmp, scl, step, perp[3], pimp[3];
-        inVrt = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx];
+        /* inVrt = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx]; */
         if (0 == inVertIdx) {
-          forw = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx+1];
-          back = inVrt;
+          forwIdx = inVertTotalIdx+1;
+          backIdx = inVertTotalIdx;
           scl = 1;
         } else if (_lpldFibers->vcnt[primIdx]-1 == inVertIdx) {
-          forw = inVrt;
-          back = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx-1];
+          forwIdx = inVertTotalIdx;
+          backIdx = inVertTotalIdx-1;
           scl = 1;
         } else {
-          forw = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx+1];
-          back = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx-1];
+          forwIdx = inVertTotalIdx+1;
+          backIdx = inVertTotalIdx-1;
           scl = 0.5;
         }
         if (1 == _lpldFibers->vcnt[primIdx]) {
           ELL_3V_SET(tang, 0, 0, 1); // completely arbitrary, as it must be
           step = 0;
         } else {
-          ELL_3V_SUB(tang, forw->xyzw, back->xyzw);
+          ELL_3V_SUB(tang,
+                     _lpldFibers->xyzw + 4*forwIdx,
+                     _lpldFibers->xyzw + 4*backIdx);
           ELL_3V_NORM(tang, tang, step);
           step *= scl;  /* step now length of distance between input verts, 
                            which may be different from nominal fiber step
@@ -681,7 +690,7 @@ HyperStreamline::updateTubeGeometry() {
         ELL_3V_NORM(perp, perp, tmp);
         ELL_3V_CROSS(pimp, perp, tang);
         // (perp, pimp, tang) is a left-handed frame, on purpose
-        limnVrt *outVrt;
+        // limnVrt *outVrt;
         // -------------------------------------- BEGIN initial endcap
         if (0 == inVertIdx) {
           unsigned int startIdx = outVertTotalIdx;
@@ -696,16 +705,16 @@ HyperStreamline::updateTubeGeometry() {
               sinph = sin(phi);
               costh = cos(theta);
               sinth = sin(theta);
-              outVrt = _lpldTubes->vert + outVertTotalIdx;
-              ELL_3V_SCALE_ADD3_TT(outVrt->norm, float,
+              ELL_3V_SCALE_ADD3_TT(_lpldTubes->norm + 3*outVertTotalIdx, float,
                                    -cosph, tang,
                                    costh*sinph, perp,
                                    sinth*sinph, pimp);
-              ELL_3V_SCALE_ADD3_TT(outVrt->xyzw, float,
-                                   1, inVrt->xyzw,
+              ELL_3V_SCALE_ADD3_TT(_lpldTubes->xyzw + 4*outVertTotalIdx, float,
+                                   1, _lpldFibers->xyzw + 4*inVertTotalIdx,
                                    -step/2, tang,
-                                   _tubeRadius, outVrt->norm);
-              outVrt->xyzw[3] = 1.0;
+                                   _tubeRadius,
+                                   _lpldTubes->norm + 3*outVertTotalIdx);
+              (_lpldTubes->xyzw + 4*outVertTotalIdx)[3] = 1.0;
               outVertTotalIdx++;
             }
           }
@@ -729,14 +738,15 @@ HyperStreamline::updateTubeGeometry() {
           double shift = AIR_AFFINE(-0.5, pi, _tubeFacet-0.5, -step/2, step/2);
           double cosa = cost[pi];
           double sina = sint[pi];
-          outVrt = _lpldTubes->vert + outVertTotalIdx;
-          ELL_3V_SCALE_ADD2_TT(outVrt->norm, float,
+          // outVrt = _lpldTubes->vert + outVertTotalIdx;
+          ELL_3V_SCALE_ADD2_TT(_lpldTubes->norm + 3*outVertTotalIdx, float,
                                cosa, perp, sina, pimp);
-          ELL_3V_SCALE_ADD3_TT(outVrt->xyzw, float,
-                               1, inVrt->xyzw,
-                               _tubeRadius, outVrt->norm,
+          ELL_3V_SCALE_ADD3_TT(_lpldTubes->xyzw + 4*outVertTotalIdx, float,
+                               1, _lpldFibers->xyzw + 4*inVertTotalIdx,
+                               _tubeRadius,
+                               _lpldTubes->norm + 3*outVertTotalIdx,
                                shift, tang);
-          outVrt->xyzw[3] = 1.0;
+          (_lpldTubes->xyzw + 4*outVertTotalIdx)[3] = 1.0;
           _lpldTubes->indx[outIndxIdx++] = outVertTotalIdx;
           _lpldTubes->indx[outIndxIdx++] = outVertTotalIdx + _tubeFacet;
           outVertTotalIdx++;
@@ -755,26 +765,28 @@ HyperStreamline::updateTubeGeometry() {
               sinph = sin(phi);
               costh = cos(theta);
               sinth = sin(theta);
-              outVrt = _lpldTubes->vert + outVertTotalIdx;
-              ELL_3V_SCALE_ADD3_TT(outVrt->norm, float,
+              // outVrt = _lpldTubes->vert + outVertTotalIdx;
+              ELL_3V_SCALE_ADD3_TT(_lpldTubes->norm + 3*outVertTotalIdx, float,
                                    -cosph, tang,
                                    costh*sinph, perp,
                                    sinth*sinph, pimp);
-              ELL_3V_SCALE_ADD3_TT(outVrt->xyzw, float,
-                                   1, inVrt->xyzw,
+              ELL_3V_SCALE_ADD3_TT(_lpldTubes->xyzw + 4*outVertTotalIdx, float,
+                                   1, _lpldFibers->xyzw + 4*inVertTotalIdx,
                                    step/2, tang,
-                                   _tubeRadius, outVrt->norm);
-              outVrt->xyzw[3] = 1.0;
+                                   _tubeRadius,
+                                   _lpldTubes->norm + 3*outVertTotalIdx);
+              (_lpldTubes->xyzw + 4*outVertTotalIdx)[3] = 1.0;
               outVertTotalIdx++;
             }
           }
-          outVrt = _lpldTubes->vert + outVertTotalIdx;
-          ELL_3V_COPY_TT(outVrt->norm, float, tang);
-          ELL_3V_SCALE_ADD3_TT(outVrt->xyzw, float,
-                               1, inVrt->xyzw,
+          // outVrt = _lpldTubes->vert + outVertTotalIdx;
+          ELL_3V_COPY_TT(_lpldTubes->norm + 3*outVertTotalIdx, float, tang);
+          ELL_3V_SCALE_ADD3_TT(_lpldTubes->xyzw + 4*outVertTotalIdx, float,
+                               1, _lpldFibers->xyzw + 4*inVertTotalIdx,
                                step/2, tang,
-                               _tubeRadius, outVrt->norm);
-          outVrt->xyzw[3] = 1.0;
+                               _tubeRadius,
+                               _lpldTubes->norm + 3*outVertTotalIdx);
+          (_lpldTubes->xyzw + 4*outVertTotalIdx)[3] = 1.0;
           outVertTotalIdx++;
           for (unsigned int ei=0; ei<_endFacet-1; ei++) {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
@@ -814,7 +826,7 @@ HyperStreamline::updateFiberStopColor() {
     {  0,   0,   0, 255},  /* tenFiberStopBounds: black */
     { 25, 255,  25, 255}}; /* tenFiberStopStub: wacky, should never see */
 
-  limnVrt *inVrt;
+  // limnVrt *inVrt;
   if (_flag[flagFiberColor]
       || _flag[flagFiberStopColorDo]) {
     double time0 = airTime();
@@ -829,11 +841,13 @@ HyperStreamline::updateFiberStopColor() {
         for (unsigned int inVertIdx=0;
              inVertIdx<_lpldFibers->vcnt[primIdx];
              inVertIdx++) {
-          inVrt = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx];
+          // inVrt = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx];
           if (0 == inVertIdx) {
-            ELL_4V_COPY(inVrt->rgba, stcol[_fiber[fi]->whyStop[0]]);
+            ELL_4V_COPY(_lpldFibers->rgba + 4*inVertTotalIdx,
+                        stcol[_fiber[fi]->whyStop[0]]);
           } else if (inVertIdx == _lpldFibers->vcnt[primIdx]-1) {
-            ELL_4V_COPY(inVrt->rgba, stcol[_fiber[fi]->whyStop[1]]);
+            ELL_4V_COPY(_lpldFibers->rgba + 4*inVertTotalIdx,
+                        stcol[_fiber[fi]->whyStop[1]]);
           }
           inVertTotalIdx++;
         }
@@ -856,7 +870,7 @@ HyperStreamline::updateTubeColor() {
     unsigned int inVertTotalIdx = 0;
     unsigned int outVertTotalIdx = 0;
     unsigned int primIdx = 0;
-    limnVrt *inVrt, *outVrt;
+    // limnVrt *inVrt, *outVrt;
     for (unsigned int fi=0; fi<_fiber.size(); fi++) {
       if (0 == _fiber[fi]->stepNum[0] + _fiber[fi]->stepNum[1]) {
 	// this fiber was a non-starter
@@ -865,31 +879,35 @@ HyperStreamline::updateTubeColor() {
       for (unsigned int inVertIdx=0;
            inVertIdx<_lpldFibers->vcnt[primIdx];
            inVertIdx++) {
-        inVrt = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx];
+        // inVrt = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx];
         if (0 == inVertIdx) {
           for (unsigned int ei=0; ei<_endFacet; ei++) {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
-              outVrt = _lpldTubes->vert + outVertTotalIdx;
-              ELL_4V_COPY(outVrt->rgba, inVrt->rgba);
+              // outVrt = _lpldTubes->vert + outVertTotalIdx;
+              ELL_4V_COPY(_lpldTubes->rgba + 4*outVertTotalIdx,
+                          _lpldFibers->rgba + 4*inVertTotalIdx);
               outVertTotalIdx++;
             }
           }
         }
         for (unsigned int pi=0; pi<_tubeFacet; pi++) {
-          outVrt = _lpldTubes->vert + outVertTotalIdx;
-          ELL_4V_COPY(outVrt->rgba, inVrt->rgba);
+          // outVrt = _lpldTubes->vert + outVertTotalIdx;
+          ELL_4V_COPY(_lpldTubes->rgba + 4*outVertTotalIdx,
+                      _lpldFibers->rgba + 4*inVertTotalIdx);
           outVertTotalIdx++;
         }
         if (inVertIdx == _lpldFibers->vcnt[primIdx]-1) {
           for (unsigned int ei=0; ei<_endFacet; ei++) {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
-              outVrt = _lpldTubes->vert + outVertTotalIdx;
-              ELL_4V_COPY(outVrt->rgba, inVrt->rgba);
+              // outVrt = _lpldTubes->vert + outVertTotalIdx;
+              ELL_4V_COPY(_lpldTubes->rgba + 4*outVertTotalIdx,
+                          _lpldFibers->rgba + 4*inVertTotalIdx);
               outVertTotalIdx++;
             }
           }
-          outVrt = _lpldTubes->vert + outVertTotalIdx;
-          ELL_4V_COPY(outVrt->rgba, inVrt->rgba);
+          // outVrt = _lpldTubes->vert + outVertTotalIdx;
+          ELL_4V_COPY(_lpldTubes->rgba + 4*outVertTotalIdx,
+                      _lpldFibers->rgba + 4*inVertTotalIdx);
           outVertTotalIdx++;
         }
         inVertTotalIdx++;

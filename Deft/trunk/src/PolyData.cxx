@@ -148,13 +148,11 @@ PolyData::probe(const Gage *gage) {
   }
       
   unsigned int N = lpld()->vertNum;
-  const limnVrt *vert = lpld()->vert;
+  const float *xyzw = lpld()->xyzw;
   for (unsigned int I=0; I<N; I++) {
-    gage_t xx, yy, zz;
-    xx = static_cast<gage_t>(vert[I].xyzw[0] / vert[I].xyzw[3]);
-    yy = static_cast<gage_t>(vert[I].xyzw[1] / vert[I].xyzw[3]);
-    zz = static_cast<gage_t>(vert[I].xyzw[2] / vert[I].xyzw[3]);
-    _valid[I] = !gage->probe(answerAll, xx, yy, zz);
+    gage_t xyz[3];
+    ELL_34V_HOMOG_TT(xyz, gage_t, xyzw + 4*I);
+    _valid[I] = !gage->probe(answerAll, xyz[0], xyz[1], xyz[2]);
     for (unsigned int qi=0; qi<_values.size(); qi++) {
       answerAll[qi] += length[qi];
     }
@@ -189,12 +187,13 @@ PolyData::color(unsigned int valuesIdx, const Cmap *cmap) {
 
   cmap->map(_nrgba, _values[valuesIdx]);
   unsigned int N = _lpldOwn->vertNum;
-  unsigned char *rgba = AIR_CAST(unsigned char*, _nrgba->data);
-  limnVrt *vert = _lpldOwn->vert;
+  unsigned char *nrgba = AIR_CAST(unsigned char*, _nrgba->data);
+  unsigned char *vrgba = _lpldOwn->rgba;
   for (unsigned int I=0; I<N; I++) {
-    rgba[3] *= _valid[I];   // needs to persist in _nrgba!!
-    ELL_4V_COPY(vert[I].rgba, rgba);
-    rgba += 4;
+    nrgba[3] *= _valid[I];   // needs to persist in _nrgba!!
+    ELL_4V_COPY(vrgba, nrgba);
+    nrgba += 4;
+    vrgba += 4;
   }
   changed();  // to invalidate display lists
 }
@@ -211,24 +210,24 @@ PolyData::alphaMask(unsigned int valuesIdx, double thresh) {
     return;
   }
   unsigned int N = _lpldOwn->vertNum;
-  unsigned char *rgba = AIR_CAST(unsigned char*, _nrgba->data);
-  limnVrt *vert = _lpldOwn->vert;
+  unsigned char *nrgba = AIR_CAST(unsigned char*, _nrgba->data);
+  unsigned char *vrgba = _lpldOwn->rgba;
   double *mdata = _values[valuesIdx]->data();
   unsigned int factorNum = _values[valuesIdx]->length();
   if (mdata) {
     switch (factorNum) {
     case 1:
       for (unsigned int I=0; I<N; I++) {
-        vert[I].rgba[3] = mdata[I] >= thresh ? rgba[3] : 0;
-        rgba += 4;
+        (vrgba + 4*I)[3] = mdata[I] >= thresh ? nrgba[3] : 0;
+        nrgba += 4;
       }
       break;
     case 2:
       for (unsigned int I=0; I<N; I++) {
-        vert[I].rgba[3] = (mdata[0 + 2*I]*mdata[1 + 2*I] >= thresh 
-                           ? rgba[3] 
-                           : 0);
-        rgba += 4;
+        (vrgba + 4*I)[3] = (mdata[0 + 2*I]*mdata[1 + 2*I] >= thresh 
+                            ? nrgba[3] 
+                            : 0);
+        nrgba += 4;
       }
       break;
     default:
@@ -237,8 +236,8 @@ PolyData::alphaMask(unsigned int valuesIdx, double thresh) {
         for (unsigned int fi=0; fi<factorNum; fi++) {
           mm *= mdata[fi + factorNum*I];
         }
-        vert[I].rgba[3] = mm >= thresh ? rgba[3] : 0;
-        rgba += 4;
+        (vrgba + 4*I)[3] = mm >= thresh ? nrgba[3] : 0;
+        nrgba += 4;
       }
       break;
     }
@@ -254,17 +253,17 @@ PolyData::RGBLut(unsigned char lut[256]) {
     fprintf(stderr, "%s(%p): can't modify data that is not owned\n", me, this);
     return;
   }
-  unsigned char *rgba = AIR_CAST(unsigned char*, _nrgba->data);
-  if (!rgba) {
+  unsigned char *nrgba = AIR_CAST(unsigned char*, _nrgba->data);
+  if (!nrgba) {
     return;
   }
 
   size_t N = nrrdElementNumber(_nrgba)/4;
-  limnVrt *vert = _lpldOwn->vert;
+  unsigned char *vrgba = _lpldOwn->rgba;
   for (size_t I=0; I<N; I++) {
-    vert[I].rgba[0] = lut[rgba[0 + 4*I]];
-    vert[I].rgba[1] = lut[rgba[1 + 4*I]];
-    vert[I].rgba[2] = lut[rgba[2 + 4*I]];
+    (vrgba + 4*I)[0] = lut[nrgba[0 + 4*I]];
+    (vrgba + 4*I)[1] = lut[nrgba[1 + 4*I]];
+    (vrgba + 4*I)[2] = lut[nrgba[2 + 4*I]];
   }
   changed();
 }
@@ -279,11 +278,11 @@ PolyData::RGBSet(unsigned char R, unsigned char G, unsigned char B) {
   }
 
   size_t N = _lpldOwn->vertNum;
-  limnVrt *vert = _lpldOwn->vert;
+  unsigned char *vrgba = _lpldOwn->rgba;
   for (size_t I=0; I<N; I++) {
-    vert[I].rgba[0] = R;
-    vert[I].rgba[1] = G;
-    vert[I].rgba[2] = B;
+    (vrgba + 4*I)[0] = R;
+    (vrgba + 4*I)[1] = G;
+    (vrgba + 4*I)[2] = B;
   }
   changed();
 }
@@ -302,7 +301,7 @@ PolyData::verticesGet(Nrrd *npos) {
   }
   float *pos = static_cast<float *>(npos->data);
   for (unsigned int ii=0; ii<lpld->vertNum; ii++) {
-    ELL_34V_HOMOG(pos + 3*ii, lpld->vert[ii].xyzw);
+    ELL_34V_HOMOG(pos + 3*ii, lpld->xyzw + 4*ii);
   }
   return lpld->vertNum;
 }
@@ -310,7 +309,6 @@ PolyData::verticesGet(Nrrd *npos) {
 void
 PolyData::drawImmediate() {
   // char me[]="PolyData::drawImmediate";
-  limnVrt *vrt;
   const limnPolyData *lpld = this->lpld();
   int glWhat;
   const GLenum glpt[LIMN_PRIMITIVE_MAX+1] = {
@@ -328,23 +326,20 @@ PolyData::drawImmediate() {
     return;
   }
 
-  /* {
+  /*
+  {
     unsigned int I = 5370;
     fprintf(stderr, "!%s: vert[%u].rgba = (%u,%u,%u,%u)\n",
-            me, I, lpld->vert[I].rgba[0], lpld->vert[I].rgba[1],
-            lpld->vert[I].rgba[2], lpld->vert[I].rgba[3]);
-    I == 5350;
-    fprintf(stderr, "!%s: vert[%u].rgba = (%u,%u,%u,%u)\n",
-            me, I, lpld->vert[I].rgba[0], lpld->vert[I].rgba[1],
-            lpld->vert[I].rgba[2], lpld->vert[I].rgba[3]);
-            } */
-
+            me, I,
+            lpld->rgba + 4*I + 0, lpld->rgba + 4*I + 1,
+            lpld->rgba + 4*I + 2, lpld->rgba + 4*I + 3);
+  }
+  */
   /*
   fprintf(stderr, "!%s: HELLO _colorUse = %s\n", me,
           _colorUse ? "true" : "false");
   fprintf(stderr, "!%s: _compiling = %s\n", me, _compiling ? "true" : "false");
   */
-  vrt = lpld->vert;
   if (_transformUse) {
     float tmpMat[16];
     glPushMatrix();
@@ -366,17 +361,16 @@ PolyData::drawImmediate() {
   }
   if (!_compiling) {
     glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_NORMAL_ARRAY);
-    if (_colorUse) {
-      glEnableClientState(GL_COLOR_ARRAY);
+    glVertexPointer(4, GL_FLOAT, 4*sizeof(float), lpld->xyzw);
+    if (lpld->norm) {
+      glEnableClientState(GL_NORMAL_ARRAY);
+      glNormalPointer(GL_FLOAT, 3*sizeof(float), lpld->norm);
     }
-    glVertexPointer(4, GL_FLOAT, sizeof(limnVrt), vrt[0].xyzw);
-    glNormalPointer(GL_FLOAT, sizeof(limnVrt), vrt[0].norm);
-    if (_colorUse) {
-      glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(limnVrt), vrt[0].rgba);
+    if (lpld->rgba && _colorUse) {
+      glEnableClientState(GL_COLOR_ARRAY);
+      glColorPointer(4, GL_UNSIGNED_BYTE, 4*sizeof(unsigned char), lpld->rgba);
     }
   }
-  unsigned int vertCnt, vertIdx = 0;
   if (_wireframe) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   } else {
@@ -391,6 +385,7 @@ PolyData::drawImmediate() {
   fprintf(stderr, "!%s: _colorUse = %s\n", me, _colorUse ? "true" : "false");
   fprintf(stderr, "!%s: _compiling = %s\n", me, _compiling ? "true" : "false");
   */
+  unsigned int vertCnt, vertIdx = 0;
   if (!_compiling) {
     for (unsigned int primIdx=0; primIdx<lpld->primNum; primIdx++) {
       vertCnt = lpld->vcnt[primIdx];
@@ -404,11 +399,13 @@ PolyData::drawImmediate() {
       glWhat = glpt[lpld->type[primIdx]];
       glBegin(glWhat);
       for (unsigned int vii=0; vii<vertCnt; vii++) {
-        glNormal3fv(vrt[(lpld->indx + vertIdx)[vii]].norm);
-        if (_colorUse) {
-          glColor4ubv(vrt[(lpld->indx + vertIdx)[vii]].rgba);
+        if (lpld->norm) {
+          glNormal3fv(lpld->norm + 3*(lpld->indx + vertIdx)[vii]);
         }
-        glVertex4fv(vrt[(lpld->indx + vertIdx)[vii]].xyzw);
+        if (lpld->rgba && _colorUse) {
+          glColor4ubv(lpld->rgba + 4*(lpld->indx + vertIdx)[vii]);
+        }
+        glVertex4fv(lpld->xyzw + 4*(lpld->indx + vertIdx)[vii]);
       }
       glEnd();
       vertIdx += vertCnt;
@@ -442,18 +439,18 @@ PolyData::boundsGet(float min[3], float max[3]) const {
   const limnPolyData *lpld = this->lpld();
   unsigned int vi, vertNum;
   float vertB[4], vertC[4];
-  limnVrt *vrt;
 
   if (lpld) {
-    vrt = lpld->vert;
     vertNum = lpld->vertNum;
     for (vi=0; vi<vertNum; vi++) {
       /*
       fprintf(stderr, "!%s: xyzw[%u] = (%g,%g,%g,%g)", me, vi,
-              vrt[vi].xyzw[0], vrt[vi].xyzw[1],
-              vrt[vi].xyzw[2], vrt[vi].xyzw[3]);
+              lpld->xyzw + 4*vi + 0,
+              lpld->xyzw + 4*vi + 1,
+              lpld->xyzw + 4*vi + 2,
+              lpld->xyzw + 4*vi + 3);
       */
-      ELL_4MV_MUL(vertB, _transform, vrt[vi].xyzw);
+      ELL_4MV_MUL(vertB, _transform, lpld->xyzw + 4*vi);
       /*
       fprintf(stderr, " --> (%g,%g,%g,%g)", 
               vertB[0], vertB[1], vertB[2], vertB[3]);
