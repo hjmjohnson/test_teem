@@ -5,7 +5,7 @@ ENDIF(NOT BUILD_SHARED_LIBS)
 SET(DEFT_SRCS
 	Volume.cxx Object.cxx Group.cxx
 	enums.cxx misc.cxx Viewer.cxx ViewerUI.cxx Scene.cxx
-	Slider.cxx Actor.cxx Contour.cxx GlyphOld.cxx
+	Slider.cxx Contour.cxx GlyphOld.cxx
 	HyperStreamline.cxx HyperStreamlineUI.cxx
 	TensorGlyph.cxx TensorGlyphUI.cxx
 	Plane.cxx Gage.cxx Values.cxx Cmap.cxx
