@@ -282,15 +282,8 @@ TriPlane::glyphsUpdate(unsigned int pIdx) {
                 seedPlane[pIdx]->values()[0]->nrrd(), 
                 nrrdTypeFloat);
     glyph[pIdx]->dataSet(_seedTenFloat[pIdx]->axis[1].size,
-                         static_cast<float*>(_seedTenFloat[pIdx]->data),
-                         7,
-                         seedPlane[pIdx]->polyData()->vert[0].xyzw,
-                         // HEY: this is != sizeof(limnVrt), which means
-                         // that limnVrt is failing to be as compact as
-                         // desired.  Yet more reason to move limn to 
-                         // per-attribute arrays...
-                         &(seedPlane[pIdx]->polyData()->vert[1].xyzw[0])
-                         - &(seedPlane[pIdx]->polyData()->vert[0].xyzw[0]),
+                         static_cast<float*>(_seedTenFloat[pIdx]->data), 7,
+                         seedPlane[pIdx]->polyData()->xyzw, 4, 
                          NULL);
     glyph[pIdx]->update();
   }

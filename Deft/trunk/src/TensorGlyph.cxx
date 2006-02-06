@@ -871,15 +871,17 @@ TensorGlyph::glyphPaletteUpdate() {
 
     switch(_glyphType) {
     case tenGlyphTypeBox:
-      limnPolyDataCube(lpld, _cleanEdge);
+      limnPolyDataCube(lpld, 1 << limnPolyDataInfoNorm, _cleanEdge);
       list[0] = surf->compileDisplayList();
       break;
     case tenGlyphTypeCylinder:
     case tenGlyphTypeSphere:
       if (tenGlyphTypeCylinder == _glyphType) {
-        limnPolyDataCylinder(lpld, _glyphRes, _cleanEdge);
+        limnPolyDataCylinder(lpld, 1 << limnPolyDataInfoNorm,
+                             _glyphRes, _cleanEdge);
       } else {
-        limnPolyDataSpiralSphere(lpld, 2*_glyphRes, _glyphRes);
+        limnPolyDataSpiralSphere(lpld, 1 << limnPolyDataInfoNorm,
+                                 2*_glyphRes, _glyphRes);
       }
       list[1] = surf->compileDisplayList();
       limnPolyDataTransform_f(lpld, ZtoX);
@@ -903,7 +905,9 @@ TensorGlyph::glyphPaletteUpdate() {
             alpha = pow(1-cl, _superquadSharpness);
             beta = pow(1-cp, _superquadSharpness);
           }
-          limnPolyDataSpiralSuperquadric(lpld, alpha, beta,
+          limnPolyDataSpiralSuperquadric(lpld,
+                                         1 << limnPolyDataInfoNorm,
+                                         alpha, beta,
                                          2*_glyphRes, _glyphRes);
           limnPolyDataTransform_f(lpld, trnsf);
           list[cpIdx + _baryRes*clIdx] = surf->compileDisplayList();

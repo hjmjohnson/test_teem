@@ -1,19 +1,18 @@
 
 OBJS = Volume.o Object.o Group.o \
        enums.o misc.o Viewer.o ViewerUI.o Scene.o \
-       Slider.o Actor.o Contour.o GlyphOld.o \
+       Slider.o Contour.o GlyphOld.o \
+       Plane.o Gage.o Values.o Cmap.o \
+       TriPlane.o TriPlaneUI.o \
        HyperStreamline.o HyperStreamlineUI.o \
        TensorGlyph.o TensorGlyphUI.o \
-       Plane.o Gage.o Values.o Cmap.o \
        PolyData.o PolyProbe.o \
-       TriPlane.o TriPlaneUI.o
 
 all: Deft_dti Deft_sqd Deft_push
 
 Cmap.o: Values.o
 PolyProbe.o: PolyData.o
 Plane.o: PolyProbe.o
-Scene.o: Actor.o
 Scene.o: Object.o
 PolyData.o: Object.o Gage.o Values.o Cmap.o
 Values.o: Gage.o

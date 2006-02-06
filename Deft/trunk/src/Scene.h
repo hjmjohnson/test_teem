@@ -26,7 +26,6 @@
 #define DEFT_SCENE_INCLUDED
 
 #include "Deft.h"
-#include "Actor.h"
 #include "Object.h"
 #include "Group.h"
 
@@ -52,10 +51,6 @@ public:
   // update (viewspace) lights
   void lightUpdate(limnCamera *cam);
 
-  // set objects in scene
-  int actorAdd(Actor *actor);
-  Actor *actorRemove(int actorIdx);
-
   int objectAdd(Object *obj);
   Object *objectRemove(int objectIdx);
 
@@ -71,8 +66,6 @@ public:
   void boundsGet(float min[3], float max[3]) const;
 
 private:
-  Actor **actor;
-  airArray *actorArr;
   Object **object;
   airArray *objectArr;
   Group **group;

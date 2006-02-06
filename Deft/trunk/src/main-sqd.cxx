@@ -23,7 +23,6 @@
 */
 
 #include "Deft.h"
-#include "Actor.h"
 #include "PolyData.h"
 #include "Viewer.h"
 #include "Plane.h"
@@ -48,14 +47,18 @@ main(int, char **argv) {
   viewer->helpPrint();
 
   limnPolyData *pld = limnPolyDataNew();
-  limnPolyDataSpiralSuperquadric(pld, 0.5f, 0.5f, 41, 22);
+  limnPolyDataSpiralSuperquadric(pld, 
+                                 (1 << limnPolyDataInfoRGBA)
+                                 | (1 << limnPolyDataInfoNorm),
+                                 0.3f, 0.3f, 50, 50);
   Deft::PolyData *surf = new Deft::PolyData(pld, true);
   surf->wireframe(true);
   surf->visible(true);
   scene->objectAdd(surf);
-
+  
   /*
   Deft::Plane *plane = new Deft::Plane(10, 30);
+  plane->update();
   plane->wireframe(true);
   plane->twoSided(true);
   scene->objectAdd(plane);

@@ -190,7 +190,10 @@ Plane::updateGeometry() {
     ret = true;
     // polygonalization changes
     // these actually re-use the _lpld, but clipping will change that...
-    limnPolyDataPlane(_lpldOwn, _resolutionU, _resolutionV);
+    limnPolyDataPlane(_lpldOwn,
+                      (1 << limnPolyDataInfoRGBA)
+                      | (1 << limnPolyDataInfoNorm),
+                      _resolutionU, _resolutionV);
 
     _flag[flagResolution] = false;
     // HEY: not true, but need to somehow force vertex update below ...
@@ -208,10 +211,10 @@ Plane::updateGeometry() {
       for (unsigned int uIdx=0; uIdx<_resolutionU; uIdx++) {
         float uu = static_cast<float>(AIR_AFFINE(0, uIdx, _resolutionU-1,
                                                  0.0, 1.0));
-        ELL_3V_SCALE_ADD3(_lpldOwn->vert[vertIdx].xyzw,
+        ELL_3V_SCALE_ADD3(_lpldOwn->xyzw + 4*vertIdx,
                           1.0f, _origin, uu, _edgeU, vv, _edgeV);
-        _lpldOwn->vert[vertIdx].xyzw[3] = 1.0f;
-        ELL_3V_COPY(_lpldOwn->vert[vertIdx].norm, norm);
+        (_lpldOwn->xyzw + 4*vertIdx)[3] = 1.0f;
+        ELL_3V_COPY(_lpldOwn->norm + 3*vertIdx, norm);
         ++vertIdx;
       }
     }

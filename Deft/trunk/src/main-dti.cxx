@@ -24,7 +24,6 @@
 
 #include "Deft.h"
 #include "Object.h"
-#include "Actor.h"
 #include "Contour.h"
 #include "Viewer.h"
 #include "ViewerUI.h"
