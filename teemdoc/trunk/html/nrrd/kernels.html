@@ -1,0 +1,417 @@
+<!--
+  Documentation for "teem: Gordon Kindlmann's research software"
+  Copyright (C) 2004, 2003, 2002, 2001, 2000 University of Utah
+  This documentation may not be modified or redistributed in any
+  form, except by the copyright holder.
+-->
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html/4/loose.dtd"> 
+<html>
+<head>
+<title>
+Teem: nrrd: Kernels
+</title>
+<meta http-equiv="Content-Type" content="text/html; charset=US-ASCII"> 
+</head>
+<body bgcolor="#ffffff">
+<A href="http://sourceforge.net"><IMG 
+ src="http://sourceforge.net/sflogo.php?group_id=85445&amp;type=2"
+ align=right width="125" height="37" border="0" alt="SourceForge.net Logo"></A>
+<table border=0 cellpadding=0 cellspacing=0>
+<tr>
+  <td width=80 height=80>
+    <a href="../index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/teem80.jpg"></a>
+  <td height=80>
+  <td width=80 height=80>
+    <a href="./index.html"><img border=0 width=80 height=80 alt=""
+    src="../img/nrrd80.jpg"></a>
+  <td>
+<tr>
+  <td width=80 align=center valign=top>
+    <b><a href="../index.html">teem</a></b>
+  <td valign=top>
+    <b>/</b>
+  <td width=80 align=center valign=top>
+    <b><a href="./index.html">nrrd</a></b>
+  <td>
+    <h2>&nbsp;&nbsp;<b>Kernels</b></h2>
+</table>
+
+
+<ul>
+<li><a href="#NrrdKernel">The NrrdKernel struct</a>
+<li><a href="#NrrdKernelSpec">The NrrdKernelSpec struct</a>
+<li><a href="#supplied">Kernels supplied by Nrrd</a>
+<li><a href="#plotting">Plotting kernels</a>
+</ul>
+
+<p>
+
+Besides representing arrays, the Nrrd library is responsible in Teem
+for representing continuous finite-support functions called kernels
+(or filters), which are the basis of axis-aligned resampling in Nrrd,
+and of the convolution-based measurements in <a
+href="../gage/index.html">Gage</a>.  Kernels are used to reconstruct
+continuous values from discretely sampled data, as well as measuring
+derivatives from sampled data.
+
+<a name="NrrdKernel"><h2>The NrrdKernel struct</h2></a>
+
+Everything Nrrd knows about a kernel is contained in the <tt>NrrdKernel</tt>
+struct:
+
+<blockquote><pre>
+/*
+******** NrrdKernel struct
+**
+** these are essentially the methods of the various kernels implemented.
+**
+** Nrrd's use of this sort of kernel always assumes support symmetric
+** around zero, but does not assume anything about even- or oddness
+**
+** It is a strong but very simplifying assumption that the parameter
+** array ("parm") is always type double.  There is essentially no
+** value in allowing flexibility between float and double, and much
+** Teem code assumes that it will always be type double.
+*/
+typedef struct {
+  /* terse string representation of kernel function, irrespective of
+     the parameter vector */
+  char name[AIR_STRLEN_SMALL];
+
+  /* number of parameters needed (# elements in parm[] used) */
+  unsigned int numParm;
+
+  /* smallest x (x > 0) such that k(y) = 0 for all y > x, y < -x */
+  double (*support)(const double *parm);
+
+  /* integral of kernel from -support to +support */
+  double (*integral)(const double *parm);
+
+  /* evaluate once, single precision */
+  float (*eval1_f)(float x, const double *parm);
+
+  /* evaluate N times, single precision */
+  void (*evalN_f)(float *f, const float *x, size_t N, const double *parm);
+
+  /* evaluate once, double precision */
+  double (*eval1_d)(double x, const double *parm);
+
+  /* eval. N times, double precision */
+  void (*evalN_d)(double *f, const double *x, size_t N, const double *parm);
+} NrrdKernel;
+</pre></blockquote>
+
+Note that the <tt>NrrdKernel</tt> is basically a bag of callback 
+functions, for learning things about the kernel (its support, or
+its integral), and for evaluating the kernel in various ways.
+
+<p>
+
+All the kernels use a <tt>double*</tt> to communicate parameters which
+may change the shape or size of the kernel.  The first parameter
+(<tt>parm[0]</tt>) usually determines the kernel scaling, as measured
+in units of samples.  For example, <tt>nrrdKernelBox</tt> represents
+the box function (1.0 inside [-0.5,0.5], and 0.0 outside) when
+<tt>parm[0]&nbsp;==&nbsp;1.0</tt>, but you can change the size of the
+box function by setting a different value for <tt>parm[0]</tt>: if
+<tt>parm[0]&nbsp;==&nbsp;4.0</tt>, the support of the box functions
+extends to [-2,2].  To be mathematically well-behaved, when kernels
+support this kind of scaling, the amplitude of the kernel is scaled
+proportionally so that the integral of the kernel is constant.
+
+<p>
+
+Unlike other structs in Nrrd (and Teem), NrrdKernels are usually
+not user-allocated (there is no <tt>nrrdKernelNew()</tt> or 
+<tt>nrrdKernelNix()</tt>).  Rather, the kernels in Nrrd 
+are created at compile-time, and pointers to these are used
+to communicate kernel information to the convolution functions
+that need them.
+
+<p>
+
+There is one function which supplies a standard way of mapping from
+a string to a <tt>NrrdKernel</tt> and a parameter vector; this is
+used for command-line specification of kernels:
+<pre>
+int nrrdKernelParse(const NrrdKernel **kernelP, double *parm,
+                    const char *str);
+</pre>
+Examples of strings and the kernels they parse to are given below.
+
+<a name="NrrdKernelSpec"><h2>The NrrdKernelSpec struct</h2></a>
+
+Because nearly all kernels require some parameters to tune their
+behavior, sometimes it is helpful to pair together the <tt>NrrdKernel</tt>
+and its parameter vector:
+
+<blockquote><pre>
+/*
+******** NrrdKernelSpec struct
+** 
+** for those times when it makes most sense to directly associate a
+** NrrdKernel with its parameter vector (that is, a full kernel
+** "spec"ification), basically: using hest.
+*/
+typedef struct {
+  const NrrdKernel *kernel;
+  double parm[NRRD_KERNEL_PARMS_NUM];
+} NrrdKernelSpec;
+</pre></blockquote>
+
+These functions operate with <tt>NrrdKernelSpect</tt>s:
+
+<ul>
+<li><pre>
+NrrdKernelSpec *nrrdKernelSpecNew();
+NrrdKernelSpec *nrrdKernelSpecNix(NrrdKernelSpec *ksp);
+NrrdKernelSpec *nrrdKernelSpecCopy(NrrdKernelSpec *ksp);
+</pre>
+Create, destroy, and copy (which also creates).
+
+<li><pre>
+void nrrdKernelSpecSet(NrrdKernelSpec *ksp, const NrrdKernel *k,
+                       const double kparm[NRRD_KERNEL_PARMS_NUM]);
+</pre>
+Set a <tt>NrrdKernelSpec</tt> from a <tt>NrrdKernel</tt> pointer and a
+parameter vector.
+
+<li><pre>
+void nrrdKernelParmSet(const NrrdKernel **kP,
+                       double kparm[NRRD_KERNEL_PARMS_NUM],
+                       NrrdKernelSpec *ksp);
+</pre>
+Set a <tt>NrrdKernel</tt> pointer and a
+parameter vector from a <tt>NrrdKernelSpec</tt>.
+
+<li><pre>
+int nrrdKernelSpecParse(NrrdKernelSpec *ksp, const char *str);
+</pre>
+Like <tt>nrrdKernelParse</tt>, but sets info in a given
+<tt>NrrdKernelSpec</tt>.
+
+</ul>
+
+<a name="supplied"><h2>Kernels supplied by Nrrd</h2></a>
+
+The "string" information in the table below are the sort of thing that
+can be parsed by <tt>nrrdKernelParse</tt> and
+<tt>nrrdKernelSpecParse</tt>.  When there are two versions of the
+string, it means that when the scale ("<i>scl</i>") parameter is not
+explicitly given, <tt>parm[0]</tt> set to 1.0.  The "parameter"
+information gives the number of parameters required by the kernel
+(<tt>numParm</tt> in the <tt>NrrdKernel</tt>), and what they mean.
+
+<p>
+
+<table border=1>
+<tr>
+<td><tt>NrrdKernel*</tt>
+<td>string
+<td>parameters
+<td>description
+
+<tr>
+<td><tt>nrrdKernelZero</tt>
+<td>"zero"<br>
+"zero:<i>scl</t>"
+<td>1:<br>parm[0]=scale
+<td>Zero everywhere
+
+<tr>
+<td><tt>nrrdKernelBox</tt>
+<td>"box"<br>
+"box:<i>scl</t>"
+<td>1:<br>parm[0]=scale
+<td>The box function, equals 1.0 inside [-0.5,0.5], and 0.0 outside.
+Used for implementing nearest-neighbor interpolation.
+
+<tr>
+<td><tt>nrrdKernelTent</tt>
+<td>"tent"<br>
+"tent:<i>scl</t>"
+<td>1:<br>parm[0]=scale
+<td>The tent function: f(-1)=0, f(0)=1, f(1)=0, with linear ramps
+in between, and zero elsewhere.  Used for linear (and bilinear
+and trilinear) interpolation.
+
+<tr>
+<td><tt>nrrdKernelForwDiff</tt>
+<td>"forwdiff"<br>
+"forwdiff:<i>scl</t>"
+<td>1:<br>parm[0]=scale
+<td>Piecewise-linear ramps that implement forward-difference differentiation
+
+<tr>
+<td><tt>nrrdKernelCentDiff</tt>
+<td>"centdiff"<br>
+"centdiff:<i>scl</t>"
+<td>1:<br>parm[0]=scale
+<td>Piecewise-linear ramps that implement central-difference differentiation
+
+<tr>
+<td><tt>nrrdKernelBCCubic</tt>
+<td>"cubic:<i>B</i>,<i>C</i>"<br>
+"cubic:<i>scl</i>,<i>B</i>,<i>C</i>"
+<td>3:<br>
+parm[0]=scale<br>
+parm[1]=B<br>
+parm[2]=C<br>
+<td>The two-parameter family of first-order continuous, 4-sample support,
+piece-wise cubic splines, described by
+"D. P. Mitchell and A. N. Netravali. Reconstruction filters in
+computer graphics. In Computer Graphics (SIGGRAPH '88 Proceedings),
+volume 22, pages 221--228, August 1988."  Includes the Catmull-Rom
+spline at (B,C)=(0,0.5) and the uniform cubic B-spline at (B,C)=(1,0).
+
+<tr>
+<td><tt>nrrdKernelBCCubicD</tt>
+<td>"cubicd:<i>B</i>,<i>C</i>"<br>
+"cubicd:<i>scl</i>,<i>B</i>,<i>C</i>"
+<td>3:<br>
+parm[0]=scale<br>
+parm[1]=B<br>
+parm[2]=C<br>
+<td>The first derivative of the BC cubics
+
+<tr>
+<td><tt>nrrdKernelBCCubicDD</tt>
+<td>"cubicdd:<i>B</i>,<i>C</i>"<br>
+"cubicdd:<i>scl</i>,<i>B</i>,<i>C</i>"
+<td>3:<br>
+parm[0]=scale<br>
+parm[1]=B<br>
+parm[2]=C<br>
+<td>The second derivative of the BC cubics.  Note: The uniform 
+cubic B-spline at (B,C)=(1,0) is the only one which is second-order
+continuous.
+
+<tr>
+<td><tt>nrrdKernelGaussian</tt>
+<td>"gauss:<i>sig</i>,<i>cut</i>"
+<td>2:<br>
+parm[0]=sigma<br>
+parm[1]=cut-off<br>
+<td>The Gaussian.  Sigma is measured in units of samples, and the cut-off
+is measured in units of sigma.  "gauss:3,5" describes a Gaussian with
+inflection points at -3 and +3, and which is zero outside [-15,15].
+
+<tr>
+<td><tt>nrrdKernelGaussianD</tt>
+<td>"gaussd:<i>sig</i>,<i>cut</i>"
+<td>2:<br>
+parm[0]=sigma<br>
+parm[1]=cut-off<br>
+<td>First derivative of the Gaussian
+
+<tr>
+<td><tt>nrrdKernelGaussianDD</tt>
+<td>"gaussdd:<i>sig</i>,<i>cut</i>"
+<td>2:<br>
+parm[0]=sigma<br>
+parm[1]=cut-off<br>
+<td>Second derivative of the Gaussian
+
+<tr>
+<td><tt>nrrdKernelHann</tt>
+<td>"hann:<i>cut</i>"
+<td>1:<br>
+parm[0]=cut-off<br>
+<td>Hann-windowed sinc() function.  Cut-off is measured in units of samples.
+
+<tr>
+<td><tt>nrrdKernelHannD</tt>
+<td>"hannd:<i>cut</i>"
+<td>1:<br>
+parm[0]=cut-off<br>
+<td>First derivative of Hann-windowed sinc()
+
+<tr>
+<td><tt>nrrdKernelHannDD</tt>
+<td>"hanndd:<i>cut</i>"
+<td>1:<br>
+parm[0]=cut-off<br>
+<td>Second derivative of Hann-windowed sinc()
+
+<tr>
+<td><tt>nrrdKernelBlackman</tt>
+<td>"hann:<i>cut</i>"
+<td>1:<br>
+parm[0]=cut-off<br>
+<td>Blackman-windowed sinc() function.  Cut-off is measured in units of samples.
+
+<tr>
+<td><tt>nrrdKernelBlackmanD</tt>
+<td>"hannd:<i>cut</i>"
+<td>1:<br>
+parm[0]=cut-off<br>
+<td>First derivative of Blackman-windowed sinc()
+
+<tr>
+<td><tt>nrrdKernelBlackmanDD</tt>
+<td>"hanndd:<i>cut</i>"
+<td>1:<br>
+parm[0]=cut-off<br>
+<td>Second derivative of Blackman-windowed sinc()
+
+</table>
+
+<a name="plotting"><h2>Plotting kernels</h2></a>
+
+The formulae for the kernels are available for inspection in
+<a href="http://cvs.sourceforge.net/viewcvs.py/teem/teem/src/nrrd/kernel.c?view=markup"><tt>teem/src/nrrd/kernel.c</tt></a>, but it is sometimes
+nice to be able to quickly see what a given kernel looks like.  Some
+<tt>unu</tt> can do this:
+
+<blockquote><tt>
+echo <b>0 0 1 0 0</b> \<br>
+&nbsp;| unu axdelete -a -1 \<br>
+&nbsp;| unu resample -s x100 -c node -k <b>cubic:0,0.5</b> \<br>
+&nbsp;| unu 2op + - 0.2 \<br>
+&nbsp;| unu dhisto -h 200 -nolog \<br>
+&nbsp;| unu pad -min -1 -1 -max M+1 M+1 -b pad -v 0 -o cmr.png
+</tt></blockquote>
+<center>
+<img src="cmr.png" width=502 height=202>
+</center>
+
+<blockquote><tt>
+echo <b>0 0 1 0 0</b> \<br>
+&nbsp;| unu axdelete -a -1 \<br>
+&nbsp;| unu resample -s x100 -c node -k <b>cubicd:0,0.5</b> \<br>
+&nbsp;| unu 2op + - 1.4 \<br>
+&nbsp;| unu dhisto -h 200 -nolog \<br>
+&nbsp;| unu pad -min -1 -1 -max M+1 M+1 -b pad -v 0 -o cmrd.png
+</tt></blockquote>
+<center>
+<img src="cmrd.png" width=502 height=202>
+</center>
+
+<p>
+
+The "-k" argument to <tt>unu resample</tt> specifies the kernel to use
+to upsample the input vector, in this case "0 0 1 0 0", which ends up
+plotting from -2 to +2.  Using "0 0 0 1 0 0 0" would plot from -3 to +3.
+The "<tt>unu 2op + - 0.2</tt>" adds a little bit to all the values so 
+that nothing negative is given to <tt>unu dhisto</tt>, which was never
+really meant for this.
+
+<p>
+
+You can also save the sampled values to text files for plotting with
+other programs:
+<blockquote><pre>
+echo 0 0 1 0 0 \
+ | unu axdelete -a -1 \
+ | unu resample -s x100 -c node -k cubic:0,0.5 -o range.txt
+echo -2 -1 0 1 2 \
+ | unu axdelete -a -1 \
+ | unu resample -s x100 -c node -k tent -o domain.txt
+</pre></blockquote>
+
+<p>
+<a href="http://validator.w3.org/check/referer">&nbsp;</a>
+</body>
+</html>
