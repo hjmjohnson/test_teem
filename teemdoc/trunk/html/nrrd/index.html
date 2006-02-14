@@ -46,6 +46,8 @@ Teem: nrrd
        <font size="-2">&nbsp;</font><br>
     - <a href="lib.html"> Library description </a> <br>
        <font size="-2">&nbsp;</font><br>
+    - <a href="kernels.html"> Kernels in Nrrd </a> <br>
+       <font size="-2">&nbsp;</font><br>
     - <a href="demo.html">Demo of <b>nrrd</b>/<tt>unu</tt> uses</a><br>
        <font size="-2">&nbsp;</font><br>
     - <a href="soapbox.html">Advocacy</a><br>
@@ -53,9 +55,6 @@ Teem: nrrd
 </table>
 
 <h2>Nearly Raw Raster Data</h2>
-
-<h4>(no relationship to <a href="http://www.norstan.com">Norstan Inc.</a>,
-NASDAQ: <a href="http://www.google.com/search?hl=en&amp;lr=&amp;ie=UTF-8&amp;safe=off&amp;prev=/search%3Fq%3Dnrrd%26hl%3Den%26lr%3D%26ie%3DUTF-8%26safe%3Doff&amp;q=stocks:NRRD+">NRRD</a>)</h4>
 
 Nrrd is a library and file format designed to support scientific
 visualization and image processing involving N-dimensional raster
@@ -65,12 +64,11 @@ floating point types), encoding of written files (raw, ascii, hex, or
 gzip or bzip2 compression), and endianness (the byte order of data is
 explicitly recorded when the type or encoding expose it).  Besides the
 NRRD format, the library can read and write PNG, PPM, and PGM images,
-as well as VTK "STRUCTURED_POINTS" datasets.  About two dozen
+as well as some VTK "STRUCTURED_POINTS" datasets.  About two dozen
 operations on raster data are implemented, including simple things
 like quantizing, slicing, and cropping, as well as fancier things like
 projection, histogram equalization, and filtered resampling (up and
-down) with arbitrary seperable kernels.  As with the <a href="../index.html">rest of teem</a>, nrrd builds on (and is released pre-compiled for)
-<a href="../download/index.html">six different platforms</a>.
+down) with arbitrary seperable kernels. 
 
 <p>
 
@@ -86,41 +84,45 @@ href="soapbox.html">"Advocacy"</a>.
 <p>
 
 In these pages, "NRRD" refers to the file format, "<tt>Nrrd</tt>"
-refers to the C struct defined in <tt>nrrd.h</tt>, "<b>nrrd</b>"
-refers to the library containing all the nrrd functions, , and "nrrd"
+refers to the C struct defined in <tt>nrrd.h</tt>, "Nrrd"
+refers to the library containing all the nrrd functions, and "nrrd"
 is a general term for all of these.
 
 <ul>
 
-<li><a href="intro.html"><b>Introduction</b></a>: What kind of data
+<li><a href="intro.html">Introduction</a>: What kind of data
 nrrd can represent, with a discussion of dimension, axes, and scalar
 types.
 
-<li><a href="descformat.html"><b>Description of NRRD file
-format</b></a>: General information about the format, and comparisons
+<li><a href="descformat.html">Description of NRRD file
+format</a>: General information about the format, and comparisons
 with other similar formats.
 
-<li><a href="format.html"><b>Definition of NRRD file format</b></a>:
+<li><a href="format.html">Definition of NRRD file format</a>:
 How to get data into and out of nrrd.
 
-<li><a href="files/index.html"><b>Example NRRD files</b></a>: A
+<li><a href="files/index.html">Example NRRD files</a>: A
 variety of NRRD file format examples, as well as PPM, PGM, and text
 files that encode nrrd information.
 
-<li><a href="otherformat.html"><b>NRRD-Compatible file
-formats</b></a>: How NRRD plays well with PPM, PGM, and PNG images,
+<li><a href="otherformat.html">NRRD-Compatible file
+formats</a>: How NRRD plays well with PPM, PGM, and PNG images,
 as well as plain text files.  Information normally found in the NRRD
 header can be losslessly encoded in these formats.
 
-<li><a href="lib.html"><b>nrrd Library Description</b></a>: High-level
-documentation for the <b>nrrd</b> library and the various functions
+<li><a href="lib.html">nrrd Library Description</a>: High-level
+documentation for the Nrrd library and the various functions
 for manipulating <tt>Nrrd</tt>s.
 
-<li><a href="demo.html"><b>Demonstrations of using nrrd</b></a>: A
-series of examples of how the <b>nrrd</b> library and/or the
+<li><a href="kernels.html">Kernels</a>: Nrrd has a particular
+way of representing the continuous kernels that are the basis
+of convolution-based resampling.
+
+<li><a href="demo.html">Demonstrations of using nrrd</a>: A
+series of examples of how the Nrrd library and/or the
 "<tt>unu</tt>" program can be used to do useful things.
 
-<li><a href="soapbox.html"><b>Advocacy</b></a>: Why you should
+<li><a href="soapbox.html">Advocacy</a>: Why you should
 use nrrd.
 
 </ul>
