@@ -150,8 +150,8 @@ PolyData::probe(const Gage *gage) {
   unsigned int N = lpld()->vertNum;
   const float *xyzw = lpld()->xyzw;
   for (unsigned int I=0; I<N; I++) {
-    gage_t xyz[3];
-    ELL_34V_HOMOG_TT(xyz, gage_t, xyzw + 4*I);
+    double xyz[3];
+    ELL_34V_HOMOG(xyz, xyzw + 4*I);
     _valid[I] = !gage->probe(answerAll, xyz[0], xyz[1], xyz[2]);
     for (unsigned int qi=0; qi<_values.size(); qi++) {
       answerAll[qi] += length[qi];
@@ -196,6 +196,7 @@ PolyData::color(unsigned int valuesIdx, const Cmap *cmap) {
     vrgba += 4;
   }
   changed();  // to invalidate display lists
+
 }
 
 void
@@ -388,14 +389,18 @@ PolyData::drawImmediate() {
   unsigned int vertCnt, vertIdx = 0;
   if (!_compiling) {
     for (unsigned int primIdx=0; primIdx<lpld->primNum; primIdx++) {
-      vertCnt = lpld->vcnt[primIdx];
+      vertCnt = lpld->icnt[primIdx];
       glWhat = glpt[lpld->type[primIdx]];
+      /*
+      fprintf(stderr, "!%s: glDrawElements(%u, %u, GL_UNSIGNED_INT, %p)\n", me,
+              glWhat, vertCnt, lpld->indx + vertIdx);
+      */
       glDrawElements(glWhat, vertCnt, GL_UNSIGNED_INT, lpld->indx + vertIdx);
       vertIdx += vertCnt;
     }
   } else {
     for (unsigned int primIdx=0; primIdx<lpld->primNum; primIdx++) {
-      vertCnt = lpld->vcnt[primIdx];
+      vertCnt = lpld->icnt[primIdx];
       glWhat = glpt[lpld->type[primIdx]];
       glBegin(glWhat);
       for (unsigned int vii=0; vii<vertCnt; vii++) {
