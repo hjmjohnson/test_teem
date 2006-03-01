@@ -199,6 +199,15 @@ PolyProbe::colorQuantity(int quantity) {
     _cmap->min1D(0);
     _cmap->max1D(1);
     break;
+  case colorQuantityTrace:
+    _queryColor.resize(1);
+    _queryColor[0] = tenGageTrace;
+    strcat(fname, "cmap/gray.nrrd");
+    lret = nrrdLoad(_nrmap1D, fname, NULL);
+    _cmap->rmap1D(_nrmap1D);
+    _cmap->min1D(0);
+    _cmap->max1D(0.012);
+    break;
   case colorQuantityClCp:
     _queryColor.resize(2);
     _queryColor[0] = tenGageCl2;
@@ -448,7 +457,12 @@ PolyProbe::update(bool geometryChanged) {
   */
   if (_flag[flagProbedValues]
       || _flag[flagColorMap]) {
-    if (_gage->querySet() && this->polyData()->vertNum) { // NOT ->query().size()
+    // NOT ->query().size(), but for reasons GLK can't remember
+    if (_gage->querySet() && this->polyData()->vertNum) { 
+      /*
+      fprintf(stderr, "!%s: lpld->rgba = %p\n", me, 
+              dynamic_cast<PolyData*>(this)->lpld()->rgba);
+      */
       dynamic_cast<PolyData*>(this)->color(0, _cmap);
     }
     _flag[flagProbedValues] = false;
