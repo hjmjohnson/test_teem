@@ -114,6 +114,7 @@ _colorQuantityStr[DEFT_COLOR_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
   "(Mode,FA)",
   "Mode",
   "FA",
+  "Trace",
   "(Cl,Cp)",
   "Cl",
   "Cp",

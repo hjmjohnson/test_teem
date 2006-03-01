@@ -31,6 +31,7 @@
 #include <teem/nrrd.h>
 #include <teem/ell.h>
 #include <teem/limn.h>
+#include <teem/seek.h>
 #include <teem/ten.h>
 
 #include <GL/glew.h>  /* includes glu.h */
@@ -139,13 +140,14 @@ enum {
   colorQuantityModeFA,     /*  3: */
   colorQuantityMode,       /*  4: */
   colorQuantityFA,         /*  5: */
-  colorQuantityClCp,       /*  6: */
-  colorQuantityCl,         /*  7: */
-  colorQuantityCp,         /*  8: */
-  colorQuantityCa,         /*  9: */
+  colorQuantityTrace,      /*  6: */
+  colorQuantityClCp,       /*  7: */
+  colorQuantityCl,         /*  8: */
+  colorQuantityCp,         /*  9: */
+  colorQuantityCa,         /* 10: */
   colorQuantityLast
 };
-#define DEFT_COLOR_QUANTITY_MAX 9
+#define DEFT_COLOR_QUANTITY_MAX 10
 
 /*
 ** the weirdness here is that while "confidence" is itself
