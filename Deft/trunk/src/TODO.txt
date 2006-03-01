@@ -1,27 +1,31 @@
+check to see if cmap directory can be loaded
+anisocontour: allow toggling coloring
+glyphs: colored by starkCmap
+fiber/triplane: debug segfault when seeding grid changes with fibers-on-planes
+fiber/triplane: separate fiber thresh slider
+anisocontour: single Grid slider, don't resample if not shown
+change cursor when in different camera interaction zones
+fibers: export to LoD's format
+fibers: fast iterative method for principal eigenvalue
+
 SP:
 - GUI w/ tabs
 - Perspective limit -> rotation block
-- mouse/camera interactions unintuitive
 - top-level menu, including file->open
 - shell
 - high-level parameter settings:
   set thresh so that I see 100 glyphs on this plane
 
-debug segfault when seeding grid changes with fibers-on-planes
-
 glyphs on planes: need to spatially separate from plane
 
-glyphs: colored by starkCmap
 glyphs: skip negative eigenvalues button
 
 picking on slices
 fibers: seed at pick point
 
-fibers: fast iterative method for principal eigenvalue
 fibers: graceful handling of node-centered volumes
 fibers: different fiber tractography algorithms, with GUI menu
 fibers: hest button
-fibers: export to LoD's format
 fibers: as with glyphs: sort and display based on per-fiber measures
 fibers: glyphs on a subset of vertices (like LoD did)
 
@@ -57,6 +61,14 @@ of arrays of vertices. this is the only scalable way to handle
 optional per-vertex attributes (originally motivated by need for 
 floating point texture coords) ...
 
+DBE: 0) seed fibers from mask volume (scalar info that can be thresholded)
+
+0.25) "pause" updates of GUI, so that multiple things can be updated at once
+
+0.5) track a different eigenvector
+
+0.75) track sheets
+
 DBE: 1) On quit, perhaps consider and option to save the current state.
 --> maybe hest all UI windows on destruction?
 
@@ -83,6 +95,9 @@ the CANCEL button: need separate GUI and CPU threads
 
 DBE: For animations: consider a command-line parsing window (or prompt)
 that can take new parameters while the program is running
+
+DBE: keyboard equivalents for all GUI interactions, to facilitate
+"rotate, dump, rotate, dump..."
 
 DBE: 5) There is a limitation on the FOV value of 180 but when trying to
    set it to 180 when trouble shooting (4) I obtain the following at
@@ -139,12 +154,8 @@ like Slicer or SPM/DoDTI: 2D display of cutting planes.
 
 features I miss from DTInspect.tcl:
 - color glyphs by anisotropy
-- anisotropy isosurfaces, colored by evec1 or another anisotropy,
-  optionally cut by planes
-- axis-aligned cutting planes clipped to anisotropy isosurface
+- anisotropy isosurfaces optionally cut by planes
 - entities themselves control whether they are cut by the planes
-- glyphs seeding on cutting planes, colored by evec1 or another anisotropy,
-  culled by anisotropy isosurface
 
 other non-essential DTInspect features:
 - all things had variable opacity
@@ -214,7 +225,6 @@ what I really want in a slicer/exploration tool
   and maybe some kind of provenance
 
 - 3D vis I really need:
-  - view-point picker (camera) that doesn't suck
   - ability to have arbitrarily oriented cutting planes- perhaps even just
     3-D rotatation but viewing only the screen-defined plane 
   - ability to do off-axis cropping would be nice too
