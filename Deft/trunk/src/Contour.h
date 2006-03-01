@@ -26,20 +26,21 @@
 #define DEFT_CONTOUR_INCLUDED
 
 #include "Deft.h"
+#include "PolyProbe.h"
 
 namespace Deft {
 
-class DEFT_EXPORT Contour {
+class DEFT_EXPORT Contour : public PolyProbe {
 public:
   explicit Contour();
   ~Contour();
-  void volumeSet(const Nrrd *nin);
+  void volumeSet(const Nrrd *nin); // only scalars for now
   void lowerInsideSet(int val);
   double minimum();
   double maximum();
-  void extract(limnObject *obj, double isovalue);
+  void extract(double isovalue);
 private:
-  limnContour3DContext *lctx;
+  seekContext *_sctx;
 };
 
 }

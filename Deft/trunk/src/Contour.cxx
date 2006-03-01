@@ -29,13 +29,13 @@ namespace Deft {
 
 Contour::Contour() {
 
-  lctx = limnContour3DContextNew();
-  lctx->findNormals = AIR_TRUE;
+  _sctx = seekContextNew();
+  seekNormalsFindSet(_sctx, AIR_TRUE);
 }
 
 Contour::~Contour() {
 
-  lctx = limnContour3DContextNix(lctx);
+  _sctx = seekContextNix(_sctx);
 }
 
 void
@@ -44,15 +44,92 @@ Contour::volumeSet(const Nrrd *nvol) {
   const char *key;
   gageShape *shape;
   airArray *mop;
+  int ftype;
 
+  /*
+  ftype = seekTypeRidgeSurface;
+  gageKind *kind = gageKindScl;
+  int valItem = gageSclValue;
+  int normItem = gageSclNormal;
+  int gradItem = gageSclGradVec;
+  int evalItem = gageSclHessEval;
+  int evecItem = gageSclHessEvec;
+  */
+
+  gageKind *kind = tenGageKind;
+  ftype = seekTypeIsocontour;
+  int valItem = tenGageFA;
+  int normItem = tenGageFANormal;
+  int gradItem = tenGageFAGradVec;
+  int evecItem = tenGageFAHessianEvec;
+  int evalItem = tenGageFAHessianEval;
+
+  /* 
+  gageKind *kind = tenGageKind;
+
+  ftype = seekTypeRidgeSurface;
+  int valItem = tenGageFA;
+  int normItem = tenGageFANormal;
+  int gradItem = tenGageFAGradVec;
+  int evalItem = tenGageFAHessianEval;
+  int evecItem = tenGageFAHessianEvec;
+
+  ftype = seekTypeValleySurface;
+  int valItem = tenGageMode;
+  int normItem = tenGageModeNormal;
+  int gradItem = tenGageModeGradVec;
+  int evalItem = tenGageModeHessianEval;
+  int evecItem = tenGageModeHessianEvec;
+  */
+
+  /*
+  ** holy crap, it actually works 
+  */
+  gageContext *gctx;
+  gagePerVolume *gpvl;
+  double kparm[3];
+  gctx = gageContextNew();
+  int E = 0;
+  if (!E) E |= !(gpvl = gagePerVolumeNew(gctx, nvol, kind));
+  if (!E) E |= gagePerVolumeAttach(gctx, gpvl);
+  ELL_3V_SET(kparm, 1, 1.0, 0.0);
+  if (!E) E |= gageKernelSet(gctx, gageKernel00, nrrdKernelBCCubic, kparm);
+  ELL_3V_SET(kparm, 1, 1.0, 0.0);
+  if (!E) E |= gageKernelSet(gctx, gageKernel11, nrrdKernelBCCubicD, kparm);
+  ELL_3V_SET(kparm, 1, 1.0, 0.0);
+  if (!E) E |= gageKernelSet(gctx, gageKernel22, nrrdKernelBCCubicDD, kparm);
+  if (!E) E |= gageQueryItemOn(gctx, gpvl, valItem);
+  if (!E) E |= gageQueryItemOn(gctx, gpvl, normItem);
+  if (!E) E |= gageQueryItemOn(gctx, gpvl, gradItem);
+  if (!E) E |= gageQueryItemOn(gctx, gpvl, evecItem);
+  if (!E) E |= gageUpdate(gctx);
+  if (E) {
+    fprintf(stderr, "%s: trouble:\n%s", me, biffGetDone(GAGE));
+  }
+  /* */
+  
   mop = airMopNew();
   shape = gageShapeNew();
   airMopAdd(mop, shape, (airMopper)gageShapeNix, airMopAlways);
   if (!(key = GAGE)
-      || gageShapeSet(shape, nvol, 0)
+      || gageShapeSet(shape, nvol, kind->baseDim)
       || !(key = LIMN)
-      || limnContour3DVolumeSet(lctx, nvol)
-      || limnContour3DTransformSet(lctx, shape->ItoW)) {
+      /* */
+      || seekDataSet(_sctx, nvol, gctx, 0)
+      || seekItemValueSet(_sctx, valItem)
+      || seekItemNormalSet(_sctx, normItem)
+      /* */
+      /*
+      || seekDataSet(_sctx, nvol, NULL, 0)
+      || seekTypeSet(_sctx, seekTypeIsocontour)
+      */
+      /* */
+      || seekTypeSet(_sctx, ftype)
+      || seekItemGradientSet(_sctx, gradItem)
+      || seekItemEigensystemSet(_sctx, evalItem, evecItem)
+      /* */
+      || seekUpdate(_sctx)
+      ) {
     airMopAdd(mop, err=biffGetDone(key), airFree, airMopAlways);
     fprintf(stderr, "%s: trouble:\n%s", me, err);
     airMopError(mop); return;
@@ -65,7 +142,7 @@ void
 Contour::lowerInsideSet(int val) {
   char me[]="Contour::lowerInsideSet", *err;
 
-  if (limnContour3DLowerInsideSet(lctx, val)) {
+  if (seekLowerInsideSet(_sctx, val)) {
     err = biffGetDone(LIMN);
     fprintf(stderr, "%s: trouble:\n%s", me, err);
     free(err); return;
@@ -74,43 +151,38 @@ Contour::lowerInsideSet(int val) {
 }
 
 void
-Contour::extract(limnObject *obj, double isovalue) {
+Contour::extract(double isovalue) {
   char me[]="Contour::extract", *err;
   double time0, time1;
 
   time0 = airTime();
-  limnObjectEmpty(obj);
-  /*
-  lctx->findNormals = AIR_FALSE;
-  if (limnContour3DExtract(lctx, obj, isovalue)
-      || limnObjectFaceNormals(obj, limnSpaceWorld)
-      || limnObjectVertexNormals(obj)) {
-  */
-  if (limnContour3DExtract(lctx, obj, isovalue)) {
+  if (seekIsovalueSet(_sctx, isovalue)
+      || seekUpdate(_sctx)
+      || seekExtract(_sctx, _lpldOwn)) {
     err = biffGetDone(LIMN);
     fprintf(stderr, "%s: trouble getting isosurface:\n%s", me, err);
     free(err); 
-    limnObjectEmpty(obj);
     return;
   }
   time1 = airTime();
   /*
   fprintf(stderr, "%s: %d tris, %g|%g sec: %g|%g Ktris/sec\n", me,
-          obj->faceNum, lctx->time, time1-time0,
-          (double)(obj->faceNum)/(1000.0*lctx->time),
-          (double)(obj->faceNum)/(1000.0*(time1 - time0)));
+          _lpldOwn->indxNum/3, _sctx->time, time1-time0,
+          (double)(_lpldOwn->indxNum/3)/(1000.0*_sctx->time),
+          (double)(_lpldOwn->indxNum/3)/(1000.0*(time1 - time0)));
   */
+  this->changed();
   return;
 }
 
 double
 Contour::minimum() {
-  return lctx->range->min;
+  return _sctx->range->min;
 }
 
 double
 Contour::maximum() {
-  return lctx->range->max;
+  return _sctx->range->max;
 }
 
 } /* namespace Deft */
