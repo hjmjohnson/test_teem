@@ -590,6 +590,7 @@ HyperStreamlineUI::_stopSlider_cb(Deft::Slider *slider,
   ui->redraw();
 }
 
+// TERRIBLE: copied from TriPlaneUI.C
 void
 HyperStreamlineUI::kernel_cb(fltk::Choice *menu, HyperStreamlineUI *ui) {
   // char me[]="HyperStreamlineUI::kernel_cb";
