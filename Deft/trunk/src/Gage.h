@@ -69,7 +69,7 @@ public:
   // the return is non-zero if (x,y,z) was outside the volume
   // NOTE: can only probe in world space (not in gage's native index space)
   // NOTE: is it really a const member function?  No compiler complaints!
-  int probe(double **answer, gage_t x, gage_t y, gage_t z) const;
+  int probe(double **answer, double x, double y, double z) const;
   
   // other parameters or flags
   void verbose(int v);
@@ -81,9 +81,9 @@ private:
   gagePerVolume *_pvl;
   void _answerInit();
   std::vector<std::vector<int> > _item;
-  std::vector<std::vector<const gage_t *> > _answer;
+  std::vector<std::vector<const double *> > _answer;
   std::vector<std::vector<unsigned int> > _answerLength;
-  std::vector<std::vector<void (*)(double *, const gage_t *)> > _answerCopy;
+  std::vector<std::vector<void (*)(double *, const double *)> > _answerCopy;
 };
 
 } /* namespace Deft */

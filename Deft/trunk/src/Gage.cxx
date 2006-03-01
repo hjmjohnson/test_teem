@@ -33,7 +33,7 @@ namespace Deft {
 
 #define answerCopy(N) \
 void \
-_answerCopy_##N (double *dst, const gage_t *src) { \
+_answerCopy_##N (double *dst, const double *src) { \
   for (unsigned int ii=0; ii<N; ii++) { \
     *dst++ = *src++; \
   } \
@@ -53,7 +53,7 @@ answerCopy(11);
 answerCopy(12);
 
 void
-(*_answerCopy_[13])(double *dst, const gage_t *src) = {
+(*_answerCopy_[13])(double *dst, const double *src) = {
   NULL,
   _answerCopy_1,
   _answerCopy_2,
@@ -203,7 +203,7 @@ Gage::update() {
 }
 
 int
-Gage::probe(double **answerAll, gage_t x, gage_t y, gage_t z) const {
+Gage::probe(double **answerAll, double x, double y, double z) const {
   // static int count = 0;
   // char me[]="Gage::_probe";
   double *answer;
@@ -238,7 +238,7 @@ Gage::probe(double **answerAll, gage_t x, gage_t y, gage_t z) const {
 
 void
 Gage::verbose(int v) {
-  gageParmSet(_gctx, gageParmVerbose, AIR_CAST(gage_t, v));
+  gageParmSet(_gctx, gageParmVerbose, v);
 }
 
 int
