@@ -544,7 +544,7 @@ HyperStreamline::updateFiberGeometry() {
         vertTotalIdx++;
       }
       _lpldFibers->type[primIdx] = limnPrimitiveLineStrip;
-      _lpldFibers->vcnt[primIdx] = vertNum;
+      _lpldFibers->icnt[primIdx] = vertNum;
       primIdx++;
     }
     _flag[flagFiberAllocated] = false;
@@ -613,9 +613,9 @@ HyperStreamline::updateTubeAllocated() {
     unsigned int tubeIndxNum = 0;
     for (unsigned int primIdx=0; primIdx<_lpldFibers->primNum; primIdx++) {
       tubeVertNum += _tubeFacet*(2*_endFacet
-                                 + _lpldFibers->vcnt[primIdx]) + 1;
+                                 + _lpldFibers->icnt[primIdx]) + 1;
       tubeIndxNum += 2*_tubeFacet*(2*_endFacet
-                                   + _lpldFibers->vcnt[primIdx] + 1)-2;
+                                   + _lpldFibers->icnt[primIdx] + 1)-2;
     }
     limnPolyDataAlloc(_lpldTubes,
                       (1 << limnPolyDataInfoRGBA)
@@ -647,10 +647,10 @@ HyperStreamline::updateTubeGeometry() {
     unsigned int outIndxIdx = 0;
     for (unsigned int primIdx=0; primIdx<_lpldFibers->primNum; primIdx++) {
       _lpldTubes->type[primIdx] = limnPrimitiveTriangleStrip;
-      _lpldTubes->vcnt[primIdx] = 2*_tubeFacet*(2*_endFacet 
-						+ _lpldFibers->vcnt[primIdx] + 1) - 2;
+      _lpldTubes->icnt[primIdx] = 2*_tubeFacet*(2*_endFacet 
+						+ _lpldFibers->icnt[primIdx] + 1) - 2;
       for (unsigned int inVertIdx=0;
-           inVertIdx<_lpldFibers->vcnt[primIdx];
+           inVertIdx<_lpldFibers->icnt[primIdx];
            inVertIdx++) {
         unsigned int forwIdx, backIdx;
         double tang[3], tmp, scl, step, perp[3], pimp[3];
@@ -659,7 +659,7 @@ HyperStreamline::updateTubeGeometry() {
           forwIdx = inVertTotalIdx+1;
           backIdx = inVertTotalIdx;
           scl = 1;
-        } else if (_lpldFibers->vcnt[primIdx]-1 == inVertIdx) {
+        } else if (_lpldFibers->icnt[primIdx]-1 == inVertIdx) {
           forwIdx = inVertTotalIdx;
           backIdx = inVertTotalIdx-1;
           scl = 1;
@@ -668,7 +668,7 @@ HyperStreamline::updateTubeGeometry() {
           backIdx = inVertTotalIdx-1;
           scl = 0.5;
         }
-        if (1 == _lpldFibers->vcnt[primIdx]) {
+        if (1 == _lpldFibers->icnt[primIdx]) {
           ELL_3V_SET(tang, 0, 0, 1); // completely arbitrary, as it must be
           step = 0;
         } else {
@@ -680,7 +680,7 @@ HyperStreamline::updateTubeGeometry() {
                            which may be different from nominal fiber step
                            size because of anisoSpeed stuff */
         }
-        if (0 == inVertIdx || 1 == _lpldFibers->vcnt[primIdx]) {
+        if (0 == inVertIdx || 1 == _lpldFibers->icnt[primIdx]) {
           ell_3v_perp_d(perp, tang);
         } else {
           // transport last perp forwards
@@ -753,7 +753,7 @@ HyperStreamline::updateTubeGeometry() {
         }
         unsigned int tubeEndIdx = outVertTotalIdx;
         // -------------------------------------- BEGIN final endcap
-        if (inVertIdx == _lpldFibers->vcnt[primIdx]-1) {
+        if (inVertIdx == _lpldFibers->icnt[primIdx]-1) {
           for (unsigned int ei=0; ei<_endFacet; ei++) {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
               double costh, sinth, cosph, sinph;
@@ -839,13 +839,13 @@ HyperStreamline::updateFiberStopColor() {
 	  continue;
 	}
         for (unsigned int inVertIdx=0;
-             inVertIdx<_lpldFibers->vcnt[primIdx];
+             inVertIdx<_lpldFibers->icnt[primIdx];
              inVertIdx++) {
           // inVrt = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx];
           if (0 == inVertIdx) {
             ELL_4V_COPY(_lpldFibers->rgba + 4*inVertTotalIdx,
                         stcol[_fiber[fi]->whyStop[0]]);
-          } else if (inVertIdx == _lpldFibers->vcnt[primIdx]-1) {
+          } else if (inVertIdx == _lpldFibers->icnt[primIdx]-1) {
             ELL_4V_COPY(_lpldFibers->rgba + 4*inVertTotalIdx,
                         stcol[_fiber[fi]->whyStop[1]]);
           }
@@ -877,7 +877,7 @@ HyperStreamline::updateTubeColor() {
 	continue;
       }
       for (unsigned int inVertIdx=0;
-           inVertIdx<_lpldFibers->vcnt[primIdx];
+           inVertIdx<_lpldFibers->icnt[primIdx];
            inVertIdx++) {
         // inVrt = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx];
         if (0 == inVertIdx) {
@@ -896,7 +896,7 @@ HyperStreamline::updateTubeColor() {
                       _lpldFibers->rgba + 4*inVertTotalIdx);
           outVertTotalIdx++;
         }
-        if (inVertIdx == _lpldFibers->vcnt[primIdx]-1) {
+        if (inVertIdx == _lpldFibers->icnt[primIdx]-1) {
           for (unsigned int ei=0; ei<_endFacet; ei++) {
             for (unsigned int pi=0; pi<_tubeFacet; pi++) {
               // outVrt = _lpldTubes->vert + outVertTotalIdx;
