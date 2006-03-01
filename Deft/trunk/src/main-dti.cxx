@@ -33,6 +33,8 @@
 #include "TriPlaneUI.h"
 #include "HyperStreamline.h"
 #include "HyperStreamlineUI.h"
+#include "Anisocontour.h"
+#include "AnisocontourUI.h"
 #include "Gage.h"
 #include "Cmap.h"
 
@@ -177,7 +179,9 @@ main(int argc, char **argv) {
     viewer->keyboard('p', 0, 0);
   }
   // viewer->helpPrint();
-
+  Deft::ViewerUI *viewerUI = new Deft::ViewerUI(viewer);
+  viewerUI->show();
+  
   Deft::TensorGlyph *glyph = new Deft::TensorGlyph();
   if (nPos) {
     glyph->dataSet(nin->axis[1].size,
@@ -208,9 +212,6 @@ main(int argc, char **argv) {
 
   scene->objectAdd(glyph);
 
-  Deft::ViewerUI *viewerUI = new Deft::ViewerUI(viewer);
-  viewerUI->show();
-  
   Deft::TensorGlyphUI *glyphUI = new Deft::TensorGlyphUI(glyph, viewer);
   glyphUI->show();
 
@@ -260,6 +261,19 @@ main(int argc, char **argv) {
   hslineUI->add(triplane->hsline[2]);
 
   hslineUI->show();
+
+  // --------------------------------------------------
+
+  /* */
+  Deft::Anisocontour *anicont = new Deft::Anisocontour(vol);
+  anicont->colorQuantity(Deft::colorQuantityRgbLinear);
+  anicont->alphaMask(false);
+  Deft::AnisocontourUI *anisoUI = 
+    new Deft::AnisocontourUI(anicont, viewer);
+  scene->objectAdd(anicont);
+  anicont->update();
+  anisoUI->show();
+  /*   */
 
   // --------------------------------------------------
 

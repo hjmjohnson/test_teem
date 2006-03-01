@@ -52,9 +52,6 @@ private:
 
   fltk::Window *_win;  
 
-  fltk::ValueInput *_samplingInput;
-  static void sampling_cb(fltk::ValueInput *val, TriPlaneUI *ui);
-
   fltk::CheckButton *_visibleButton[4];
   static void visible_cb(fltk::CheckButton *but, TriPlaneUI *ui);
 
