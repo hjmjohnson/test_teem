@@ -45,7 +45,7 @@ const char kernelStr[6][128] = {
   "BC:1,0"
 };
 
-char labelBuff[4][128] = {"All", "Axis 0", "Axis 1", "Axis 2"};
+static char labelBuff[4][128] = {"All", "Axis 0", "Axis 1", "Axis 2"};
 
 TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
   // char me[]="TriPlaneUI::TriPlaneUI";

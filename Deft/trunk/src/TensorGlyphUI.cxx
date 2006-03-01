@@ -60,8 +60,7 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _visibleButton->value(_tglyph[0]->visible());
 
   // ----------------------------------
-  _glyphTypeMenu = new fltk::Choice(3*W/8, winy, W/5, incy=lineH,
-                                    "Shape");
+  _glyphTypeMenu = new fltk::Choice(3*W/8, winy, W/5, incy=lineH, "Shape");
   _glyphTypeMenu->add(airEnumStr(tenGlyphType, tenGlyphTypeBox), this);
   _glyphTypeMenu->add(airEnumStr(tenGlyphType, tenGlyphTypeSphere), this);
   _glyphTypeMenu->add(airEnumStr(tenGlyphType, tenGlyphTypeCylinder), this);
@@ -72,8 +71,7 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _glyphTypeMenu->value(tgroup->find(_glyphTypeMenu->find(def)));
 
   // ----------------------------------
-  _glyphColorMenu = new fltk::Choice(7*W/10, winy, W/4, incy=lineH,
-                                     "Color");
+  _glyphColorMenu = new fltk::Choice(7*W/10, winy, W/4, incy=lineH, "Color");
   _glyphColorMenu->add("RGB(linear)", this);
   _glyphColorMenu->add("RGB(planar)", this);
   _glyphColorMenu->add("Mode", this);
