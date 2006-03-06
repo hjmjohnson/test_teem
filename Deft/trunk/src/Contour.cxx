@@ -30,6 +30,7 @@ namespace Deft {
 Contour::Contour() {
 
   _sctx = seekContextNew();
+  seekVerboseSet(_sctx, 10);
   seekNormalsFindSet(_sctx, AIR_TRUE);
 }
 
@@ -41,41 +42,51 @@ Contour::~Contour() {
 void
 Contour::volumeSet(const Nrrd *nvol) {
   char me[]="Contour::volumeSet", *err;
-  const char *key;
-  gageShape *shape;
   airArray *mop;
   int ftype;
 
-  /*
-  ftype = seekTypeRidgeSurface;
   gageKind *kind = gageKindScl;
-  int valItem = gageSclValue;
+  /*
+  ftype = seekTypeIsocontour;
+  int sclvItem = gageSclValue;
   int normItem = gageSclNormal;
+  */  
+
+  ftype = seekTypeRidgeSurface;
+  /* int normItem = gageSclNormal; */
+  int normItem = gageSclHessEvec2;
+  this->twoSided(true);
   int gradItem = gageSclGradVec;
   int evalItem = gageSclHessEval;
   int evecItem = gageSclHessEvec;
-  */
 
-  gageKind *kind = tenGageKind;
+
+  /* gageKind *kind = tenGageKind; */
+  /*
   ftype = seekTypeIsocontour;
-  int valItem = tenGageFA;
+  int sclvItem = tenGageFA;
   int normItem = tenGageFANormal;
+  */
+  /*
+  ftype = seekTypeRidgeSurface;
+  this->twoSided(true);
   int gradItem = tenGageFAGradVec;
   int evecItem = tenGageFAHessianEvec;
   int evalItem = tenGageFAHessianEval;
+  */
 
   /* 
   gageKind *kind = tenGageKind;
 
   ftype = seekTypeRidgeSurface;
-  int valItem = tenGageFA;
+  int sclvItem = tenGageFA;
   int normItem = tenGageFANormal;
   int gradItem = tenGageFAGradVec;
   int evalItem = tenGageFAHessianEval;
   int evecItem = tenGageFAHessianEvec;
 
   ftype = seekTypeValleySurface;
-  int valItem = tenGageMode;
+  int sclvItem = tenGageMode;
   int normItem = tenGageModeNormal;
   int gradItem = tenGageModeGradVec;
   int evalItem = tenGageModeHessianEval;
@@ -92,45 +103,48 @@ Contour::volumeSet(const Nrrd *nvol) {
   int E = 0;
   if (!E) E |= !(gpvl = gagePerVolumeNew(gctx, nvol, kind));
   if (!E) E |= gagePerVolumeAttach(gctx, gpvl);
-  ELL_3V_SET(kparm, 1, 1.0, 0.0);
+  ELL_3V_SET(kparm, 2, 1.0, 0.0);
   if (!E) E |= gageKernelSet(gctx, gageKernel00, nrrdKernelBCCubic, kparm);
-  ELL_3V_SET(kparm, 1, 1.0, 0.0);
+  ELL_3V_SET(kparm, 2, 1.0, 0.0);
   if (!E) E |= gageKernelSet(gctx, gageKernel11, nrrdKernelBCCubicD, kparm);
-  ELL_3V_SET(kparm, 1, 1.0, 0.0);
+  ELL_3V_SET(kparm, 2, 1.0, 0.0);
   if (!E) E |= gageKernelSet(gctx, gageKernel22, nrrdKernelBCCubicDD, kparm);
-  if (!E) E |= gageQueryItemOn(gctx, gpvl, valItem);
+  /*
+  if (!E) E |= gageQueryItemOn(gctx, gpvl, sclvItem);
   if (!E) E |= gageQueryItemOn(gctx, gpvl, normItem);
+  */
+
   if (!E) E |= gageQueryItemOn(gctx, gpvl, gradItem);
+  if (!E) E |= gageQueryItemOn(gctx, gpvl, evalItem);
   if (!E) E |= gageQueryItemOn(gctx, gpvl, evecItem);
+
   if (!E) E |= gageUpdate(gctx);
   if (E) {
     fprintf(stderr, "%s: trouble:\n%s", me, biffGetDone(GAGE));
   }
   /* */
+
+  size_t samples[3];
+  ELL_3V_SET(samples, 40, 40, 20);
   
   mop = airMopNew();
-  shape = gageShapeNew();
-  airMopAdd(mop, shape, (airMopper)gageShapeNix, airMopAlways);
-  if (!(key = GAGE)
-      || gageShapeSet(shape, nvol, kind->baseDim)
-      || !(key = LIMN)
-      /* */
-      || seekDataSet(_sctx, nvol, gctx, 0)
-      || seekItemValueSet(_sctx, valItem)
-      || seekItemNormalSet(_sctx, normItem)
-      /* */
-      /*
-      || seekDataSet(_sctx, nvol, NULL, 0)
-      || seekTypeSet(_sctx, seekTypeIsocontour)
-      */
+  if (seekDataSet(_sctx, /* nvol */ NULL , gctx /* NULL */, 0)
       /* */
       || seekTypeSet(_sctx, ftype)
+      /* || seekSamplesSet(_sctx, samples) */
+
       || seekItemGradientSet(_sctx, gradItem)
       || seekItemEigensystemSet(_sctx, evalItem, evecItem)
+      || seekItemNormalSet(_sctx, normItem)
+
+      /*
+      || seekItemScalarSet(_sctx, sclvItem)
+      || seekItemNormalSet(_sctx, normItem)
+      */
       /* */
       || seekUpdate(_sctx)
       ) {
-    airMopAdd(mop, err=biffGetDone(key), airFree, airMopAlways);
+    airMopAdd(mop, err=biffGetDone(SEEK), airFree, airMopAlways);
     fprintf(stderr, "%s: trouble:\n%s", me, err);
     airMopError(mop); return;
   }
@@ -143,7 +157,7 @@ Contour::lowerInsideSet(int val) {
   char me[]="Contour::lowerInsideSet", *err;
 
   if (seekLowerInsideSet(_sctx, val)) {
-    err = biffGetDone(LIMN);
+    err = biffGetDone(SEEK);
     fprintf(stderr, "%s: trouble:\n%s", me, err);
     free(err); return;
   }
@@ -156,10 +170,10 @@ Contour::extract(double isovalue) {
   double time0, time1;
 
   time0 = airTime();
-  if (seekIsovalueSet(_sctx, isovalue)
-      || seekUpdate(_sctx)
+  if (/* seekIsovalueSet(_sctx, isovalue)
+         || */ seekUpdate(_sctx)
       || seekExtract(_sctx, _lpldOwn)) {
-    err = biffGetDone(LIMN);
+    err = biffGetDone(SEEK);
     fprintf(stderr, "%s: trouble getting isosurface:\n%s", me, err);
     free(err); 
     return;
