@@ -125,7 +125,7 @@ Contour::volumeSet(const Nrrd *nvol) {
   /* */
 
   size_t samples[3];
-  ELL_3V_SET(samples, 40, 40, 20);
+  ELL_3V_SET(samples, 60, 60, 30);
   
   mop = airMopNew();
   if (seekDataSet(_sctx, /* nvol */ NULL , gctx /* NULL */, 0)

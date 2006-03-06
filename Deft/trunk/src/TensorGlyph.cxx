@@ -888,7 +888,7 @@ TensorGlyph::glyphPaletteUpdate() {
       list[_baryRes] = surf->compileDisplayList();
       break;
     case tenGlyphTypeSuperquad:
-      double alpha, beta;
+      float alpha, beta;
       for (unsigned int cpIdx=0; cpIdx<_baryRes; cpIdx++) {
         double cp = NRRD_CELL_POS(0.0, 1.0, _baryRes, cpIdx);
         for (unsigned int clIdx=0; clIdx<_baryRes; clIdx++) {
@@ -898,12 +898,12 @@ TensorGlyph::glyphPaletteUpdate() {
           }
           if (cl > cp) {
             trnsf = ZtoX;
-            alpha = pow(1-cp, _superquadSharpness);
-            beta = pow(1-cl, _superquadSharpness);
+            alpha = AIR_CAST(float, pow(1-cp, _superquadSharpness));
+            beta = AIR_CAST(float, pow(1-cl, _superquadSharpness));
           } else {
             trnsf = ident;
-            alpha = pow(1-cl, _superquadSharpness);
-            beta = pow(1-cp, _superquadSharpness);
+            alpha = AIR_CAST(float, pow(1-cl, _superquadSharpness));
+            beta = AIR_CAST(float, pow(1-cp, _superquadSharpness));
           }
           limnPolyDataSpiralSuperquadric(lpld,
                                          1 << limnPolyDataInfoNorm,
@@ -1022,7 +1022,7 @@ TensorGlyph::drawImmediate() {
     }
     glPushMatrix();
     glTranslatef(pos[0], pos[1], pos[2]);
-    glRotatef(180*angle/AIR_PI, axis[0], axis[1], axis[2]);
+    glRotatef(AIR_CAST(float, 180*angle/AIR_PI), axis[0], axis[1], axis[2]);
     glScalef(glyphScale*eval[0], glyphScale*eval[1], glyphScale*eval[2]);
     /*
     fprintf(stderr, "!%s: glCallList(list[%u] = %u)\n", me,
