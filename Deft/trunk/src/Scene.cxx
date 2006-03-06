@@ -164,6 +164,8 @@ Scene::draw() {
 
   double time0 = airTime();
 
+  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+
   glEnable(GL_DEPTH_TEST);
 
   // very crude test showed this wasn't a huge performance hit
@@ -216,14 +218,16 @@ Scene::draw() {
   GLfloat mat_specular[] = {0.0f, 0.0f, 0.0f, 1.0f};
 
   GLfloat mat_shininess[] = {70.0f};
-  glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
-  glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
-  glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-  glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
+  /*
   glMaterialfv(GL_BACK, GL_AMBIENT, mat_zero);
   glMaterialfv(GL_BACK, GL_DIFFUSE, mat_zero);
   glMaterialfv(GL_BACK, GL_SPECULAR, mat_zero);
   glMaterialfv(GL_BACK, GL_SHININESS, mat_zero);
+  */
 
   for (unsigned int objIdx=0; objIdx<objectArr->len; objIdx++) {
     object[objIdx]->draw();
