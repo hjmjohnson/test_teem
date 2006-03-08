@@ -164,7 +164,7 @@ Scene::draw() {
 
   double time0 = airTime();
 
-  glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
+  /* glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE); */
 
   glEnable(GL_DEPTH_TEST);
 
@@ -205,7 +205,7 @@ Scene::draw() {
   }
 
   // set materials (until scene objects have their own materials)
-  GLfloat mat_zero[] = {0.0f, 0.0f, 0.0f, 0.0f};
+  /* GLfloat mat_zero[] = {0.0f, 0.0f, 0.0f, 0.0f}; */
   /* YOOHOO changed for van gogh 
   GLfloat mat_ambient[] = {0.1f, 0.1f, 0.1f, 1.0f};
   // may be over-ridden with glColorMaterial 

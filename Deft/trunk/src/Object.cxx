@@ -45,6 +45,7 @@ Object::Object() {
   _twoSided = false;
   _visible = true;
   _colorUse = true;
+  _normalsUse = true;
   _normalizeUse = true;
   _compilingUse = true;
   _lightingUse = true;
@@ -171,6 +172,16 @@ Object::colorUse(bool col) {
 }
 
 bool Object::colorUse() const { return _colorUse; }
+
+void
+Object::normalsUse(bool col) { 
+  if (_normalsUse != col) {
+    _normalsUse = col;
+    this->changed();
+  }
+}
+
+bool Object::normalsUse() const { return _normalsUse; }
 
 void
 Object::normalizeUse(bool norm) {

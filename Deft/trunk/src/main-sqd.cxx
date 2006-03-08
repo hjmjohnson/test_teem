@@ -52,7 +52,8 @@ main(int, char **argv) {
                                  | (1 << limnPolyDataInfoNorm),
                                  0.3f, 0.3f, 50, 50);
   Deft::PolyData *surf = new Deft::PolyData(pld, true);
-  surf->wireframe(true);
+  surf->wireframe(false);
+  surf->normalsUse(false);
   surf->visible(true);
   scene->objectAdd(surf);
   

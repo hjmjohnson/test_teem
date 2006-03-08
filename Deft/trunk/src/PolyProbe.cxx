@@ -440,7 +440,7 @@ PolyProbe::update(bool geometryChanged) {
   */
   if (_flag[flagGeometry]
       || _flag[flagGageContext]) {
-    if (_gage->querySet() && this->polyData()->vertNum) { // NOT ->query().size()
+    if (_gage->querySet() && this->polyData()->xyzwNum) { // NOT ->query().size()
       probe(_gage);
     }
     _flag[flagGeometry] = false;
@@ -458,7 +458,7 @@ PolyProbe::update(bool geometryChanged) {
   if (_flag[flagProbedValues]
       || _flag[flagColorMap]) {
     // NOT ->query().size(), but for reasons GLK can't remember
-    if (_gage->querySet() && this->polyData()->vertNum) { 
+    if (_gage->querySet() && this->polyData()->xyzwNum) { 
       /*
       fprintf(stderr, "!%s: lpld->rgba = %p\n", me, 
               dynamic_cast<PolyData*>(this)->lpld()->rgba);
@@ -478,7 +478,7 @@ PolyProbe::update(bool geometryChanged) {
   if (_flag[flagBrightness]
       || _flag[flagInitialRGBA]) {
     _brightnessLutSet(_brightness);
-    if (_colorDoit && this->polyData()->vertNum) {
+    if (_colorDoit && this->polyData()->xyzwNum) {
       dynamic_cast<PolyData*>(this)->RGBLut(_brightnessLut);
     } else {
       // this was the solution to the uncolored fibers being a random
@@ -494,7 +494,7 @@ PolyProbe::update(bool geometryChanged) {
       || _flag[flagAlphaMaskThreshold]) {
     if (_alphaMaskDoit
 	&& _gage->querySet()
-	&& this->polyData()->vertNum) { // NOT ->query().size()
+	&& this->polyData()->xyzwNum) { // NOT ->query().size()
       dynamic_cast<PolyData*>(this)->alphaMask(1, _alphaMaskThreshold);
     }
     _flag[flagInitialRGBA] = false;

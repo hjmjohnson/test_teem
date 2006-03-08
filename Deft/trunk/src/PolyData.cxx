@@ -116,7 +116,7 @@ PolyData::probe(const Gage *gage) {
   // HEY: we're using the length of _valid to 
   // indicate the allocated size of all the values
   if (query() != gage->query()
-      || lpld()->vertNum != _valid.size()) {
+      || lpld()->xyzwNum != _valid.size()) {
     // fprintf(stderr, "!%s: deleting new values\n", me);
     _valuesClear();    
   }
@@ -124,14 +124,14 @@ PolyData::probe(const Gage *gage) {
   // allocate new values if needed
   if (!_values.size()) {
     // fprintf(stderr, "!%s: allocating new values\n", me);
-    _valid.resize(lpld()->vertNum);
+    _valid.resize(lpld()->xyzwNum);
     _values.resize(gage->query().size());
     /*
     fprintf(stderr, "!%s: &_values=%p, _values.size()=%u\n", me,
             &_values, AIR_CAST(unsigned int, _values.size()));
     */
     for (unsigned int qi=0; qi<_values.size(); qi++) {
-      _values[qi] = new Values(lpld()->vertNum, gage->volume()->kind(),
+      _values[qi] = new Values(lpld()->xyzwNum, gage->volume()->kind(),
                                gage->query()[qi]);
       /*
       fprintf(stderr, "!%s: _values[%u]->nrrd()->data = %p\n", me, qi,
@@ -147,7 +147,7 @@ PolyData::probe(const Gage *gage) {
     // fprintf(stderr, "!%s: length[%u] = %u\n", me, qi, length[qi]);
   }
       
-  unsigned int N = lpld()->vertNum;
+  unsigned int N = lpld()->xyzwNum;
   const float *xyzw = lpld()->xyzw;
   for (unsigned int I=0; I<N; I++) {
     double xyz[3];
@@ -186,7 +186,7 @@ PolyData::color(unsigned int valuesIdx, const Cmap *cmap) {
   }
 
   cmap->map(_nrgba, _values[valuesIdx]);
-  unsigned int N = _lpldOwn->vertNum;
+  unsigned int N = _lpldOwn->xyzwNum;
   unsigned char *nrgba = AIR_CAST(unsigned char*, _nrgba->data);
   unsigned char *vrgba = _lpldOwn->rgba;
   for (unsigned int I=0; I<N; I++) {
@@ -210,7 +210,7 @@ PolyData::alphaMask(unsigned int valuesIdx, double thresh) {
   if (!_values[valuesIdx]->length()) {
     return;
   }
-  unsigned int N = _lpldOwn->vertNum;
+  unsigned int N = _lpldOwn->xyzwNum;
   unsigned char *nrgba = AIR_CAST(unsigned char*, _nrgba->data);
   unsigned char *vrgba = _lpldOwn->rgba;
   double *mdata = _values[valuesIdx]->data();
@@ -278,7 +278,7 @@ PolyData::RGBSet(unsigned char R, unsigned char G, unsigned char B) {
     return;
   }
 
-  size_t N = _lpldOwn->vertNum;
+  size_t N = _lpldOwn->xyzwNum;
   unsigned char *vrgba = _lpldOwn->rgba;
   for (size_t I=0; I<N; I++) {
     (vrgba + 4*I)[0] = R;
@@ -295,16 +295,16 @@ PolyData::verticesGet(Nrrd *npos) {
   const limnPolyData *lpld = this->polyData();
   if (nrrdMaybeAlloc_va(npos, nrrdTypeFloat, 2,
                         AIR_CAST(size_t, 3),
-                        AIR_CAST(size_t, lpld->vertNum))) {
+                        AIR_CAST(size_t, lpld->xyzwNum))) {
     err = biffGetDone(NRRD);
     fprintf(stderr, "%s: couldn't allocate output:\n%s", me, err);
     free(err); exit(1);
   }
   float *pos = static_cast<float *>(npos->data);
-  for (unsigned int ii=0; ii<lpld->vertNum; ii++) {
+  for (unsigned int ii=0; ii<lpld->xyzwNum; ii++) {
     ELL_34V_HOMOG(pos + 3*ii, lpld->xyzw + 4*ii);
   }
-  return lpld->vertNum;
+  return lpld->xyzwNum;
 }
 
 void
@@ -363,7 +363,7 @@ PolyData::drawImmediate() {
   if (!_compiling) {
     glEnableClientState(GL_VERTEX_ARRAY);
     glVertexPointer(4, GL_FLOAT, 4*sizeof(float), lpld->xyzw);
-    if (lpld->norm) {
+    if (lpld->norm && _normalsUse) {
       glEnableClientState(GL_NORMAL_ARRAY);
       glNormalPointer(GL_FLOAT, 3*sizeof(float), lpld->norm);
     }
@@ -384,6 +384,7 @@ PolyData::drawImmediate() {
   }
   /*
   fprintf(stderr, "!%s: _colorUse = %s\n", me, _colorUse ? "true" : "false");
+  fprintf(stderr, "!%s: _normalsUse = %s\n", me, _normalsUse ? "true" : "false");
   fprintf(stderr, "!%s: _compiling = %s\n", me, _compiling ? "true" : "false");
   */
   unsigned int vertCnt, vertIdx = 0;
@@ -404,7 +405,7 @@ PolyData::drawImmediate() {
       glWhat = glpt[lpld->type[primIdx]];
       glBegin(glWhat);
       for (unsigned int vii=0; vii<vertCnt; vii++) {
-        if (lpld->norm) {
+        if (lpld->norm && _normalsUse) {
           glNormal3fv(lpld->norm + 3*(lpld->indx + vertIdx)[vii]);
         }
         if (lpld->rgba && _colorUse) {
@@ -418,8 +419,10 @@ PolyData::drawImmediate() {
   }
   if (!_compiling) {
     glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_NORMAL_ARRAY);
-    if (_colorUse) {
+    if (lpld->norm && _normalsUse) {
+      glDisableClientState(GL_NORMAL_ARRAY);
+    }
+    if (lpld->rgba && _colorUse) {
       glDisableClientState(GL_COLOR_ARRAY);
     }
   }
@@ -442,12 +445,12 @@ void
 PolyData::boundsGet(float min[3], float max[3]) const {
   // char me[]="PolyData::boundsGet";
   const limnPolyData *lpld = this->lpld();
-  unsigned int vi, vertNum;
+  unsigned int vi, xyzwNum;
   float vertB[4], vertC[4];
 
   if (lpld) {
-    vertNum = lpld->vertNum;
-    for (vi=0; vi<vertNum; vi++) {
+    xyzwNum = lpld->xyzwNum;
+    for (vi=0; vi<xyzwNum; vi++) {
       /*
       fprintf(stderr, "!%s: xyzw[%u] = (%g,%g,%g,%g)", me, vi,
               lpld->xyzw + 4*vi + 0,
