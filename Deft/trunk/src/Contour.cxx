@@ -45,21 +45,31 @@ Contour::volumeSet(const Nrrd *nvol) {
   airArray *mop;
   int ftype;
 
-  gageKind *kind = gageKindScl;
-  /*
+  this->wireframe(true);
+
   ftype = seekTypeIsocontour;
+  /*
+  gageKind *kind = gageKindScl;
   int sclvItem = gageSclValue;
   int normItem = gageSclNormal;
-  */  
+  int strengthItem = gageSclGradMag;
+  int strengthSign = 1;
+  double strength = 0.2;
+  */
 
-  ftype = seekTypeRidgeSurface;
-  /* int normItem = gageSclNormal; */
-  int normItem = gageSclHessEvec2;
+  /* ftype = seekTypeRidgeSurface; */
+  /*
   this->twoSided(true);
+  this->normalsUse(false);
+  this->lightingUse(true);
+  int normItem = gageSclHessEvec2;
   int gradItem = gageSclGradVec;
   int evalItem = gageSclHessEval;
   int evecItem = gageSclHessEvec;
-
+  int strengthItem = gageSclHessEval2;
+  int strengthSign = -1;
+  double strength = 0.03;
+  */
 
   /* gageKind *kind = tenGageKind; */
   /*
@@ -70,11 +80,14 @@ Contour::volumeSet(const Nrrd *nvol) {
   /*
   ftype = seekTypeRidgeSurface;
   this->twoSided(true);
+  int normItem = tenGageFAHessianEvec2;
   int gradItem = tenGageFAGradVec;
   int evecItem = tenGageFAHessianEvec;
   int evalItem = tenGageFAHessianEval;
+  int strengthItem = tenGageFAHessianEval2;
+  int strengthSign = -1;
+  double strength = 17;
   */
-
   /* 
   gageKind *kind = tenGageKind;
 
@@ -96,6 +109,7 @@ Contour::volumeSet(const Nrrd *nvol) {
   /*
   ** holy crap, it actually works 
   */
+  /*
   gageContext *gctx;
   gagePerVolume *gpvl;
   double kparm[3];
@@ -109,37 +123,48 @@ Contour::volumeSet(const Nrrd *nvol) {
   if (!E) E |= gageKernelSet(gctx, gageKernel11, nrrdKernelBCCubicD, kparm);
   ELL_3V_SET(kparm, 2, 1.0, 0.0);
   if (!E) E |= gageKernelSet(gctx, gageKernel22, nrrdKernelBCCubicDD, kparm);
-  /*
+
   if (!E) E |= gageQueryItemOn(gctx, gpvl, sclvItem);
   if (!E) E |= gageQueryItemOn(gctx, gpvl, normItem);
+  if (!E) E |= gageQueryItemOn(gctx, gpvl, strengthItem);
   */
 
+  /*
+  if (!E) E |= gageQueryItemOn(gctx, gpvl, normItem);
   if (!E) E |= gageQueryItemOn(gctx, gpvl, gradItem);
   if (!E) E |= gageQueryItemOn(gctx, gpvl, evalItem);
   if (!E) E |= gageQueryItemOn(gctx, gpvl, evecItem);
-
+  if (!E) E |= gageQueryItemOn(gctx, gpvl, strengthItem);
+  */
+  /*
   if (!E) E |= gageUpdate(gctx);
   if (E) {
     fprintf(stderr, "%s: trouble:\n%s", me, biffGetDone(GAGE));
   }
+  */
   /* */
 
   size_t samples[3];
-  ELL_3V_SET(samples, 60, 60, 30);
+  ELL_3V_SET(samples, 61, 61, 31);
   
   mop = airMopNew();
-  if (seekDataSet(_sctx, /* nvol */ NULL , gctx /* NULL */, 0)
+  if (seekDataSet(_sctx, nvol /* NULL */, NULL /* gctx */, 0)
       /* */
       || seekTypeSet(_sctx, ftype)
       /* || seekSamplesSet(_sctx, samples) */
+      /*
+      || seekStrengthUseSet(_sctx, AIR_TRUE)
+      || seekStrengthSet(_sctx, strengthSign, strength)
 
+      || seekItemStrengthSet(_sctx, strengthItem)
+      || seekItemScalarSet(_sctx, sclvItem)
+      || seekItemNormalSet(_sctx, normItem)
+      */
+      /*
       || seekItemGradientSet(_sctx, gradItem)
       || seekItemEigensystemSet(_sctx, evalItem, evecItem)
       || seekItemNormalSet(_sctx, normItem)
-
-      /*
-      || seekItemScalarSet(_sctx, sclvItem)
-      || seekItemNormalSet(_sctx, normItem)
+      || seekItemStrengthSet(_sctx, strengthItem)
       */
       /* */
       || seekUpdate(_sctx)
@@ -170,11 +195,11 @@ Contour::extract(double isovalue) {
   double time0, time1;
 
   time0 = airTime();
-  if (/* seekIsovalueSet(_sctx, isovalue)
-         || */ seekUpdate(_sctx)
+  if (seekIsovalueSet(_sctx, isovalue)
+      || seekUpdate(_sctx)
       || seekExtract(_sctx, _lpldOwn)) {
     err = biffGetDone(SEEK);
-    fprintf(stderr, "%s: trouble getting isosurface:\n%s", me, err);
+    fprintf(stderr, "%s: trouble getting surface:\n%s", me, err);
     free(err); 
     return;
   }
@@ -186,6 +211,13 @@ Contour::extract(double isovalue) {
           (double)(_lpldOwn->indxNum/3)/(1000.0*(time1 - time0)));
   */
   this->changed();
+
+  if (limnPolyDataVertexWindingFix(_lpldOwn)) {
+    err = biffGetDone(LIMN);
+    fprintf(stderr, "%s: trouble fixing winding:\n%s", me, err);
+    free(err); 
+  }
+
   return;
 }
 

@@ -78,6 +78,8 @@ public:
   bool visible() const;
   void colorUse(bool);
   bool colorUse() const;
+  void normalsUse(bool);
+  bool normalsUse() const;
   void normalizeUse(bool);
   bool normalizeUse() const;
   void compilingUse(bool);
@@ -104,7 +106,8 @@ protected:
   unsigned int _displayList;
 
   // internal booleans
-  bool _wireframe, _twoSided, _visible, _colorUse, _normalizeUse,
+  bool _wireframe, _twoSided, _visible, _colorUse,
+    _normalsUse, _normalizeUse,
     _compilingUse, _lightingUse, _transformUse;
 
   // transform applied to whole object

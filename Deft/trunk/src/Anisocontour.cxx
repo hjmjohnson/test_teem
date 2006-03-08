@@ -258,7 +258,7 @@ Anisocontour::update() {
         || limnPolyDataAlloc(_lpldOwn,
                              (1 << limnPolyDataInfoRGBA)
                              | (1 << limnPolyDataInfoNorm),
-                             _lpldOwn->vertNum,
+                             _lpldOwn->xyzwNum,
                              _lpldOwn->indxNum,
                              _lpldOwn->primNum)) {
       fprintf(stderr, "%s: PROBLEM:\n%s", me, biffGetDone(LIMN));
