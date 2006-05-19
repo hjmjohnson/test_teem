@@ -137,8 +137,7 @@ NRRD files come in two forms: with an attached header (in which the
 header and the data are in the same file), and with a detached header
 (header and data are in two separate files). The attached-header form
 is described first, and the minor variation that enables detached
-headers is described in <a href="#detached">Section 3</a>.  NRRD readers
-must be able to support attached and detached headers.
+headers is described in <a href="#detached">Section 3</a>.
 
 <p>
 
@@ -533,7 +532,11 @@ are listed together (for example, "<tt>block&nbsp;size</tt>" is the
 same as <tt>blocksize</tt>").  Equivalent field descriptors are listed
 together in the table enumerating the meanings of the various
 descriptors (for example, "<tt>uchar</tt> is the same as
-"<tt>unsigned&nbsp;char</tt>").  Quotes are used to delimit the field
+"<tt>unsigned&nbsp;char</tt>"). 
+
+<p>
+
+Note that quotes are used to delimit the field
 descriptors in the explanation of their meaning; quotes are not part
 of the descriptor itself (except for the <a
 href="#labels"><tt>labels</tt></a> and various <a
