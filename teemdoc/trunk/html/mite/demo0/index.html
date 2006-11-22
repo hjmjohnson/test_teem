@@ -98,7 +98,7 @@ function:
 <blockquote><pre>
 echo "0 1" \
  | unu reshape -s 1 2 \
- | unu resample -s = 1024 -k tent \
+ | unu resample -s = 1024 -k tent -c node \
  | unu save -f text -o ramp.txt
 
 echo "-1.0 0.0   -0.8 0.0    0.8 1.0    1.0 1.0" \
@@ -130,6 +130,7 @@ miter -i sph.nrrd -o sph-rend.nrrd @cam.txt \
   -k00 cubic:1,0 -k11 cubicd:1,0 -k22 cubicdd:1,0 \
   -step 0.008 -ref 0.01 -nt 30 -n1 0.99 \
   -txf val-txf.nrrd
+
 overrgb -i sph-rend.nrrd -g 1.4 -b 0.2 0.3 0.4 -o sph-blu.png
 overrgb -i sph-rend.nrrd -g 1.4 -b 0.7 0.3 0.2 -o sph-red.png
 
@@ -138,6 +139,7 @@ miter -i pin.nrrd -o pin-rend.nrrd @cam.txt \
   -k00 cubic:1,0 -k11 cubicd:1,0 -k22 cubicdd:1,0 \
   -step 0.008 -ref 0.01 -nt 30 -n1 0.99 \
   -txf val-txf.nrrd
+
 overrgb -i pin-rend.nrrd -g 1.4 -b 0.2 0.3 0.4 -o pin-blu.png
 overrgb -i pin-rend.nrrd -g 1.4 -b 0.7 0.3 0.2 -o pin-red.png
 </pre></blockquote>
