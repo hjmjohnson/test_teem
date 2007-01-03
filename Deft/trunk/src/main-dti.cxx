@@ -59,7 +59,7 @@ main(int argc, char **argv) {
     anisoThresh, anisoThreshMin, glyphScale, sqdSharp;
   int size[2], ortho, rght, atrel, glyphType, glyphFacetRes;
   Nrrd *_nin=NULL, *nin=NULL, *nPos=NULL, *nseed=NULL;
-#if 0
+#if 0*3
   Nrrd *_ninBlur=NULL, *ninBlur;
 #endif
 #if 0*4
@@ -79,7 +79,7 @@ main(int argc, char **argv) {
   hestOptAdd(&hopt, "seed", "nin", airTypeOther, 1, 1, &nseed, "",
              "tractography seeds for tensor volume",
              NULL, NULL, nrrdHestNrrd);
-#if 0
+#if 0*3
   hestOptAdd(&hopt, "ib", "nin", airTypeOther, 1, 1, &_ninBlur, NULL,
              "input tensor volume, blurred a titch",
              NULL, NULL, nrrdHestNrrd);
@@ -190,7 +190,7 @@ main(int argc, char **argv) {
     nin = _nin;
   }
 
-#if 0
+#if 0*3
   if (3 == _ninBlur->spaceDim 
       && AIR_EXISTS(_ninBlur->measurementFrame[0][0])) {
     ninBlur = nrrdNew();
@@ -264,7 +264,7 @@ main(int argc, char **argv) {
   // --------------------------------------------------
 
   Deft::Volume *vol = new Deft::Volume(tenGageKind, nin);
-#if 0
+#if 0*3
   Deft::Volume *volBlur = new Deft::Volume(tenGageKind, ninBlur);
 #endif
   Deft::TriPlane *triplane = new Deft::TriPlane(vol);
@@ -343,7 +343,7 @@ main(int argc, char **argv) {
 
   // --------------------------------------------------
 
-#if 0
+#if 0*3
 
   Deft::Anisofeature *anifeatR = new Deft::Anisofeature(volBlur);
   anifeatR->type(seekTypeRidgeSurface);
