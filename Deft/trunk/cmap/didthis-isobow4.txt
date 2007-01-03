@@ -2,7 +2,7 @@ echo "0 0 1 1" \
  | unu reshape -s 2 2 \
  | unu resample -s 300 300 -k tent -c node -o fade
 
-echo "1 0 1 0" \
+echo "0 1 0 1" \
  | unu reshape -s 2 2 \
  | unu resample -s 300 300 -k tent -c node \
  | unu imap -m isobow4.txt -r \
