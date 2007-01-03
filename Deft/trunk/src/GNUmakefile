@@ -10,7 +10,7 @@ OBJS = Volume.o Object.o Group.o \
        Anisofeature.o AnisofeatureUI.o \
        PolyData.o PolyProbe.o \
 
-all: Deft_dti Deft_dwi
+all: Deft_dti Deft_iso
 # all: Deft_dti   Deft_sqd Deft_iso Deft_push
 
 Cmap.o: Values.o
