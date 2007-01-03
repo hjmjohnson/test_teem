@@ -71,6 +71,7 @@ TensorGlyph::TensorGlyph() {
   for (unsigned int fi=flagUnknown+1; fi<flagLast; fi++) {
     flag[fi] = false;
   }
+  _savingIV = false;
 
   dynamic(false);
   _cleanEdge = false;
@@ -451,9 +452,11 @@ TensorGlyph::anisoCacheUpdate() {
       nrrdMaybeAlloc_va(_nAnisoCache, nrrdTypeFloat, 1,
                         AIR_CAST(size_t, _inDataNum));
       aniso = (float *)_nAnisoCache->data;
+      /*
       fprintf(stderr, "!%s: computing %s anisotropy (%u tensors) ... ", 
               "TensorGlyph::anisoCacheUpdate", 
               airEnumStr(tenAniso, _anisoType), _inDataNum);
+      */
       for (ii=0; ii<_inDataNum; ii++) {
         const float *tenData = _tenData + ii*_inTenDataStride;
         if (tenData[0]) {
@@ -464,7 +467,9 @@ TensorGlyph::anisoCacheUpdate() {
           aniso[ii] = 0;
         }
       }
+      /*
       fprintf(stderr, "done\n");
+      */
     }
     flag[flagAnisoType] = false;
     flag[flagAnisoCache] = true;
@@ -835,7 +840,7 @@ TensorGlyph::activeSetUpdate() {
 
 void
 TensorGlyph::glyphPaletteUpdate() {
-  // char me[]="TensorGlyph::glyphPaletteUpdate";
+  char me[]="TensorGlyph::glyphPaletteUpdate";
   float ZtoX[16] = {0, 0, 1, 0,
                     0, 1, 0, 0,
                     -1, 0, 0, 0,
@@ -868,6 +873,11 @@ TensorGlyph::glyphPaletteUpdate() {
                       AIR_CAST(size_t, _baryRes),
                       AIR_CAST(size_t, _baryRes));
     unsigned int *list = (unsigned int *)(_nList->data);
+
+    if (_savingIV && _glyphType != tenGlyphTypeSuperquad) {
+      fprintf(stderr, "%s: WARNING: savingIV only works with %s\n", me,
+              airEnumStr(tenGlyphType, tenGlyphTypeSuperquad));
+    }
 
     switch(_glyphType) {
     case tenGlyphTypeBox:
@@ -910,6 +920,18 @@ TensorGlyph::glyphPaletteUpdate() {
                                          alpha, beta,
                                          2*_glyphRes, _glyphRes);
           limnPolyDataTransform_f(lpld, trnsf);
+          if (_savingIV) {
+            FILE *file;
+            char filename[128];
+            sprintf(filename, "glyph-%03u.iv", cpIdx + _baryRes*clIdx);
+            file = fopen(filename, "w");
+            if (limnPolyDataIVWrite(file, lpld)) {
+              char *err = biffGetDone(LIMN);
+              fprintf(stderr, "%s: couldn't save %s:\n%s", me, filename, err);
+              free(err);
+            }
+            fclose(file);
+          }
           list[cpIdx + _baryRes*clIdx] = surf->compileDisplayList();
 	  /*
 	  fprintf(stderr, "!%s: list[cpIdx + _baryRes*clIdx] = "
@@ -996,6 +1018,10 @@ TensorGlyph::drawImmediate() {
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, white);
   }
   float glyphScale = static_cast<float>(_glyphScale);
+  FILE *ivFile = NULL;
+  if (_savingIV) {
+    ivFile = fopen("datalist.txt", "w");
+  }
   for (unsigned int ii=0; ii<_activeNum; ii++) {
     float *dataLine = (float*)(_nDataCache->data) + ii*DATA_IDX_NUM;
     float *rgb = dataLine + RGB_DATA_IDX;
@@ -1029,6 +1055,14 @@ TensorGlyph::drawImmediate() {
 	    baryIdx, list[baryIdx]);
     */
     glCallList(list[baryIdx]);
+    if (_savingIV) {
+      fprintf(ivFile, "%g %g %g   %g %g %g   %g %g %g %g   %g %g %g    %u\n", 
+              rgb[0], rgb[1], rgb[2],
+              pos[0], pos[1], pos[2],
+              AIR_CAST(float, 180*angle/AIR_PI), axis[0], axis[1], axis[2],
+              glyphScale*eval[0], glyphScale*eval[1], glyphScale*eval[2],
+              baryIdx);
+    }
     glPopMatrix();
     _glyphsDrawnNum++;
   }
@@ -1037,6 +1071,9 @@ TensorGlyph::drawImmediate() {
   }
   if (_normalizeUse) {
     glDisable(GL_NORMALIZE);
+  }
+  if (_savingIV) {
+    fclose(ivFile);
   }
 
   flag[flagGlyphScale] = false;
@@ -1093,6 +1130,19 @@ TensorGlyph::boundsGet(float min[3], float max[3]) const {
   fprintf(stderr, "!%s: min=(%g,%g,%g), max=(%g,%g,%g)\n", me, 
           min[0], min[1], min[2], max[0], max[1], max[2]);
   */
+}
+
+void
+TensorGlyph::saveInventor() {
+  
+  unsigned int bres = this->barycentricResolution();
+  this->barycentricResolution(bres+1);
+  _savingIV = true;
+  this->barycentricResolution(bres);
+  this->update();
+  this->drawImmediate();
+  _savingIV = false;
+  return;
 }
 
 } /* namespace Deft */

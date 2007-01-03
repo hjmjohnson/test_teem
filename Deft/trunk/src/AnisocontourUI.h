@@ -76,9 +76,16 @@ private:
   Slider *_anisoSlider;
   static void aniso_cb(Slider *slider, AnisocontourUI *ui);
 
+  fltk::Choice *_alphaMaskQuantityMenu;
+  static void alphaMaskQuantity_cb(fltk::Choice *menu, AnisocontourUI *ui);
+  Slider *_alphaMaskThresholdSlider;
+  static void alphaMaskThreshold_cb(Slider *val, AnisocontourUI *ui);
+
   fltk::ValueSlider *_brightSlider;
   static void bright_cb(fltk::ValueSlider *val, AnisocontourUI *ui);
 
+  fltk::Button *_saveIVButton;
+  static void _saveIV_cb(fltk::Button *but, AnisocontourUI *ui);
 };
 
 }

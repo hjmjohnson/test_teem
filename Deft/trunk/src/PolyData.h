@@ -83,6 +83,9 @@ public:
 
   // set vertex RGB to this
   void RGBSet(unsigned char R, unsigned char G, unsigned char B);
+
+  // save out polydata to iv file
+  void IVWrite(FILE *file) const;
   
   void drawImmediate();
   unsigned int verticesGet(Nrrd *npos);

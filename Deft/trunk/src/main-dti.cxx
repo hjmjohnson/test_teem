@@ -35,6 +35,8 @@
 #include "HyperStreamlineUI.h"
 #include "Anisocontour.h"
 #include "AnisocontourUI.h"
+#include "Anisofeature.h"
+#include "AnisofeatureUI.h"
 #include "Gage.h"
 #include "Cmap.h"
 
@@ -56,7 +58,16 @@ main(int argc, char **argv) {
   float fr[3], at[3], up[3], fovy, neer, faar, dist, bg[3],
     anisoThresh, anisoThreshMin, glyphScale, sqdSharp;
   int size[2], ortho, rght, atrel, glyphType, glyphFacetRes;
-  Nrrd *_nin=NULL, *nin=NULL, *nPos=NULL;
+  Nrrd *_nin=NULL, *nin=NULL, *nPos=NULL, *nseed=NULL;
+#if 0
+  Nrrd *_ninBlur=NULL, *ninBlur;
+#endif
+#if 0*4
+  Nrrd *nb0;
+#endif
+#if 0*5
+  Nrrd *ntumor;
+#endif
   int aniso, camkeep;
 
   mop = airMopNew();
@@ -65,6 +76,24 @@ main(int argc, char **argv) {
   hestOptAdd(&hopt, "i", "nin", airTypeOther, 1, 1, &_nin, NULL,
              "input tensor volume",
              NULL, NULL, nrrdHestNrrd);
+  hestOptAdd(&hopt, "seed", "nin", airTypeOther, 1, 1, &nseed, "",
+             "tractography seeds for tensor volume",
+             NULL, NULL, nrrdHestNrrd);
+#if 0
+  hestOptAdd(&hopt, "ib", "nin", airTypeOther, 1, 1, &_ninBlur, NULL,
+             "input tensor volume, blurred a titch",
+             NULL, NULL, nrrdHestNrrd);
+#endif
+#if 0*4
+  hestOptAdd(&hopt, "b0", "nin", airTypeOther, 1, 1, &nb0, NULL,
+             "B0 volume",
+             NULL, NULL, nrrdHestNrrd);
+#endif
+#if 0*5
+  hestOptAdd(&hopt, "it", "nin", airTypeOther, 1, 1, &ntumor, NULL,
+             "tumor distance map",
+             NULL, NULL, nrrdHestNrrd);
+#endif
   hestOptAdd(&hopt, "pi", "pos", airTypeOther, 1, 1, &nPos, "",
              "positions of input samples",
              NULL, NULL, nrrdHestNrrd);
@@ -161,6 +190,22 @@ main(int argc, char **argv) {
     nin = _nin;
   }
 
+#if 0
+  if (3 == _ninBlur->spaceDim 
+      && AIR_EXISTS(_ninBlur->measurementFrame[0][0])) {
+    ninBlur = nrrdNew();
+    airMopAdd(mop, ninBlur, (airMopper)nrrdNuke, airMopAlways);
+    if (tenMeasurementFrameReduce(ninBlur, _ninBlur)) {
+      airMopAdd(mop, err = biffGetDone(TEN), airFree, airMopAlways);
+      fprintf(stderr, "%s: trouble undoing measurement frame:\n%s", me, err);
+      airMopError(mop);
+      exit(1);
+    }
+  } else {
+    ninBlur = _ninBlur;
+  }
+#endif
+
   Deft::Scene *scene = new Deft::Scene();
   scene->bgColor(bg[0], bg[1], bg[2]);
   Deft::Viewer *viewer = new Deft::Viewer(scene, size[0], size[1]);
@@ -202,7 +247,8 @@ main(int argc, char **argv) {
   glyph->glyphResolution(glyphFacetRes);
   // glyph->barycentricResolution(12);
   glyph->glyphScale(glyphScale);
-  glyph->rgbParmSet(tenAniso_Cl1, 0, 1, 1.0, 1.5, 1.0);
+  glyph->rgbParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
+  glyph->visible(true);
   glyph->update();
   /*
   void rgbParmSet(int aniso, unsigned int evec,
@@ -218,12 +264,22 @@ main(int argc, char **argv) {
   // --------------------------------------------------
 
   Deft::Volume *vol = new Deft::Volume(tenGageKind, nin);
+#if 0
+  Deft::Volume *volBlur = new Deft::Volume(tenGageKind, ninBlur);
+#endif
   Deft::TriPlane *triplane = new Deft::TriPlane(vol);
   
-  NrrdKernelSpec *ksp00 = nrrdKernelSpecNew();
-  double kparm[10] = {1,1,0};
-  nrrdKernelSpecSet(ksp00, nrrdKernelTent, kparm);
-  triplane->kernel(gageKernel00, ksp00);
+  NrrdKernelSpec *ksp = nrrdKernelSpecNew();
+  double kparm[10];
+
+  kparm[0] = 1.0;
+  nrrdKernelSpecSet(ksp, nrrdKernelTent, kparm);
+  triplane->kernel(gageKernel00, ksp);
+  ELL_3V_SET(kparm, 1, 1, 0);
+  nrrdKernelSpecSet(ksp, nrrdKernelBCCubicD, kparm);
+  triplane->kernel(gageKernel11, ksp);
+  nrrdKernelSpecSet(ksp, nrrdKernelBCCubicDD, kparm);
+  triplane->kernel(gageKernel22, ksp);
   triplane->colorQuantity(Deft::colorQuantityRgbLinear);
   // HEY: you can eventually segfault if this isn't set here
   // shouldn't doing so be optional?
@@ -248,6 +304,9 @@ main(int argc, char **argv) {
   hsline->lightingUse(false);
   hsline->colorQuantity(Deft::colorQuantityRgbLinear);
   hsline->alphaMask(false);
+  if (nseed) {
+    hsline->seedsSet(nseed);
+  }
   Deft::HyperStreamlineUI *hslineUI = 
     new Deft::HyperStreamlineUI(hsline, glyph, viewer);
   scene->objectAdd(hsline);
@@ -264,18 +323,82 @@ main(int argc, char **argv) {
 
   // --------------------------------------------------
 
-  /* */
+#if 1
+
   Deft::Anisocontour *anicont = new Deft::Anisocontour(vol);
   anicont->colorQuantity(Deft::colorQuantityRgbLinear);
-  anicont->alphaMask(false);
+  anicont->alphaMask(true);
+  // HEY: without this, the UI menu would come up blank because no there
+  // was no value
+  anicont->alphaMaskQuantity(Deft::alphaMaskQuantityConfidence);
   Deft::AnisocontourUI *anisoUI = 
     new Deft::AnisocontourUI(anicont, viewer);
+  fprintf(stderr, "!%s: anicont->alphaMaskQuantity() = %u\n", me, 
+          anicont->alphaMaskQuantity());
   scene->objectAdd(anicont);
   anicont->update();
   anisoUI->show();
-  /*   */
+
+#endif
 
   // --------------------------------------------------
+
+#if 0
+
+  Deft::Anisofeature *anifeatR = new Deft::Anisofeature(volBlur);
+  anifeatR->type(seekTypeRidgeSurface);
+  anifeatR->itemStrength(tenGageFARidgeSurfaceStrength);
+  anifeatR->itemGradient(tenGageFAGradVec);
+  anifeatR->itemEigensystem(tenGageFAHessianEval, tenGageFAHessianEvec);
+  anifeatR->colorQuantity(Deft::colorQuantityRgbLinear);
+  anifeatR->alphaMaskQuantity(Deft::alphaMaskQuantityFARidgeSurfaceStrength);
+  Deft::AnisofeatureUI *anifeUIR = 
+    new Deft::AnisofeatureUI(anifeatR, viewer);
+  scene->objectAdd(anifeatR);
+  anifeUIR->show();
+
+  // --------------------------------------------------
+
+
+  Deft::Anisofeature *anifeatV = new Deft::Anisofeature(volBlur);
+  anifeatV->type(seekTypeValleySurface);
+  anifeatV->itemStrength(tenGageFAValleySurfaceStrength);
+  anifeatV->itemGradient(tenGageFAGradVec);
+  anifeatV->itemEigensystem(tenGageFAHessianEval, tenGageFAHessianEvec);
+  anifeatV->colorQuantity(Deft::colorQuantityRgbLinear);
+  anifeatV->alphaMaskQuantity(Deft::alphaMaskQuantityFAValleySurfaceStrength);
+  Deft::AnisofeatureUI *anifeUIV = 
+    new Deft::AnisofeatureUI(anifeatV, viewer);
+  scene->objectAdd(anifeatV);
+  anifeUIV->show();
+
+  /*
+  Deft::Anisofeature *anifeatV = new Deft::Anisofeature(volBlur);
+  anifeatV->type(seekTypeIsoContour);
+  anifeatV->itemStrength(tenGageFAGradMag);
+  anifeatV->itemScalar(tenGageFA2n
+  anifeatV->itemGradient(tenGageFAGradVec);
+  anifeatV->itemEigensystem(tenGageFAHessianEval, tenGageFAHessianEvec);
+  anifeatV->colorQuantity(Deft::colorQuantityRgbLinear);
+  anifeatV->alphaMaskQuantity(Deft::alphaMaskQuantityFAValleySurfaceStrength);
+  Deft::AnisofeatureUI *anifeUIV = 
+    new Deft::AnisofeatureUI(anifeatV, viewer);
+  scene->objectAdd(anifeatV);
+  anifeUIV->show();
+
+  ftype = seekTypeIsocontour;
+  gageKind *kind = tenGageKind;
+  int sclvItem = tenGageFA;
+  int normItem = tenGageFANormal;
+  int strengthItem = tenGageConfidence;
+  int strengthSign = 1;
+  double strength = 0.5;
+  */
+
+
+  // --------------------------------------------------
+
+#endif
 
   fltk::flush();
   glyph->update();

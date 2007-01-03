@@ -87,6 +87,9 @@ private:
 
   fltk::Button *_hestButton;
   static void _hest_cb(fltk::Button *but, TensorGlyphUI *ui);
+
+  fltk::Button *_hackButton;
+  static void _hack_cb(fltk::Button *but, TensorGlyphUI *ui);
 };
 
 }

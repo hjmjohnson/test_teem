@@ -480,5 +480,17 @@ PolyData::boundsGet(float min[3], float max[3]) const {
   return;
 }
 
+void
+PolyData::IVWrite(FILE *file) const {
+  char me[]="PolyData::IVWrite", *err;
+
+  if (limnPolyDataIVWrite(file, this->polyData())) {
+    err = biffGetDone(LIMN);
+    fprintf(stderr, "%s: couldn't save:\n%s", me, err);
+    free(err);
+  }
+}
+
+
 } /* namespace Deft */
 

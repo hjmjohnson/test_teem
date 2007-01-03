@@ -174,6 +174,7 @@ TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
                                    this);
   def = airEnumStr(alphaMaskQuantity,
                    _triplane->plane[0]->alphaMaskQuantity());
+  fprintf(stderr, "TriPlane def = %s\n", def);
   _alphaMaskQuantityMenu->value(((fltk::Group*)_alphaMaskQuantityMenu)
                                 ->find(_alphaMaskQuantityMenu
                                        ->find(def)));

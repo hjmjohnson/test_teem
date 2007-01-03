@@ -1,11 +1,16 @@
-check to see if cmap directory can be loaded
+
+have a mask volume that can additionally screen volume glyph locations
+colormap window
+DEFT_HOME detection: check to see if cmap directory can be loaded
+make start-up faster
+
+fibers: export to LoD's format
 anisocontour: allow toggling coloring
 glyphs: colored by starkCmap
 fiber/triplane: debug segfault when seeding grid changes with fibers-on-planes
 fiber/triplane: separate fiber thresh slider
 anisocontour: single Grid slider, don't resample if not shown
 change cursor when in different camera interaction zones
-fibers: export to LoD's format
 fibers: fast iterative method for principal eigenvalue
 
 SP:

@@ -49,6 +49,7 @@ const char kernelStr[6][128] = {
 static char labelBuff[3][128] = {"Grid 0", "Grid 1", "Grid 2"};
 
 AnisocontourUI::AnisocontourUI(Anisocontour *aniso, Viewer *vw) {
+  char me[]="AnisocontourUI::AnisocontourUI";
   const unsigned int W = 400, H = 200, lineH = 20;
   unsigned int incy, winy;
   const char *def;
@@ -116,6 +117,7 @@ AnisocontourUI::AnisocontourUI(Anisocontour *aniso, Viewer *vw) {
   _anisoTypeMenu->add(airEnumStr(tenAniso, tenAniso_Cl2), this);
   _anisoTypeMenu->add(airEnumStr(tenAniso, tenAniso_Cp2), this);
   _anisoTypeMenu->add(airEnumStr(tenAniso, tenAniso_Ca2), this);
+  _anisoTypeMenu->add(airEnumStr(tenAniso, tenAniso_Tr), this);
   _anisoTypeMenu->callback((fltk::Callback*)(anisoType_cb), this);
   def = airEnumStr(tenAniso, _aniso->anisoType());
   fltk::Group *tgroup = (fltk::Group*)(_anisoTypeMenu);
@@ -130,7 +132,29 @@ AnisocontourUI::AnisocontourUI(Anisocontour *aniso, Viewer *vw) {
   _anisoSlider->callback((fltk::Callback*)aniso_cb, this);
 
   winy += incy;
+  _alphaMaskQuantityMenu = new fltk::Choice(7*W/80, winy, W/7, lineH, "Mask");
+  for (unsigned int qi=alphaMaskQuantityUnknown+1;
+       qi<alphaMaskQuantityLast;
+       qi++) {
+    _alphaMaskQuantityMenu->add(airEnumStr(alphaMaskQuantity, qi), this);
+  }
+  _alphaMaskQuantityMenu->callback((fltk::Callback*)(alphaMaskQuantity_cb),
+                                   this);
+  def = airEnumStr(alphaMaskQuantity, _aniso->alphaMaskQuantity());
+  _alphaMaskQuantityMenu->value(((fltk::Group*)_alphaMaskQuantityMenu)
+                                ->find(_alphaMaskQuantityMenu
+                                       ->find(def)));
 
+  _alphaMaskThresholdSlider = new Deft::Slider(0, winy, W, incy=40);
+  _alphaMaskThresholdSlider->align(fltk::ALIGN_LEFT);
+  _alphaMaskThresholdSlider->range(0.0, 1.0);
+  _alphaMaskThresholdSlider->color(0xFFFFFF00);
+  _alphaMaskThresholdSlider->fastUpdate(0);
+  _alphaMaskThresholdSlider->callback((fltk::Callback*)alphaMaskThreshold_cb,
+                                      this);
+  _alphaMaskThresholdSlider->value(_aniso->alphaMaskThreshold());
+
+  winy += incy;
   _kernelMenu = new fltk::Choice(12*W/100, winy, 16*W/100,
                                  incy=lineH, "Kernel");
   for (unsigned int ki=kernelUnknown+1; ki<kernelLast; ki++) {
@@ -149,6 +173,13 @@ AnisocontourUI::AnisocontourUI(Anisocontour *aniso, Viewer *vw) {
   _brightSlider->align(fltk::ALIGN_LEFT);
   _brightSlider->box(fltk::THIN_DOWN_BOX);
   _brightSlider->color(fltk::GRAY40);
+
+  winy += incy;
+  winy += incy;
+
+  _saveIVButton = new fltk::Button(12*W/100, winy, 13*W/100, incy=lineH,
+                                   "save IV");
+  _saveIVButton->callback((fltk::Callback*)_saveIV_cb, this);
 
   _win->end();
 }
@@ -255,6 +286,27 @@ AnisocontourUI::aniso_cb(Slider *slider, AnisocontourUI *ui) {
   ui->redraw();
 }
 
+// TERRIBLE: copied from TriPlaneUI.C
+void
+AnisocontourUI::alphaMaskQuantity_cb(fltk::Choice *menu, AnisocontourUI *ui) {
+  unsigned int qi;
+
+  for (qi=alphaMaskQuantityUnknown+1;
+       strcmp(menu->item()->label(), airEnumStr(alphaMaskQuantity, qi));
+       qi++);
+  ui->_aniso->alphaMaskQuantity(qi);
+  dynamic_cast<PolyProbe*>(ui->_aniso)->update(true);
+  ui->redraw();
+}
+
+void
+AnisocontourUI::alphaMaskThreshold_cb(Slider *val, AnisocontourUI *ui) {
+
+  ui->_aniso->alphaMaskThreshold(val->value());
+  dynamic_cast<PolyProbe*>(ui->_aniso)->update(true);
+  ui->redraw();
+}
+
 void
 AnisocontourUI::bright_cb(fltk::ValueSlider *val, AnisocontourUI *ui) {
 
@@ -262,5 +314,15 @@ AnisocontourUI::bright_cb(fltk::ValueSlider *val, AnisocontourUI *ui) {
   ui->redraw();
 }
 
+void
+AnisocontourUI::_saveIV_cb(fltk::Button *, AnisocontourUI *ui) {
+  FILE *file;
+
+  file = fopen("tmp.iv", "w");
+  if (file) {
+    ui->_aniso->IVWrite(file);
+    fclose(file);
+  }
+}
 
 } /* namespace Deft */

@@ -81,36 +81,13 @@ Anisocontour::Anisocontour(const Volume *vol) {
   _isovalue = AIR_NAN;
   this->isovalue(1.0);
 
+  this->twoSided(true);
+  this->evecRgbBgGray(0.0);
+  this->evecRgbIsoGray(0.4);
+  this->evecRgbMaxSat(0.95);
+
   _sctx = seekContextNew();
   seekNormalsFindSet(_sctx, AIR_TRUE);
-
-  /*
-  _gctx = gageContextNew();
-  double kparm[3];
-  E = 0;
-  if (!E) E |= !(_gpvl = gagePerVolumeNew(_gctx, vol->nrrd(), tenGageKind));
-  if (!E) E |= gagePerVolumeAttach(_gctx, _gpvl);
-  ELL_3V_SET(kparm, 1, 1.0, 0.0);
-  if (!E) E |= gageKernelSet(_gctx, gageKernel00, nrrdKernelBCCubic, kparm);
-  ELL_3V_SET(kparm, 1, 1.0, 0.0);
-  if (!E) E |= gageKernelSet(_gctx, gageKernel11, nrrdKernelBCCubicD, kparm);
-  ELL_3V_SET(kparm, 1, 1.0, 0.0);
-  if (!E) E |= gageKernelSet(_gctx, gageKernel22, nrrdKernelBCCubicDD, kparm);
-  if (!E) E |= gageQueryItemOn(_gctx, _gpvl, tenGageFAGradVec);
-  if (!E) E |= gageQueryItemOn(_gctx, _gpvl, tenGageFAHessianEvec2);
-  if (!E) E |= gageUpdate(_gctx);
-  if (E) {
-    fprintf(stderr, "%s: trouble:\n%s", me, biffGetDone(GAGE));
-  }
-  if (!E) E |= seekDataSet(_sctx, NULL, _gctx, 0);
-  if (!E) E |= seekTypeSet(_sctx, seekTypeRidgeSurface);
-  if (!E) E |= seekItemGradientSet(_sctx, tenGageFAGradVec);
-  if (!E) E |= seekItemEigenvectorSet(_sctx, 0,tenGageFAHessianEvec2);
-  if (!E) E |= seekUpdate(_sctx);
-  if (E) {
-    fprintf(stderr, "%s: trouble:\n%s", me, biffGetDone(LIMN));
-  }
-  */
 
   _ksp = nrrdKernelSpecNew();
   nrrdKernelSpecParse(_ksp, "tent");
@@ -185,28 +162,30 @@ Anisocontour::isovalue(double ival) {
 
 void
 Anisocontour::glyphsDo(bool doit) {
-
+  AIR_UNUSED(doit);
 }
 
 void
 Anisocontour::tractsDo(bool doit) {
-
+  AIR_UNUSED(doit);
 }
 
 void
 Anisocontour::update() {
   char me[]="Anisocontour::update";
   int E = 0;
+  NrrdKernelSpec lksp;
 
   if (_flag[flagSamplings]
       || _flag[flagKernel]) {
 
     if (_flag[flagSamplings]) {
       for (unsigned int axi=0; axi<3; axi++) {
+        unsigned int baxi = _volume->kind()->baseDim + axi;
         size_t size = AIR_CAST(size_t, (pow(2.0, _sampling[axi]) 
-                                        * _volume->nrrd()->axis[1+axi].size));
-        if (!E) E |= nrrdResampleSamplesSet(_rsmc, 1+axi, size);
-        if (!E) E |= nrrdResampleRangeFullSet(_rsmc, 1+axi);
+                                        * _volume->nrrd()->axis[baxi].size));
+        if (!E) E |= nrrdResampleSamplesSet(_rsmc, baxi, size);
+        if (!E) E |= nrrdResampleRangeFullSet(_rsmc, baxi);
       }
     }
     if (_flag[flagKernel]) {
@@ -221,6 +200,14 @@ Anisocontour::update() {
 
     // Also have to update kernel of PolyProbe
     dynamic_cast<PolyProbe*>(this)->kernel(gageKernel00, _ksp);
+    // HEY: hack!
+    lksp.kernel = nrrdKernelBCCubicD;
+    ELL_3V_SET(lksp.parm, 1, 1, 0);
+    dynamic_cast<PolyProbe*>(this)->kernel(gageKernel11, &lksp);
+    // HEY: hack!
+    lksp.kernel = nrrdKernelBCCubicDD;
+    ELL_3V_SET(lksp.parm, 1, 1, 0);
+    dynamic_cast<PolyProbe*>(this)->kernel(gageKernel22, &lksp);
     
     _flag[flagSamplings] = false;
     _flag[flagKernel] = false;
@@ -237,7 +224,7 @@ Anisocontour::update() {
     if (seekDataSet(_sctx, _naniso, NULL, 0)
         || seekTypeSet(_sctx, seekTypeIsocontour)
         || seekUpdate(_sctx)) {
-      fprintf(stderr, "%s: PROBLEM:\n%s", me, biffGetDone(LIMN));
+      fprintf(stderr, "%s: PROBLEM:\n%s", me, biffGetDone(SEEK));
     }
     /* */
     _flag[flagAnisoType] = false;
@@ -254,13 +241,15 @@ Anisocontour::update() {
        doesn't blow it away */
     if (seekIsovalueSet(_sctx, _isovalue)
         || seekUpdate(_sctx)
-        || seekExtract(_sctx, _lpldOwn)
-        || limnPolyDataAlloc(_lpldOwn,
-                             (1 << limnPolyDataInfoRGBA)
-                             | (1 << limnPolyDataInfoNorm),
-                             _lpldOwn->xyzwNum,
-                             _lpldOwn->indxNum,
-                             _lpldOwn->primNum)) {
+        || seekExtract(_sctx, _lpldOwn)) {
+      fprintf(stderr, "%s: PROBLEM:\n%s", me, biffGetDone(SEEK));
+    }
+    if (limnPolyDataAlloc(_lpldOwn,
+                          (limnPolyDataInfoBitFlag(_lpldOwn)
+                           | (1 << limnPolyDataInfoRGBA)),
+                          _lpldOwn->xyzwNum,
+                          _lpldOwn->indxNum,
+                          _lpldOwn->primNum)) {
       fprintf(stderr, "%s: PROBLEM:\n%s", me, biffGetDone(LIMN));
     }
 
