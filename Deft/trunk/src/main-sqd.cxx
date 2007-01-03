@@ -50,10 +50,10 @@ main(int, char **argv) {
   limnPolyDataSpiralSuperquadric(pld, 
                                  (1 << limnPolyDataInfoRGBA)
                                  | (1 << limnPolyDataInfoNorm),
-                                 0.3f, 0.3f, 50, 50);
+                                 0.3f, 0.3f, 20, 20);
   Deft::PolyData *surf = new Deft::PolyData(pld, true);
-  surf->wireframe(false);
-  surf->normalsUse(false);
+  surf->wireframe(true);
+  surf->normalsUse(true);
   surf->visible(true);
   scene->objectAdd(surf);
   
