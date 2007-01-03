@@ -45,7 +45,7 @@ Contour::volumeSet(const Nrrd *nvol) {
   airArray *mop;
   int ftype;
 
-  this->wireframe(true);
+  this->wireframe(false);
 
   ftype = seekTypeIsocontour;
   /*
