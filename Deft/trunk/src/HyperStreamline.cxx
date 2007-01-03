@@ -91,8 +91,17 @@ enum {
 
 HyperStreamline::HyperStreamline(const Volume *vol) {
   char me[]="HyperStreamline::HyperStreamline", *err;
+  NrrdKernelSpec lksp;
 
-  _tfx = tenFiberContextNew(vol->nrrd());
+  this->_dwi = !strcmp(TEN_DWI_GAGE_KIND_NAME, vol->kind()->name);
+
+  fprintf(stderr, "!%s: welcome gotDwi = %s (%s)\n", me,
+          this->_dwi ? "true" : "false",
+          vol->kind()->name);
+
+  _tfx = (this->_dwi
+          ? tenFiberContextDwiNew(vol->nrrd())
+          : tenFiberContextNew(vol->nrrd()));
   if (!_tfx) {
     ERROR;
   }
@@ -128,6 +137,12 @@ HyperStreamline::HyperStreamline(const Volume *vol) {
   _volume = vol;
   volume(_volume);
   dynamic_cast<PolyProbe*>(this)->kernel(gageKernel00, ksp);
+
+  // HEY: hack!
+  lksp.kernel = nrrdKernelBCCubicD;
+  ELL_3V_SET(lksp.parm, 1, 1, 0);
+  dynamic_cast<PolyProbe*>(this)->kernel(gageKernel11, &lksp);
+
   _nseeds = nrrdNew();
   nrrdKernelSpecNix(ksp);
   dynamic_cast<PolyProbe*>(this)->evecRgbAnisoGamma(1.3);
@@ -172,8 +187,11 @@ HyperStreamline::seedsSet(const Nrrd *nseeds) {
   char me[]="HyperStreamline::seedsSet";
   unsigned int seedNumNew;
 
-  // HEY: type and size checks!
   if (nseeds) {
+    if (!( 2 == nseeds->dim && 3 == nseeds->axis[0].size)) {
+      fprintf(stderr, "%s: trouble: nseeds %u-D %u-by-X, not 2-D 3-by-X\n",
+              me, nseeds->dim, AIR_CAST(unsigned int, nseeds->axis[0].size));
+    }
     if (nrrdConvert(_nseeds, nseeds, nrrdTypeFloat)) {
       fprintf(stderr, "%s: trouble:\n%s", me, biffGetDone(NRRD));
     }
@@ -459,10 +477,32 @@ HyperStreamline::updateFiberGeometry() {
     float *pos = static_cast<float*>(_nseeds->data);
     unsigned int vertTotalNum = 0;
     _fiberNum = 0;
+    bool verbose = _seedNum < 100;
     for (unsigned int seedIdx=0; seedIdx<_seedNum; seedIdx++) {
       ELL_3V_COPY(_fiber[seedIdx]->seedPos, pos + 3*seedIdx);
+      if (this->_dwi) {
+        _tfx->ten2Which = seedIdx % 2;
+      }
+      if (verbose) {
+        fprintf(stderr, "!%s: trace %u/%u:\n", me,
+                seedIdx, _seedNum);
+      }
       if (tenFiberTrace(_tfx, _fiber[seedIdx]->nvert, 
                         _fiber[seedIdx]->seedPos)) { ERROR; }
+      if (verbose) {
+        fprintf(stderr, " (%g,%g,%g): ", 
+                _fiber[seedIdx]->seedPos[0],
+                _fiber[seedIdx]->seedPos[1],
+                _fiber[seedIdx]->seedPos[2]);
+        if (_tfx->whyNowhere) {
+          fprintf(stderr, "whyNowhere = %s\n", 
+                  airEnumStr(tenFiberStop, _tfx->whyNowhere));
+        } else {
+          fprintf(stderr, "whyStop[b,f] = %s,%s\n",
+                  airEnumStr(tenFiberStop, _tfx->whyStop[0]),
+                  airEnumStr(tenFiberStop, _tfx->whyStop[1]));
+        }
+      }
       _fiber[seedIdx]->whyNowhere = _tfx->whyNowhere;
       if (tenFiberStopUnknown == _fiber[seedIdx]->whyNowhere) {
         _fiber[seedIdx]->primIdx = _fiberNum++;
@@ -523,7 +563,6 @@ HyperStreamline::updateFiberGeometry() {
     // So, primIdx should end at _fiberNum (calculated above) for last fiber
     unsigned int primIdx = 0;
     unsigned int vertTotalIdx = 0;
-    // char fname[128];
     for (unsigned int seedIdx=0; seedIdx<_seedNum; seedIdx++) {
 
       if (!(tenFiberStopUnknown == _fiber[seedIdx]->whyNowhere)) {
@@ -532,8 +571,11 @@ HyperStreamline::updateFiberGeometry() {
 
       unsigned int vertNum = _fiber[seedIdx]->nvert->axis[1].size;
       double *vert = static_cast<double*>(_fiber[seedIdx]->nvert->data);
-      // sprintf(fname, "fiber-%03u.nrrd", seedIdx);
-      // nrrdSave(fname, _fiber[seedIdx]->nvert, NULL);
+      /*
+      char fname[128];
+      sprintf(fname, "fiber-%03u.txt", seedIdx);
+      nrrdSave(fname, _fiber[seedIdx]->nvert, NULL);
+      */
       for (unsigned int vertIdx=0; vertIdx<vertNum; vertIdx++) {
         ELL_3V_COPY_TT(_lpldFibers->xyzw + 4*vertTotalIdx, float,
                        vert + 3*vertIdx);

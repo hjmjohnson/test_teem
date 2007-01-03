@@ -37,7 +37,7 @@ public:
   explicit PolyProbe();
   ~PolyProbe();
 
-  // TERRIBLE: API copied from DeftGage ... 
+  // TERRIBLE: API copied from Gage ... 
   void volume(const Volume *volume);
   const Volume *volume() const { return _gage->volume(); }
   void kernel(int which, const NrrdKernelSpec *ksp);

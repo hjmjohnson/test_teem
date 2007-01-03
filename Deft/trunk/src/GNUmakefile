@@ -7,10 +7,11 @@ OBJS = Volume.o Object.o Group.o \
        HyperStreamline.o HyperStreamlineUI.o \
        TensorGlyph.o TensorGlyphUI.o \
        Anisocontour.o AnisocontourUI.o \
+       Anisofeature.o AnisofeatureUI.o \
        PolyData.o PolyProbe.o \
 
-all: Deft_dti Deft_sqd Deft_iso
-all: Deft_dti Deft_sqd Deft_push
+all: Deft_dti Deft_dwi
+# all: Deft_dti   Deft_sqd Deft_iso Deft_push
 
 Cmap.o: Values.o
 PolyProbe.o: PolyData.o
@@ -42,6 +43,14 @@ Deft_dti: $(OBJS) main-dti.o
           -lteem -lpng -lz -lm -lobjc
 	/Developer/Tools/Rez -t APPL -o $@  /usr/local/src/fltk/FL/mac.r
 
+Deft_dwi: $(OBJS) main-dwi.o
+	c++ -g -O3 -W -Wall -o $@  $(OBJS) main-dwi.o \
+	  -L/sw/lib -L/usr/local/lib -L/Users/gk/teem/darwin.32/lib \
+	  -lfltk -lfltk_gl \
+	  -framework Carbon -lGLEW -framework OpenGL -framework AGL \
+          -lteem -lpng -lz -lm -lobjc
+	/Developer/Tools/Rez -t APPL -o $@  /usr/local/src/fltk/FL/mac.r
+
 Deft_sqd: $(OBJS) main-sqd.o
 	c++ -O3 -W -Wall -o $@  $(OBJS) main-sqd.o \
 	  -L/sw/lib -L/usr/local/lib -L/Users/gk/teem/darwin.32/lib \
@@ -50,8 +59,8 @@ Deft_sqd: $(OBJS) main-sqd.o
           -lteem -lpng -lz -lm -lobjc
 	/Developer/Tools/Rez -t APPL -o $@  /usr/local/src/fltk/FL/mac.r
 
-Deft_iso: $(OBJS) main-iso2.o
-	c++ -O3 -W -Wall -o $@  $(OBJS) main-iso2.o \
+Deft_iso: $(OBJS) main-iso.o
+	c++ -O3 -W -Wall -o $@  $(OBJS) main-iso.o \
 	  -L/sw/lib -L/usr/local/lib -L/Users/gk/teem/darwin.32/lib \
 	  -lfltk -lfltk_gl \
 	  -framework Carbon -lGLEW -framework OpenGL -framework AGL \
@@ -59,7 +68,7 @@ Deft_iso: $(OBJS) main-iso2.o
 	/Developer/Tools/Rez -t APPL -o $@  /usr/local/src/fltk/FL/mac.r
 
 Deft_push: $(OBJS) main-push.o
-	c++ -O3 -W -Wall -o $@  $(OBJS) main-push.o \
+	c++ -g -O3 -W -Wall -o $@  $(OBJS) main-push.o \
 	  -L/sw/lib -L/usr/local/lib -L/Users/gk/teem/darwin.32/lib \
 	  -lfltk -lfltk_gl \
 	  -framework Carbon -lGLEW -framework OpenGL -framework AGL \
@@ -67,4 +76,5 @@ Deft_push: $(OBJS) main-push.o
 	/Developer/Tools/Rez -t APPL -o $@  /usr/local/src/fltk/FL/mac.r
 
 clean:
-	rm -f $(OBJS) main-dti.o main-sqd.o Deft_dti Deft_sqd
+	rm -f $(OBJS) main-dti.o main-dwi.o \
+          main-sqd.o Deft_dti Deft_sqd Deft_push

@@ -27,6 +27,11 @@
 
 #include "Deft.h"
 
+/*
+** the simple job of this is to pair a gageKind and Nrrd into 
+** a single entity 
+*/
+
 namespace Deft {
 
 // maybe time-varying volumes can be handled here...

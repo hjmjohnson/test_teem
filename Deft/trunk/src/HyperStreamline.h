@@ -155,7 +155,7 @@ public:
   double tubeGeometryTime() const { return _tubeGeometryTime; }
   double tubeColorTime() const { return _tubeColorTime; }
 private:
-  bool _flag[128], _tubeDo, _stopColorDo;
+  bool _flag[128], _tubeDo, _stopColorDo, _dwi;
   Nrrd *_nseeds;
   unsigned int _seedNum, _fiberNum,  _fiberVertexNum, _tubeFacet, _endFacet;
   const Volume *_volume;

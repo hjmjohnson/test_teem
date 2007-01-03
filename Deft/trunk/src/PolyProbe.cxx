@@ -171,7 +171,7 @@ PolyProbe::colorQuantity(int quantity) {
     break;
   case colorQuantityModeFA:
     _queryColor.resize(2);
-    _queryColor[0] = tenGageModeWarp;
+    _queryColor[0] = tenGageMode;
     _queryColor[1] = tenGageCa2;
     strcat(fname, "cmap/isobow4-2D.nrrd");
     lret = nrrdLoad(_nlut2D, fname, NULL);
@@ -206,7 +206,7 @@ PolyProbe::colorQuantity(int quantity) {
     lret = nrrdLoad(_nrmap1D, fname, NULL);
     _cmap->rmap1D(_nrmap1D);
     _cmap->min1D(0);
-    _cmap->max1D(0.012);
+    _cmap->max1D(0.01); // HEY: hack!
     break;
   case colorQuantityClCp:
     _queryColor.resize(2);
@@ -246,6 +246,95 @@ PolyProbe::colorQuantity(int quantity) {
     _cmap->rmap1D(_nrmap1D);
     _cmap->min1D(0);
     _cmap->max1D(1);
+    break;
+  case colorQuantityTrGradVecDotEvec0:
+  case colorQuantityFAGradVecDotEvec0:
+  case colorQuantityOmegaGradVecDotEvec0:
+    _queryColor.resize(1);
+    strcat(fname, "cmap/gray.nrrd");
+    lret = nrrdLoad(_nrmap1D, fname, NULL);
+    _cmap->rmap1D(_nrmap1D);
+    _cmap->min1D(0);
+    switch(quantity) {
+    case colorQuantityTrGradVecDotEvec0:
+      _queryColor[0] = tenGageTraceGradVecDotEvec0;
+      _cmap->max1D(0.002); // HEY: hack!
+      break;
+    case colorQuantityFAGradVecDotEvec0:
+      _queryColor[0] = tenGageFAGradVecDotEvec0;
+      _cmap->max1D(0.33); // HEY: hack!
+      break;
+    case colorQuantityOmegaGradVecDotEvec0:
+      _queryColor[0] = tenGageOmegaGradVecDotEvec0;
+      _cmap->max1D(0.33); // HEY: hack!
+      break;
+    }
+    break;
+  case colorQuantityTrDiffusionAngle:
+  case colorQuantityFADiffusionAngle:
+  case colorQuantityOmegaDiffusionAngle:
+    _queryColor.resize(1);
+    strcat(fname, "cmap/isobow4-1D.nrrd");
+    lret = nrrdLoad(_nrmap1D, fname, NULL);
+    _cmap->rmap1D(_nrmap1D);
+    _cmap->min1D(0);
+    _cmap->max1D(1);
+    switch(quantity) {
+    case colorQuantityTrDiffusionAngle:
+      _queryColor[0] = tenGageTraceDiffusionAngle;
+      break;
+    case colorQuantityFADiffusionAngle:
+      _queryColor[0] = tenGageFADiffusionAngle;
+      break;
+    case colorQuantityOmegaDiffusionAngle:
+      _queryColor[0] = tenGageOmegaDiffusionAngle;
+      break;
+    }
+    break;
+  case colorQuantityTrDiffusionFraction:
+  case colorQuantityFADiffusionFraction:
+  case colorQuantityOmegaDiffusionFraction:
+    _queryColor.resize(1);
+    strcat(fname, "cmap/isobow4-1D.nrrd");
+    lret = nrrdLoad(_nrmap1D, fname, NULL);
+    _cmap->rmap1D(_nrmap1D);
+    _cmap->min1D(0.26); // HEY: hack!
+    _cmap->max1D(0.41); // HEY: hack!
+    switch(quantity) {
+    case colorQuantityTrDiffusionFraction:
+      _queryColor[0] = tenGageTraceDiffusionFraction;
+      break;
+    case colorQuantityFADiffusionFraction:
+      _queryColor[0] = tenGageFADiffusionFraction;
+      break;
+    case colorQuantityOmegaDiffusionFraction:
+      _queryColor[0] = tenGageOmegaDiffusionFraction;
+      break;
+    }
+    break;
+  case colorQuantityTrGradEvec0:
+    _queryColor.resize(2);
+    _queryColor[0] = tenGageTraceDiffusionAngle;
+    _cmap->min2D0(0);
+    _cmap->max2D0(1);
+    _queryColor[1] = tenGageTraceGradMag;
+    _cmap->min2D1(0);
+    _cmap->max2D1(0.001); // HEY: hack!
+    strcat(fname, "cmap/isobow4-2D.nrrd");
+    lret = nrrdLoad(_nlut2D, fname, NULL);
+    _cmap->lut2D(_nlut2D);
+    break;
+  case colorQuantityFAGradEvec0:
+    _queryColor.resize(2);
+    _queryColor[0] = tenGageFADiffusionAngle;
+    _cmap->min2D0(0);
+    _cmap->max2D0(1);
+    _queryColor[1] = tenGageFAGradMag;
+    _cmap->min2D1(0);
+    _cmap->max2D1(0.33); // HEY: hack!
+    strcat(fname, "cmap/isobow4-2D.nrrd");
+    lret = nrrdLoad(_nlut2D, fname, NULL);
+    _cmap->lut2D(_nlut2D);
     break;
   default:
     fprintf(stderr, "%s: unknown colorQuantity %d ??? \n", me, quantity);
@@ -332,6 +421,14 @@ PolyProbe::alphaMaskQuantity(int quantity) {
     _queryAlphaMask[0] = tenGageConfidence;
     _queryAlphaMask[1] = tenGageCa2;
     break;
+  case alphaMaskQuantityFARidgeSurfaceStrength:
+    _queryAlphaMask.resize(1);
+    _queryAlphaMask[0] = tenGageFARidgeSurfaceStrength;
+    break;
+  case alphaMaskQuantityFAValleySurfaceStrength:
+    _queryAlphaMask.resize(1);
+    _queryAlphaMask[0] = tenGageFAValleySurfaceStrength;
+    break;
   }
   _alphaMaskQuantity = quantity;
   _flag[flagQueryAlphaMask] = true;
@@ -339,8 +436,11 @@ PolyProbe::alphaMaskQuantity(int quantity) {
 
 void
 PolyProbe::alphaMaskThreshold(double thresh) {
+  // char me[]="PolyProbe::alphaMaskThreshold";
 
+  // fprintf(stderr, "!%s: hi\n", me);
   if (_alphaMaskThreshold != thresh) {
+    // fprintf(stderr, "!%s: %g -> %g\n", me, _alphaMaskThreshold, thresh);
     _alphaMaskThreshold = thresh;
     _flag[flagAlphaMaskThreshold] = true;
   }

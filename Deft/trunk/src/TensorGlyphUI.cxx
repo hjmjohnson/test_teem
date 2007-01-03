@@ -109,7 +109,7 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
                                                   "Sqd sharp");
   _superquadSharpnessInput->callback((fltk::Callback*)
                                      (superquadSharpness_cb), this);
-  _superquadSharpnessInput->range(0.0, 5.0);
+  _superquadSharpnessInput->range(0.0, 15.0);
   _superquadSharpnessInput->step(0.1);
   _superquadSharpnessInput->linesize(0.1);
   _superquadSharpnessInput->value(_tglyph[0]->superquadSharpness());
@@ -170,6 +170,9 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _KglyphsPerSecondOutput = new fltk::Output(W/2, winy, W/4, incy=lineH,
                                              "K glyphs / second");
   _KglyphsPerSecondOutput->box(fltk::NO_BOX);
+
+  _hackButton = new fltk::Button(17*W/20, winy, W/10, lineH, "hack");
+  _hackButton->callback((fltk::Callback*)_hack_cb, this);
 
   winy += incy;
   winy += 2;
@@ -340,6 +343,12 @@ TensorGlyphUI::_hest_cb(fltk::Button *, TensorGlyphUI *ui) {
           airEnumStr(tenAniso, ui->_tglyph[0]->anisoType()),
           ui->_tglyph[0]->anisoThreshMin(),
           ui->_tglyph[0]->anisoThresh());
+}
+
+void
+TensorGlyphUI::_hack_cb(fltk::Button *, TensorGlyphUI *ui) {
+  
+  ui->_tglyph[0]->saveInventor();
 }
 
 

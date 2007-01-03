@@ -134,20 +134,36 @@ enum {
 ** are currently all tensor-specific, which is stupid.
 */
 enum {
-  colorQuantityUnknown,    /*  0: */
-  colorQuantityRgbLinear,  /*  1: */
-  colorQuantityRgbPlanar,  /*  2: */
-  colorQuantityModeFA,     /*  3: */
-  colorQuantityMode,       /*  4: */
-  colorQuantityFA,         /*  5: */
-  colorQuantityTrace,      /*  6: */
-  colorQuantityClCp,       /*  7: */
-  colorQuantityCl,         /*  8: */
-  colorQuantityCp,         /*  9: */
-  colorQuantityCa,         /* 10: */
+  colorQuantityUnknown,                /*  0: */
+  colorQuantityRgbLinear,              /*  1: */
+  colorQuantityRgbPlanar,              /*  2: */
+  colorQuantityModeFA,                 /*  3: */
+  colorQuantityMode,                   /*  4: */
+  colorQuantityFA,                     /*  5: */
+  colorQuantityTrace,                  /*  6: */
+  colorQuantityClCp,                   /*  7: */
+  colorQuantityCl,                     /*  8: */
+  colorQuantityCp,                     /*  9: */
+  colorQuantityCa,                     /* 10: */
+
+  colorQuantityTrGradVecDotEvec0,      /* 11: */
+  colorQuantityTrGradEvec0,            /* 12: */
+  colorQuantityTrDiffusionAngle,       /* 13: */
+  colorQuantityTrDiffusionFraction,    /* 14: */
+
+  colorQuantityFAGradVecDotEvec0,      /* 15: */
+  colorQuantityFAGradEvec0,            /* 16: */
+  colorQuantityFADiffusionAngle,       /* 17: */
+  colorQuantityFADiffusionFraction,    /* 18: */
+
+  colorQuantityOmegaGradVecDotEvec0,   /* 19: */
+  colorQuantityOmegaNormalDotEvec0,    /* 20: */
+  colorQuantityOmegaDiffusionAngle,    /* 21: */
+  colorQuantityOmegaDiffusionFraction, /* 22: */
+
   colorQuantityLast
 };
-#define DEFT_COLOR_QUANTITY_MAX 10
+#define DEFT_COLOR_QUANTITY_MAX 22
 
 /*
 ** the weirdness here is that while "confidence" is itself
@@ -155,15 +171,17 @@ enum {
 ** signify the product of confidence and the measure
 */
 enum {
-  alphaMaskQuantityUnknown,     /* 0 */
-  alphaMaskQuantityConfidence,  /* 1 */
-  alphaMaskQuantityFA,          /* 2 */
-  alphaMaskQuantityCl,          /* 3 */
-  alphaMaskQuantityCp,          /* 4 */
-  alphaMaskQuantityCa,          /* 5 */
+  alphaMaskQuantityUnknown,          /* 0 */
+  alphaMaskQuantityConfidence,       /* 1 */
+  alphaMaskQuantityFA,               /* 2 */
+  alphaMaskQuantityCl,               /* 3 */
+  alphaMaskQuantityCp,               /* 4 */
+  alphaMaskQuantityCa,               /* 5 */
+  alphaMaskQuantityFARidgeSurfaceStrength,  /* 6 */
+  alphaMaskQuantityFAValleySurfaceStrength, /* 7 */
   alphaMaskQuantityLast
 };
-#define DEFT_ALPHA_MASK_QUANTITY_MAX 5
+#define DEFT_ALPHA_MASK_QUANTITY_MAX    7
 
 /* enumsDeft.C */
 DEFT_API airEnum *fltkEvent;

@@ -59,7 +59,7 @@ public:
   virtual unsigned int verticesGet(Nrrd *npos)=0;
 
   // For learning the axis-aligned bounding box
-  virtual void boundsGet(float min[3], float max[3]) const =0;
+  virtual void boundsGet(float min[3], float max[3]) const = 0;
 
   // To indicate that any cached displayList should be nixed.
   // It is the Object user's job to indicate when its contents have changed...
@@ -94,6 +94,9 @@ public:
   void transformGet(float mat[16]) const;
 
   double drawTime() const { return _drawTime; }
+
+  // save me to inventor format (may require multiple files)
+  // virtual void saveInventor() const = 0;
 
   // callbacks
   void postDrawCallback(Callback *cb, void *data);

@@ -142,6 +142,9 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
   glyph[0] = new TensorGlyph();
   glyph[1] = new TensorGlyph();
   glyph[2] = new TensorGlyph();
+  glyph[0]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
+  glyph[1]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
+  glyph[2]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
   glyph[0]->dynamic(true);
   glyph[1]->dynamic(true);
   glyph[2]->dynamic(true);

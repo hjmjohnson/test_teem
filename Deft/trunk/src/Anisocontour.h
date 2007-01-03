@@ -65,8 +65,6 @@ private:
   const Volume *_volume;
   NrrdResampleContext *_rsmc;
   seekContext *_sctx;
-  gageContext *_gctx;
-  gagePerVolume *_gpvl;
   int _anisoType;
   double _maskThresh, _isovalue, _sampling[3];
   NrrdKernelSpec *_ksp;

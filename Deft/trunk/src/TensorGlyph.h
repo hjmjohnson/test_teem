@@ -94,9 +94,13 @@ public:
   void drawImmediate();
   unsigned int verticesGet(Nrrd *npos);
   void boundsGet(float min[3], float max[3]) const;
+  
+  // not const because of the hacks that are used to trigger the saves
+  void saveInventor();
 private:
   // flags for managing state
   bool flag[DEFT_FLAG_NUM_MAX];
+  bool _savingIV;
 
   // basic glyph parameters
   bool _dynamic,            // data is assumed dynamic; no sorting by aniso

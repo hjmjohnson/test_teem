@@ -164,8 +164,6 @@ Scene::draw() {
 
   double time0 = airTime();
 
-  /* glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE); */
-
   glEnable(GL_DEPTH_TEST);
 
   // very crude test showed this wasn't a huge performance hit

@@ -118,7 +118,22 @@ _colorQuantityStr[DEFT_COLOR_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
   "(Cl,Cp)",
   "Cl",
   "Cp",
-  "Ca"
+  "Ca",
+
+  "|GV(Tr).evec0|",
+  "(Gm(Tr),|N(Tr).evec0|)",
+  "Da(Tr)",
+  "Df(Tr)",
+
+  "|GV(Fa).evec0|",
+  "(Gm(Fa),|N(Fa).evec0|)",
+  "Da(Fa)",
+  "Df(Fa)",
+
+  "|GV(Om).evec0|",
+  "(Gm(Om),|N(Om).evec0|)",
+  "Da(Om)",
+  "Df(Om)"
 };
 
 airEnum
@@ -143,7 +158,9 @@ _alphaMaskQuantityStr[DEFT_ALPHA_MASK_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
   "FA",
   "Cl",
   "Cp",
-  "Ca"
+  "Ca",
+  "FaRd",
+  "FaVa"
 };
 
 airEnum
