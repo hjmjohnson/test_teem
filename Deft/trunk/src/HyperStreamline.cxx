@@ -124,9 +124,9 @@ HyperStreamline::HyperStreamline(const Volume *vol) {
 
   // default fiber context settings
   this->color(true);
-  fiberType(tenFiberTypeEvec1);
-  stopConfidence(0.5);
+  fiberType(tenFiberTypeEvec0);
   stopAniso(tenAniso_Cl2, 0.3);
+  stopConfidence(0.5);
   step(1);
   stopHalfStepNum(30);
   stopStubDo(true);
@@ -447,17 +447,26 @@ HyperStreamline::updateFiberAllocated() {
   // char me[]="HyperStreamline::updateFiberAllocated";
 
   if (_flag[flagSeedNum]) {
-    // fprintf(stderr, "!%s: hello\n", me);
-    // currently allocate more when needed, and never free
+    // NO MORE: "currently allocate more when needed, and never free"
+    // that was causing problems because some code was using 
+    // _fiber.size() as the number of fibers, so you'd segfault
+    // if the number of fibers decreased!
     double time0 = airTime();
-    if (_seedNum > _fiber.size()) {
-      size_t sizeOld = _fiber.size();
+    size_t sizeOld = _fiber.size();
+    if (_seedNum > sizeOld) {
       _fiber.resize(_seedNum);
       for (unsigned int seedIdx=sizeOld;
-           seedIdx<_fiber.size();
+           seedIdx<_seedNum;
            seedIdx++) {
         _fiber[seedIdx] = new HyperStreamlineSingle();
       }
+    } else if (_seedNum < sizeOld) {
+      for (unsigned int seedIdx=_seedNum;
+           seedIdx<sizeOld;
+           seedIdx++) {
+        delete _fiber[seedIdx];
+      }
+      _fiber.resize(_seedNum);
     }
     _flag[flagSeedNum] = false;
     _flag[flagFiberAllocated] = true;
@@ -689,8 +698,8 @@ HyperStreamline::updateTubeGeometry() {
     unsigned int outIndxIdx = 0;
     for (unsigned int primIdx=0; primIdx<_lpldFibers->primNum; primIdx++) {
       _lpldTubes->type[primIdx] = limnPrimitiveTriangleStrip;
-      _lpldTubes->icnt[primIdx] = 2*_tubeFacet*(2*_endFacet 
-						+ _lpldFibers->icnt[primIdx] + 1) - 2;
+      _lpldTubes->icnt[primIdx] =
+        2*_tubeFacet*(2*_endFacet + _lpldFibers->icnt[primIdx] + 1) - 2;
       for (unsigned int inVertIdx=0;
            inVertIdx<_lpldFibers->icnt[primIdx];
            inVertIdx++) {
@@ -868,7 +877,6 @@ HyperStreamline::updateFiberStopColor() {
     {  0,   0,   0, 255},  /* tenFiberStopBounds: black */
     { 25, 255,  25, 255}}; /* tenFiberStopStub: wacky, should never see */
 
-  // limnVrt *inVrt;
   if (_flag[flagFiberColor]
       || _flag[flagFiberStopColorDo]) {
     double time0 = airTime();
@@ -883,7 +891,6 @@ HyperStreamline::updateFiberStopColor() {
         for (unsigned int inVertIdx=0;
              inVertIdx<_lpldFibers->icnt[primIdx];
              inVertIdx++) {
-          // inVrt = _lpldFibers->vert + _lpldFibers->indx[inVertTotalIdx];
           if (0 == inVertIdx) {
             ELL_4V_COPY(_lpldFibers->rgba + 4*inVertTotalIdx,
                         stcol[_fiber[fi]->whyStop[0]]);

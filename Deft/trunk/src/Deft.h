@@ -70,22 +70,6 @@ namespace Deft {
 extern char homeDir[AIR_STRLEN_MED];   // TERRIBLE
 
 /*
-** 0: Deft_t == float
-** 1: Deft_t == double
-*/
-#if 0
-typedef double Deft_t;
-#define Deft_nt nrrdTypeDouble
-#define DEFT_TYPE_FLOAT 0
-#define tenEIGENSOLVE tenEigensolve_d
-#else
-typedef float Deft_t;
-#define Deft_nt nrrdTypeFloat
-#define DEFT_TYPE_FLOAT 1
-#define tenEIGENSOLVE tenEigensolve_f
-#endif
-
-/*
 ** viewerMode* enum
 **
 ** the GUI modes that a DeftViewer can be in.  In Fov and Depth
@@ -118,7 +102,7 @@ enum {
 #define DEFT_FLAG_NUM_MAX 128
 
 /*
-** colorQuantity* enum
+** colorTenQuantity* enum
 **
 ** the quantities that one can expect to see colormapped after having
 ** probed them in a (diffusion) tensor field.
@@ -130,40 +114,42 @@ enum {
 ** treats that information.  On the other hand, colorQuantityCl and
 ** colorQuantityCp set queries of tenGageCl2 and tenGageCp2, but both
 ** use the same (user-supplied) colormap.  So this really conveys
-** something about a combination of a query and a coloring. Plus- these
-** are currently all tensor-specific, which is stupid.
+** something about a combination of a query and a coloring.
 */
 enum {
-  colorQuantityUnknown,                /*  0: */
-  colorQuantityRgbLinear,              /*  1: */
-  colorQuantityRgbPlanar,              /*  2: */
-  colorQuantityModeFA,                 /*  3: */
-  colorQuantityMode,                   /*  4: */
-  colorQuantityFA,                     /*  5: */
-  colorQuantityTrace,                  /*  6: */
-  colorQuantityClCp,                   /*  7: */
-  colorQuantityCl,                     /*  8: */
-  colorQuantityCp,                     /*  9: */
-  colorQuantityCa,                     /* 10: */
+  colorTenQuantityUnknown,                /*  0: */
 
-  colorQuantityTrGradVecDotEvec0,      /* 11: */
-  colorQuantityTrGradEvec0,            /* 12: */
-  colorQuantityTrDiffusionAngle,       /* 13: */
-  colorQuantityTrDiffusionFraction,    /* 14: */
+  colorTenQuantityConf,                   /*  1: */
 
-  colorQuantityFAGradVecDotEvec0,      /* 15: */
-  colorQuantityFAGradEvec0,            /* 16: */
-  colorQuantityFADiffusionAngle,       /* 17: */
-  colorQuantityFADiffusionFraction,    /* 18: */
+  colorTenQuantityRgbLinear,              /*  2: */
+  colorTenQuantityRgbPlanar,              /*  3: */
+  colorTenQuantityModeFA,                 /*  4: */
+  colorTenQuantityMode,                   /*  5: */
+  colorTenQuantityFA,                     /*  6: */
+  colorTenQuantityTrace,                  /*  7: */
+  colorTenQuantityClCp,                   /*  8: */
+  colorTenQuantityCl,                     /*  9: */
+  colorTenQuantityCp,                     /* 10: */
+  colorTenQuantityCa,                     /* 11: */
 
-  colorQuantityOmegaGradVecDotEvec0,   /* 19: */
-  colorQuantityOmegaNormalDotEvec0,    /* 20: */
-  colorQuantityOmegaDiffusionAngle,    /* 21: */
-  colorQuantityOmegaDiffusionFraction, /* 22: */
+  colorTenQuantityTrGradVecDotEvec0,      /* 12: */
+  colorTenQuantityTrGradEvec0,            /* 13: */
+  colorTenQuantityTrDiffusionAngle,       /* 14: */
+  colorTenQuantityTrDiffusionFraction,    /* 15: */
 
-  colorQuantityLast
+  colorTenQuantityFAGradVecDotEvec0,      /* 16: */
+  colorTenQuantityFAGradEvec0,            /* 17: */
+  colorTenQuantityFADiffusionAngle,       /* 18: */
+  colorTenQuantityFADiffusionFraction,    /* 19: */
+
+  colorTenQuantityOmegaGradVecDotEvec0,   /* 20: */
+  colorTenQuantityOmegaNormalDotEvec0,    /* 21: */
+  colorTenQuantityOmegaDiffusionAngle,    /* 22: */
+  colorTenQuantityOmegaDiffusionFraction, /* 23: */
+
+  colorTenQuantityLast
 };
-#define DEFT_COLOR_QUANTITY_MAX 22
+#define DEFT_COLOR_TEN_QUANTITY_MAX 23
 
 /*
 ** the weirdness here is that while "confidence" is itself
@@ -171,23 +157,44 @@ enum {
 ** signify the product of confidence and the measure
 */
 enum {
-  alphaMaskQuantityUnknown,          /* 0 */
-  alphaMaskQuantityConfidence,       /* 1 */
-  alphaMaskQuantityFA,               /* 2 */
-  alphaMaskQuantityCl,               /* 3 */
-  alphaMaskQuantityCp,               /* 4 */
-  alphaMaskQuantityCa,               /* 5 */
-  alphaMaskQuantityFARidgeSurfaceStrength,  /* 6 */
-  alphaMaskQuantityFAValleySurfaceStrength, /* 7 */
-  alphaMaskQuantityLast
+  alphaMaskTenQuantityUnknown,          /* 0 */
+  alphaMaskTenQuantityConfidence,       /* 1 */
+  alphaMaskTenQuantityFA,               /* 2 */
+  alphaMaskTenQuantityCl,               /* 3 */
+  alphaMaskTenQuantityCp,               /* 4 */
+  alphaMaskTenQuantityCa,               /* 5 */
+  alphaMaskTenQuantityFARidgeSurfaceStrength,  /* 6 */
+  alphaMaskTenQuantityFAValleySurfaceStrength, /* 7 */
+  alphaMaskTenQuantityLast
 };
-#define DEFT_ALPHA_MASK_QUANTITY_MAX    7
+#define DEFT_ALPHA_MASK_TEN_QUANTITY_MAX    7
+
+enum {
+  colorDwiQuantityUnknown,          /* 0 */
+  colorDwiQuantityB0,               /* 1 */
+  colorDwiQuantityMeanDwiValue,     /* 2 */
+  colorDwiQuantityRgbLinear,        /* 3 */
+  colorDwiQuantity1TensorError,     /* 4 */
+  colorDwiQuantity1TensorErrorLog,  /* 5 */
+  colorDwiQuantityLast
+};
+#define DEFT_COLOR_DWI_QUANTITY_MAX    5
+
+enum {
+  alphaMaskDwiQuantityUnknown,          /* 0 */
+  alphaMaskDwiQuantityB0,               /* 1 */
+  alphaMaskDwiQuantityMeanDwiValue,     /* 2 */
+  alphaMaskDwiQuantityLast
+};
+#define DEFT_ALPHA_MASK_DWI_QUANTITY_MAX    2
 
 /* enumsDeft.C */
 DEFT_API airEnum *fltkEvent;
 DEFT_API airEnum *viewerMode;
-DEFT_API airEnum *colorQuantity;
-DEFT_API airEnum *alphaMaskQuantity;
+DEFT_API airEnum *colorTenQuantity;
+DEFT_API airEnum *alphaMaskTenQuantity;
+DEFT_API airEnum *colorDwiQuantity;
+DEFT_API airEnum *alphaMaskDwiQuantity;
 
 /* miscDeft.C */
 DEFT_API void sanity();

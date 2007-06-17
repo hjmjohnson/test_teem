@@ -49,6 +49,7 @@
 
 char *info = ("this might come in handy.");
 
+
 int
 main(int argc, char **argv) {
   hestOpt *hopt=NULL;
@@ -61,6 +62,7 @@ main(int argc, char **argv) {
   Nrrd *_nin=NULL, *nin=NULL, *nPos=NULL, *nseed=NULL;
 #if 0*3
   Nrrd *_ninBlur=NULL, *ninBlur;
+  limnPolyData *pldRid, *pldVal;
 #endif
 #if 0*4
   Nrrd *nb0;
@@ -83,6 +85,12 @@ main(int argc, char **argv) {
   hestOptAdd(&hopt, "ib", "nin", airTypeOther, 1, 1, &_ninBlur, NULL,
              "input tensor volume, blurred a titch",
              NULL, NULL, nrrdHestNrrd);
+  hestOptAdd(&hopt, "lvi", "pld", airTypeOther,   1, 1, &pldVal, "",
+             "input polydata",
+             NULL, NULL, limnHestPolyDataLMPD);
+  hestOptAdd(&hopt, "lri", "pld", airTypeOther,   1, 1, &pldRid, "",
+             "input polydata",
+             NULL, NULL, limnHestPolyDataLMPD);
 #endif
 #if 0*4
   hestOptAdd(&hopt, "b0", "nin", airTypeOther, 1, 1, &nb0, NULL,
@@ -177,6 +185,7 @@ main(int argc, char **argv) {
       exit(1);
     }
   }
+
   if (3 == _nin->spaceDim && AIR_EXISTS(_nin->measurementFrame[0][0])) {
     nin = nrrdNew();
     airMopAdd(mop, nin, (airMopper)nrrdNuke, airMopAlways);
@@ -189,22 +198,6 @@ main(int argc, char **argv) {
   } else {
     nin = _nin;
   }
-
-#if 0*3
-  if (3 == _ninBlur->spaceDim 
-      && AIR_EXISTS(_ninBlur->measurementFrame[0][0])) {
-    ninBlur = nrrdNew();
-    airMopAdd(mop, ninBlur, (airMopper)nrrdNuke, airMopAlways);
-    if (tenMeasurementFrameReduce(ninBlur, _ninBlur)) {
-      airMopAdd(mop, err = biffGetDone(TEN), airFree, airMopAlways);
-      fprintf(stderr, "%s: trouble undoing measurement frame:\n%s", me, err);
-      airMopError(mop);
-      exit(1);
-    }
-  } else {
-    ninBlur = _ninBlur;
-  }
-#endif
 
   Deft::Scene *scene = new Deft::Scene();
   scene->bgColor(bg[0], bg[1], bg[2]);
@@ -227,6 +220,8 @@ main(int argc, char **argv) {
   Deft::ViewerUI *viewerUI = new Deft::ViewerUI(viewer);
   viewerUI->show();
   
+  Deft::Volume *vol = new Deft::Volume(tenGageKind, nin);
+
   Deft::TensorGlyph *glyph = new Deft::TensorGlyph();
   if (nPos) {
     glyph->dataSet(nin->axis[1].size,
@@ -263,11 +258,16 @@ main(int argc, char **argv) {
 
   // --------------------------------------------------
 
-  Deft::Volume *vol = new Deft::Volume(tenGageKind, nin);
-#if 0*3
-  Deft::Volume *volBlur = new Deft::Volume(tenGageKind, ninBlur);
-#endif
   Deft::TriPlane *triplane = new Deft::TriPlane(vol);
+  // HEY: you can eventually segfault if this isn't set here
+  // shouldn't doing so be optional?
+  triplane->alphaMaskQuantity(Deft::alphaMaskTenQuantityConfidence);
+  fprintf(stderr, "!%s: setting %s %s = %u\n", me, 
+          Deft::colorTenQuantity->name,
+          airEnumStr(Deft::colorTenQuantity, Deft::colorTenQuantityRgbLinear),
+          Deft::colorTenQuantityRgbLinear);
+  triplane->colorQuantity(Deft::colorTenQuantityRgbLinear);
+  fprintf(stderr, "!%s: done\n", me);
   
   NrrdKernelSpec *ksp = nrrdKernelSpecNew();
   double kparm[10];
@@ -280,36 +280,40 @@ main(int argc, char **argv) {
   triplane->kernel(gageKernel11, ksp);
   nrrdKernelSpecSet(ksp, nrrdKernelBCCubicDD, kparm);
   triplane->kernel(gageKernel22, ksp);
-  triplane->colorQuantity(Deft::colorQuantityRgbLinear);
-  // HEY: you can eventually segfault if this isn't set here
-  // shouldn't doing so be optional?
-  triplane->alphaMaskQuantity(Deft::alphaMaskQuantityConfidence);
   triplane->visible(false);
+
   scene->groupAdd(triplane);
 
   // HEY, WRONG: totally wrong place to be doing this
-  triplane->glyph[0]->parmCopy(glyph);
-  triplane->glyph[1]->parmCopy(glyph);
-  triplane->glyph[2]->parmCopy(glyph);
-  glyphUI->add(triplane->glyph[0]);
-  glyphUI->add(triplane->glyph[1]);
-  glyphUI->add(triplane->glyph[2]);
+  if (1) {
+    Deft::TensorGlyph *tgl[3];
+    tgl[0] = static_cast<Deft::TensorGlyph*>(triplane->glyph[0]);
+    tgl[1] = static_cast<Deft::TensorGlyph*>(triplane->glyph[1]);
+    tgl[2] = static_cast<Deft::TensorGlyph*>(triplane->glyph[2]);
+    tgl[0]->parmCopy(glyph);
+    tgl[1]->parmCopy(glyph);
+    tgl[2]->parmCopy(glyph);
+    glyphUI->add(tgl[0]);
+    glyphUI->add(tgl[1]);
+    glyphUI->add(tgl[2]);
+  }
 
   Deft::TriPlaneUI *planeUI = new Deft::TriPlaneUI(triplane, viewer);
   planeUI->show();
 
   // --------------------------------------------------
-
   Deft::HyperStreamline *hsline = new Deft::HyperStreamline(vol);
   hsline->lightingUse(false);
-  hsline->colorQuantity(Deft::colorQuantityRgbLinear);
+  hsline->colorQuantity(Deft::colorTenQuantityRgbLinear);
+  hsline->alphaMaskQuantity(Deft::alphaMaskTenQuantityConfidence);
   hsline->alphaMask(false);
+  hsline->twoSided(true);
   if (nseed) {
     hsline->seedsSet(nseed);
   }
+  scene->objectAdd(hsline);
   Deft::HyperStreamlineUI *hslineUI = 
     new Deft::HyperStreamlineUI(hsline, glyph, viewer);
-  scene->objectAdd(hsline);
 
   // HEY, WRONG: totally wrong place to be doing this
   triplane->hsline[0]->parmCopy(hsline);
@@ -323,35 +327,36 @@ main(int argc, char **argv) {
 
   // --------------------------------------------------
 
-#if 1
-
-  Deft::Anisocontour *anicont = new Deft::Anisocontour(vol);
-  anicont->colorQuantity(Deft::colorQuantityRgbLinear);
-  anicont->alphaMask(true);
-  // HEY: without this, the UI menu would come up blank because no there
-  // was no value
-  anicont->alphaMaskQuantity(Deft::alphaMaskQuantityConfidence);
-  Deft::AnisocontourUI *anisoUI = 
-    new Deft::AnisocontourUI(anicont, viewer);
-  fprintf(stderr, "!%s: anicont->alphaMaskQuantity() = %u\n", me, 
-          anicont->alphaMaskQuantity());
-  scene->objectAdd(anicont);
-  anicont->update();
-  anisoUI->show();
-
-#endif
-
-  // --------------------------------------------------
-
 #if 0*3
+  if (3 == _ninBlur->spaceDim 
+      && AIR_EXISTS(_ninBlur->measurementFrame[0][0])) {
+    ninBlur = nrrdNew();
+    airMopAdd(mop, ninBlur, (airMopper)nrrdNuke, airMopAlways);
+    if (tenMeasurementFrameReduce(ninBlur, _ninBlur)) {
+      airMopAdd(mop, err = biffGetDone(TEN), airFree, airMopAlways);
+      fprintf(stderr, "%s: trouble undoing measurement frame:\n%s", me, err);
+      airMopError(mop);
+      exit(1);
+    }
+  } else {
+    ninBlur = _ninBlur;
+  }
 
-  Deft::Anisofeature *anifeatR = new Deft::Anisofeature(volBlur);
-  anifeatR->type(seekTypeRidgeSurface);
-  anifeatR->itemStrength(tenGageFARidgeSurfaceStrength);
-  anifeatR->itemGradient(tenGageFAGradVec);
-  anifeatR->itemEigensystem(tenGageFAHessianEval, tenGageFAHessianEvec);
-  anifeatR->colorQuantity(Deft::colorQuantityRgbLinear);
-  anifeatR->alphaMaskQuantity(Deft::alphaMaskQuantityFARidgeSurfaceStrength);
+  Deft::Volume *volBlur = new Deft::Volume(tenGageKind, ninBlur);
+
+  Deft::Anisofeature *anifeatR;
+  if (pldRid) {
+    anifeatR = new Deft::Anisofeature(volBlur, pldRid);
+    fprintf(stderr, "!%s: hacking data pldRid %p\n", me, pldRid);
+  } else {
+    anifeatR = new Deft::Anisofeature(volBlur, NULL);
+    anifeatR->type(seekTypeRidgeSurface);
+    anifeatR->itemStrength(tenGageFARidgeSurfaceStrength);
+    anifeatR->itemGradient(tenGageFAGradVec);
+    anifeatR->itemEigensystem(tenGageFAHessianEval, tenGageFAHessianEvec);
+  }
+  anifeatR->colorQuantity(Deft::colorTenQuantityRgbLinear);
+  anifeatR->alphaMaskQuantity(Deft::alphaMaskTenQuantityFARidgeSurfaceStrength);
   Deft::AnisofeatureUI *anifeUIR = 
     new Deft::AnisofeatureUI(anifeatR, viewer);
   scene->objectAdd(anifeatR);
@@ -359,49 +364,48 @@ main(int argc, char **argv) {
 
   // --------------------------------------------------
 
-
-  Deft::Anisofeature *anifeatV = new Deft::Anisofeature(volBlur);
-  anifeatV->type(seekTypeValleySurface);
-  anifeatV->itemStrength(tenGageFAValleySurfaceStrength);
-  anifeatV->itemGradient(tenGageFAGradVec);
-  anifeatV->itemEigensystem(tenGageFAHessianEval, tenGageFAHessianEvec);
-  anifeatV->colorQuantity(Deft::colorQuantityRgbLinear);
-  anifeatV->alphaMaskQuantity(Deft::alphaMaskQuantityFAValleySurfaceStrength);
+  Deft::Anisofeature *anifeatV;
+  if (pldVal) {
+    anifeatV = new Deft::Anisofeature(volBlur, pldVal);
+    fprintf(stderr, "!%s: hacking data pldVal %p\n", me, pldVal);
+  } else {
+    anifeatV = new Deft::Anisofeature(volBlur, NULL);
+    anifeatV->type(seekTypeValleySurface);
+    anifeatV->itemStrength(tenGageFAValleySurfaceStrength);
+    anifeatV->itemGradient(tenGageFAGradVec);
+    anifeatV->itemEigensystem(tenGageFAHessianEval, tenGageFAHessianEvec);
+  }
+  anifeatV->colorQuantity(Deft::colorTenQuantityRgbLinear);
+  anifeatV->alphaMaskQuantity(Deft::alphaMaskTenQuantityFAValleySurfaceStrength);
   Deft::AnisofeatureUI *anifeUIV = 
     new Deft::AnisofeatureUI(anifeatV, viewer);
   scene->objectAdd(anifeatV);
   anifeUIV->show();
 
-  /*
-  Deft::Anisofeature *anifeatV = new Deft::Anisofeature(volBlur);
-  anifeatV->type(seekTypeIsoContour);
-  anifeatV->itemStrength(tenGageFAGradMag);
-  anifeatV->itemScalar(tenGageFA2n
-  anifeatV->itemGradient(tenGageFAGradVec);
-  anifeatV->itemEigensystem(tenGageFAHessianEval, tenGageFAHessianEvec);
-  anifeatV->colorQuantity(Deft::colorQuantityRgbLinear);
-  anifeatV->alphaMaskQuantity(Deft::alphaMaskQuantityFAValleySurfaceStrength);
-  Deft::AnisofeatureUI *anifeUIV = 
-    new Deft::AnisofeatureUI(anifeatV, viewer);
-  scene->objectAdd(anifeatV);
-  anifeUIV->show();
+#endif /* 0*3 */
 
-  ftype = seekTypeIsocontour;
-  gageKind *kind = tenGageKind;
-  int sclvItem = tenGageFA;
-  int normItem = tenGageFANormal;
-  int strengthItem = tenGageConfidence;
-  int strengthSign = 1;
-  double strength = 0.5;
-  */
+  // --------------------------------------------------
+
+  Deft::Anisocontour *anicont = new Deft::Anisocontour(vol);
+  anicont->colorQuantity(Deft::colorTenQuantityRgbLinear);
+  anicont->alphaMask(true);
+  // HEY: without this, the UI menu would come up blank because no there
+  // was no value
+  anicont->alphaMaskQuantity(Deft::alphaMaskTenQuantityConfidence);
+  fprintf(stderr, "!%s: anicont->alphaMaskQuantity() = %u\n", me, 
+          anicont->alphaMaskQuantity());
+  anicont->update();
+
+  Deft::AnisocontourUI *anisoUI = 
+    new Deft::AnisocontourUI(anicont, viewer);
+  scene->objectAdd(anicont);
+  anisoUI->show();
 
 
   // --------------------------------------------------
 
-#endif
-
   fltk::flush();
-  glyph->update();
+  // glyph->update();
   fltk::redraw();
 
   if (!camkeep) {

@@ -39,17 +39,21 @@ public:
 
   // set/get background color
   void bgColor(float R, float G, float B);
-  float bgColorR();
-  float bgColorG();
-  float bgColorB();
+  float bgColorR() const { return _bgColor[0]; }
+  float bgColorG() const { return _bgColor[1]; }
+  float bgColorB() const { return _bgColor[2]; }
 
   // set/get ambient light
   void ambLight(float R, float G, float B);
-  float ambLightR();
-  float ambLightG();
-  float ambLightB();
+  float ambLightR() const { return lit->amb[0]; }
+  float ambLightG() const { return lit->amb[1]; }
+  float ambLightB() const { return lit->amb[2]; }
   // update (viewspace) lights
   void lightUpdate(limnCamera *cam);
+
+  // set/get fog
+  bool fog() const { return _fog; }
+  void fog(bool f);
 
   int objectAdd(Object *obj);
   Object *objectRemove(int objectIdx);
@@ -73,6 +77,7 @@ private:
   float _bgColor[3];
   double _lastTime, _totalTime, _drawTime;
   limnLight *lit;
+  bool _fog;
 };
 
 }

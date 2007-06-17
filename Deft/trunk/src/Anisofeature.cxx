@@ -42,7 +42,21 @@ enum {
   flagLast
 };
 
-Anisofeature::Anisofeature(const Volume *vol) {
+Anisofeature::Anisofeature(const Volume *) {
+  char me[]="Anisofeature::Anisofeature";
+
+  fprintf(stderr, "!%s: don't use me, bye\n", me);
+  exit(0);
+}
+
+// make this separate as part of debugging, could be back in the .h file
+double
+Anisofeature::sampling() const {
+
+  return _sampling; 
+}
+
+Anisofeature::Anisofeature(const Volume *vol, const limnPolyData *lpld) {
   char me[]="Anisofeature::Anisofeature";
   int E;
 
@@ -57,6 +71,11 @@ Anisofeature::Anisofeature(const Volume *vol) {
     _flag[fi] = false;
   }
 
+  if (lpld) {
+    _hack = true;
+  } else {
+    _hack = false;
+  }
   _volume = vol;
   dynamic_cast<PolyProbe*>(this)->volume(_volume);
   dynamic_cast<PolyProbe*>(this)->color(true);
@@ -80,26 +99,22 @@ Anisofeature::Anisofeature(const Volume *vol) {
   ERROR_CHECK(GAGE);
 
   _sctx = seekContextNew();
-  seekVerboseSet(_sctx, 10);
-  if (!E) E |= seekDataSet(_sctx, NULL, _gctx, 0);
-  _sampling = AIR_NAN;
-  this->sampling(0.0);
-
-  _lpldOrig = _lpldOwn;
   _lpldWhole = limnPolyDataNew();
+  _lpldOrig = _lpldOwn;
   _lpldCC = limnPolyDataNew();
   _lpldSelect = limnPolyDataNew();
-
-  /*
-  this->type(seekTypeIsocontour);
-  this->itemScalar(tenGageFA);
-  this->isovalue(0.7);
-  */
-
-  this->strengthUse(true);
-  this->strength(+1, 0.0);
-
-  ERROR_CHECK(SEEK);
+  if (_hack) {
+    _flag[flagLpldWhole] = true;
+    limnPolyDataCopy(_lpldWhole, lpld);
+  } else {
+    seekVerboseSet(_sctx, 10);
+    if (!E) E |= seekDataSet(_sctx, NULL, _gctx, 0);
+    _sampling = AIR_NAN;
+    this->sampling(0.0);
+    this->strengthUse(true);
+    this->strength(+1, 0.0);
+    ERROR_CHECK(SEEK);
+  }
 
   this->alphaMask(true);
   this->evecRgbBgGray(0.0);
@@ -112,6 +127,7 @@ Anisofeature::Anisofeature(const Volume *vol) {
 
   dynamic_cast<PolyProbe*>(this)->brightness(1.0);
   this->twoSided(true);
+  fprintf(stderr, "!%s: returning\n", me);
 }
 
 Anisofeature::~Anisofeature() {
@@ -196,8 +212,10 @@ Anisofeature::type(int type) {
 
   if (!E) E |= gageQueryReset(_gctx, _gpvl);
   ERROR_CHECK(GAGE);
-  if (!E) E |= seekTypeSet(_sctx, type);
-  ERROR_CHECK(SEEK);
+  if (!_hack) {
+    if (!E) E |= seekTypeSet(_sctx, type);
+    ERROR_CHECK(SEEK);
+  }
   _flag[flagFeatureParm] = true;
 }
 
@@ -208,8 +226,10 @@ Anisofeature::itemScalar(int item) {
 
   if (!E) E |= gageQueryItemOn(_gctx, _gpvl, item);
   ERROR_CHECK(GAGE);
-  if (!E) E |= seekItemScalarSet(_sctx, item);
-  ERROR_CHECK(SEEK);
+  if (!_hack) {
+    if (!E) E |= seekItemScalarSet(_sctx, item);
+    ERROR_CHECK(SEEK);
+  }
   _flag[flagFeatureParm] = true;
 }
 
@@ -220,8 +240,10 @@ Anisofeature::itemStrength(int item) {
 
   if (!E) E |= gageQueryItemOn(_gctx, _gpvl, item);
   ERROR_CHECK(GAGE);
-  if (!E) E |= seekItemStrengthSet(_sctx, item);
-  ERROR_CHECK(SEEK);
+  if (!_hack) {
+    if (!E) E |= seekItemStrengthSet(_sctx, item);
+    ERROR_CHECK(SEEK);
+  }
   _flag[flagFeatureParm] = true;
 }
 
@@ -232,8 +254,10 @@ Anisofeature::itemNormal(int item) {
 
   if (!E) E |= gageQueryItemOn(_gctx, _gpvl, item);
   ERROR_CHECK(GAGE);
-  if (!E) E |= seekItemNormalSet(_sctx, item);
-  ERROR_CHECK(SEEK);
+  if (!_hack) {
+    if (!E) E |= seekItemNormalSet(_sctx, item);
+    ERROR_CHECK(SEEK);
+  }
   _flag[flagFeatureParm] = true;
 }
 
@@ -244,8 +268,10 @@ Anisofeature::itemGradient(int item) {
 
   if (!E) E |= gageQueryItemOn(_gctx, _gpvl, item);
   ERROR_CHECK(GAGE);
-  if (!E) E |= seekItemGradientSet(_sctx, item);
-  ERROR_CHECK(SEEK);
+  if (!_hack) {
+    if (!E) E |= seekItemGradientSet(_sctx, item);
+    ERROR_CHECK(SEEK);
+  }
   _flag[flagFeatureParm] = true;
 }
 
@@ -257,35 +283,46 @@ Anisofeature::itemEigensystem(int evalItem, int evecItem) {
   if (!E) E |= gageQueryItemOn(_gctx, _gpvl, evalItem);
   if (!E) E |= gageQueryItemOn(_gctx, _gpvl, evecItem);
   ERROR_CHECK(GAGE);
-  if (!E) E |= seekItemEigensystemSet(_sctx, evalItem, evecItem);
-  ERROR_CHECK(SEEK);
+  if (!_hack) {
+    if (!E) E |= seekItemEigensystemSet(_sctx, evalItem, evecItem);
+    ERROR_CHECK(SEEK);
+  }
   _flag[flagFeatureParm] = true;
 }
 
 void
 Anisofeature::strengthUse(bool doit) {
   char me[]="Anisofeature::strengthUse";
-  int E=0;
-  if (!E) E |= seekStrengthUseSet(_sctx, doit ? AIR_TRUE : AIR_FALSE);
-  ERROR_CHECK(SEEK);
+
+  if (!_hack) {
+    int E=0;
+    if (!E) E |= seekStrengthUseSet(_sctx, doit ? AIR_TRUE : AIR_FALSE);
+    ERROR_CHECK(SEEK);
+  }
   _flag[flagFeatureParm] = true;
 }
 
 void
 Anisofeature::strength(int sign, double strength) {
   char me[]="  Anisofeature::strength";
-  int E=0;
-  if (!E) E |= seekStrengthSet(_sctx, sign, strength, strength);
-  ERROR_CHECK(SEEK);
+
+  if (!_hack) {
+    int E=0;
+    if (!E) E |= seekStrengthSet(_sctx, sign, strength, strength);
+    ERROR_CHECK(SEEK);
+  }
   _flag[flagFeatureParm] = true;
 }
 
 void
 Anisofeature::isovalue(double ival) {
   char me[]="Anisofeature::isovalue";
-  int E=0;
-  if (!E) E |= seekIsovalueSet(_sctx, ival);
-  ERROR_CHECK(SEEK);
+
+  if (!_hack) {
+    int E=0;
+    if (!E) E |= seekIsovalueSet(_sctx, ival);
+    ERROR_CHECK(SEEK);
+  }
   _flag[flagFeatureParm] = true;
 }
 
@@ -341,20 +378,25 @@ Anisofeature::update() {
   char me[]="Anisofeature::update";
   int E=0;
   
+  fprintf(stderr, "!%s: hello (hack %s, whole %s)\n", me,
+          _hack ? "true" : "false",
+          _flag[flagLpldWhole] ? "true" : "false");
   if (_flag[flagFeatureParm]) {
     if (!E) E |= gageUpdate(_gctx);
     ERROR_CHECK(GAGE);
-    if (!E) E |= seekUpdate(_sctx);
-    if (!E) E |= seekExtract(_sctx, _lpldWhole);
-    ERROR_CHECK(SEEK);
-    if (_sctx->strengthUse) {
-      fprintf(stderr, "!%s: max strength seen = %g\n", me,
-              _sctx->strengthSeenMax);
+    if (!_hack) {
+      if (!E) E |= seekUpdate(_sctx);
+      if (!E) E |= seekExtract(_sctx, _lpldWhole);
+      ERROR_CHECK(SEEK);
+      if (_sctx->strengthUse) {
+        fprintf(stderr, "!%s: max strength seen = %g\n", me,
+                _sctx->strengthSeenMax);
+      }
     }
     _flag[flagFeatureParm] = false;
     _flag[flagLpldWhole] = true;
   }
-
+  
   if (_flag[flagLpldWhole]
       || _flag[flagCCParm]) {
     if (_ccDo) {
@@ -392,6 +434,7 @@ Anisofeature::update() {
       nrrdNuke(nmask);
       _lpldOwn = _lpldSelect;
     } else {
+      fprintf(stderr, "%s: setting _lpldOwn = %p\n", me, _lpldOwn);
       _lpldOwn = _lpldWhole;
     }
   }
@@ -404,7 +447,7 @@ Anisofeature::update() {
                                  _lpldOwn->indxNum,
                                  _lpldOwn->primNum);
   ERROR_CHECK(LIMN);
-  if (!E) E |= limnPolyDataVertexWindingFix(_lpldOwn);
+  if (!E) E |= limnPolyDataVertexWindingFix(_lpldOwn, AIR_TRUE);
   if (!E) E |= limnPolyDataVertexNormals(_lpldOwn);
   ERROR_CHECK(LIMN);
   this->changed();

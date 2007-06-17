@@ -176,14 +176,30 @@ Anisocontour::update() {
   int E = 0;
   NrrdKernelSpec lksp;
 
+  fprintf(stderr, "!%s: samplings = %s, kernel = %s\n", me,
+          _flag[flagSamplings] ? "true" : "false",
+          _flag[flagKernel] ? "true" : "false");
   if (_flag[flagSamplings]
       || _flag[flagKernel]) {
 
+    // Also have to update kernel of PolyProbe
+    dynamic_cast<PolyProbe*>(this)->kernel(gageKernel00, _ksp);
+    // HEY: hack!
+    lksp.kernel = nrrdKernelBCCubicD;
+    ELL_3V_SET(lksp.parm, 1, 1, 0);
+    dynamic_cast<PolyProbe*>(this)->kernel(gageKernel11, &lksp);
+    // HEY: hack!
+    lksp.kernel = nrrdKernelBCCubicDD;
+    ELL_3V_SET(lksp.parm, 1, 1, 0);
+    dynamic_cast<PolyProbe*>(this)->kernel(gageKernel22, &lksp);
+    
     if (_flag[flagSamplings]) {
       for (unsigned int axi=0; axi<3; axi++) {
         unsigned int baxi = _volume->kind()->baseDim + axi;
         size_t size = AIR_CAST(size_t, (pow(2.0, _sampling[axi]) 
                                         * _volume->nrrd()->axis[baxi].size));
+        fprintf(stderr, "!%s: samples[%u,%u] = %u\n", me, axi, baxi,
+                AIR_CAST(unsigned int, size));
         if (!E) E |= nrrdResampleSamplesSet(_rsmc, baxi, size);
         if (!E) E |= nrrdResampleRangeFullSet(_rsmc, baxi);
       }
@@ -198,17 +214,6 @@ Anisocontour::update() {
       fprintf(stderr, "%s: PROBLEM:\n%s", me, biffGetDone(NRRD));
     }
 
-    // Also have to update kernel of PolyProbe
-    dynamic_cast<PolyProbe*>(this)->kernel(gageKernel00, _ksp);
-    // HEY: hack!
-    lksp.kernel = nrrdKernelBCCubicD;
-    ELL_3V_SET(lksp.parm, 1, 1, 0);
-    dynamic_cast<PolyProbe*>(this)->kernel(gageKernel11, &lksp);
-    // HEY: hack!
-    lksp.kernel = nrrdKernelBCCubicDD;
-    ELL_3V_SET(lksp.parm, 1, 1, 0);
-    dynamic_cast<PolyProbe*>(this)->kernel(gageKernel22, &lksp);
-    
     _flag[flagSamplings] = false;
     _flag[flagKernel] = false;
     _flag[flagVolumeRsmp] = true;
@@ -244,6 +249,7 @@ Anisocontour::update() {
         || seekExtract(_sctx, _lpldOwn)) {
       fprintf(stderr, "%s: PROBLEM:\n%s", me, biffGetDone(SEEK));
     }
+
     if (limnPolyDataAlloc(_lpldOwn,
                           (limnPolyDataInfoBitFlag(_lpldOwn)
                            | (1 << limnPolyDataInfoRGBA)),

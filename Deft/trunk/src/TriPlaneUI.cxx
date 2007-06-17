@@ -52,19 +52,21 @@ TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
   const unsigned int W=400, H=365, lineH=20;
   unsigned int winy, incy;
   const char *def;
+  const airEnum *enm;
+  int itu, itl;
 
-  _ksp = nrrdKernelSpecNew();
-  _triplane = tp;
-  _viewer = vw;
-
-  winy = 0;
   _win = new fltk::Window(W, H, "Deft::TriPlane");
   _win->begin();
   _win->resizable(_win);
-  winy += 5;
 
+  winy = 0;
+  winy += 5;
+  _triplane = tp;
+  _viewer = vw;
+  _ksp = nrrdKernelSpecNew();
   // ----------------------------------
   for (unsigned int pli=0; pli<=3; pli++) {
+
     _visibleButton[pli] = new fltk::CheckButton(0, winy,
                                                 W/8, lineH, 
                                                 labelBuff[pli]);
@@ -82,14 +84,20 @@ TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
 
     _colorQuantityMenu[pli] = new fltk::Choice(37*W/100, winy,
                                                22*W/100, lineH, "Color");
-    for (unsigned int qi=colorQuantityUnknown+1; qi<colorQuantityLast; qi++) {
-      _colorQuantityMenu[pli]->add(airEnumStr(colorQuantity, qi), this);
+    enm = _triplane->plane[0]->colorQuantityEnum();
+    itu = airEnumUnknown(enm);
+    itl = airEnumLast(enm);
+    for (int qi=itu+1; qi<=itl; qi++) {
+      _colorQuantityMenu[pli]->add(airEnumStr(enm, qi), this);
     }
     _colorQuantityMenu[pli]->callback((fltk::Callback*)(colorQuantity_cb),
                                       this);
+    def = airEnumStr(enm, _triplane->plane[0]->colorQuantity());
+    _colorQuantityMenu[0]->value(((fltk::Group*)_colorQuantityMenu[0])
+                                 ->find(_colorQuantityMenu[0]
+                                        ->find(def)));
     if (pli) {
-      def = airEnumStr(colorQuantity,
-                       _triplane->plane[pli-1]->colorQuantity());
+      def = airEnumStr(enm, _triplane->plane[pli-1]->colorQuantity());
       _colorQuantityMenu[pli]->value(((fltk::Group*)_colorQuantityMenu[pli])
                                      ->find(_colorQuantityMenu[pli]
                                             ->find(def)));
@@ -165,15 +173,15 @@ TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
   winy += 10;
 
   _alphaMaskQuantityMenu = new fltk::Choice(7*W/80, winy, W/7, lineH, "Mask");
-  for (unsigned int qi=alphaMaskQuantityUnknown+1;
-       qi<alphaMaskQuantityLast;
-       qi++) {
-    _alphaMaskQuantityMenu->add(airEnumStr(alphaMaskQuantity, qi), this);
+  enm = _triplane->plane[0]->alphaMaskQuantityEnum();
+  itu = airEnumUnknown(enm);
+  itl = airEnumLast(enm);
+  for (int qi=itu+1; qi<=itl; qi++) {
+    _alphaMaskQuantityMenu->add(airEnumStr(enm, qi), this);
   }
   _alphaMaskQuantityMenu->callback((fltk::Callback*)(alphaMaskQuantity_cb),
                                    this);
-  def = airEnumStr(alphaMaskQuantity,
-                   _triplane->plane[0]->alphaMaskQuantity());
+  def = airEnumStr(enm, _triplane->plane[0]->alphaMaskQuantity());
   fprintf(stderr, "TriPlane def = %s\n", def);
   _alphaMaskQuantityMenu->value(((fltk::Group*)_alphaMaskQuantityMenu)
                                 ->find(_alphaMaskQuantityMenu
@@ -208,6 +216,7 @@ TriPlaneUI::TriPlaneUI(TriPlane *tp, Viewer *vw) {
   _kernelMenu->callback((fltk::Callback*)(kernel_cb), this);
   _kernelMenu->value(((fltk::Group*)_kernelMenu)
                      ->find(_kernelMenu->find(kernelStr[kernelTent])));
+  _win->end();
 }
 
 TriPlaneUI::~TriPlaneUI() {
@@ -311,8 +320,10 @@ TriPlaneUI::alphaMaskQuantity_cb(fltk::Choice *menu, TriPlaneUI *ui) {
   // char me[]="TriPlaneUI::alphaMaskQuantity_cb";
   unsigned int qi;
 
-  for (qi=alphaMaskQuantityUnknown+1;
-       strcmp(menu->item()->label(), airEnumStr(alphaMaskQuantity, qi));
+  const airEnum *enm = ui->_triplane->plane[0]->alphaMaskQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  for (qi=itu+1;
+       strcmp(menu->item()->label(), airEnumStr(enm, qi));
        qi++);
   ui->_triplane->alphaMaskQuantity(qi);
   ui->_triplane->update();
@@ -383,10 +394,17 @@ TriPlaneUI::colorQuantity_cb(fltk::Choice *menu, TriPlaneUI *ui) {
   // char me[]="TriPlaneUI::colorQuantity_cb";
   unsigned int qi, pli;
 
-  for (qi=colorQuantityUnknown+1;
-       strcmp(menu->item()->label(), airEnumStr(colorQuantity, qi));
+  const airEnum *enm = ui->_triplane->plane[0]->colorQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  for (qi=itu+1;
+       strcmp(menu->item()->label(), airEnumStr(enm, qi));
        qi++);
+  /*
+  fprintf(stderr, "!%s: got %s %s = %u\n", me, enm->name, 
+          airEnumStr(enm, qi), qi);
+  */
   for (pli=0; ui->_colorQuantityMenu[pli] != menu; pli++);
+  // fprintf(stderr, "!%s: pli = %u\n", me, pli);
   if (!pli) {
     ui->_triplane->colorQuantity(qi);
     ui->_colorQuantityMenu[1]->value(menu->value());

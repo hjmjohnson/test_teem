@@ -49,19 +49,19 @@ const char kernelStr[6][128] = {
 static char labelBuff[3][128] = {"Grid 0", "Grid 1", "Grid 2"};
 
 AnisocontourUI::AnisocontourUI(Anisocontour *aniso, Viewer *vw) {
-  char me[]="AnisocontourUI::AnisocontourUI";
+  // char me[]="AnisocontourUI::AnisocontourUI";
   const unsigned int W = 400, H = 200, lineH = 20;
   unsigned int incy, winy;
   const char *def;
-
-  _aniso = aniso;
-  _viewer = vw;
-  _ksp = nrrdKernelSpecNew();
 
   winy = 5;
   _win = new fltk::Window(W, H, "Deft::Anisocontour");
   _win->begin();
   _win->resizable(_win);
+
+  _aniso = aniso;
+  _viewer = vw;
+  _ksp = nrrdKernelSpecNew();
 
   incy=lineH;
   for (unsigned int axi=0; axi<3; axi++) {
@@ -83,7 +83,7 @@ AnisocontourUI::AnisocontourUI(Anisocontour *aniso, Viewer *vw) {
   _visibleButton->callback((fltk::Callback*)visible_cb, this);
   _visibleButton->value(_aniso->visible());
 
-  _wireframeButton = new fltk::CheckButton(14*W/100, winy,
+  _wireframeButton = new fltk::CheckButton(0, winy + lineH,
                                            W/5, lineH, "Wire");
   _wireframeButton->callback((fltk::Callback*)wireframe_cb, this);
   _wireframeButton->value(_aniso->wireframe());
@@ -100,13 +100,21 @@ AnisocontourUI::AnisocontourUI(Anisocontour *aniso, Viewer *vw) {
   _tractsDoButton->value(_aniso->tractsDo());
   */
 
+  _colorButton = new fltk::CheckButton(22*W/100, winy, 
+                                       20*W/100, lineH, "Color");
+  _colorButton->callback((fltk::Callback*)color_cb, this);
+  _colorButton->value(_aniso->color());
+
   _colorQuantityMenu = new fltk::Choice(35*W/100, winy,
-                                        22*W/100, lineH, "Color");
-  for (unsigned int qi=colorQuantityUnknown+1; qi<colorQuantityLast; qi++) {
-    _colorQuantityMenu->add(airEnumStr(colorQuantity, qi), this);
+                                        22*W/100, lineH);
+  const airEnum *enm = aniso->colorQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  int itl = airEnumLast(enm);
+  for (int qi=itu+1; qi<=itl; qi++) {
+    _colorQuantityMenu->add(airEnumStr(enm, qi), this);
   }
   _colorQuantityMenu->callback((fltk::Callback*)(colorQuantity_cb), this);
-  def = airEnumStr(colorQuantity, _aniso->colorQuantity());
+  def = airEnumStr(enm, _aniso->colorQuantity());
   _colorQuantityMenu->value(((fltk::Group*)_colorQuantityMenu)
                             ->find(_colorQuantityMenu
                                    ->find(def)));
@@ -118,6 +126,7 @@ AnisocontourUI::AnisocontourUI(Anisocontour *aniso, Viewer *vw) {
   _anisoTypeMenu->add(airEnumStr(tenAniso, tenAniso_Cp2), this);
   _anisoTypeMenu->add(airEnumStr(tenAniso, tenAniso_Ca2), this);
   _anisoTypeMenu->add(airEnumStr(tenAniso, tenAniso_Tr), this);
+  _anisoTypeMenu->add(airEnumStr(tenAniso, tenAniso_Conf), this);
   _anisoTypeMenu->callback((fltk::Callback*)(anisoType_cb), this);
   def = airEnumStr(tenAniso, _aniso->anisoType());
   fltk::Group *tgroup = (fltk::Group*)(_anisoTypeMenu);
@@ -133,14 +142,15 @@ AnisocontourUI::AnisocontourUI(Anisocontour *aniso, Viewer *vw) {
 
   winy += incy;
   _alphaMaskQuantityMenu = new fltk::Choice(7*W/80, winy, W/7, lineH, "Mask");
-  for (unsigned int qi=alphaMaskQuantityUnknown+1;
-       qi<alphaMaskQuantityLast;
-       qi++) {
-    _alphaMaskQuantityMenu->add(airEnumStr(alphaMaskQuantity, qi), this);
+  enm = aniso->alphaMaskQuantityEnum();
+  itu = airEnumUnknown(enm);
+  itl = airEnumLast(enm);
+  for (int qi=itu+1; qi<=itl; qi++) {
+    _alphaMaskQuantityMenu->add(airEnumStr(enm, qi), this);
   }
   _alphaMaskQuantityMenu->callback((fltk::Callback*)(alphaMaskQuantity_cb),
                                    this);
-  def = airEnumStr(alphaMaskQuantity, _aniso->alphaMaskQuantity());
+  def = airEnumStr(enm, _aniso->alphaMaskQuantity());
   _alphaMaskQuantityMenu->value(((fltk::Group*)_alphaMaskQuantityMenu)
                                 ->find(_alphaMaskQuantityMenu
                                        ->find(def)));
@@ -227,11 +237,22 @@ AnisocontourUI::wireframe_cb(fltk::CheckButton *but, AnisocontourUI *ui) {
 }
 
 void
+AnisocontourUI::color_cb(fltk::CheckButton *but,
+                         AnisocontourUI *ui) {
+
+  ui->_aniso->color(but->value());
+  dynamic_cast<PolyProbe*>(ui->_aniso)->update(false);
+  ui->redraw();
+}
+
+void
 AnisocontourUI::colorQuantity_cb(fltk::Choice *menu, AnisocontourUI *ui) {
   unsigned int qi;
 
-  for (qi=colorQuantityUnknown+1;
-       strcmp(menu->item()->label(), airEnumStr(colorQuantity, qi));
+  const airEnum *enm = ui->_aniso->colorQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  for (qi=itu+1;
+       strcmp(menu->item()->label(), airEnumStr(enm, qi));
        qi++);
   ui->_aniso->colorQuantity(qi);
   ui->redraw();
@@ -291,8 +312,10 @@ void
 AnisocontourUI::alphaMaskQuantity_cb(fltk::Choice *menu, AnisocontourUI *ui) {
   unsigned int qi;
 
-  for (qi=alphaMaskQuantityUnknown+1;
-       strcmp(menu->item()->label(), airEnumStr(alphaMaskQuantity, qi));
+  const airEnum *enm = ui->_aniso->alphaMaskQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  for (qi=itu+1;
+       strcmp(menu->item()->label(), airEnumStr(enm, qi));
        qi++);
   ui->_aniso->alphaMaskQuantity(qi);
   dynamic_cast<PolyProbe*>(ui->_aniso)->update(true);

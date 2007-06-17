@@ -84,15 +84,22 @@ ViewerUI::ViewerUI(Viewer *vw) {
 
   winy += incy;
 
-  _upFixButton = new fltk::CheckButton(10+1*W/12, winy, W/6, incy=lineH,
+  _upFixButton = new fltk::CheckButton(10+1*W/20, winy, 
+                                       4*W/20, incy=lineH,
                                        "Fix Up");
   _upFixButton->callback((fltk::Callback*)upFix_cb, this);
   _upFixButton->value(_viewer->upFix());
 
-  _orthographicButton = new fltk::CheckButton(10+4*W/12, winy, W/6, incy=lineH,
+  _orthographicButton = new fltk::CheckButton(10+4*W/20, winy, 
+                                              4*W/20, incy=lineH,
                                               "Orthographic");
   _orthographicButton->callback((fltk::Callback*)orthographic_cb, this);
   _orthographicButton->value(_viewer->orthographic());
+
+  _fogButton = new fltk::CheckButton(10+9*W/20, winy, 3*W/20, incy=lineH,
+                                     "Fog");
+  _fogButton->callback((fltk::Callback*)fog_cb, this);
+  _fogButton->value(_viewer->fog());
 
   _fromXInput->value(_viewer->fromX());
   _fromYInput->value(_viewer->fromY());
@@ -212,6 +219,12 @@ ViewerUI::upFix_cb(fltk::CheckButton *chbut, ViewerUI *ui) {
 void
 ViewerUI::orthographic_cb(fltk::CheckButton *chbut, ViewerUI *ui) {
   ui->_viewer->orthographic(chbut->value());
+  ui->_viewer->redraw();
+}
+
+void
+ViewerUI::fog_cb(fltk::CheckButton *chbut, ViewerUI *ui) {
+  ui->_viewer->fog(chbut->value());
   ui->_viewer->redraw();
 }
 

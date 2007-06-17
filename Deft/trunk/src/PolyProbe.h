@@ -69,6 +69,10 @@ public:
   int alphaMaskQuantity() const { return _alphaMaskQuantity; }
   void alphaMaskThreshold(double thresh);
   double alphaMaskThreshold() const { return _alphaMaskThreshold; }
+  const airEnum *colorQuantityEnum() const { 
+    return _colorQuantityEnum; }
+  const airEnum *alphaMaskQuantityEnum() const { 
+    return _alphaMaskQuantityEnum; }
 
   // per-component gamma-ish brightening
   void brightness(double brightness);
@@ -93,6 +97,7 @@ public:
 
 private:
   bool _flag[DEFT_FLAG_NUM_MAX];
+  const airEnum *_colorQuantityEnum, *_alphaMaskQuantityEnum;
   bool _colorDoit, _alphaMaskDoit;
   int _colorQuantity, _alphaMaskQuantity;
   std::vector<int> _queryColor, _queryNoColor, _queryAlphaMask;

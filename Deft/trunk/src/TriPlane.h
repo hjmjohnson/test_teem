@@ -28,7 +28,9 @@
 #include "Deft.h"
 #include "Group.h"
 #include "Plane.h"
+#include "Glyph.h"
 #include "TensorGlyph.h"
+#include "StarGlyph.h"
 #include "HyperStreamline.h"
 
 namespace Deft {
@@ -44,6 +46,11 @@ namespace Deft {
 class DEFT_EXPORT TriPlane : public Group {
 public: 
   explicit TriPlane(const Volume *vol);
+
+  /*
+  void baseGlyph(const limnPolyData *bglyph);
+  const limnPolyData *baseGlyph() const { return _bglyph; }
+  */
 
   // exposing const pointer to useful info in gageShape
   const gageShape *shape() const;
@@ -82,20 +89,23 @@ public:
   void tractsUpdate(unsigned int planeIdx);
 
   void seedAnisoThresh(double aniso);
-  double seedAnisoThresh() const { return glyph[0]->anisoThresh(); }
+  double seedAnisoThresh() const;
   
   Plane *plane[3];       /* the planes we draw */
   Plane *seedPlane[3];   /* the planes used for seed points */
-  TensorGlyph *glyph[3];
+  // We use an Object here because StarGlyphs are rather different beasts...
+  Object *glyph[3];
   HyperStreamline *hsline[3];
 
   ~TriPlane();
 private:
   gageShape *_shape;
+  const Volume *_vol; // never owned
+  const limnPolyData *_bglyph;
   float _origW[3], _interW[3][3], _edgeW[3][3], _posI[3];
   double _sampling[3], _seedSampling[3];
   bool _glyphsDo[3], _tractsDo[3];
-  Nrrd *_seedTenFloat[3], *_seedPosFloat[3];
+  Nrrd *_seedValFloat[3], *_seedPosFloat[3];
   unsigned int _size[3], _seedSize[3];  // # samples along each axis
 };
 

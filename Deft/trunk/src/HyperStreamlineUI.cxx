@@ -57,20 +57,18 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, Object *vobj,
   const char *defStr;
   int defVal;
 
+  _win = new fltk::Window(W, H, "Deft::HyperStreamline");
+  _win->begin();
+  _win->resizable(_win);
+
   _hsline.resize(1);
   _hsline[0] = hs;
   _vobj = vobj;
   _viewer = vw;
   _hsline[0]->postDrawCallback((Callback*)(postDraw_cb), this);
 
-  _ksp = nrrdKernelSpecNew();
-
-  _win = new fltk::Window(W, H, "Deft::HyperStreamline");
-  _win->begin();
-  _win->resizable(_win);
-
   winy += 3;
-
+  _ksp = nrrdKernelSpecNew();
   // ----------------------------------
   _computeButton = new fltk::Button(2*W/40, winy,
                                     W/6, incy=lineH, "Initialize");
@@ -94,11 +92,14 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, Object *vobj,
   _colorButton->value(_hsline[0]->color());
 
   _colorQuantityMenu = new fltk::Choice(18*W/40, winy, 10*W/40, lineH);
-  for (unsigned int qi=colorQuantityUnknown+1; qi<colorQuantityLast; qi++) {
-    _colorQuantityMenu->add(airEnumStr(colorQuantity, qi), this);
+  const airEnum *enm = hs->colorQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  int itl = airEnumLast(enm);
+  for (int qi=itu+1; qi<=itl; qi++) {
+    _colorQuantityMenu->add(airEnumStr(enm, qi), this);
   }
   _colorQuantityMenu->callback((fltk::Callback*)(colorQuantity_cb), this);
-  defStr = airEnumStr(colorQuantity, _hsline[0]->colorQuantity());
+  defStr = airEnumStr(enm, _hsline[0]->colorQuantity());
   _colorQuantityMenu->value(((fltk::Group*)_colorQuantityMenu)
                             ->find(_colorQuantityMenu->find(defStr)));
 
@@ -318,9 +319,10 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, Object *vobj,
   winy += 2;
   
   // fprintf(stderr, "!%s: winy = %d\n", me, winy);
-  _win->end();
 
   _nseeds = nrrdNew();
+
+  _win->end();
 }
 
 HyperStreamlineUI::~HyperStreamlineUI() {
@@ -398,8 +400,10 @@ HyperStreamlineUI::colorQuantity_cb(fltk::Choice *menu,
   // char me[]="TriPlaneUI::colorQuantity_cb";
   unsigned int qi;
 
-  for (qi=colorQuantityUnknown+1;
-       strcmp(menu->item()->label(), airEnumStr(colorQuantity, qi));
+  const airEnum *enm = ui->_hsline[0]->colorQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  for (qi=itu+1;
+       strcmp(menu->item()->label(), airEnumStr(enm, qi));
        qi++);
   for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
     ui->_hsline[idx]->colorQuantity(qi);
@@ -409,9 +413,12 @@ HyperStreamlineUI::colorQuantity_cb(fltk::Choice *menu,
 
 void
 HyperStreamlineUI::compute_cb(fltk::Button *, HyperStreamlineUI *ui) {
+  char me[]="HyperStreamlineUI::compute_cb";
 
   unsigned int seedNum = ui->_vobj->verticesGet(ui->_nseeds);
   if (seedNum) {
+    fprintf(stderr, "!%s: seeding with %u %u\n", me, seedNum, 
+            AIR_CAST(unsigned int, ui->_nseeds->axis[1].size));
     ui->_hsline[0]->seedsSet(ui->_nseeds);
   } else {
     ui->_hsline[0]->seedsSet(NULL);

@@ -39,11 +39,12 @@ Scene::Scene() {
   ELL_3V_SET(_bgColor, 0, 0, 0);
   lit = limnLightNew();
   limnLightAmbientSet(lit, 1.0, 1.0, 1.0);
-  limnLightSet(lit, 0,              /* which */
-               AIR_TRUE,            /* in viewspace */
-               0.9f, 0.9f, 0.9f,    /* r g b */
-               1.0f, -1.0f, -4.0f); /* x y z */
+  limnLightSet(lit, 0,                /* which */
+               AIR_TRUE,              /* in viewspace */
+               0.95f, 0.95f, 0.95f,   /* r g b */
+               -1.0f, -1.0f, -3.5f);  /* x y z */
   _lastTime = _totalTime = _drawTime = 0;
+  _fog = false;
   objectArr = airArrayNew((void**)(&object), NULL,
                           sizeof(Object*), arrayIncr);
   groupArr = airArrayNew((void**)(&group), NULL,
@@ -61,19 +62,11 @@ Scene::bgColor(float R, float G, float B) {
   return;
 }
 
-float Scene::bgColorR() { return _bgColor[0]; }
-float Scene::bgColorG() { return _bgColor[1]; }
-float Scene::bgColorB() { return _bgColor[2]; }
-
 void
 Scene::ambLight(float R, float G, float B) {
   limnLightAmbientSet(lit, R, G, B);
   return;
 }
-
-float Scene::ambLightR() { return lit->amb[0]; }
-float Scene::ambLightG() { return lit->amb[1]; }
-float Scene::ambLightB() { return lit->amb[2]; }
 
 void
 Scene::lightUpdate(limnCamera *cam) {
@@ -84,6 +77,12 @@ Scene::lightUpdate(limnCamera *cam) {
     sprintf(err, "%s: trouble:\n%s", me, err);
     free(err); return;
   }
+  return;
+}
+
+void
+Scene::fog(bool f) {
+  _fog = f;
   return;
 }
 
@@ -161,6 +160,7 @@ void
 Scene::draw() {
   char me[]="Deft::Scene::draw";
   unsigned int lightIdx;
+  GLenum errCode;
 
   double time0 = airTime();
 
@@ -173,6 +173,7 @@ Scene::draw() {
   glAlphaFunc(GL_GREATER, 0.5);
 
   // clear screen
+  // HEY: glClearColor only needs to be called once
   glClearColor(bgColorR(), bgColorG(), bgColorB(), 0.0);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -229,16 +230,26 @@ Scene::draw() {
 
   for (unsigned int objIdx=0; objIdx<objectArr->len; objIdx++) {
     object[objIdx]->draw();
+    // glFinish(); glFlush(); glFinish(); glFlush();
+    // while ((errCode = glGetError()) != GL_NO_ERROR) {
+    //   fprintf(stderr, "\n%s: !!! post object %u OpenGL Error: %s\n\n", me,
+    //           objIdx, gluErrorString(errCode));
+    // }
   }
   glDisable(GL_LIGHTING);
   for (unsigned int grpIdx=0; grpIdx<groupArr->len; grpIdx++) {
     group[grpIdx]->draw();
+    // glFinish(); glFlush(); glFinish(); glFlush();
+    // while ((errCode = glGetError()) != GL_NO_ERROR) {
+    //   fprintf(stderr, "\n%s: !!! post group %u/%u OpenGL Error: %s\n\n", me,
+    //           grpIdx, groupArr->len, gluErrorString(errCode));
+    // }
   }
   double time1 = airTime();
   _drawTime = time1 - time0;
   _totalTime = time1 - _lastTime;
   _lastTime = time1;
-  GLenum errCode;
+  glFlush();
   while ((errCode = glGetError()) != GL_NO_ERROR) {
     fprintf(stderr, "\n%s: !!! OpenGL Error: %s\n\n", me,
             gluErrorString(errCode));
@@ -250,36 +261,54 @@ Scene::draw() {
 
 void
 Scene::boundsGet(float gmin[3], float gmax[3]) const {
-  // char me[]="Scene::boundsGet";
+  char me[]="Scene::boundsGet";
   float min[3], max[3];
-  bool beenSet = false;
+  bool starting = true;
 
+  ELL_3V_SET(gmin, AIR_NAN, AIR_NAN, AIR_NAN);
+  ELL_3V_SET(gmax, AIR_NAN, AIR_NAN, AIR_NAN);
   for (unsigned int objIdx=0; objIdx<objectArr->len; objIdx++) {
+    if (!object[objIdx]) {
+      continue;
+    }
     object[objIdx]->boundsGet(min, max);
-    if (!beenSet) {
+    fprintf(stderr, "%s: object[%u]: (%g,%g,%g) (%g,%g,%g)\n", me, objIdx,
+            min[0], min[1], min[2], max[0], max[1], max[2]);
+    if (!( ELL_3V_EXISTS(min) && ELL_3V_EXISTS(max) )) {
+      continue;
+    }
+    if (starting) {
       ELL_3V_COPY(gmin, min);
       ELL_3V_COPY(gmax, max);
-      beenSet = true;
+      starting = false;
     } else {
       ELL_3V_MIN(gmin, gmin, min);
       ELL_3V_MAX(gmax, gmax, max);
     }
   }
   for (unsigned int grpIdx=0; grpIdx<groupArr->len; grpIdx++) {
+    if (!group[grpIdx]) {
+      continue;
+    }
     group[grpIdx]->boundsGet(min, max);
-    if (!beenSet) {
+    fprintf(stderr, "%s: group[%u]: (%g,%g,%g) (%g,%g,%g)\n", me, grpIdx,
+            min[0], min[1], min[2], max[0], max[1], max[2]);
+    if (!( ELL_3V_EXISTS(min) && ELL_3V_EXISTS(max) )) {
+      continue;
+    }
+    if (starting) {
       ELL_3V_COPY(gmin, min);
       ELL_3V_COPY(gmax, max);
-      beenSet = true;
+      starting = false;
     } else {
       ELL_3V_MIN(gmin, gmin, min);
       ELL_3V_MAX(gmax, gmax, max);
     }
   }
-  /*
+
   fprintf(stderr, "%s: obj->boundsGet: (%g,%g,%g) (%g,%g,%g)\n", me, 
           min[0], min[1], min[2], max[0], max[1], max[2]);
-  */
+
   return;
 }
 

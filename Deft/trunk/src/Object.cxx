@@ -75,6 +75,8 @@ Object::draw() {
   // char me[]="Object::draw";
   double time0;
 
+  // fprintf(stderr, "!%s(%p): hello, visible = %s\n", me, this,
+  //         _visible ? "true" : "false");
   if (_visible) {
     time0 = airTime();
     if (_staticDrawCount == 0 && _displayList) {
@@ -101,6 +103,14 @@ Object::draw() {
   } else {
     _drawTime = 0;
   }
+  // GLenum errCode;
+  // glFinish(); glFlush(); glFinish(); glFlush();
+  // while ((errCode = glGetError()) != GL_NO_ERROR) {
+  //   fprintf(stderr, "\n%s: !!! post object OpenGL Error: %s\n\n", me,
+  //           gluErrorString(errCode));
+  // }
+  // fprintf(stderr, "!%s(%p): bye, visible = %s\n", me, this,
+  //         _visible ? "true" : "false");
 }
 
 unsigned int

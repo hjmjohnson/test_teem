@@ -37,19 +37,20 @@
 namespace Deft {
 
 TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
+  // char me[]="TensorGlyphUI::TensorGlyphUI";
   const unsigned int W = 400, H = 307, lineH = 20;
   unsigned int winy, incy;
   const char *def;
   
-  _tglyph.resize(1);
-  _tglyph[0] = tg;
-  _tglyph[0]->postDrawCallback((Callback*)(postDraw_cb), this);
-  _viewer = vw;
-
   winy = 0;
   _win = new fltk::Window(W, H, "Deft::TensorGlyph");
   _win->begin();
   _win->resizable(_win);
+
+  _tglyph.resize(1);
+  _tglyph[0] = tg;
+  _tglyph[0]->postDrawCallback((Callback*)(postDraw_cb), this);
+  _viewer = vw;
 
   winy += 5;
 

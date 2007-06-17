@@ -78,6 +78,10 @@ public:
   void orthographic(bool);
   bool orthographic();
 
+  // HEY: this is a hack; it shouldn't be our job to access this
+  bool fog() const { return _scene->fog(); }
+  void fog(bool f);
+
   void helpPrint();
   void reshape(int w, int h);  // glut-like
   void draw();

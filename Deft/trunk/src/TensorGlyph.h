@@ -27,6 +27,7 @@
 
 #include "Deft.h"
 #include "Object.h"
+#include "Glyph.h"
 #include "PolyData.h"
 
 namespace Deft {
@@ -61,10 +62,10 @@ public:
   bool clampEvalUse() const { return _clampEvalUse; }
   void skipNegativeEigenvalues(bool skip);
   bool skipNegativeEigenvalues() const { return _skipNegEval; }
-  void anisoThreshMin(double anisoThreshMin);
-  double anisoThreshMin() const { return _anisoThreshMin; }
   void anisoThresh(double anisoThresh);
   double anisoThresh() const { return _anisoThresh; }
+  void anisoThreshMin(double anisoThreshMin);
+  double anisoThreshMin() const { return _anisoThreshMin; }
   void rgbParmSet(int aniso, unsigned int evec,
                   double maxSat, double isoGray,
                   double gamma, double modulate);
@@ -103,7 +104,7 @@ private:
   bool _savingIV;
 
   // basic glyph parameters
-  bool _dynamic,            // data is assumed dynamic; no sorting by aniso
+  bool _dynamic,
     _cleanEdge,             // no vertex sharing on cylinder and cube glyphs
     _skipNegEval,           // don't show tensors w/ negative eigenvalues
     _clampEvalUse;          // do clamping of eigenvalues to this
@@ -114,8 +115,8 @@ private:
     _baryRes,               // resolution of barycentric shape domain
     _rgbEvec;               // in {0,1,2}: which eigenvector used for coloring
   double _glyphScale,       // over-all glyph scaling
-    _anisoThreshMin,        // estimated lower bound on anisoThresh
     _anisoThresh,           // culling based on anisotropy
+    _anisoThreshMin,        // estimated lower bound on anisoThresh
     _maskThresh,            // culling based on confidence/mask value
     _clampEval,             // if _clampEvalUse, clamp eigenvalues to this
     _rgbMaxSat,             // maximal saturation

@@ -107,8 +107,11 @@ viewerMode = &_viewerMode;
 /* ------------------------------------------------------------- */
 
 char
-_colorQuantityStr[DEFT_COLOR_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
+_colorTenQuantityStr[DEFT_COLOR_TEN_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
   "unknown query",
+
+  "conf",
+
   "RGB(linear)",
   "RGB(planar)",
   "(Mode,FA)",
@@ -137,22 +140,22 @@ _colorQuantityStr[DEFT_COLOR_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
 };
 
 airEnum
-_colorQuantity = {
+_colorTenQuantity = {
   "tensor colormap query",
-  DEFT_COLOR_QUANTITY_MAX,
-  _colorQuantityStr, NULL,
+  DEFT_COLOR_TEN_QUANTITY_MAX,
+  _colorTenQuantityStr, NULL,
   NULL,
   NULL, NULL,
   AIR_FALSE
 };
 
 airEnum *
-colorQuantity = &_colorQuantity;
+colorTenQuantity = &_colorTenQuantity;
 
 /* ------------------------------------------------------------- */
 
 char
-_alphaMaskQuantityStr[DEFT_ALPHA_MASK_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
+_alphaMaskTenQuantityStr[DEFT_ALPHA_MASK_TEN_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
   "unknown query",
   "conf",
   "FA",
@@ -164,16 +167,63 @@ _alphaMaskQuantityStr[DEFT_ALPHA_MASK_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
 };
 
 airEnum
-_alphaMaskQuantity = {
+_alphaMaskTenQuantity = {
   "tensor alpha mask query",
-  DEFT_ALPHA_MASK_QUANTITY_MAX,
-  _alphaMaskQuantityStr, NULL,
+  DEFT_ALPHA_MASK_TEN_QUANTITY_MAX,
+  _alphaMaskTenQuantityStr, NULL,
   NULL,
   NULL, NULL,
   AIR_FALSE
 };
 
 airEnum *
-alphaMaskQuantity = &_alphaMaskQuantity;
+alphaMaskTenQuantity = &_alphaMaskTenQuantity;
+
+/* ------------------------------------------------------------- */
+
+char
+_colorDwiQuantityStr[DEFT_COLOR_DWI_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
+  "unknown query",
+  "b0",
+  "mdwi",
+  "RGB(linear)",
+  "1t-err",
+  "1t-errlog",
+};
+
+airEnum
+_colorDwiQuantity = {
+  "dwi colormap query",
+  DEFT_COLOR_DWI_QUANTITY_MAX,
+  _colorDwiQuantityStr, NULL,
+  NULL,
+  NULL, NULL,
+  AIR_FALSE
+};
+
+airEnum *
+colorDwiQuantity = &_colorDwiQuantity;
+
+/* ------------------------------------------------------------- */
+
+char
+_alphaMaskDwiQuantityStr[DEFT_ALPHA_MASK_DWI_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
+  "unknown query",
+  "b0",
+  "mdwi",
+};
+
+airEnum
+_alphaMaskDwiQuantity = {
+  "dwi alpha mask query",
+  DEFT_ALPHA_MASK_DWI_QUANTITY_MAX,
+  _alphaMaskDwiQuantityStr, NULL,
+  NULL,
+  NULL, NULL,
+  AIR_FALSE
+};
+
+airEnum *
+alphaMaskDwiQuantity = &_alphaMaskDwiQuantity;
 
 }
