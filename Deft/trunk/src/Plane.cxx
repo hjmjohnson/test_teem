@@ -231,8 +231,9 @@ bool
 Plane::update() {
   // char me[]="Plane::update";
 
+  // fprintf(stderr, "!%s: 0 updating\n", me);
   bool ret = this->updateGeometry();
-  // fprintf(stderr, "!%s: updating, ret %s\n", me, ret ? "true" : "false");
+  // fprintf(stderr, "!%s: 1 updating, ret %s\n", me, ret ? "true" : "false");
   ret |= dynamic_cast<PolyProbe*>(this)->update(ret);
   if (ret) {
     changed(); // have to explicitly indicate vertex data change

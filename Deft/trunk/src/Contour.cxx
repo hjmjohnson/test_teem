@@ -212,7 +212,7 @@ Contour::extract(double isovalue) {
   */
   this->changed();
 
-  if (limnPolyDataVertexWindingFix(_lpldOwn)) {
+  if (limnPolyDataVertexWindingFix(_lpldOwn, AIR_TRUE)) {
     err = biffGetDone(LIMN);
     fprintf(stderr, "%s: trouble fixing winding:\n%s", me, err);
     free(err); 

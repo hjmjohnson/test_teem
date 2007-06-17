@@ -156,7 +156,12 @@ Cmap::map(Nrrd *nrgba, const Values *val) const {
   char me[]="Cmap::map", *err;
   const char *key=NULL;
   int E=0;
-
+  
+  /*
+  fprintf(stderr, "!%s: size %u length %u \n", me, 
+          AIR_CAST(unsigned int, val->item().size()),
+          AIR_CAST(unsigned int, val->length()));
+  */
   if (1 == val->item().size()) {
     if (1 == val->length()) {
       // nrrdSave("input.nrrd", val->nrrd(), NULL);
@@ -186,8 +191,14 @@ Cmap::map(Nrrd *nrgba, const Values *val) const {
                && tenGageTensor == val->item()[0]) {
       key = TEN;
       E = tenEvecRGB(nrgba, val->nrrd(), _rgbp);
+    } else if (!strcmp(TEN_DWI_GAGE_KIND_NAME, val->kind()->name)
+               && tenDwiGageTensor == val->item()[0]) {
+      key = TEN;
+      E = tenEvecRGB(nrgba, val->nrrd(), _rgbp);
     } else {
-      fprintf(stderr, "%s: unknown non-scalar single item\n", me);
+      fprintf(stderr, "%s: unknown non-scalar single item (%s %s = %d)\n", me,
+              val->kind()->name, airEnumStr(val->kind()->enm, val->item()[0]),
+              val->item()[0]);
       exit(1);
     }
   } else if (2 == val->item().size()) {

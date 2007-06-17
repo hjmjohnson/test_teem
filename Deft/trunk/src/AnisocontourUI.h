@@ -55,6 +55,9 @@ private:
   fltk::CheckButton *_wireframeButton;
   static void wireframe_cb(fltk::CheckButton *but, AnisocontourUI *ui);
 
+  fltk::CheckButton *_colorButton;
+  static void color_cb(fltk::CheckButton *but, AnisocontourUI *ui);
+
   fltk::Choice *_colorQuantityMenu;
   static void colorQuantity_cb(fltk::Choice *menu, AnisocontourUI *ui);
 

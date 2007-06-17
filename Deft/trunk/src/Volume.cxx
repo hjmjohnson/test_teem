@@ -36,6 +36,7 @@ Volume::Volume(const gageKind *kind, const Nrrd *nrrd) {
   _kind = kind;
   _nrrd = nrrd;
   _nrrdOwn = NULL;
+  fprintf(stderr, "!%s: okay\n", me);
 }
 
 Volume::Volume(const gageKind *kind, Nrrd *nrrd, bool own) {

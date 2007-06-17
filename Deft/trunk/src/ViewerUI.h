@@ -62,6 +62,9 @@ private:
   static void upFix_cb(fltk::CheckButton *chbut, ViewerUI *ui);
   fltk::CheckButton *_orthographicButton;
   static void orthographic_cb(fltk::CheckButton *chbut, ViewerUI *ui);
+  // HEY: this is for the scene, not the viewer!
+  fltk::CheckButton *_fogButton;
+  static void fog_cb(fltk::CheckButton *chbut, ViewerUI *ui);
 
   fltk::Output *_framesPerSecondOutputRender;
   fltk::Output *_framesPerSecondOutputActual;

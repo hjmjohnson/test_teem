@@ -1,25 +1,28 @@
 
 OBJS = Volume.o Object.o Group.o \
-       enums.o misc.o Viewer.o ViewerUI.o Scene.o \
-       Slider.o Contour.o \
+       Viewer.o ViewerUI.o \
+       Slider.o \
+       enums.o misc.o Scene.o \
+       Contour.o \
        Plane.o Gage.o Values.o Cmap.o \
+       StarGlyph.o TensorGlyph.o TensorGlyphUI.o \
        TriPlane.o TriPlaneUI.o \
        HyperStreamline.o HyperStreamlineUI.o \
-       TensorGlyph.o TensorGlyphUI.o \
        Anisocontour.o AnisocontourUI.o \
        Anisofeature.o AnisofeatureUI.o \
-       PolyData.o PolyProbe.o \
+       PolyData.o PolyProbe.o
 
-all: Deft_dti Deft_iso
-# all: Deft_dti   Deft_sqd Deft_iso Deft_push
+all: Deft_dti  Deft_dwi
+# all: Deft_dti Deft_iso Deft_push Deft_sqd
+# all: Deft_dti   Deft_iso Deft_push 
 
 Cmap.o: Values.o
 PolyProbe.o: PolyData.o
 Plane.o: PolyProbe.o
-Scene.o: Object.o
+Scene.o StarGlyph.o TensorGlyph.o: Object.o
 PolyData.o: Object.o Gage.o Values.o Cmap.o
+TriPlane.o: Group.o Glyph.o Plane.o HyperStreamline.o
 Values.o: Gage.o
-TensorGlyph.o: PolyData.o
 TensorGlyphUI.o: Viewer.o
 TensorGlyphUI.o: TensorGlyph.o
 HyperStreamline.o: PolyData.o 
@@ -69,6 +72,14 @@ Deft_iso: $(OBJS) main-iso.o
 
 Deft_push: $(OBJS) main-push.o
 	c++ -g -O3 -W -Wall -o $@  $(OBJS) main-push.o \
+	  -L/sw/lib -L/usr/local/lib -L/Users/gk/teem/darwin.32/lib \
+	  -lfltk -lfltk_gl \
+	  -framework Carbon -lGLEW -framework OpenGL -framework AGL \
+          -lteem -lpng -lz -lm -lobjc
+	/Developer/Tools/Rez -t APPL -o $@  /usr/local/src/fltk/FL/mac.r
+
+Deft_lmpd: $(OBJS) main-lmpd.o
+	c++ -g -O3 -W -Wall -o $@  $(OBJS) main-lmpd.o \
 	  -L/sw/lib -L/usr/local/lib -L/Users/gk/teem/darwin.32/lib \
 	  -lfltk -lfltk_gl \
 	  -framework Carbon -lGLEW -framework OpenGL -framework AGL \

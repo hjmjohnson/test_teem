@@ -62,6 +62,12 @@ Viewer::~Viewer() {
 }
 
 void
+Viewer::fog(bool f) {
+  _scene->fog(f);
+  cameraUpdate();  // currently needed because of where fog code is
+}
+
+void
 Viewer::helpPrint() {
 
   fprintf(stderr, "------- key commands\n");
@@ -137,11 +143,18 @@ void Viewer::orthographic(bool ortho) {
 
 void
 Viewer::cameraReset() {
+  char me[]="Viewer::cameraReset";
 
   double cmin, cmax, scl=8, fovY, fovZ;
   float min[3], max[3];
 
   _scene->boundsGet(min, max);
+  if (!( ELL_3V_EXISTS(min) && ELL_3V_EXISTS(max) )) {
+    ELL_3V_SET(min, -1, -1, -1);
+    ELL_3V_SET(max, 1, 1, 1);
+  }
+  fprintf(stderr, "!%s: min = %g %g %g, max = %g %g %g\n", me,
+          min[0], min[1], min[2], max[0], max[1], max[2]);
   ELL_3V_SCALE_ADD2(_camera->at, 0.5, min, 0.5, max);
   cmin = min[0];
   cmin = AIR_MIN(cmin, min[1]);
@@ -167,6 +180,7 @@ Viewer::cameraReset() {
 
 void
 Viewer::cameraUpdate() {
+  float fogRGBA[4] = {0.0, 0.0, 0.0, 1};
 
   char me[]="Deft::Viewer::cameraUpdate", *err;
   
@@ -181,6 +195,40 @@ Viewer::cameraUpdate() {
 
   // update scene's (viewspace) lights
   _scene->lightUpdate(_camera);
+
+  // this should probably moved elsewhere; because now cameraUpdate
+  // has to be called everytime there is a change in the fog state!
+  if (_scene->fog()) {
+    glEnable(GL_FOG);
+    glFogi(GL_FOG_MODE, GL_LINEAR);
+    // glFogf(GL_FOG_DENSITY, 0.001);
+    glFogfv(GL_FOG_COLOR, fogRGBA);
+    glFogf(GL_FOG_START, AIR_LERP(0.2, _camera->vspNeer, _camera->vspFaar));
+    glFogf(GL_FOG_END, _camera->vspFaar);
+  } else {
+    glDisable(GL_FOG);
+  }
+    
+  /* gradient background (thanks to Jon Blocksom)
+  ** not quite working yet, and this should probably moved elsewhere
+  // clear screen
+  glClearColor(bgColorR(), bgColorG(), bgColorB(), 0.0);
+  glDisable(GL_LIGHTING);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glOrtho(-1.0, 1.0, -1.0, 1.0, 0.0, 1.0);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glBegin(GL_QUADS);
+  glColor3f(1.0, 1.0, 1.0);   glVertex3f(-1.0, 1.0, -1.0);
+  glColor3f(1.0, 1.0, 1.0);   glVertex3f(1.0, -1.0, -1.0);
+  glColor3f(0.0, 0.0, 0.0);   glVertex3f(1.0, -1.0, -1.0);
+  glColor3f(0.0, 0.0, 0.0);   glVertex3f(-1.0, 1.0, -1.0);
+  glEnd();
+  glClear(GL_DEPTH_BUFFER_BIT);
+  glEnable(GL_LIGHTING);
+  */
 
   // set GL transforms
   glMatrixMode(GL_PROJECTION);
@@ -230,7 +278,6 @@ Viewer::draw() {
     valid(1);
   }
   _scene->draw();
-  glFlush();
   if (_postDrawCallback) {
     _postDrawCallback(this, _postDrawCallbackData);
   }

@@ -314,11 +314,12 @@ PolyData::drawImmediate() {
   int glWhat;
   const GLenum glpt[LIMN_PRIMITIVE_MAX+1] = {
     GL_POINTS,         /* 0: limnPrimitiveUnknown */
-    GL_TRIANGLES,      /* 1: limnPrimitiveTriangles */
-    GL_TRIANGLE_STRIP, /* 2: limnPrimitiveTriangleStrip */
-    GL_TRIANGLE_FAN,   /* 3: limnPrimitiveTriangleFan */
-    GL_QUADS,          /* 4: limnPrimitiveQuads */
-    GL_LINE_STRIP      /* 5: limnPrimitiveLineStrip */
+    GL_POINTS,         /* 1: limnPrimitiveNoop */
+    GL_TRIANGLES,      /* 2: limnPrimitiveTriangles */
+    GL_TRIANGLE_STRIP, /* 3: limnPrimitiveTriangleStrip */
+    GL_TRIANGLE_FAN,   /* 4: limnPrimitiveTriangleFan */
+    GL_QUADS,          /* 5: limnPrimitiveQuads */
+    GL_LINE_STRIP      /* 6: limnPrimitiveLineStrip */
   };
   float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -391,29 +392,33 @@ PolyData::drawImmediate() {
   if (!_compiling) {
     for (unsigned int primIdx=0; primIdx<lpld->primNum; primIdx++) {
       vertCnt = lpld->icnt[primIdx];
-      glWhat = glpt[lpld->type[primIdx]];
-      /*
-      fprintf(stderr, "!%s: glDrawElements(%u, %u, GL_UNSIGNED_INT, %p)\n", me,
-              glWhat, vertCnt, lpld->indx + vertIdx);
-      */
-      glDrawElements(glWhat, vertCnt, GL_UNSIGNED_INT, lpld->indx + vertIdx);
+      if (limnPrimitiveNoop != lpld->type[primIdx]) {
+        glWhat = glpt[lpld->type[primIdx]];
+        /*
+          fprintf(stderr, "!%s: glDrawElements(%u, %u, GL_UNSIGNED_INT, %p)\n", me,
+          glWhat, vertCnt, lpld->indx + vertIdx);
+        */
+        glDrawElements(glWhat, vertCnt, GL_UNSIGNED_INT, lpld->indx + vertIdx);
+      }
       vertIdx += vertCnt;
     }
   } else {
     for (unsigned int primIdx=0; primIdx<lpld->primNum; primIdx++) {
       vertCnt = lpld->icnt[primIdx];
-      glWhat = glpt[lpld->type[primIdx]];
-      glBegin(glWhat);
-      for (unsigned int vii=0; vii<vertCnt; vii++) {
-        if (lpld->norm && _normalsUse) {
-          glNormal3fv(lpld->norm + 3*(lpld->indx + vertIdx)[vii]);
+      if (limnPrimitiveNoop != lpld->type[primIdx]) {
+        glWhat = glpt[lpld->type[primIdx]];
+        glBegin(glWhat);
+        for (unsigned int vii=0; vii<vertCnt; vii++) {
+          if (lpld->norm && _normalsUse) {
+            glNormal3fv(lpld->norm + 3*(lpld->indx + vertIdx)[vii]);
+          }
+          if (lpld->rgba && _colorUse) {
+            glColor4ubv(lpld->rgba + 4*(lpld->indx + vertIdx)[vii]);
+          }
+          glVertex4fv(lpld->xyzw + 4*(lpld->indx + vertIdx)[vii]);
         }
-        if (lpld->rgba && _colorUse) {
-          glColor4ubv(lpld->rgba + 4*(lpld->indx + vertIdx)[vii]);
-        }
-        glVertex4fv(lpld->xyzw + 4*(lpld->indx + vertIdx)[vii]);
+        glEnd();
       }
-      glEnd();
       vertIdx += vertCnt;
     }
   }
@@ -438,6 +443,12 @@ PolyData::drawImmediate() {
   if (_transformUse) {
     glPopMatrix();
   }
+  // glFinish(); glFlush(); glFinish(); glFlush();
+  // GLenum errCode;
+  // while ((errCode = glGetError()) != GL_NO_ERROR) {
+  //   fprintf(stderr, "\n%s: !!! OpenGL Error: %s\n\n", me,
+  //           gluErrorString(errCode));
+  // }
   return;
 }
 
@@ -448,34 +459,39 @@ PolyData::boundsGet(float min[3], float max[3]) const {
   unsigned int vi, xyzwNum;
   float vertB[4], vertC[4];
 
+  ELL_3V_SET(min, AIR_NAN, AIR_NAN, AIR_NAN);
+  ELL_3V_SET(max, AIR_NAN, AIR_NAN, AIR_NAN);
   if (lpld) {
+    bool starting = true;
     xyzwNum = lpld->xyzwNum;
     for (vi=0; vi<xyzwNum; vi++) {
       /*
-      fprintf(stderr, "!%s: xyzw[%u] = (%g,%g,%g,%g)", me, vi,
-              lpld->xyzw + 4*vi + 0,
-              lpld->xyzw + 4*vi + 1,
-              lpld->xyzw + 4*vi + 2,
-              lpld->xyzw + 4*vi + 3);
+      fprintf(stderr, "!%s: xyzw[%u] = (%g,%g,%g,%g)\n", me, vi,
+              (lpld->xyzw + 4*vi)[0],
+              (lpld->xyzw + 4*vi)[1],
+              (lpld->xyzw + 4*vi)[2],
+              (lpld->xyzw + 4*vi)[3]);
       */
-      ELL_4MV_MUL(vertB, _transform, lpld->xyzw + 4*vi);
-      /*
-      fprintf(stderr, " --> (%g,%g,%g,%g)", 
-              vertB[0], vertB[1], vertB[2], vertB[3]);
-      */
-      ELL_4V_HOMOG(vertC, vertB);
-      // fprintf(stderr, " --> (%g,%g,%g)\n", vertC[0], vertC[1], vertC[2]);
-      if (!vi) {
-        ELL_3V_COPY(min, vertC);
-        ELL_3V_COPY(max, vertC);
-      } else {
-        ELL_3V_MIN(min, min, vertC);
-        ELL_3V_MAX(max, max, vertC);
+      if (ELL_4V_EXISTS(lpld->xyzw + 4*vi)) {
+        ELL_4MV_MUL(vertB, _transform, lpld->xyzw + 4*vi);
+        /*
+        fprintf(stderr, " --> (%g,%g,%g,%g)", 
+                vertB[0], vertB[1], vertB[2], vertB[3]);
+        */
+        ELL_4V_HOMOG(vertC, vertB);
+        /*
+        fprintf(stderr, " --> (%g,%g,%g)\n", vertC[0], vertC[1], vertC[2]);
+        */
+        if (starting) {
+          ELL_3V_COPY(min, vertC);
+          ELL_3V_COPY(max, vertC);
+          starting = false;
+        } else {
+          ELL_3V_MIN(min, min, vertC);
+          ELL_3V_MAX(max, max, vertC);
+        }
       }
     }
-  } else {
-    ELL_3V_SET(min, 0, 0, 0);
-    ELL_3V_SET(max, 0, 0, 0);
   }
   return;
 }

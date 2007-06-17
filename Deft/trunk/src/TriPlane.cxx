@@ -31,6 +31,8 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
 
   fprintf(stderr, "%s(%u): kind = %p\n", me, __LINE__, vol->kind());
   _shape = gageShapeNew();
+  _vol = vol;
+  _bglyph = NULL;
   if (gageShapeSet(_shape, vol->nrrd(), vol->kind()->baseDim)) {
     fprintf(stderr, "%s: trouble with volume:\n%s", me,
             err = biffGetDone(GAGE)); free(err);
@@ -138,26 +140,38 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
   plane[0]->brightness(1.2);
   plane[1]->brightness(1.2);
   plane[2]->brightness(1.2);
-
-  glyph[0] = new TensorGlyph();
-  glyph[1] = new TensorGlyph();
-  glyph[2] = new TensorGlyph();
-  glyph[0]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
-  glyph[1]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
-  glyph[2]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
-  glyph[0]->dynamic(true);
-  glyph[1]->dynamic(true);
-  glyph[2]->dynamic(true);
-  glyph[0]->visible(_glyphsDo[0]);
-  glyph[1]->visible(_glyphsDo[1]);
-  glyph[2]->visible(_glyphsDo[2]);
+  
+  if (tenGageKind == _vol->kind()) {
+    TensorGlyph *tgl[3];
+    glyph[0] = tgl[0] = new TensorGlyph();
+    glyph[1] = tgl[1] = new TensorGlyph();
+    glyph[2] = tgl[2] = new TensorGlyph();
+    tgl[0]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
+    tgl[1]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
+    tgl[2]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
+    tgl[0]->dynamic(true);
+    tgl[1]->dynamic(true);
+    tgl[2]->dynamic(true);
+    glyph[0]->visible(_glyphsDo[0]);
+    glyph[1]->visible(_glyphsDo[1]);
+    glyph[2]->visible(_glyphsDo[2]);
+  } else if (!strcmp(TEN_DWI_GAGE_KIND_NAME, vol->kind()->name)) {
+    /*
+    glyph[0] = new StarGlyph();
+    glyph[1] = new StarGlyph();
+    glyph[2] = new StarGlyph();
+    */
+    glyph[0] = 0;
+    glyph[1] = 0;
+    glyph[2] = 0;
+  }
   seedPlane[0]->noColorQuery(tenGageTensor);
   seedPlane[1]->noColorQuery(tenGageTensor);
   seedPlane[2]->noColorQuery(tenGageTensor);
 
-  _seedTenFloat[0] = nrrdNew();
-  _seedTenFloat[1] = nrrdNew();
-  _seedTenFloat[2] = nrrdNew();
+  _seedValFloat[0] = nrrdNew();
+  _seedValFloat[1] = nrrdNew();
+  _seedValFloat[2] = nrrdNew();
   _seedPosFloat[0] = nrrdNew();
   _seedPosFloat[1] = nrrdNew();
   _seedPosFloat[2] = nrrdNew();
@@ -182,7 +196,6 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
   object[6] = hsline[0];
   object[7] = hsline[1];
   object[8] = hsline[2];
-
 }
 
 TriPlane::~TriPlane() {
@@ -192,13 +205,28 @@ TriPlane::~TriPlane() {
   delete hsline[0];
   delete hsline[1];
   delete hsline[2];
-  nrrdNuke(_seedTenFloat[0]);
-  nrrdNuke(_seedTenFloat[1]);
-  nrrdNuke(_seedTenFloat[2]);
+  nrrdNuke(_seedValFloat[0]);
+  nrrdNuke(_seedValFloat[1]);
+  nrrdNuke(_seedValFloat[2]);
   nrrdNuke(_seedPosFloat[0]);
   nrrdNuke(_seedPosFloat[1]);
   nrrdNuke(_seedPosFloat[2]);
 }
+
+/*
+void
+TriPlane::baseGlyph(const limnPolyData *bglyph) {
+
+  _bglyph = bglyph;
+  if (!strcmp(TEN_DWI_GAGE_KIND_NAME, _vol->kind()->name)) {
+    StarGlyph *sgl;
+    for (unsigned int pi=0; pi<3; pi++) {
+      sgl = dynamic_cast<StarGlyph *>(glyph[pi]);
+      sgl->baseGlyph(_bglyph);
+    }
+  }
+}
+*/
 
 void
 TriPlane::sampling(unsigned int axisIdx, double smpl) {
@@ -279,16 +307,23 @@ TriPlane::position(unsigned int pIdx, float pos) {
 
 void
 TriPlane::glyphsUpdate(unsigned int pIdx) {
+  char me[]="TriPlane::glyphsUpdate";
 
   if (_glyphsDo[pIdx]) {
-    nrrdConvert(_seedTenFloat[pIdx],
+    nrrdConvert(_seedValFloat[pIdx],
                 seedPlane[pIdx]->values()[0]->nrrd(), 
                 nrrdTypeFloat);
-    glyph[pIdx]->dataSet(_seedTenFloat[pIdx]->axis[1].size,
-                         static_cast<float*>(_seedTenFloat[pIdx]->data), 7,
-                         seedPlane[pIdx]->polyData()->xyzw, 4, 
-                         NULL);
-    glyph[pIdx]->update();
+    if (tenGageKind == _vol->kind()) {
+      TensorGlyph *tgl = static_cast<TensorGlyph*>(glyph[pIdx]);
+      tgl->dataSet(_seedValFloat[pIdx]->axis[1].size,
+                   static_cast<float*>(_seedValFloat[pIdx]->data), 7,
+                   seedPlane[pIdx]->polyData()->xyzw, 4, 
+                   NULL);
+      tgl->update();
+    } else {
+      fprintf(stderr, "%s: on non-tensor glyphs!\n", me);
+    }
+    // glyph[pIdx]->update();
   }
 }
 
@@ -305,9 +340,29 @@ TriPlane::tractsUpdate(unsigned int pIdx) {
 void
 TriPlane::seedAnisoThresh(double aniso) {
 
+  if (tenGageKind == _vol->kind()) {
+    static_cast<TensorGlyph*>(this->glyph[0])->anisoThresh(aniso);
+    static_cast<TensorGlyph*>(this->glyph[1])->anisoThresh(aniso);
+    static_cast<TensorGlyph*>(this->glyph[2])->anisoThresh(aniso);
+  }
+  /*
   this->glyph[0]->anisoThresh(aniso);
   this->glyph[1]->anisoThresh(aniso);
   this->glyph[2]->anisoThresh(aniso);
+  */
+}
+
+double
+TriPlane::seedAnisoThresh() const {
+  double ret = AIR_NAN;
+
+  if (this->glyph[0]) {
+    if (tenGageKind == _vol->kind()) {
+      ret = static_cast<TensorGlyph*>(this->glyph[0])->anisoThresh();
+    }
+  }
+  // return this->glyph[0]->anisoThresh();
+  return ret;
 }
 
 float TriPlane::position(unsigned int planeIdx) const { 
@@ -328,7 +383,11 @@ TriPlane::kernel(int which, const NrrdKernelSpec *ksp) {
 
 void
 TriPlane::colorQuantity(int quantity) {
+  char me[]="TriPlane::colorQuantity";
 
+  const airEnum *enm = plane[0]->colorQuantityEnum();
+  fprintf(stderr, "!%s: %s = %s (%d)\n", me,
+          enm->name, airEnumStr(enm, quantity), quantity);
   plane[0]->colorQuantity(quantity);
   plane[1]->colorQuantity(quantity);
   plane[2]->colorQuantity(quantity);
@@ -336,6 +395,7 @@ TriPlane::colorQuantity(int quantity) {
 
 void
 TriPlane::alphaMaskQuantity(int quantity) {
+  // char me[]="TriPlane::alphaMaskQuantity";
 
   plane[0]->alphaMaskQuantity(quantity);
   plane[1]->alphaMaskQuantity(quantity);
@@ -401,6 +461,7 @@ TriPlane::brightness(float br) {
 
 void
 TriPlane::update() {
+  // char me[]="TriPlane::update";
 
   plane[0]->update();
   plane[1]->update();

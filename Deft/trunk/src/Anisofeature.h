@@ -34,11 +34,12 @@ namespace Deft {
 class DEFT_EXPORT Anisofeature : public PolyProbe {
 public:
   explicit Anisofeature(const Volume *vol);
+  explicit Anisofeature(const Volume *vol, const limnPolyData *lpld);
   ~Anisofeature();
 
   // log_2 of sampling factor *all* axes
   void sampling(double smpl);
-  double sampling() const { return _sampling; }
+  double sampling() const;
 
   // for now, only allow cubic:S,1,0 kernel and its derivatives
   void scale(double scl);
@@ -87,7 +88,7 @@ public:
   void update();
 
 private:
-  bool _flag[128], _ccDo, _ccSingle;
+  bool _flag[128], _ccDo, _ccSingle, _hack;
   unsigned int _ccId;
   const Volume *_volume;
   gageContext *_gctx;

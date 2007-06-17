@@ -441,7 +441,7 @@ TensorGlyph::parmCopy(TensorGlyph *src) {
 void
 TensorGlyph::anisoCacheUpdate() {
   // char me[]="TensorGlyph::anisoCacheUpdate";
-  float *aniso, eval[3];
+  float *aniso;
   size_t ii;
 
   if (flag[flagAnisoType]
@@ -460,9 +460,7 @@ TensorGlyph::anisoCacheUpdate() {
       for (ii=0; ii<_inDataNum; ii++) {
         const float *tenData = _tenData + ii*_inTenDataStride;
         if (tenData[0]) {
-          // HEY this should use faster method if it all possible
-          tenEigensolve_f(eval, NULL, tenData);
-          aniso[ii] = tenAnisoEval_f(eval, _anisoType);
+          aniso[ii] = tenAnisoTen_f(tenData, _anisoType);
         } else {
           aniso[ii] = 0;
         }
@@ -554,7 +552,7 @@ TensorGlyph::dataAllocatedUpdate() {
   this->maxNumUpdate();
 
   if (flag[flagMaxNum]) {
-    if (nrrdMaybeAlloc_va(_nDataCache, Deft_nt, 2,
+    if (nrrdMaybeAlloc_va(_nDataCache, nrrdTypeFloat, 2,
                           AIR_CAST(size_t, DATA_IDX_NUM),
                           AIR_CAST(size_t, _maxNum))) {
       err = biffGetDone(NRRD);
@@ -779,7 +777,6 @@ TensorGlyph::dataRGBUpdate() {
   if (flag[flagDataSorted]
       || flag[flagRGBParm]) {
     float *dataCache = (float*)(_nDataCache->data);
-    float aniso[TEN_ANISO_MAX+1];
     float evecPre[3], evec[3];
 
     ELL_3V_SET(evecPre, 0, 0, 0);
@@ -796,8 +793,7 @@ TensorGlyph::dataRGBUpdate() {
       G = AIR_AFFINE(0.0, _rgbMaxSat, 1.0, _rgbIsoGray, G);
       B = AIR_AFFINE(0.0, _rgbMaxSat, 1.0, _rgbIsoGray, B);
       /* desaturate some by rgbAniso */
-      tenAnisoCalc_f(aniso, eval);
-      double rgbAniso = aniso[_rgbAnisoType];
+      double rgbAniso = tenAnisoEval_f(eval, _rgbAnisoType);
       double tmp = AIR_AFFINE(0.0, rgbAniso, 1.0, _rgbIsoGray, R);
       R = AIR_AFFINE(0.0, _rgbModulate, 1.0, R, tmp);
       tmp = AIR_AFFINE(0.0, rgbAniso, 1.0, _rgbIsoGray, G);

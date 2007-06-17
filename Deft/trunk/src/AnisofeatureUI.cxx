@@ -27,6 +27,7 @@
 namespace Deft {
 
 AnisofeatureUI::AnisofeatureUI(Anisofeature *aniso, Viewer *vw) {
+  char me[]="AnisofeatureUI::AnisofeatureUI";
   const unsigned int W = 400, H = 230, lineH = 20;
   unsigned int incy, winy;
   const char *def;
@@ -49,7 +50,8 @@ AnisofeatureUI::AnisofeatureUI(Anisofeature *aniso, Viewer *vw) {
   _sampleSlider->color(fltk::GRAY40);
   _sampleSlider->when(fltk::WHEN_RELEASE);
   _sampleSlider->callback((fltk::Callback*)sample_cb, this);
-  _sampleSlider->value(_aniso->sampling());
+  double smp = _aniso->sampling();
+  _sampleSlider->value(smp);
 
   winy += incy;
   _visibleButton = new fltk::CheckButton(0, winy, 13*W/100, lineH, "Show");
@@ -63,11 +65,6 @@ AnisofeatureUI::AnisofeatureUI(Anisofeature *aniso, Viewer *vw) {
   _wireframeButton->value(_aniso->wireframe());
 
 
-  _colorButton = new fltk::CheckButton(27*W/100, winy, 
-                                       20*W/100, lineH, "Color");
-  _colorButton->callback((fltk::Callback*)color_cb, this);
-  _colorButton->value(_aniso->color());
-
   /*
   _glyphsDoButton = new fltk::CheckButton(0, winy + lineH,
                                           W/5, lineH, "Glyph");
@@ -80,13 +77,21 @@ AnisofeatureUI::AnisofeatureUI(Anisofeature *aniso, Viewer *vw) {
   _tractsDoButton->value(_aniso->tractsDo());
   */
 
+  _colorButton = new fltk::CheckButton(27*W/100, winy, 
+                                       20*W/100, lineH, "Color");
+  _colorButton->callback((fltk::Callback*)color_cb, this);
+  _colorButton->value(_aniso->color());
+
   _colorQuantityMenu = new fltk::Choice(39*W/100, winy,
                                         22*W/100, lineH);
-  for (unsigned int qi=colorQuantityUnknown+1; qi<colorQuantityLast; qi++) {
-    _colorQuantityMenu->add(airEnumStr(colorQuantity, qi), this);
+  const airEnum *enm = aniso->colorQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  int itl = airEnumLast(enm);
+  for (int qi=itu+1; qi<=itl; qi++) {
+    _colorQuantityMenu->add(airEnumStr(enm, qi), this);
   }
   _colorQuantityMenu->callback((fltk::Callback*)(colorQuantity_cb), this);
-  def = airEnumStr(colorQuantity, _aniso->colorQuantity());
+  def = airEnumStr(enm, _aniso->colorQuantity());
   _colorQuantityMenu->value(((fltk::Group*)_colorQuantityMenu)
                             ->find(_colorQuantityMenu
                                    ->find(def)));
@@ -132,15 +137,15 @@ AnisofeatureUI::AnisofeatureUI(Anisofeature *aniso, Viewer *vw) {
 // TERRIBLE: copied from TriPlaneUI.C
   winy += incy;
   _alphaMaskQuantityMenu = new fltk::Choice(7*W/80, winy, W/7, lineH, "Mask");
-  for (unsigned int qi=alphaMaskQuantityUnknown+1;
-       qi<alphaMaskQuantityLast;
-       qi++) {
-    _alphaMaskQuantityMenu->add(airEnumStr(alphaMaskQuantity, qi), this);
+  enm = aniso->alphaMaskQuantityEnum();
+  itu = airEnumUnknown(enm);
+  itl = airEnumLast(enm);
+  for (int qi=itu+1; qi<=itl; qi++) {
+    _alphaMaskQuantityMenu->add(airEnumStr(enm, qi), this);
   }
   _alphaMaskQuantityMenu->callback((fltk::Callback*)(alphaMaskQuantity_cb),
                                    this);
-  def = airEnumStr(alphaMaskQuantity,
-                   _aniso->alphaMaskQuantity());
+  def = airEnumStr(enm, _aniso->alphaMaskQuantity());
   fprintf(stderr, "anisofeature def = %s\n", def);
 
   _alphaMaskQuantityMenu->value(((fltk::Group*)_alphaMaskQuantityMenu)
@@ -183,6 +188,7 @@ AnisofeatureUI::AnisofeatureUI(Anisofeature *aniso, Viewer *vw) {
   _once = false;
 
   _win->end();
+  fprintf(stderr, "%s: bye\n", me);
 }
 
 AnisofeatureUI::~AnisofeatureUI() {
@@ -205,8 +211,11 @@ AnisofeatureUI::redraw() {
 
 void
 AnisofeatureUI::sample_cb(fltk::ValueSlider *val, AnisofeatureUI *ui) {
+  char me[]="AnisofeatureUI::sample_cb";
 
+  fprintf(stderr, "!%s: hi\n", me);
   ui->_aniso->sampling(val->value());
+  fprintf(stderr, "!%s: bye\n", me);
 }
 
 void
@@ -234,10 +243,12 @@ AnisofeatureUI::color_cb(fltk::CheckButton *but,
 
 void
 AnisofeatureUI::colorQuantity_cb(fltk::Choice *menu, AnisofeatureUI *ui) {
-  unsigned int qi;
+  int qi;
 
-  for (qi=colorQuantityUnknown+1;
-       strcmp(menu->item()->label(), airEnumStr(colorQuantity, qi));
+  const airEnum *enm = ui->_aniso->colorQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  for (qi=itu+1;
+       strcmp(menu->item()->label(), airEnumStr(enm, qi));
        qi++);
   ui->_aniso->colorQuantity(qi);
   ui->redraw();
@@ -257,8 +268,10 @@ void
 AnisofeatureUI::alphaMaskQuantity_cb(fltk::Choice *menu, AnisofeatureUI *ui) {
   unsigned int qi;
 
-  for (qi=alphaMaskQuantityUnknown+1;
-       strcmp(menu->item()->label(), airEnumStr(alphaMaskQuantity, qi));
+  const airEnum *enm = ui->_aniso->alphaMaskQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  for (qi=itu+1;
+       strcmp(menu->item()->label(), airEnumStr(enm, qi));
        qi++);
   ui->_aniso->alphaMaskQuantity(qi);
   dynamic_cast<PolyProbe*>(ui->_aniso)->update(true);
