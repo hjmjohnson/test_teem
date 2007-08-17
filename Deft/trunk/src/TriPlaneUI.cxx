@@ -422,6 +422,9 @@ void
 TriPlaneUI::seedAnisoThresh_cb(Slider *slider, TriPlaneUI *ui) {
 
   ui->_triplane->seedAnisoThresh(slider->value());
+//   ui->_triplane->glyphsUpdate(0);
+//   ui->_triplane->glyphsUpdate(1);
+//   ui->_triplane->glyphsUpdate(2);
   ui->redraw();
 }
 

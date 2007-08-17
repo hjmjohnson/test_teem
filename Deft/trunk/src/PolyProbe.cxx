@@ -124,6 +124,13 @@ PolyProbe::kernelReset() {
 }
 
 void
+PolyProbe::lpldCopy(const limnPolyData *lpld) {
+  limnPolyDataCopy(_lpldOwn, lpld);
+  _flag[flagGeometry] = true;
+  return;
+}
+
+void
 PolyProbe::color(bool doit) {
 
   /*
@@ -151,6 +158,31 @@ PolyProbe::noColorQuery(int item) {
   this->color(false);
   _queryNoColor.resize(1);
   _queryNoColor[0] = item;
+  _flag[flagQueryNoColor] = true;
+}
+
+void
+PolyProbe::noColorQuery(int item0, int item1) {
+  
+  // HEY: need a way to test no change from last time
+  
+  this->color(false);
+  _queryNoColor.resize(2);
+  _queryNoColor[0] = item0;
+  _queryNoColor[1] = item1;
+  _flag[flagQueryNoColor] = true;
+}
+
+void
+PolyProbe::noColorQuery(int item0, int item1, int item2) {
+  
+  // HEY: need a way to test no change from last time
+  
+  this->color(false);
+  _queryNoColor.resize(3);
+  _queryNoColor[0] = item0;
+  _queryNoColor[1] = item1;
+  _queryNoColor[2] = item2;
   _flag[flagQueryNoColor] = true;
 }
 
@@ -384,11 +416,20 @@ PolyProbe::colorQuantity(int quantity) {
       lret = nrrdLoad(_nrmap1D, fname, NULL);
       _cmap->rmap1D(_nrmap1D);
       _cmap->min1D(0);
-      _cmap->max1D(2000); // HEY: hack!
+      _cmap->max1D(2500); // HEY: hack!
+      break;
+    case colorDwiQuantityFA:
+      _queryColor.resize(1);
+      _queryColor[0] = tenDwiGageFA;
+      strcat(fname, "cmap/gray.nrrd");
+      lret = nrrdLoad(_nrmap1D, fname, NULL);
+      _cmap->rmap1D(_nrmap1D);
+      _cmap->min1D(0);
+      _cmap->max1D(1);
       break;
     case colorDwiQuantityMeanDwiValue:
       _queryColor.resize(1);
-      _queryColor[0] = tenDwiGageMeanDwiValue;
+      _queryColor[0] = tenDwiGageMeanDWIValue;
       strcat(fname, "cmap/gray.nrrd");
       lret = nrrdLoad(_nrmap1D, fname, NULL);
       _cmap->rmap1D(_nrmap1D);
@@ -402,7 +443,7 @@ PolyProbe::colorQuantity(int quantity) {
       lret = nrrdLoad(_nrmap1D, fname, NULL);
       _cmap->rmap1D(_nrmap1D);
       _cmap->min1D(0);
-      _cmap->max1D(20); // HEY: hack!
+      _cmap->max1D(100); // HEY: hack!
       break;
     case colorDwiQuantity1TensorErrorLog:
       _queryColor.resize(1);
@@ -533,7 +574,11 @@ PolyProbe::alphaMaskQuantity(int quantity) {
       break;
     case alphaMaskDwiQuantityMeanDwiValue:
       _queryAlphaMask.resize(1);
-      _queryAlphaMask[0] = tenDwiGageMeanDwiValue;
+      _queryAlphaMask[0] = tenDwiGageMeanDWIValue;
+      break;
+    case alphaMaskDwiQuantityConfidence:
+      _queryAlphaMask.resize(1);
+      _queryAlphaMask[0] = tenDwiGageConfidence;
       break;
     }
   }
@@ -586,12 +631,13 @@ PolyProbe::evecRgbMaxSat(double maxSat) {
 
 bool
 PolyProbe::update(bool geometryChanged) {
-  // char me[]="PolyProbe::update";
+  char me[]="PolyProbe::update";
   bool ret = false;
 
   // well this is weird- the polyprobe class has to be told when its
   // own polydata has changed?  Shouldn't it have a way of knowing?
-  _flag[flagGeometry] = geometryChanged;
+  // Fri Aug 17 09:14:43 EDT 2007: now its "|=" instead of "="
+  _flag[flagGeometry] |= geometryChanged;
   /*
   fprintf(stderr, "!%s(%p): _flag[QueryColor,QueryAlphaMask] = %s,%s\n",
           me, this, _flag[flagQueryColor] ? "true" : "false",
@@ -626,12 +672,12 @@ PolyProbe::update(bool geometryChanged) {
   */
   if (_flag[flagQuery]
       || _flag[flagGageKernels]) {
-    /*
+
     fprintf(stderr, "!%s: _gage->update(): %u %u %u\n", me, 
             (unsigned int)(_gage->query().size()),
             (unsigned int)(_gage->query()[0].size()),
             (unsigned int)(_gage->query()[1].size()));
-    */
+
     if (_gage->querySet()) { // NOT ->query().size()
       _gage->update();
     }
@@ -648,7 +694,8 @@ PolyProbe::update(bool geometryChanged) {
   */
   if (_flag[flagGeometry]
       || _flag[flagGageContext]) {
-    if (_gage->querySet() && this->polyData()->xyzwNum) { // NOT ->query().size()
+    if (_gage->querySet() 
+        && this->polyData()->xyzwNum) { // NOT ->query().size()
       probe(_gage);
     }
     _flag[flagGeometry] = false;

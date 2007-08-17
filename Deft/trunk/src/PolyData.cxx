@@ -280,10 +280,12 @@ PolyData::RGBSet(unsigned char R, unsigned char G, unsigned char B) {
 
   size_t N = _lpldOwn->xyzwNum;
   unsigned char *vrgba = _lpldOwn->rgba;
-  for (size_t I=0; I<N; I++) {
-    (vrgba + 4*I)[0] = R;
-    (vrgba + 4*I)[1] = G;
-    (vrgba + 4*I)[2] = B;
+  if (vrgba) {
+    for (size_t I=0; I<N; I++) {
+      (vrgba + 4*I)[0] = R;
+      (vrgba + 4*I)[1] = G;
+      (vrgba + 4*I)[2] = B;
+    }
   }
   changed();
 }
@@ -309,11 +311,11 @@ PolyData::verticesGet(Nrrd *npos) {
 
 void
 PolyData::drawImmediate() {
-  // char me[]="PolyData::drawImmediate";
+  char me[]="PolyData::drawImmediate";
   const limnPolyData *lpld = this->lpld();
   int glWhat;
   const GLenum glpt[LIMN_PRIMITIVE_MAX+1] = {
-    GL_POINTS,         /* 0: limnPrimitiveUnknown */
+    0,                 /* 0: limnPrimitiveUnknown */
     GL_POINTS,         /* 1: limnPrimitiveNoop */
     GL_TRIANGLES,      /* 2: limnPrimitiveTriangles */
     GL_TRIANGLE_STRIP, /* 3: limnPrimitiveTriangleStrip */
@@ -351,7 +353,7 @@ PolyData::drawImmediate() {
   if (_normalizeUse) {
     glEnable(GL_NORMALIZE);
   }
-  if (_colorUse) {
+  if (lpld->rgba && _colorUse) {
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   } else {
@@ -360,6 +362,11 @@ PolyData::drawImmediate() {
   }
   if (_lightingUse) {
     glEnable(GL_LIGHTING);
+  }
+  if (0 && _flatShading) {
+    glShadeModel(GL_FLAT);
+  } else {
+    glShadeModel(GL_SMOOTH);
   }
   if (!_compiling) {
     glEnableClientState(GL_VERTEX_ARRAY);
@@ -390,13 +397,19 @@ PolyData::drawImmediate() {
   */
   unsigned int vertCnt, vertIdx = 0;
   if (!_compiling) {
+    if (0) {
+      FILE *file;
+      file = fopen("all.lmpd", "wb");
+      limnPolyDataLMPDWrite(file, lpld);
+      fclose(file);
+    }
     for (unsigned int primIdx=0; primIdx<lpld->primNum; primIdx++) {
       vertCnt = lpld->icnt[primIdx];
       if (limnPrimitiveNoop != lpld->type[primIdx]) {
         glWhat = glpt[lpld->type[primIdx]];
         /*
-          fprintf(stderr, "!%s: glDrawElements(%u, %u, GL_UNSIGNED_INT, %p)\n", me,
-          glWhat, vertCnt, lpld->indx + vertIdx);
+        fprintf(stderr, "!%s: glDrawElements(%u, %u, GL_UNSIGNED_INT, %p)\n",
+                me, glWhat, vertCnt, lpld->indx + vertIdx);
         */
         glDrawElements(glWhat, vertCnt, GL_UNSIGNED_INT, lpld->indx + vertIdx);
       }
@@ -434,7 +447,7 @@ PolyData::drawImmediate() {
   if (_lightingUse) {
     glDisable(GL_LIGHTING);
   }
-  if (_colorUse) {
+  if (lpld->rgba && _colorUse) {
     glDisable(GL_COLOR_MATERIAL);
   }
   if (_normalizeUse) {

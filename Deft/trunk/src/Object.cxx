@@ -33,7 +33,7 @@
 
 namespace Deft {
 
-const unsigned int displayListDrawCount = 10;
+const unsigned int displayListDrawCount = 8;
 
 Object::Object() {
   // char me[]="Object::Object";
@@ -72,7 +72,7 @@ Object::changed() {
 
 void
 Object::draw() {
-  // char me[]="Object::draw";
+  char me[]="Object::draw";
   double time0;
 
   // fprintf(stderr, "!%s(%p): hello, visible = %s\n", me, this,
@@ -85,7 +85,7 @@ Object::draw() {
       // _displayList);
       glDeleteLists(_displayList, 1);
       _displayList = 0;
-    } else if (_staticDrawCount == displayListDrawCount
+    } else if (_staticDrawCount >= displayListDrawCount + airRandInt(10)
                && _compilingUse
                && !_displayList) {
       this->compile();
@@ -152,7 +152,14 @@ Object::wireframe(bool wf) {
   }
 }
 
-bool Object::wireframe() const { return _wireframe; }
+void
+Object::flatShading(bool fs) {
+
+  if (_flatShading != fs) {
+    _flatShading = fs;
+    this->changed();
+  }
+}
 
 void
 Object::twoSided(bool ts) {
@@ -164,14 +171,10 @@ Object::twoSided(bool ts) {
   }
 }
 
-bool Object::twoSided() const { return _twoSided; }
-
 void
 Object::visible(bool vis) { 
   _visible = vis;
 }
-
-bool Object::visible() const { return _visible; }
 
 void
 Object::colorUse(bool col) { 
@@ -181,8 +184,6 @@ Object::colorUse(bool col) {
   }
 }
 
-bool Object::colorUse() const { return _colorUse; }
-
 void
 Object::normalsUse(bool col) { 
   if (_normalsUse != col) {
@@ -190,8 +191,6 @@ Object::normalsUse(bool col) {
     this->changed();
   }
 }
-
-bool Object::normalsUse() const { return _normalsUse; }
 
 void
 Object::normalizeUse(bool norm) {
@@ -201,8 +200,6 @@ Object::normalizeUse(bool norm) {
   }
 }
 
-bool Object::normalizeUse() const { return _normalizeUse; }
-
 void
 Object::compilingUse(bool comp) {
   if (_compilingUse != comp) {
@@ -210,8 +207,6 @@ Object::compilingUse(bool comp) {
     // changed?
   }
 }
-
-bool Object::compilingUse() const { return _compilingUse; }
 
 void
 Object::lightingUse(bool shad) {
@@ -221,8 +216,6 @@ Object::lightingUse(bool shad) {
   }
 }
 
-bool Object::lightingUse() const { return _lightingUse; }
-
 void
 Object::transformUse(bool tran) {
   if (_transformUse != tran) {
@@ -230,8 +223,6 @@ Object::transformUse(bool tran) {
     this->changed();
   }
 }
-
-bool Object::transformUse() const { return _transformUse; }
 
 void
 Object::transformSet(const float mat[16]) {

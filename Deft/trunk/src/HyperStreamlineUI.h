@@ -105,6 +105,9 @@ private:
   fltk::CheckButton *_stopRadiusButton;
   Deft::Slider *_stopRadiusSlider;
   
+  fltk::CheckButton *_stopFractionButton;
+  Deft::Slider *_stopFractionSlider;
+  
   fltk::Choice *_kernelMenu;
   static void kernel_cb(fltk::Choice *menu, HyperStreamlineUI *ui);
 

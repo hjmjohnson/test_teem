@@ -28,7 +28,6 @@
 #include "Deft.h"
 #include "Group.h"
 #include "Plane.h"
-#include "Glyph.h"
 #include "TensorGlyph.h"
 #include "StarGlyph.h"
 #include "HyperStreamline.h"
@@ -47,10 +46,8 @@ class DEFT_EXPORT TriPlane : public Group {
 public: 
   explicit TriPlane(const Volume *vol);
 
-  /*
   void baseGlyph(const limnPolyData *bglyph);
   const limnPolyData *baseGlyph() const { return _bglyph; }
-  */
 
   // exposing const pointer to useful info in gageShape
   const gageShape *shape() const;
