@@ -186,6 +186,7 @@ _colorDwiQuantityStr[DEFT_COLOR_DWI_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
   "unknown query",
   "b0",
   "mdwi",
+  "fa",
   "RGB(linear)",
   "1t-err",
   "1t-errlog",
@@ -211,6 +212,7 @@ _alphaMaskDwiQuantityStr[DEFT_ALPHA_MASK_DWI_QUANTITY_MAX+1][AIR_STRLEN_SMALL] =
   "unknown query",
   "b0",
   "mdwi",
+  "conf"
 };
 
 airEnum

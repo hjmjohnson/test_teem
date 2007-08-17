@@ -100,7 +100,10 @@ HyperStreamline::HyperStreamline(const Volume *vol) {
           vol->kind()->name);
 
   _tfx = (this->_dwi
-          ? tenFiberContextDwiNew(vol->nrrd())
+          ? tenFiberContextDwiNew(vol->nrrd(),
+                                  10, 1, 1,
+                                  tenEstimate1MethodLLS,
+                                  tenEstimate2MethodPeled)
           : tenFiberContextNew(vol->nrrd()));
   if (!_tfx) {
     ERROR;
@@ -124,7 +127,13 @@ HyperStreamline::HyperStreamline(const Volume *vol) {
 
   // default fiber context settings
   this->color(true);
-  fiberType(tenFiberTypeEvec0);
+  fprintf(stderr, "!%s: %p bingo 0\n", me, this);
+  if (this->_dwi) {
+    fiberType(tenDwiFiberType2Evec0);
+  } else {
+    fiberType(tenFiberTypeEvec0);
+  }
+  fprintf(stderr, "!%s: bingo 1\n", me);
   stopAniso(tenAniso_Cl2, 0.3);
   stopConfidence(0.5);
   step(1);
@@ -182,6 +191,12 @@ HyperStreamline::~HyperStreamline() {
   nrrdNuke(_nseeds);
 }
 
+bool
+HyperStreamline::useDwi() const {
+
+  return _dwi;
+}
+
 void
 HyperStreamline::seedsSet(const Nrrd *nseeds) {
   char me[]="HyperStreamline::seedsSet";
@@ -213,6 +228,7 @@ void
 HyperStreamline::fiberType(int type) { 
   char me[]="HyperStreamline::fiberType", *err;
   if (tenFiberTypeSet(_tfx, type)) { ERROR; } 
+  fprintf(stderr, "!%s: %p fiberType now %d\n", me, this, _tfx->fiberType);
   _flag[flagFiberParm] = true;
 }
 
@@ -325,6 +341,26 @@ HyperStreamline::stopConfidenceDo(bool doit) {
 }
 
 void
+HyperStreamline::stopFraction(double frac) {
+  char me[]="HyperStreamline::stopFraction", *err;
+  if (tenFiberStopSet(_tfx, tenFiberStopFraction, frac)) { ERROR; }
+  _flag[flagFiberParm] = true;
+}
+
+void
+HyperStreamline::stopFractionDo(bool doit) {
+  bool olddo = (_tfx->stop & (1 << tenFiberStopFraction)) ? true : false;
+  if (olddo != doit) {
+    if (doit) {
+      tenFiberStopOn(_tfx, tenFiberStopFraction); 
+    } else {
+      tenFiberStopOff(_tfx, tenFiberStopFraction); 
+    }
+    _flag[flagFiberParm] = true;
+  }
+}
+
+void
 HyperStreamline::stopRadius(double conf) {
   char me[]="HyperStreamline::stopRadius", *err;
   if (tenFiberStopSet(_tfx, tenFiberStopRadius, conf)) { ERROR; }
@@ -396,8 +432,12 @@ HyperStreamline::tubeRadius(double radius) {
 
 void
 HyperStreamline::parmCopy(HyperStreamline *src) {
-
+  char me[]="HyperStreamline::parmCopy";
+  
+  fprintf(stderr, "!%s: noodle 0, copying from %p to %p\n", me, src, this);
   this->fiberType(src->fiberType());
+  fprintf(stderr, "!%s: noodle 1\n", me);
+
   this->integration(src->integration());
   this->step(src->step());
   this->puncture(src->puncture());
@@ -416,6 +456,9 @@ HyperStreamline::parmCopy(HyperStreamline *src) {
 
   this->stopConfidence(src->stopConfidence());
   this->stopConfidenceDo(src->stopConfidenceDo());
+
+  this->stopFraction(src->stopFraction());
+  this->stopFractionDo(src->stopFractionDo());
 
   this->stopRadius(src->stopRadius());
   this->stopRadiusDo(src->stopRadiusDo());
@@ -875,6 +918,7 @@ HyperStreamline::updateFiberStopColor() {
     {128, 128, 128, 255},  /* tenFiberStopConfidence: gray */
     {255, 255,   0, 255},  /* tenFiberStopRadius: yellow */
     {  0,   0,   0, 255},  /* tenFiberStopBounds: black */
+    { 16, 255,  16, 255},  /* tenFiberStopFraction: green */
     { 25, 255,  25, 255}}; /* tenFiberStopStub: wacky, should never see */
 
   if (_flag[flagFiberColor]

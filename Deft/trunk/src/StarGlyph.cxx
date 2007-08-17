@@ -68,8 +68,10 @@ void
 StarGlyph::anisoThresh(double thr) {
   // char me[]="StarGlyph::anisoThreshSet";
 
-  _anisoThresh = thr;
-  _flag[flagAnisoThresh] = true;
+  if (_anisoThresh != thr) {
+    _anisoThresh = thr;
+    _flag[flagAnisoThresh] = true;
+  }
 }
 
 void
@@ -89,18 +91,21 @@ StarGlyph::offsetSet(const float off[3]) {
 /* HEY: measurement frame has to be identity?? */
 void
 StarGlyph::dataSet(unsigned int num,
-                   const float *radData, unsigned int radLen,
-                   unsigned int radStride,
-                   const float *posData, unsigned int posStride) {
+                   const double *radData,
+                   unsigned int radLen, unsigned int radStride,
+                   const float *posData, unsigned int posStride,
+                   const double *anisoData, unsigned int anisoStride,
+                   const double *errData, unsigned int errStride) {
   char me[]="StarGlyph::dataSet";
 
   if (!_glyphBase) {
     fprintf(stderr, "!%s: don't yet have base glyph!\n", me);
     return;
   }
-  if (!( radLen != _glyphBase->xyzwNum/2 )) {
+  if (!( radLen == _glyphBase->xyzwNum/2 )) {
     fprintf(stderr, "!%s: (base glyph # vert)/2 %u != radLen %u\n", me,
             _glyphBase->xyzwNum/2, radLen);
+    exit(0);
     return;
   }
 
@@ -110,6 +115,10 @@ StarGlyph::dataSet(unsigned int num,
   _radStride = radStride;
   _posData = posData;
   _posStride = posStride;
+  _anisoData = anisoData;
+  _anisoStride = anisoStride;
+  _errData = errData;
+  _errStride = errStride;
 
   _flag[flagData] = true;
   return;
@@ -119,6 +128,7 @@ void
 StarGlyph::parmCopy(StarGlyph *src) {
   char me[]="StarGlyph::parmCopy";
 
+  AIR_UNUSED(src);
   fprintf(stderr, "!%s: dummy\n", me);
 }
 
@@ -126,11 +136,17 @@ void
 StarGlyph::geomAlloc() {
   char me[]="StarGlyph::geomAlloc";
 
-  if (limnPolyDataCopyN(_lpldOwn, _glyphBase, _pointsNum)) {
+  if (limnPolyDataCopyN(_lpldOwn, _glyphBase, _pointsNum)
+      || limnPolyDataAlloc(_lpldOwn, 
+                           limnPolyDataInfoBitFlag(_lpldOwn) 
+                           | (1 << limnPolyDataInfoRGBA),
+                           _lpldOwn->xyzwNum,
+                           _lpldOwn->indxNum,
+                           _lpldOwn->primNum)) {
     fprintf(stderr, "!%s: problem:\n%s", me, biffGetDone(LIMN));
     return;
   }
-  if (1) {
+  if (0) {
     FILE *file;
     file = fopen("new.lmpd", "wb");
     limnPolyDataLMPDWrite(file, _lpldOwn);
@@ -142,32 +158,105 @@ StarGlyph::geomAlloc() {
 void
 StarGlyph::geomSet() {
   char me[]="StarGlyph::geomSet";
-  unsigned int pidx, ridx, hlf;
-  const float *rad, *pos;
+  unsigned int pidx, ridx;
+  const float *pos;
+  const double *rad, *aniso, *err;
   float *xyzw;
+  unsigned char *rgba;
+  
+  // fprintf(stderr, "!%s(%p): hello\n", me, this);
+
+//   if (1) {
+//     FILE *file;
+//     file = fopen("base.lmpd", "wb");
+//     limnPolyDataLMPDWrite(file, _glyphBase);
+//     fclose(file);
+//   }
 
   rad = _radData;
   pos = _posData;
+  aniso = _anisoData;
+  err = _errData;
   xyzw = _lpldOwn->xyzw;
+  rgba = _lpldOwn->rgba;
+
+  double SCL, ethresh;
+  if (241 == _anisoStride) {
+    SCL = 1000;
+    ethresh = 27;
+  } else if (129 == _anisoStride) {
+    SCL = 5;
+    ethresh = 60;
+  } else if (103 == _anisoStride) {
+    SCL = 700;
+    ethresh = 60;
+  } else if (111 == _anisoStride) {
+    SCL = 1600;
+    ethresh = 90;
+  } else if (61 == _anisoStride) {
+    SCL = 800;
+    ethresh = 30;
+  } else {
+    SCL = 10;
+    ethresh = 10;
+  }
+  fprintf(stderr, "!%s: stride = %u\n", me, _anisoStride);
+
+  unsigned char RGBzero[3] = {255,255,255};
+  unsigned char RGBlo[3] = {255,  0,255};
+  unsigned char RGBhi[3] = {  0,255,  0};
+  unsigned char RGB[3];
   for (pidx=0; pidx<_pointsNum; pidx++) {
-    for (hlf=0; hlf<2; hlf++) {
-      for (ridx=0; ridx<_radLen; ridx++) {
-        ELL_3V_SCALE_ADD3(xyzw, 1.0, _offset, 1.0, pos + 3*pidx,
-                          _scale*rad[ridx], _glyphBase->xyzw + 4*ridx);
+    if (aniso[0] > _anisoThresh) {
+      _lpldOwn->type[pidx] = limnPrimitiveTriangles;
+      for (ridx=0; ridx<2*_radLen; ridx++) {
+        /*
+          ELL_3V_SCALE_ADD3(xyzw, 1.0, _offset, 1.0, pos + 3*pidx,
+          _scale*rad[ridx % _radLen], _glyphBase->xyzw + 4*ridx);
+        */
+        ELL_3V_SCALE_ADD2(xyzw, 1.0, pos,
+                          SCL*rad[ridx % _radLen],
+                          _glyphBase->xyzw + 4*ridx);
         xyzw[3] = 1;
         xyzw += 4;
+        double eee = err[ridx % _radLen];
+        if (eee > 0) {
+          eee = AIR_MIN(eee, ethresh);
+          ELL_4V_COPY(RGB, RGBhi);
+        } else {
+          eee = AIR_MIN(-eee, ethresh);
+          ELL_4V_COPY(RGB, RGBlo);
+        }
+        ELL_3V_LERP(rgba, eee/ethresh, RGBzero, RGB);
+        rgba[3] = 255;
+        rgba += 4;
       }
+    } else {
+      _lpldOwn->type[pidx] = limnPrimitiveNoop;
+      xyzw += 4*2*_radLen;
+      rgba += 4*2*_radLen;
     }
     rad += _radStride;
     pos += _posStride;
+    aniso += _anisoStride;
+    err += _errStride;
   }
   limnPolyDataVertexNormals(_lpldOwn);
+
+//   if (1) {
+//     FILE *file;
+//     file = fopen("all.lmpd", "wb");
+//     limnPolyDataLMPDWrite(file, _lpldOwn);
+//     fclose(file);
+//   }
+
+
   return;
 }
 
 void
 StarGlyph::update() {
-  char me[]="StarGlyph::update";
+  // char me[]="StarGlyph::update";
 
   if (_flag[flagGlyphBase]
       || _flag[flagData]) {
@@ -185,32 +274,55 @@ StarGlyph::update() {
     _flag[flagScale] = false;
     _flag[flagOffset] = false;
     _flag[flagAnisoThresh] = false;
+    // fprintf(stderr, "!%s: changed\n", me);
     this->changed();
   }
-}
-
-void
-StarGlyph::drawImmediate() {
-  char me[]="StarGlyph::drawImmediate";
-  
-  fprintf(stderr, "!%s: dummy\n", me);
 }
 
 unsigned int
 StarGlyph::verticesGet(Nrrd *npos) {
   char me[]="StarGlyph::verticesGet";
+  unsigned int pidx, totalNum;
+  const float *pos;
+  float *posOut;
+  const double *aniso;
+
+
+  totalNum = 0;
+  aniso = _anisoData;
+  for (pidx=0; pidx<_pointsNum; pidx++) {
+    totalNum += (aniso[0] > _anisoThresh);
+    aniso += _anisoStride;
+  }
+  if (totalNum) {
+    if (nrrdMaybeAlloc_va(npos, nrrdTypeFloat, 2,
+                          AIR_CAST(size_t, 3),
+                          AIR_CAST(size_t, totalNum))) {
+      char *err = biffGetDone(NRRD);
+      fprintf(stderr, "%s: couldn't allocate output:\n%s", me, err);
+      free(err); exit(1);
+    }
+    posOut = AIR_CAST(float *, npos->data);
+    pos = _posData;
+    aniso = _anisoData;
+    for (pidx=0; pidx<_pointsNum; pidx++) {
+      if (aniso[0] > _anisoThresh) {
+        ELL_3V_COPY(posOut, pos);
+        posOut += 3;
+      }
+      pos += _posStride;
+      aniso += _anisoStride;
+    }
+  }
+  return totalNum;
+}
+
+// void
+// StarGlyph::drawImmediate() {
+//   char me[]="StarGlyph::drawImmediate";
   
-  fprintf(stderr, "!%s: dummy\n", me);
-  return 0;
-}
-
-void
-StarGlyph::boundsGet(float min[3], float max[3]) const {
-  char me[]="StarGlyph::boundsGet";
-
-  fprintf(stderr, "!%s: dummy\n", me);
-  return;
-}
+//   fprintf(stderr, "!%s: dummy\n", me);
+// }
 
 
 } /* namespace Deft */

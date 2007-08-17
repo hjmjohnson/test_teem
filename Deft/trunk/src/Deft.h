@@ -173,20 +173,22 @@ enum {
   colorDwiQuantityUnknown,          /* 0 */
   colorDwiQuantityB0,               /* 1 */
   colorDwiQuantityMeanDwiValue,     /* 2 */
-  colorDwiQuantityRgbLinear,        /* 3 */
-  colorDwiQuantity1TensorError,     /* 4 */
-  colorDwiQuantity1TensorErrorLog,  /* 5 */
+  colorDwiQuantityFA,               /* 3 */
+  colorDwiQuantityRgbLinear,        /* 4 */
+  colorDwiQuantity1TensorError,     /* 5 */
+  colorDwiQuantity1TensorErrorLog,  /* 6 */
   colorDwiQuantityLast
 };
-#define DEFT_COLOR_DWI_QUANTITY_MAX    5
+#define DEFT_COLOR_DWI_QUANTITY_MAX    6
 
 enum {
   alphaMaskDwiQuantityUnknown,          /* 0 */
   alphaMaskDwiQuantityB0,               /* 1 */
   alphaMaskDwiQuantityMeanDwiValue,     /* 2 */
+  alphaMaskDwiQuantityConfidence,       /* 3 */
   alphaMaskDwiQuantityLast
 };
-#define DEFT_ALPHA_MASK_DWI_QUANTITY_MAX    2
+#define DEFT_ALPHA_MASK_DWI_QUANTITY_MAX   3
 
 /* enumsDeft.C */
 DEFT_API airEnum *fltkEvent;

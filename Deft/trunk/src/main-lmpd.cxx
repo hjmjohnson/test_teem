@@ -138,6 +138,8 @@ main(int argc, char **argv) {
 
   bag.poly = new Deft::PolyData(lpld);
   bag.poly->wireframe(wire);
+  bag.poly->lightingUse(true);
+  bag.poly->flatShading(true);
   bag.poly->twoSided(true);
   bag.poly->normalsUse(true);
   bag.poly->visible(true);

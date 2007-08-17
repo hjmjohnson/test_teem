@@ -60,6 +60,8 @@ public:
   explicit HyperStreamline(const Volume *vol);
   ~HyperStreamline();
 
+  bool useDwi() const;
+
   void fiberType(int type);
   int fiberType() const { return _tfx->fiberType; }
 
@@ -105,6 +107,12 @@ public:
   double stopRadius() const { return _tfx->minRadius; }
   bool stopRadiusDo() const {
     return (_tfx->stop & (1 << tenFiberStopRadius)) ? true : false; }
+
+  void stopFraction(double frac);
+  void stopFractionDo(bool doit);
+  double stopFraction() const { return _tfx->minFraction; }
+  bool stopFractionDo() const {
+    return (_tfx->stop & (1 << tenFiberStopFraction)) ? true : false; }
 
   void stopStubDo(bool doit);
   bool stopStubDo() const {

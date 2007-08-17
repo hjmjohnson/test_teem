@@ -31,7 +31,7 @@
 
 namespace Deft {
 
-class DEFT_EXPORT StarGlyph : public PolyData {
+class DEFT_EXPORT StarGlyph : public PolyData  {
 public: 
   explicit StarGlyph();
   ~StarGlyph();
@@ -41,8 +41,11 @@ public:
   void baseGlyph(const limnPolyData *bglyph);
   // "rad" = vertex radius, "pos" = 3-vector of glyph center
   void dataSet(unsigned int num,
-               const float *radData, unsigned int radLen, unsigned int radStride,
-               const float *posData, unsigned int posStride);
+               const double *radData,
+               unsigned int radLen, unsigned int radStride,
+               const float *posData, unsigned int posStride,
+               const double *anisoData, unsigned int anisoStride,
+               const double *errData, unsigned int errStride);
 
   void anisoThresh(double anisoThresh);
   double anisoThresh() const { return _anisoThresh; }
@@ -53,9 +56,9 @@ public:
 
   void update();
 
-  void drawImmediate();
+  // over-rides standard PolyData verticesGet
   unsigned int verticesGet(Nrrd *npos);
-  void boundsGet(float min[3], float max[3]) const;
+
 private:
 
   void geomAlloc(void);
@@ -66,10 +69,9 @@ private:
   double _anisoThresh, _scale;
   unsigned int _pointsNum;
   float _offset[3];
-  const float *_radData;
-  unsigned int _radLen, _radStride;
+  const double *_radData, *_anisoData, *_errData;
+  unsigned int _radLen, _radStride, _posStride, _anisoStride, _errStride;
   const float *_posData;
-  unsigned int _posStride;
 };
 
 }

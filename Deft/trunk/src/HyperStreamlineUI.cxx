@@ -218,6 +218,24 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, Object *vobj,
   winy += incy;
   winy += 5;
 
+  if (hs->useDwi()) {
+    _stopFractionButton = new fltk::CheckButton(5, winy, W/10, lineH,
+                                              "Fraction");
+    _stopFractionButton->value(_hsline[0]->stopFractionDo());
+    _stopFractionButton->callback((fltk::Callback*)_stopButton_cb, this);
+    _stopFractionSlider = new Deft::Slider(0, winy, W, incy=40);
+    _stopFractionSlider->align(fltk::ALIGN_LEFT);
+    _stopFractionSlider->range(0.0, 1.0);
+    _stopFractionSlider->color(0x01FF0100);
+    _stopFractionSlider->step(0.01);
+    _stopFractionSlider->fastUpdate(0);
+    _stopFractionSlider->value(_hsline[0]->stopFraction());
+    _stopFractionSlider->callback((fltk::Callback*)_stopSlider_cb, this);
+    
+    winy += incy;
+    winy += 5;
+  }
+
   _stopConfidenceButton = new fltk::CheckButton(5, winy, W/10, lineH,
                                                 "Confidence mask");
   _stopConfidenceButton->value(_hsline[0]->stopConfidenceDo());
@@ -415,15 +433,19 @@ void
 HyperStreamlineUI::compute_cb(fltk::Button *, HyperStreamlineUI *ui) {
   char me[]="HyperStreamlineUI::compute_cb";
 
-  unsigned int seedNum = ui->_vobj->verticesGet(ui->_nseeds);
-  if (seedNum) {
-    fprintf(stderr, "!%s: seeding with %u %u\n", me, seedNum, 
-            AIR_CAST(unsigned int, ui->_nseeds->axis[1].size));
-    ui->_hsline[0]->seedsSet(ui->_nseeds);
+  if (ui->_vobj) {
+    unsigned int seedNum = ui->_vobj->verticesGet(ui->_nseeds);
+    if (seedNum) {
+      fprintf(stderr, "!%s: seeding with %u %u\n", me, seedNum, 
+              AIR_CAST(unsigned int, ui->_nseeds->axis[1].size));
+      ui->_hsline[0]->seedsSet(ui->_nseeds);
+    } else {
+      ui->_hsline[0]->seedsSet(NULL);
+    }
+    ui->redraw();
   } else {
-    ui->_hsline[0]->seedsSet(NULL);
+    fprintf(stderr, "!%s: got NULL _vobj\n", me);
   }
-  ui->redraw();
 }
 
 void
@@ -545,6 +567,13 @@ HyperStreamlineUI::_stopButton_cb(fltk::CheckButton *but,
       } else {
         ui->_hsline[idx]->stopConfidenceDo(false);
       }
+    } else if (but == ui->_stopFractionButton) {
+      if (but->value()) {
+        ui->_hsline[idx]->stopFraction(ui->_stopFractionSlider->value());
+        ui->_hsline[idx]->stopFractionDo(true);
+      } else {
+        ui->_hsline[idx]->stopFractionDo(false);
+      }
     } else if (but == ui->_stopRadiusButton) {
       if (but->value()) {
         ui->_hsline[idx]->stopRadius(ui->_stopRadiusSlider->value());
@@ -587,6 +616,10 @@ HyperStreamlineUI::_stopSlider_cb(Deft::Slider *slider,
     } else if (slider == ui->_stopConfidenceSlider) {
       if (ui->_hsline[idx]->stopConfidenceDo()) {
         ui->_hsline[idx]->stopConfidence(slider->value());
+      }
+    } else if (slider == ui->_stopFractionSlider) {
+      if (ui->_hsline[idx]->stopFractionDo()) {
+        ui->_hsline[idx]->stopFraction(slider->value());
       }
     } else if (slider == ui->_stopRadiusSlider) {
       if (ui->_hsline[idx]->stopRadiusDo()) {

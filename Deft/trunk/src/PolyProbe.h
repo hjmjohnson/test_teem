@@ -44,15 +44,21 @@ public:
   const NrrdKernelSpec *kernel(int which) const;
   void kernelReset();
 
+  // for externally re-setting the geometry
+  // HEY: what a fricken terrible method name...
+  void lpldCopy(const limnPolyData *lpld);
+
   // this at once sets both a query and colormap
   void color(bool doit);
   bool color() const { return _colorDoit; }
   void colorQuantity(int quantity);
   int colorQuantity() const { return _colorQuantity; }
 
-  // this sets an item, and says to use no colormap
+  // this sets an item (or two, or three), and says to use no colormap
   // HEY: need something for general-length queries
   void noColorQuery(int item);
+  void noColorQuery(int item0, int item1);
+  void noColorQuery(int item0, int item1, int item2);
 
   // returns the current query
   std::vector<std::vector<int> > query() const { return _gage->query(); }

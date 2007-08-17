@@ -27,7 +27,6 @@
 
 #include "Deft.h"
 #include "Object.h"
-#include "Glyph.h"
 #include "PolyData.h"
 
 namespace Deft {

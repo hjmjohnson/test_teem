@@ -28,6 +28,10 @@
 #include "ViewerUI.h"
 #include "TriPlane.h"
 #include "TriPlaneUI.h"
+#include "SeedPoint.h"
+#include "SeedPointUI.h"
+#include "Hyperstreamline.h"
+#include "HyperstreamlineUI.h"
 #include "Gage.h"
 #include "Cmap.h"
 
@@ -56,7 +60,7 @@ main(int argc, char **argv) {
   airArray *mop;
   char *me, *err;
 
-  float fr[3], at[3], up[3], fovy, neer, faar, dist, bg[3];
+  float fr[3], at[3], up[3], fovy, neer, faar, dist, bg[3], mmdwi;
   int size[2], ortho, rght, atrel;
   Nrrd *ninDwi;
   int camkeep;
@@ -68,6 +72,8 @@ main(int argc, char **argv) {
   hestOptAdd(&hopt, "idwi", "nin", airTypeOther, 1, 1, &ninDwi, NULL,
              "input DWI volume",
              NULL, NULL, nrrdHestNrrd);
+  hestOptAdd(&hopt, "mmi", "val", airTypeFloat, 1, 1, &mmdwi, "40",
+             "min mean dwi inside conf region");
   hestOptAdd(&hopt, "ibg", "glyph", airTypeOther, 1, 1, &baseGlyph, NULL,
              "base geometry for DWI glyph",
              NULL, NULL, limnHestPolyDataOFF);
@@ -118,7 +124,23 @@ main(int argc, char **argv) {
     strcpy(Deft::homeDir, "./");
   }
 
-  fprintf(stderr, "!%s: apply measurement frame to DWI gradients!!\n", me);
+  if (AIR_EXISTS(ninDwi->measurementFrame[0][0])) {
+    float mf[9], tmp[3];
+
+    mf[0] = static_cast<float>(ninDwi->measurementFrame[0][0]);
+    mf[1] = static_cast<float>(ninDwi->measurementFrame[1][0]);
+    mf[2] = static_cast<float>(ninDwi->measurementFrame[2][0]);
+    mf[3] = static_cast<float>(ninDwi->measurementFrame[0][1]);
+    mf[4] = static_cast<float>(ninDwi->measurementFrame[1][1]);
+    mf[5] = static_cast<float>(ninDwi->measurementFrame[2][1]);
+    mf[6] = static_cast<float>(ninDwi->measurementFrame[0][2]);
+    mf[7] = static_cast<float>(ninDwi->measurementFrame[1][2]);
+    mf[8] = static_cast<float>(ninDwi->measurementFrame[2][2]);
+    for (unsigned int vi=0; vi<baseGlyph->xyzwNum; vi++) {
+      ELL_3MV_MUL(tmp, mf, baseGlyph->xyzw + 4*vi);
+      ELL_3V_COPY(baseGlyph->xyzw + 4*vi, tmp);
+    }
+  }
 
   Deft::Scene *scene = new Deft::Scene();
   scene->bgColor(bg[0], bg[1], bg[2]);
@@ -156,16 +178,17 @@ main(int argc, char **argv) {
     airMopError(mop); return 1;
   }
   gageKind *kindDwi = tenDwiGageKindNew();
-  if (tenDwiGageKindSet(kindDwi, 50, 1, bval, 0.001, ngrad, nbmat,
+  if (tenDwiGageKindSet(kindDwi, mmdwi, 1, bval, 10, ngrad, nbmat,
                         tenEstimate1MethodLLS,
-                        tenEstimate2MethodQSegLLS)) {
+                        tenEstimate2MethodPeled, 42)) {
     airMopAdd(mop, err = biffGetDone(TEN), airFree, airMopAlways);
     fprintf(stderr, "%s: trouble parsing DWI info:\n%s\n", me, err);
     airMopError(mop); return 1;
   }
   Deft::Volume *volDwi = new Deft::Volume(kindDwi, ninDwi);
   Deft::TriPlane *triplane = new Deft::TriPlane(volDwi);
-  // triplane->baseGlyph(baseGlyph);
+  limnPolyDataVertexWindingFlip(baseGlyph);
+  triplane->baseGlyph(baseGlyph);
   
   NrrdKernelSpec *ksp = nrrdKernelSpecNew();
   double kparm[10];
@@ -182,7 +205,7 @@ main(int argc, char **argv) {
   triplane->colorQuantity(Deft::colorDwiQuantityB0);
   // HEY: you can eventually segfault if this isn't set here
   // shouldn't doing so be optional?
-  triplane->alphaMaskQuantity(Deft::alphaMaskDwiQuantityMeanDwiValue);
+  triplane->alphaMaskQuantity(Deft::alphaMaskDwiQuantityConfidence);
   triplane->visible(false);
   scene->groupAdd(triplane);
 
@@ -213,15 +236,38 @@ main(int argc, char **argv) {
 
   // --------------------------------------------------
 
+  Deft::HyperStreamline *hsline = new Deft::HyperStreamline(volDwi);
+  hsline->lightingUse(false);
+  hsline->colorQuantity(Deft::colorDwiQuantityRgbLinear);
+  // hsline->alphaMaskQuantity(Deft::alphaMaskTenQuantityConfidence);
+  hsline->alphaMask(false);
+  hsline->twoSided(true);
+  scene->objectAdd(hsline);
+  Deft::HyperStreamlineUI *hslineUI = 
+    new Deft::HyperStreamlineUI(hsline, NULL, viewer);
+
   // HEY, WRONG: totally wrong place to be doing this
-  /*
   triplane->hsline[0]->parmCopy(hsline);
   triplane->hsline[1]->parmCopy(hsline);
   triplane->hsline[2]->parmCopy(hsline);
   hslineUI->add(triplane->hsline[0]);
   hslineUI->add(triplane->hsline[1]);
   hslineUI->add(triplane->hsline[2]);
-  */
+
+  Deft::SeedPoint *seedpoint = new Deft::SeedPoint(volDwi, baseGlyph);
+  seedpoint->positionSet(47, 48.4, 37.4);
+
+  kparm[0] = 1.0;
+  nrrdKernelSpecSet(ksp, nrrdKernelTent, kparm);
+  seedpoint->kernel(gageKernel00, ksp);
+  seedpoint->visible(true);
+  scene->groupAdd(seedpoint);
+  Deft::SeedPointUI *seedpointUI = new Deft::SeedPointUI(seedpoint, viewer);
+  seedpoint->hsline->parmCopy(hsline);
+  hslineUI->add(seedpoint->hsline);
+  seedpointUI->show();
+
+  hslineUI->show();
 
   // --------------------------------------------------
 

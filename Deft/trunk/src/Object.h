@@ -71,23 +71,25 @@ public:
 
   // Setting and getting various booleans
   void wireframe(bool);
-  bool wireframe() const;
+  bool wireframe() const { return _wireframe; }
+  void flatShading(bool);
+  bool flatShading() const { return _flatShading; }
   void twoSided(bool);
-  bool twoSided() const;
+  bool twoSided() const { return _twoSided; }
   void visible(bool);
-  bool visible() const;
+  bool visible() const { return _visible; }
   void colorUse(bool);
-  bool colorUse() const;
+  bool colorUse() const { return _colorUse; }
   void normalsUse(bool);
-  bool normalsUse() const;
+  bool normalsUse() const { return _normalsUse; }
   void normalizeUse(bool);
-  bool normalizeUse() const;
+  bool normalizeUse() const { return _normalizeUse; }
   void compilingUse(bool);
-  bool compilingUse() const;
+  bool compilingUse() const { return _compilingUse; }
   void lightingUse(bool);
-  bool lightingUse() const;
+  bool lightingUse() const { return _lightingUse; }
   void transformUse(bool);
-  bool transformUse() const;
+  bool transformUse() const { return _transformUse; }
 
   // Setting and getting the transform
   void transformSet(const float mat[16]);
@@ -109,7 +111,7 @@ protected:
   unsigned int _displayList;
 
   // internal booleans
-  bool _wireframe, _twoSided, _visible, _colorUse,
+  bool _wireframe, _flatShading, _twoSided, _visible, _colorUse,
     _normalsUse, _normalizeUse,
     _compilingUse, _lightingUse, _transformUse;
 
