@@ -13,7 +13,7 @@ OBJS = Volume.o Object.o Group.o \
        SeedPoint.o SeedPointUI.o \
        PolyData.o PolyProbe.o
 
-all: Deft_dwi 
+all: Deft_dti Deft_dwi Deft_lmpd 
 # all: Deft_dti Deft_iso Deft_push Deft_sqd Deft_lmpd 
 # all: Deft_dti   Deft_iso Deft_push 
 

@@ -32,6 +32,7 @@ enum {
   flagGeomAlloc,
   flagData,
   flagScale,
+  flagErrThresh,
   flagOffset,
   flagAnisoThresh,
   flagGeomSet,
@@ -47,6 +48,8 @@ StarGlyph::StarGlyph() : PolyData(limnPolyDataNew(), true) {
   }
 
   ELL_3V_SET(_offset, 0, 0, 0);
+  _scale = 1000;
+  _errThresh = 30;
   _glyphBase = NULL;
 }
 
@@ -79,6 +82,13 @@ StarGlyph::scale(double scl) {
 
   _scale = scl;
   _flag[flagScale] = true;
+}
+
+void
+StarGlyph::errThresh(double thresh) {
+
+  _errThresh = thresh;
+  _flag[flagErrThresh] = true;
 }
 
 void
@@ -164,14 +174,9 @@ StarGlyph::geomSet() {
   float *xyzw;
   unsigned char *rgba;
   
-  // fprintf(stderr, "!%s(%p): hello\n", me, this);
-
-//   if (1) {
-//     FILE *file;
-//     file = fopen("base.lmpd", "wb");
-//     limnPolyDataLMPDWrite(file, _glyphBase);
-//     fclose(file);
-//   }
+  if (!AIR_EXISTS(_anisoThresh)) {
+    fprintf(stderr, "%s: anisoThresh never set!!!\n", me);
+  }
 
   rad = _radData;
   pos = _posData;
@@ -179,28 +184,6 @@ StarGlyph::geomSet() {
   err = _errData;
   xyzw = _lpldOwn->xyzw;
   rgba = _lpldOwn->rgba;
-
-  double SCL, ethresh;
-  if (241 == _anisoStride) {
-    SCL = 1000;
-    ethresh = 27;
-  } else if (129 == _anisoStride) {
-    SCL = 5;
-    ethresh = 60;
-  } else if (103 == _anisoStride) {
-    SCL = 700;
-    ethresh = 60;
-  } else if (111 == _anisoStride) {
-    SCL = 1600;
-    ethresh = 90;
-  } else if (61 == _anisoStride) {
-    SCL = 800;
-    ethresh = 30;
-  } else {
-    SCL = 10;
-    ethresh = 10;
-  }
-  fprintf(stderr, "!%s: stride = %u\n", me, _anisoStride);
 
   unsigned char RGBzero[3] = {255,255,255};
   unsigned char RGBlo[3] = {255,  0,255};
@@ -215,19 +198,19 @@ StarGlyph::geomSet() {
           _scale*rad[ridx % _radLen], _glyphBase->xyzw + 4*ridx);
         */
         ELL_3V_SCALE_ADD2(xyzw, 1.0, pos,
-                          SCL*rad[ridx % _radLen],
+                          _scale*rad[ridx % _radLen],
                           _glyphBase->xyzw + 4*ridx);
         xyzw[3] = 1;
         xyzw += 4;
         double eee = err[ridx % _radLen];
         if (eee > 0) {
-          eee = AIR_MIN(eee, ethresh);
+          eee = AIR_MIN(eee, _errThresh);
           ELL_4V_COPY(RGB, RGBhi);
         } else {
-          eee = AIR_MIN(-eee, ethresh);
+          eee = AIR_MIN(-eee, _errThresh);
           ELL_4V_COPY(RGB, RGBlo);
         }
-        ELL_3V_LERP(rgba, eee/ethresh, RGBzero, RGB);
+        ELL_3V_LERP(rgba, eee/_errThresh, RGBzero, RGB);
         rgba[3] = 255;
         rgba += 4;
       }
@@ -243,13 +226,14 @@ StarGlyph::geomSet() {
   }
   limnPolyDataVertexNormals(_lpldOwn);
 
-//   if (1) {
-//     FILE *file;
-//     file = fopen("all.lmpd", "wb");
-//     limnPolyDataLMPDWrite(file, _lpldOwn);
-//     fclose(file);
-//   }
-
+  if (0) {
+    FILE *file;
+    file = fopen("all.lmpd", "wb");
+    if (limnPolyDataLMPDWrite(file, _lpldOwn)) {
+      fprintf(stderr, "!%s: problem:\n%s", me, biffGetDone(LIMN));
+    }
+    fclose(file);
+  }
 
   return;
 }
@@ -267,6 +251,7 @@ StarGlyph::update() {
   if (_flag[flagGeomAlloc]
       || _flag[flagData]
       || _flag[flagScale]
+      || _flag[flagErrThresh]
       || _flag[flagOffset]
       || _flag[flagAnisoThresh]) {
     this->geomSet();

@@ -38,31 +38,10 @@ namespace Deft {
 ** certainly need to be able to click on individual fibers
 */
 
-HyperStreamlineSingle::HyperStreamlineSingle() {
-  // char me[]="HyperStreamlineSingle::HyperStreamlineSingle";
-  nvert = nrrdNew();
-  primIdx = 0;
-  ELL_3V_SET(seedPos, AIR_NAN, AIR_NAN, AIR_NAN);
-  halfLen[0] = AIR_NAN;
-  halfLen[1] = AIR_NAN;
-  seedIdx = 0;
-  stepNum[0] = 0;
-  stepNum[1] = 0;
-  whyStop[0] = tenFiberStopUnknown;
-  whyStop[1] = tenFiberStopUnknown;
-  whyNowhere = tenFiberStopUnknown;
-}
-
-HyperStreamlineSingle::~HyperStreamlineSingle() {
-  
-  nrrdNuke(nvert);
-}
-
 // ---------------------------------------------------------------
 
 enum {
   flagUnknown,
-  flagSeeds,
   flagSeedNum,
   flagSeedPositions,
   flagFiberAllocated,
@@ -86,7 +65,7 @@ enum {
 
 #define ERROR \
   err = biffGetDone(TEN); \
-  fprintf(stderr, "%s: trouble modifying the fiber context:\n%s\n", me, err); \
+  fprintf(stderr, "%s: trouble:\n%s\n", me, err); \
   free(err); exit(1)
 
 HyperStreamline::HyperStreamline(const Volume *vol) {
@@ -101,7 +80,7 @@ HyperStreamline::HyperStreamline(const Volume *vol) {
 
   _tfx = (this->_dwi
           ? tenFiberContextDwiNew(vol->nrrd(),
-                                  10, 1, 1,
+                                  10, 1, 1, /* thresh, soft, min */
                                   tenEstimate1MethodLLS,
                                   tenEstimate2MethodPeled)
           : tenFiberContextNew(vol->nrrd()));
@@ -111,12 +90,17 @@ HyperStreamline::HyperStreamline(const Volume *vol) {
   if (tenFiberParmSet(_tfx, tenFiberParmUseIndexSpace, AIR_FALSE)) {
     ERROR;
   }
+  _tfx->verbose = 0;
   for (unsigned int fi=flagUnknown+1; fi<flagLast; fi++) {
     _flag[fi] = false;
   }
-
+  
+  _fiberArr = airArrayNew(AIR_CAST(void **, &_fiber), NULL,
+                          sizeof(tenFiberSingle), 1024 /* incr */);
+  airArrayStructCB(_fiberArr,
+                   AIR_CAST(void (*)(void *), tenFiberSingleInit),
+                   AIR_CAST(void (*)(void *), tenFiberSingleDone));
   _seedNum = 0;
-  _fiberNum = 0;
   _fiberVertexNum = 0;
 
   // TERRIBLE: playing dangerous games with ownership of _lpldOwn...
@@ -127,13 +111,11 @@ HyperStreamline::HyperStreamline(const Volume *vol) {
 
   // default fiber context settings
   this->color(true);
-  fprintf(stderr, "!%s: %p bingo 0\n", me, this);
   if (this->_dwi) {
     fiberType(tenDwiFiberType2Evec0);
   } else {
     fiberType(tenFiberTypeEvec0);
   }
-  fprintf(stderr, "!%s: bingo 1\n", me);
   stopAniso(tenAniso_Cl2, 0.3);
   stopConfidence(0.5);
   step(1);
@@ -152,7 +134,7 @@ HyperStreamline::HyperStreamline(const Volume *vol) {
   ELL_3V_SET(lksp.parm, 1, 1, 0);
   dynamic_cast<PolyProbe*>(this)->kernel(gageKernel11, &lksp);
 
-  _nseeds = nrrdNew();
+  _nseed = nrrdNew();
   nrrdKernelSpecNix(ksp);
   dynamic_cast<PolyProbe*>(this)->evecRgbAnisoGamma(1.3);
   dynamic_cast<PolyProbe*>(this)->evecRgbIsoGray(1.0);
@@ -180,15 +162,13 @@ HyperStreamline::HyperStreamline(const Volume *vol) {
 
 HyperStreamline::~HyperStreamline() {
 
-  for (unsigned int fi=0; fi<_fiber.size(); fi++) {
-    delete _fiber[fi];
-  }
+  _fiberArr = airArrayNuke(_fiberArr);
   tenFiberContextNix(_tfx);
   // TERRIBLE
   _lpldOwn = _lpldFibers;
   // limnPolyDataNix(_lpldFibers);   (that's now done by PolyData's dtor)
   limnPolyDataNix(_lpldTubes);
-  nrrdNuke(_nseeds);
+  nrrdNuke(_nseed);
 }
 
 bool
@@ -198,23 +178,22 @@ HyperStreamline::useDwi() const {
 }
 
 void
-HyperStreamline::seedsSet(const Nrrd *nseeds) {
+HyperStreamline::seedsSet(const Nrrd *nseed) {
   char me[]="HyperStreamline::seedsSet";
   unsigned int seedNumNew;
 
-  if (nseeds) {
-    if (!( 2 == nseeds->dim && 3 == nseeds->axis[0].size)) {
-      fprintf(stderr, "%s: trouble: nseeds %u-D %u-by-X, not 2-D 3-by-X\n",
-              me, nseeds->dim, AIR_CAST(unsigned int, nseeds->axis[0].size));
+  if (nseed) {
+    if (!( 2 == nseed->dim && 3 == nseed->axis[0].size)) {
+      fprintf(stderr, "%s: trouble: nseed %u-D %u-by-X, not 2-D 3-by-X\n",
+              me, nseed->dim, AIR_CAST(unsigned int, nseed->axis[0].size));
     }
-    if (nrrdConvert(_nseeds, nseeds, nrrdTypeFloat)) {
+    if (nrrdConvert(_nseed, nseed, nrrdTypeDouble)) {
       fprintf(stderr, "%s: trouble:\n%s", me, biffGetDone(NRRD));
     }
-    seedNumNew = _nseeds->axis[1].size;
+    seedNumNew = _nseed->axis[1].size;
   } else {
     seedNumNew = 0;
   }
-  _flag[flagSeeds] = false;  // HEY- is this serving any purpose?
 
   if (_seedNum != seedNumNew) {
     _seedNum = seedNumNew;
@@ -432,11 +411,9 @@ HyperStreamline::tubeRadius(double radius) {
 
 void
 HyperStreamline::parmCopy(HyperStreamline *src) {
-  char me[]="HyperStreamline::parmCopy";
+  // char me[]="HyperStreamline::parmCopy";
   
-  fprintf(stderr, "!%s: noodle 0, copying from %p to %p\n", me, src, this);
   this->fiberType(src->fiberType());
-  fprintf(stderr, "!%s: noodle 1\n", me);
 
   this->integration(src->integration());
   this->step(src->step());
@@ -457,8 +434,10 @@ HyperStreamline::parmCopy(HyperStreamline *src) {
   this->stopConfidence(src->stopConfidence());
   this->stopConfidenceDo(src->stopConfidenceDo());
 
-  this->stopFraction(src->stopFraction());
-  this->stopFractionDo(src->stopFractionDo());
+  if (this->useDwi()) {
+    this->stopFraction(src->stopFraction());
+    this->stopFractionDo(src->stopFractionDo());
+  }
 
   this->stopRadius(src->stopRadius());
   this->stopRadiusDo(src->stopRadiusDo());
@@ -490,27 +469,17 @@ HyperStreamline::updateFiberAllocated() {
   // char me[]="HyperStreamline::updateFiberAllocated";
 
   if (_flag[flagSeedNum]) {
+    double time0 = airTime();
     // NO MORE: "currently allocate more when needed, and never free"
     // that was causing problems because some code was using 
     // _fiber.size() as the number of fibers, so you'd segfault
     // if the number of fibers decreased!
-    double time0 = airTime();
-    size_t sizeOld = _fiber.size();
-    if (_seedNum > sizeOld) {
-      _fiber.resize(_seedNum);
-      for (unsigned int seedIdx=sizeOld;
-           seedIdx<_seedNum;
-           seedIdx++) {
-        _fiber[seedIdx] = new HyperStreamlineSingle();
-      }
-    } else if (_seedNum < sizeOld) {
-      for (unsigned int seedIdx=_seedNum;
-           seedIdx<sizeOld;
-           seedIdx++) {
-        delete _fiber[seedIdx];
-      }
-      _fiber.resize(_seedNum);
-    }
+    // Wed Sep 12 12:12:50 EDT 2007: now with the change to an airArray of
+    // tenFiberSingle, and the possibility of having multiple fibers per 
+    // seed point, we can't allocated ahead of time the number fibers. 
+    // But, we know that we'll need at least as many as seed points
+    airArrayLenSet(_fiberArr, _seedNum);
+    // HEY: error if (!_fiberArr->data)
     _flag[flagSeedNum] = false;
     _flag[flagFiberAllocated] = true;
     _fiberAllocatedTime = airTime() - time0;
@@ -519,128 +488,28 @@ HyperStreamline::updateFiberAllocated() {
 
 void
 HyperStreamline::updateFiberGeometry() {
-  char me[]="HyperStreamline::updateFiberGeometry";
-  char *err;
+  char me[]="HyperStreamline::updateFiberGeometry", *err;
 
   if (_flag[flagFiberAllocated]
       || _flag[flagSeedPositions]
       || _flag[flagFiberContext]) {
     double time0 = airTime();
-    float *pos = static_cast<float*>(_nseeds->data);
-    unsigned int vertTotalNum = 0;
-    _fiberNum = 0;
-    bool verbose = _seedNum < 100;
-    for (unsigned int seedIdx=0; seedIdx<_seedNum; seedIdx++) {
-      ELL_3V_COPY(_fiber[seedIdx]->seedPos, pos + 3*seedIdx);
-      if (this->_dwi) {
-        _tfx->ten2Which = seedIdx % 2;
-      }
-      if (verbose) {
-        fprintf(stderr, "!%s: trace %u/%u:\n", me,
-                seedIdx, _seedNum);
-      }
-      if (tenFiberTrace(_tfx, _fiber[seedIdx]->nvert, 
-                        _fiber[seedIdx]->seedPos)) { ERROR; }
-      if (verbose) {
-        fprintf(stderr, " (%g,%g,%g): ", 
-                _fiber[seedIdx]->seedPos[0],
-                _fiber[seedIdx]->seedPos[1],
-                _fiber[seedIdx]->seedPos[2]);
-        if (_tfx->whyNowhere) {
-          fprintf(stderr, "whyNowhere = %s\n", 
-                  airEnumStr(tenFiberStop, _tfx->whyNowhere));
-        } else {
-          fprintf(stderr, "whyStop[b,f] = %s,%s\n",
-                  airEnumStr(tenFiberStop, _tfx->whyStop[0]),
-                  airEnumStr(tenFiberStop, _tfx->whyStop[1]));
-        }
-      }
-      _fiber[seedIdx]->whyNowhere = _tfx->whyNowhere;
-      if (tenFiberStopUnknown == _fiber[seedIdx]->whyNowhere) {
-        _fiber[seedIdx]->primIdx = _fiberNum++;
-        _fiber[seedIdx]->halfLen[0] = _tfx->halfLen[0];
-        _fiber[seedIdx]->halfLen[1] = _tfx->halfLen[1];
-        _fiber[seedIdx]->seedIdx = _tfx->numSteps[0];
-        _fiber[seedIdx]->stepNum[0] = _tfx->numSteps[0];
-        _fiber[seedIdx]->stepNum[1] = _tfx->numSteps[1];
-        vertTotalNum += _fiber[seedIdx]->nvert->axis[1].size;
-        _fiber[seedIdx]->whyStop[0] = _tfx->whyStop[0];
-        _fiber[seedIdx]->whyStop[1] = _tfx->whyStop[1];
-        /*
-        fprintf(stderr, "!%s: A fiber[%u/%u] (%p) "
-                "len = %u (%u+%u) (%s/%s)\n", me,
-                seedIdx, _fiber[seedIdx]->primIdx,
-		&(_fiber[seedIdx]),
-                AIR_CAST(unsigned int, _fiber[seedIdx]->nvert->axis[1].size),
-		_fiber[seedIdx]->stepNum[0],
-		_fiber[seedIdx]->stepNum[1],
-                airEnumStr(tenFiberStop, _fiber[seedIdx]->whyStop[0]),
-                airEnumStr(tenFiberStop, _fiber[seedIdx]->whyStop[1]));
-        */
-      } else {
-        /* the seed point was a non-starter- either things died
-           immediately, or it was a stub fiber */
-        _fiber[seedIdx]->primIdx = AIR_CAST(unsigned int, -1);
-        _fiber[seedIdx]->halfLen[0] = AIR_NAN;
-        _fiber[seedIdx]->halfLen[1] = AIR_NAN;
-        _fiber[seedIdx]->seedIdx = 0;
-        _fiber[seedIdx]->stepNum[0] = 0;
-        _fiber[seedIdx]->stepNum[1] = 0;
-        _fiber[seedIdx]->whyStop[0] = _fiber[seedIdx]->whyNowhere;
-        _fiber[seedIdx]->whyStop[1] = _fiber[seedIdx]->whyNowhere;
-	/*
-        fprintf(stderr, "!%s: B fiber[%u] (%p) len = %u+%u (%s/%s)\n", me,
-                seedIdx,
-		&(_fiber[seedIdx]),
-		_fiber[seedIdx]->stepNum[0],
-		_fiber[seedIdx]->stepNum[1],
-                airEnumStr(tenFiberStop, _fiber[seedIdx]->whyStop[0]),
-                airEnumStr(tenFiberStop, _fiber[seedIdx]->whyStop[1]));
-	*/
-      }
-    }
     
-    // allocate all polylines; _fiberNum == primNum
-    limnPolyDataAlloc(_lpldFibers, 
-                      (1 << limnPolyDataInfoRGBA)
-                      | (1 << limnPolyDataInfoNorm),
-                      vertTotalNum, vertTotalNum, _fiberNum);
-    if (_fiberVertexNum != vertTotalNum) {
-      _fiberVertexNum = vertTotalNum;
+    if (tenFiberMultiTrace(_tfx, _fiberArr, _nseed)
+        || tenFiberMultiPolyData(_tfx, _lpldFibers, _fiberArr)) { ERROR; }
+
+    if (_fiberVertexNum != _lpldFibers->xyzwNum) {
+      _fiberVertexNum = _lpldFibers->xyzwNum;
       _flag[flagFiberVertexNum] = true;
     }
+    // allocate the RGBA colors, which are filled later
+    limnPolyDataAlloc(_lpldFibers, 
+                      (limnPolyDataInfoBitFlag(_lpldFibers) 
+                       | 1 << limnPolyDataInfoRGBA),
+                      _lpldFibers->xyzwNum,
+                      _lpldFibers->xyzwNum,
+                      _lpldFibers->primNum);
     
-    // NOTE: we index through the seed points to iterate through fibers,
-    // but primIdx only increments for the seedpoints that went somewhere.
-    // So, primIdx should end at _fiberNum (calculated above) for last fiber
-    unsigned int primIdx = 0;
-    unsigned int vertTotalIdx = 0;
-    for (unsigned int seedIdx=0; seedIdx<_seedNum; seedIdx++) {
-
-      if (!(tenFiberStopUnknown == _fiber[seedIdx]->whyNowhere)) {
-        continue; // no primIdx++
-      }
-
-      unsigned int vertNum = _fiber[seedIdx]->nvert->axis[1].size;
-      double *vert = static_cast<double*>(_fiber[seedIdx]->nvert->data);
-      /*
-      char fname[128];
-      sprintf(fname, "fiber-%03u.txt", seedIdx);
-      nrrdSave(fname, _fiber[seedIdx]->nvert, NULL);
-      */
-      for (unsigned int vertIdx=0; vertIdx<vertNum; vertIdx++) {
-        ELL_3V_COPY_TT(_lpldFibers->xyzw + 4*vertTotalIdx, float,
-                       vert + 3*vertIdx);
-        (_lpldFibers->xyzw + 4*vertTotalIdx)[3] = 1.0;
-        ELL_3V_SET(_lpldFibers->norm + 3*vertTotalIdx, 0, 0, 0);
-        ELL_4V_SET(_lpldFibers->rgba + 4*vertTotalIdx, 255, 255, 255, 255);
-        _lpldFibers->indx[vertTotalIdx] = vertTotalIdx;
-        vertTotalIdx++;
-      }
-      _lpldFibers->type[primIdx] = limnPrimitiveLineStrip;
-      _lpldFibers->icnt[primIdx] = vertNum;
-      primIdx++;
-    }
     _flag[flagFiberAllocated] = false;
     _flag[flagSeedPositions] = false;
     _flag[flagFiberContext] = false;
@@ -683,13 +552,21 @@ HyperStreamline::brightness(double br) {
 
 void
 HyperStreamline::updateFiberColor() {
-  // char me[]="HyperStreamline::updateFiberColor";
+  char me[]="HyperStreamline::updateFiberColor";
   if (_flag[flagFiberGeometry]
       || _flag[flagColorMap]
       || _flag[flagFiberStopColorDo]) { // may have to refresh endpoint colors
     double time0 = airTime();
+
     _lpldOwn = _lpldFibers;   // TERRIBLE ...
-    dynamic_cast<PolyProbe*>(this)->update(true);
+    if (this->color()) {
+      dynamic_cast<PolyProbe*>(this)->update(true);
+    } else {
+      for (unsigned int cidx=0; cidx<_lpldFibers->rgbaNum; cidx++) {
+        ELL_4V_SET(_lpldFibers->rgba + 4*cidx, 255, 255, 255, 255);
+      }
+    }
+
     _flag[flagFiberGeometry] = false;
     _flag[flagColorMap] = false;
     _flag[flagFiberColor] = true;
@@ -927,20 +804,20 @@ HyperStreamline::updateFiberStopColor() {
     if (_stopColorDo) {
       unsigned int inVertTotalIdx = 0;
       unsigned int primIdx = 0;
-      for (unsigned int fi=0; fi<_fiber.size(); fi++) {
-	if (0 == _fiber[fi]->stepNum[0] + _fiber[fi]->stepNum[1]) {
+      for (unsigned int fi=0; fi<_fiberArr->len; fi++) {
+        if (!(tenFiberStopUnknown == _fiber[fi].whyNowhere)) {
 	  // this fiber was a non-starter
-	  continue;
-	}
+          continue;
+        }
         for (unsigned int inVertIdx=0;
              inVertIdx<_lpldFibers->icnt[primIdx];
              inVertIdx++) {
           if (0 == inVertIdx) {
             ELL_4V_COPY(_lpldFibers->rgba + 4*inVertTotalIdx,
-                        stcol[_fiber[fi]->whyStop[0]]);
+                        stcol[_fiber[fi].whyStop[0]]);
           } else if (inVertIdx == _lpldFibers->icnt[primIdx]-1) {
             ELL_4V_COPY(_lpldFibers->rgba + 4*inVertTotalIdx,
-                        stcol[_fiber[fi]->whyStop[1]]);
+                        stcol[_fiber[fi].whyStop[1]]);
           }
           inVertTotalIdx++;
         }
@@ -964,10 +841,10 @@ HyperStreamline::updateTubeColor() {
     unsigned int outVertTotalIdx = 0;
     unsigned int primIdx = 0;
     // limnVrt *inVrt, *outVrt;
-    for (unsigned int fi=0; fi<_fiber.size(); fi++) {
-      if (0 == _fiber[fi]->stepNum[0] + _fiber[fi]->stepNum[1]) {
-	// this fiber was a non-starter
-	continue;
+    for (unsigned int fi=0; fi<_fiberArr->len; fi++) {
+      if (!(tenFiberStopUnknown == _fiber[fi].whyNowhere)) {
+        // this fiber was a non-starter
+        continue;
       }
       for (unsigned int inVertIdx=0;
            inVertIdx<_lpldFibers->icnt[primIdx];
@@ -1045,6 +922,41 @@ HyperStreamline::update() {
       _lpldOwn = _lpldFibers;
       lightingUse(false);
     }
+
+    /*
+    if (1 == dynamic_cast<PolyData*>(this)->values()[0]->length()) {
+      // hack here to do per-fiber statistics
+      unsigned int primIdx = 0;
+      for (unsigned int fi=0; fi<_fiberArr->len; fi++) {
+        if (!(tenFiberStopUnknown == _fiber[fi].whyNowhere)) {
+          continue; // no primIdx++
+        }
+
+        if (_fiber[fi].measr[nrrdMeasureMean] < 1.06) {
+          _lpldOwn->type[primIdx] = limnPrimitiveNoop;
+        } else {
+          _lpldOwn->type[primIdx] = (_tubeDo
+                                     ? limnPrimitiveTriangleStrip
+                                     : limnPrimitiveLineStrip);
+        }
+        primIdx++;
+      }
+    } else {
+      // undo hack 
+      unsigned int primIdx = 0;
+      for (unsigned int fi=0; fi<_fiberArr->len; fi++) {
+        if (!(tenFiberStopUnknown == _fiber[fi].whyNowhere)) {
+          continue; // no primIdx++
+        }
+        _lpldOwn->type[primIdx] = (_tubeDo
+                                   ? limnPrimitiveTriangleStrip
+                                   : limnPrimitiveLineStrip);
+        primIdx++;
+      }
+
+    }
+    */
+
     _flag[flagTubeDo] = false;
     _flag[flagTubeGeometry] = false;
     _flag[flagTubeColor] = false;

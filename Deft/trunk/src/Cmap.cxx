@@ -158,9 +158,10 @@ Cmap::map(Nrrd *nrgba, const Values *val) const {
   int E=0;
   
   /*
-  fprintf(stderr, "!%s: size %u length %u \n", me, 
+  fprintf(stderr, "!%s: size %u length %u kind %s\n", me, 
           AIR_CAST(unsigned int, val->item().size()),
-          AIR_CAST(unsigned int, val->length()));
+          AIR_CAST(unsigned int, val->length()),
+          val->kind()->name);
   */
   if (1 == val->item().size()) {
     if (1 == val->length()) {

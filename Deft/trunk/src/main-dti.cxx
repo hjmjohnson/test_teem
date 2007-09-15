@@ -49,6 +49,87 @@
 
 char *info = ("this might come in handy.");
 
+#if 0*5
+typedef struct {
+  fltk::CheckButton *visible, *wireframe, *colorDo;
+  Deft::Slider *slider;
+  Deft::Contour *contour;
+  Deft::Scene *scene;
+  Deft::Viewer *viewer;
+  fltk::Choice *color;
+} isoBag;
+
+void
+isovalue_cb(fltk::Widget *widget, void *data) {
+  char me[]="isovalue_cb";
+  Deft::Slider *slider;
+  isoBag *bag;
+
+  slider = (Deft::Slider *)widget;
+  bag = (isoBag *)data;
+  fprintf(stderr, "!%s: visible = %s ************* %p\n", me, 
+          bag->contour->visible() ? "true" : "false",
+          dynamic_cast<Deft::PolyProbe*>(bag->contour)->volume());
+  bag->contour->extract(slider->value());
+  dynamic_cast<Deft::PolyProbe*>(bag->contour)->update(true);
+  bag->viewer->redraw();
+}
+
+void
+isovisible_cb(fltk::Widget *widget, void *data) {
+  char me[]="isovisible_cb";
+  isoBag *bag;
+
+  bag = (isoBag *)data;
+  fprintf(stderr, "!%s: visible = %s\n", me, 
+          bag->contour->visible() ? "true" : "false");
+  bag->contour->visible(bag->visible->value());
+  bag->viewer->redraw();
+}
+
+void
+isowire_cb(fltk::Widget *widget, void *data) {
+  char me[]="isovisible_cb";
+  isoBag *bag;
+
+  bag = (isoBag *)data;
+  bag->contour->wireframe(bag->wireframe->value());
+  bag->viewer->redraw();
+}
+
+void
+colordo_cb(fltk::Widget *widget, void *data) {
+  char me[]="colordo_cb";
+  isoBag *bag;
+
+  bag = (isoBag *)data;
+  Deft::PolyProbe *cprobe = dynamic_cast<Deft::PolyProbe*>(bag->contour);
+  cprobe->color(bag->colorDo->value());
+  dynamic_cast<Deft::PolyProbe*>(bag->contour)->update(false);
+  bag->viewer->redraw();
+}
+
+void
+color_cb(fltk::Widget *widget, void *data) {
+  char me[]="color_cb";
+  isoBag *bag;
+  unsigned int qi;
+
+  bag = (isoBag *)data;
+  Deft::PolyProbe *cprobe = dynamic_cast<Deft::PolyProbe*>(bag->contour);
+  const airEnum *enm = cprobe->colorQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  for (qi=itu+1;
+       strcmp(bag->color->item()->label(), airEnumStr(enm, qi));
+       qi++);
+  fprintf(stderr, "!%s: got %u %s\n", me, qi, airEnumStr(enm, qi));
+  cprobe->colorQuantity(qi);
+  dynamic_cast<Deft::PolyProbe*>(bag->contour)->update(false);
+  bag->viewer->redraw();
+
+}
+#endif
+
 
 int
 main(int argc, char **argv) {
@@ -68,6 +149,7 @@ main(int argc, char **argv) {
   Nrrd *nb0;
 #endif
 #if 0*5
+  isoBag bag;
   Nrrd *ntumor;
 #endif
   int aniso, camkeep;
@@ -221,6 +303,7 @@ main(int argc, char **argv) {
   viewerUI->show();
   
   Deft::Volume *vol = new Deft::Volume(tenGageKind, nin);
+  fprintf(stderr, "!%s: vol = %p *********************\n", me, vol);
 
   Deft::TensorGlyph *glyph = new Deft::TensorGlyph();
   if (nPos) {
@@ -243,7 +326,7 @@ main(int argc, char **argv) {
   // glyph->barycentricResolution(12);
   glyph->glyphScale(glyphScale);
   glyph->rgbParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
-  glyph->visible(true);
+  glyph->visible(false);
   glyph->update();
   /*
   void rgbParmSet(int aniso, unsigned int evec,
@@ -386,6 +469,7 @@ main(int argc, char **argv) {
 
   // --------------------------------------------------
 
+#if 0*8
   Deft::Anisocontour *anicont = new Deft::Anisocontour(vol);
   anicont->colorQuantity(Deft::colorTenQuantityRgbLinear);
   anicont->alphaMask(true);
@@ -400,7 +484,79 @@ main(int argc, char **argv) {
     new Deft::AnisocontourUI(anicont, viewer);
   scene->objectAdd(anicont);
   anisoUI->show();
+#endif
 
+  // --------------------------------------------------
+
+#if 0*5
+  bag.scene = scene;
+  bag.viewer = viewer;
+  bag.contour = new Deft::Contour();
+  bag.contour->volumeSet(ntumor);
+  bag.contour->visible(true);
+  bag.contour->wireframe(true);
+  bag.contour->twoSided(true);
+  bag.contour->brightness(1.2);
+  bag.scene->objectAdd(bag.contour);
+
+  Deft::PolyProbe *cprobe = dynamic_cast<Deft::PolyProbe*>(bag.contour);
+
+  cprobe->volume(vol);
+  cprobe->color(true);
+  cprobe->colorQuantity(Deft::colorTenQuantityRgbLinear);
+  cprobe->alphaMask(false);
+  cprobe->alphaMaskQuantity(Deft::alphaMaskTenQuantityConfidence);
+  ELL_3V_SET(kparm, 1, 0.5, 0);
+  nrrdKernelSpecSet(ksp, nrrdKernelBCCubic, kparm);
+  cprobe->kernel(gageKernel00, ksp);
+  ELL_3V_SET(kparm, 1, 1, 0);
+  nrrdKernelSpecSet(ksp, nrrdKernelBCCubicD, kparm);
+  cprobe->kernel(gageKernel11, ksp);
+  nrrdKernelSpecSet(ksp, nrrdKernelBCCubicDD, kparm);
+  cprobe->kernel(gageKernel22, ksp);
+
+  fltk::Window *window = new fltk::Window(size[0]+20, 0, 400, 140);
+  window->begin();
+  window->resizable(window);
+
+  int incy, winy = 0;
+
+  bag.visible = new fltk::CheckButton(0, winy, 50, incy=20, "Show");
+  bag.visible->value(bag.contour->visible());
+  bag.visible->callback(isovisible_cb, &bag);
+
+  bag.wireframe = new fltk::CheckButton(50, winy, 50, incy=20, "Wire");
+  bag.wireframe->value(bag.contour->wireframe());
+  bag.wireframe->callback(isowire_cb, &bag);
+
+  bag.colorDo = new fltk::CheckButton(100, winy, 60, incy, "Color");
+  bag.colorDo->callback((fltk::Callback*)colordo_cb, &bag);
+  bag.colorDo->value(true);
+
+  bag.color = new fltk::Choice(120, winy, 120, incy);
+  const airEnum *enm = dynamic_cast<Deft::PolyProbe*>(bag.contour)->colorQuantityEnum();
+  int itu = airEnumUnknown(enm);
+  int itl = airEnumLast(enm);
+  for (int qi=itu+1; qi<=itl; qi++) {
+    bag.color->add(airEnumStr(enm, qi), &bag);
+  }
+  bag.color->callback((fltk::Callback*)(color_cb), &bag);
+  const char *def = airEnumStr(enm, cprobe->colorQuantity());
+  bag.color->value(((fltk::Group*)bag.color)
+                   ->find(bag.color->find(def)));
+
+  winy += incy;
+  bag.slider = new Deft::Slider(0, winy, window->w(), incy=40,
+                                "Tumor Isovalue");
+  bag.slider->align(fltk::ALIGN_LEFT);
+  bag.slider->range(bag.contour->minimum(), bag.contour->maximum());
+  bag.slider->fastUpdate(1);
+  bag.slider->callback(isovalue_cb, &bag);
+  bag.slider->value(0);
+
+  window->end();
+  window->show(argc,argv);
+#endif
 
   // --------------------------------------------------
 

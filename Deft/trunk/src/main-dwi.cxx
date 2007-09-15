@@ -255,8 +255,8 @@ main(int argc, char **argv) {
   hslineUI->add(triplane->hsline[2]);
 
   Deft::SeedPoint *seedpoint = new Deft::SeedPoint(volDwi, baseGlyph);
-  seedpoint->positionSet(47, 48.4, 37.4);
-
+  seedpoint->positionSet(10, 32, 15.5);
+  
   kparm[0] = 1.0;
   nrrdKernelSpecSet(ksp, nrrdKernelTent, kparm);
   seedpoint->kernel(gageKernel00, ksp);

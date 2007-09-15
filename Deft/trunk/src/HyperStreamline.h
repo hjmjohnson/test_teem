@@ -33,27 +33,9 @@ namespace Deft {
 // HEY: this is the first time I may regret not using "Filter" in the
 // name of things that really are filters, since now the thing that
 // logically *is* a HyperStreamline has to use a different name
-
-// this is more a repository for per-fiber info than an interesting
-// object with useful methods
-class DEFT_EXPORT HyperStreamlineSingle {
-public: 
-  explicit HyperStreamlineSingle();
-  ~HyperStreamlineSingle();
-
-  Nrrd *nvert;
-  unsigned int primIdx;
-  double seedPos[3], halfLen[2];
-  unsigned int seedIdx, stepNum[2];
-  int whyStop[2], whyNowhere;
-  /* maybe also have:
-  ** aniso (mode,fa) at seed
-  ** mean aniso (mode,fa) along vertices
-  ** stdv of aniso (mode,fa) along vertices
-  ** mean curvature magnitude
-  ** mean torsion?
-  */
-};
+// 
+// actually now that Deft::HyperStreamlineSingle got moved down to
+// teem::tenFiberSingle, this objections is mooted somewhat
 
 class DEFT_EXPORT HyperStreamline : public PolyProbe {
 public: 
@@ -61,6 +43,9 @@ public:
   ~HyperStreamline();
 
   bool useDwi() const;
+
+  void verbose(int verb) { _tfx->verbose = verb; };
+  int verbose() { return _tfx->verbose; };
 
   void fiberType(int type);
   int fiberType() const { return _tfx->fiberType; }
@@ -153,7 +138,7 @@ public:
   void update();
 
   unsigned int seedNum() const { return _seedNum; }
-  unsigned int fiberNum() const { return _fiberNum; }
+  unsigned int fiberNum() const { return _fiberArr->len; }
   unsigned int fiberVertexNum() const { return _fiberVertexNum; }
   double fiberAllocatedTime() const { return _fiberAllocatedTime; }
   double fiberGeometryTime() const { return _fiberGeometryTime; }
@@ -164,8 +149,7 @@ public:
   double tubeColorTime() const { return _tubeColorTime; }
 private:
   bool _flag[128], _tubeDo, _stopColorDo, _dwi;
-  Nrrd *_nseeds;
-  unsigned int _seedNum, _fiberNum,  _fiberVertexNum, _tubeFacet, _endFacet;
+  unsigned int _tubeFacet, _endFacet;
   const Volume *_volume;
   double _tubeRadius, _brightness,
     _fiberAllocatedTime,
@@ -177,9 +161,14 @@ private:
     _tubeColorTime;
   limnPolyData *_lpldFibers, *_lpldTubes;
 
-  // HEY: I tried making a vector of the class itself, and the
-  // constructor was only called once!  Why?
-  std::vector<HyperStreamlineSingle *>_fiber;
+  Nrrd *_nseed;
+  unsigned int _seedNum; /* # seed points or 0 to say "none" (and this 
+                            semantics makes it not completely redundant 
+                            with _nseeds->axis[1].size */
+
+  airArray *_fiberArr;
+  tenFiberSingle *_fiber;
+  unsigned int _fiberVertexNum; // total # vertices on non-trivial fibers
 
   tenFiberContext *_tfx;
 

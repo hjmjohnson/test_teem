@@ -67,6 +67,9 @@ private:
   fltk::CheckButton *_tractDoButton;
   static void tractDo_cb(fltk::CheckButton *but, SeedPointUI *ui);
 
+  Slider *_scaleSlider;
+  static void scale_cb(Slider *slider, SeedPointUI *ui);
+
   Slider *_positionSlider[3];
   static void position_cb(Slider *slider, SeedPointUI *ui);
 

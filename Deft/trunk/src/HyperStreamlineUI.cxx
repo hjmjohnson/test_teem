@@ -365,7 +365,7 @@ HyperStreamlineUI::show() {
 void
 HyperStreamlineUI::redraw() {
   char buff[AIR_STRLEN_MED];
-  // char me[]="HyperStreamlineUI::redraw";
+  char me[]="HyperStreamlineUI::redraw";
   
   for (unsigned int idx=0; idx<_hsline.size(); idx++) {
     _hsline[idx]->update();
@@ -436,8 +436,9 @@ HyperStreamlineUI::compute_cb(fltk::Button *, HyperStreamlineUI *ui) {
   if (ui->_vobj) {
     unsigned int seedNum = ui->_vobj->verticesGet(ui->_nseeds);
     if (seedNum) {
-      fprintf(stderr, "!%s: seeding with %u %u\n", me, seedNum, 
-              AIR_CAST(unsigned int, ui->_nseeds->axis[1].size));
+      fprintf(stderr, "!%s: seeding with %u %u %p\n", me, seedNum, 
+              AIR_CAST(unsigned int, ui->_nseeds->axis[1].size),
+              ui->_hsline[0]);
       ui->_hsline[0]->seedsSet(ui->_nseeds);
     } else {
       ui->_hsline[0]->seedsSet(NULL);
