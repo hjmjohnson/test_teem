@@ -68,9 +68,13 @@ public:
   
   void positionSet(double X, double Y, double Z);
   void positionGet(double *pos) const;
+
+  // applies to ten1, ten2, and star
+  void scale(double scl);
+  const double scale() { return _scale; }
   
   void cursorScale(double scl);
-  const double cursorScale() { return _scale; }
+  const double cursorScale() { return _cursScale; }
 
   void update();
 
@@ -85,7 +89,7 @@ private:
   gageShape *_shape;
   const Volume *_vol;          // never owned
   const limnPolyData *_bglyph; // never owned
-  double _pos[3], _scale;
+  double _pos[3], _scale, _cursScale;
   PolyData *_cursor;
   PolyProbe *_seedProbe, *_ten1Probe, *_ten2Probe;
   StarGlyph *_starGlyph;

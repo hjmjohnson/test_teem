@@ -47,8 +47,10 @@ public:
                const double *anisoData, unsigned int anisoStride,
                const double *errData, unsigned int errStride);
 
-  void anisoThresh(double anisoThresh);
+  void anisoThresh(double thresh);
   double anisoThresh() const { return _anisoThresh; }
+  void errThresh(double thresh);
+  double errThresh() const { return _errThresh; }
   void scale(double scl);
   double scale() const { return _scale; }
   void offsetSet(const float off[3]);
@@ -66,7 +68,7 @@ private:
 
   bool _flag[DEFT_FLAG_NUM_MAX];
   const limnPolyData *_glyphBase;
-  double _anisoThresh, _scale;
+  double _anisoThresh, _errThresh, _scale;
   unsigned int _pointsNum;
   float _offset[3];
   const double *_radData, *_anisoData, *_errData;

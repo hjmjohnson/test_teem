@@ -29,12 +29,12 @@ namespace Deft {
 static char labelBuff[3][128] = {"Axis 0", "Axis 1", "Axis 2"};
 
 SeedPointUI::SeedPointUI(SeedPoint *sp, Viewer *vw) {
-  char me[]="SeedPointUI::SeedPointUI";
+  // char me[]="SeedPointUI::SeedPointUI";
   const unsigned int W=400, H=365, lineH=20;
   unsigned int winy, incy;
-  const char *def;
-  const airEnum *enm;
-  int itu, itl;
+  // const char *def;
+  // const airEnum *enm;
+  // int itu, itl;
   double pos[3];
   
   _win = new fltk::Window(W, H, "Deft::SeedPoint");
@@ -72,6 +72,16 @@ SeedPointUI::SeedPointUI(SeedPoint *sp, Viewer *vw) {
   _tractDoButton->callback((fltk::Callback*)tractDo_cb, this);
 
   winy += lineH;
+
+  // ----------------------------------
+  _scaleSlider = new Slider(0, winy, W, incy=40, "scale");
+  _scaleSlider->align(fltk::ALIGN_LEFT);
+  _scaleSlider->range(0.0, 3000);
+  _scaleSlider->fastUpdate(1);
+  _scaleSlider->callback((fltk::Callback*)scale_cb, this);
+  _scaleSlider->value(_seedpoint->scale());
+
+  winy += incy;
 
   // ----------------------------------
   _seedpoint->positionGet(pos);
@@ -134,7 +144,7 @@ SeedPointUI::ten2GlyphDo_cb(fltk::CheckButton *but, SeedPointUI *ui) {
 
 void
 SeedPointUI::starGlyphDo_cb(fltk::CheckButton *but, SeedPointUI *ui) {
-  char me[]="SeedPointUI::starGlyphDo_cb";
+  // char me[]="SeedPointUI::starGlyphDo_cb";
 
   ui->_seedpoint->starGlyphDo(but->value());
   ui->redraw();
@@ -142,15 +152,23 @@ SeedPointUI::starGlyphDo_cb(fltk::CheckButton *but, SeedPointUI *ui) {
 
 void
 SeedPointUI::tractDo_cb(fltk::CheckButton *but, SeedPointUI *ui) {
-  unsigned int pli;
 
   ui->_seedpoint->tractDo(but->value());
   ui->redraw();
 }
 
 void
-SeedPointUI::position_cb(Slider *slider, SeedPointUI *ui) {
-  char me[]="SeedPointUI::position_cb";
+SeedPointUI::scale_cb(Slider *slider, SeedPointUI *ui) {
+  // char me[]="SeedPointUI::scale_cb";
+  
+  ui->_seedpoint->scale(slider->value());
+  ui->_seedpoint->update();
+  ui->redraw();
+}
+
+void
+SeedPointUI::position_cb(Slider *, SeedPointUI *ui) {
+  // char me[]="SeedPointUI::position_cb";
   
   ui->_seedpoint->positionSet(ui->_positionSlider[0]->value(),
                               ui->_positionSlider[1]->value(),

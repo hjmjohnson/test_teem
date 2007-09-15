@@ -30,7 +30,6 @@ SeedPoint::SeedPoint(const Volume *vol,
                      const limnPolyData *bglyph) : Group(5) {
   char me[]="SeedPoint::SeedPoint", *err;
 
-  fprintf(stderr, "%s(%u): kind = %p\n", me, __LINE__, vol->kind());
   _shape = gageShapeNew();
   _vol = vol;
   _bglyph = bglyph;
@@ -57,6 +56,8 @@ SeedPoint::SeedPoint(const Volume *vol,
   } else {
     ELL_3M_IDENTITY_SET(_mframe);
   }
+
+  _scale = 1500;
 
   limnPolyData *lpld;
   lpld = limnPolyDataNew();
@@ -101,7 +102,9 @@ SeedPoint::SeedPoint(const Volume *vol,
   _starGlyph = new StarGlyph();
   _starGlyph->baseGlyph(_bglyph);
   _starGlyph->twoSided(true);
-  _starGlyph->visible(false);
+  _starGlyph->visible(true);
+  _starGlyph->scale(_scale);
+  _starGlyph->anisoThresh(0.0);
 
   _ten1Glyph = new TensorGlyph();
   _ten1Glyph->visible(false);
@@ -112,7 +115,7 @@ SeedPoint::SeedPoint(const Volume *vol,
   _ten1Glyph->glyphType(tenGlyphTypeSuperquad);
   _ten1Glyph->superquadSharpness(3.0);
   _ten1Glyph->glyphResolution(11);
-  _ten1Glyph->glyphScale(1500);
+  _ten1Glyph->glyphScale(_scale);
   _ten1Glyph->rgbParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
 
   _ten2Glyph = new TensorGlyph();
@@ -124,7 +127,7 @@ SeedPoint::SeedPoint(const Volume *vol,
   _ten2Glyph->glyphType(tenGlyphTypeSuperquad);
   _ten2Glyph->superquadSharpness(3.0);
   _ten2Glyph->glyphResolution(11);
-  _ten2Glyph->glyphScale(1500);
+  _ten2Glyph->glyphScale(_scale);
   _ten2Glyph->rgbParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
   
   this->positionSet(_shape->size[0]/2.0,
@@ -134,6 +137,7 @@ SeedPoint::SeedPoint(const Volume *vol,
 
   hsline = new HyperStreamline(vol);
   hsline->visible(false);
+  hsline->verbose(2);
 
   _npos = nrrdNew(); // will get set dynamically
   _ntmp = nrrdNew();
@@ -178,6 +182,14 @@ SeedPoint::kernel(int which, const NrrdKernelSpec *ksp) {
   if (gageKernel00 == which) {
     hsline->kernel(ksp);
   }
+}
+
+void
+SeedPoint::scale(double scl) {
+  
+  _ten1Glyph->glyphScale(scl);
+  _ten2Glyph->glyphScale(scl);
+  _starGlyph->scale(scl);
 }
 
 void
@@ -239,9 +251,9 @@ SeedPoint::positionSet(double X, double Y, double Z) {
   _ten1Probe->lpldCopy(_seedpld);
   _ten2Probe->lpldCopy(_seedpld);
   
-  ELL_4V_SET(tmat +  0, _scale, 0, 0, wpos[0]);
-  ELL_4V_SET(tmat +  4, 0, _scale, 0, wpos[1]);
-  ELL_4V_SET(tmat +  8, 0, 0, _scale, wpos[2]);
+  ELL_4V_SET(tmat +  0, _cursScale, 0, 0, wpos[0]);
+  ELL_4V_SET(tmat +  4, 0, _cursScale, 0, wpos[1]);
+  ELL_4V_SET(tmat +  8, 0, 0, _cursScale, wpos[2]);
   ELL_4V_SET(tmat + 12, 0, 0, 0, 1);
   _cursor->transformSet(tmat);
 }
@@ -260,10 +272,10 @@ SeedPoint::cursorScale(double scl) {
   char me[]="SeedPoint::cursorScale";
   float tmat[16];
 
-  _scale = scl;
-  ELL_4V_SET(tmat +  0, _scale, 0, 0, _pos[0]);
-  ELL_4V_SET(tmat +  4, 0, _scale, 0, _pos[1]);
-  ELL_4V_SET(tmat +  8, 0, 0, _scale, _pos[2]);
+  _cursScale = scl;
+  ELL_4V_SET(tmat +  0, _cursScale, 0, 0, _pos[0]);
+  ELL_4V_SET(tmat +  4, 0, _cursScale, 0, _pos[1]);
+  ELL_4V_SET(tmat +  8, 0, 0, _cursScale, _pos[2]);
   ELL_4V_SET(tmat + 12, 0, 0, 0, 1);
   _cursor->transformSet(tmat);
 }
@@ -312,16 +324,8 @@ SeedPoint::update() {
     _starGlyph->update();
   }
   if (hsline->visible()) {
-    ptrdiff_t min[2], max[2];
-    // _seedProbe->verticesGet(_npos);
-
     _seedProbe->verticesGet(_ntmp1);
-    min[0] = 0;
-    min[1] = 0;
-    max[0] = 5;
-    max[1] = _ntmp1->axis[1].size;
-    nrrdPad_nva(_ntmp2, _ntmp1, min, max, nrrdBoundaryWrap, AIR_NAN);
-    hsline->seedsSet(_ntmp2);
+    hsline->seedsSet(_ntmp1);
     hsline->update();
   }
   

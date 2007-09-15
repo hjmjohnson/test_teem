@@ -175,6 +175,21 @@ PolyData::color(unsigned int valuesIdx, const Cmap *cmap) {
     fprintf(stderr, "%s: can't modify data that is not owned\n", me);
     return;
   }
+  if (!cmap) {
+    fprintf(stderr, "%s: got NULL cmap\n", me);
+    return;
+  }
+  if (!_lpldOwn->rgba || _lpldOwn->rgbaNum != _lpldOwn->xyzwNum) {
+    fprintf(stderr, "!%s: have to allocate RGB!!!!!!!!!\n", me);
+    if (limnPolyDataAlloc(_lpldOwn,
+                          (limnPolyDataInfoBitFlag(_lpldOwn)
+                           | (1 << limnPolyDataInfoRGBA)),
+                          _lpldOwn->xyzwNum,
+                          _lpldOwn->indxNum,
+                          _lpldOwn->primNum)) {
+      fprintf(stderr, "%s: PROBLEM:\n%s", me, biffGetDone(LIMN));
+    }
+  }
   /*
   fprintf(stderr, "!%s: _values.size() = %u\n", me,
           (unsigned int)(_values.size()));
@@ -189,6 +204,11 @@ PolyData::color(unsigned int valuesIdx, const Cmap *cmap) {
   unsigned int N = _lpldOwn->xyzwNum;
   unsigned char *nrgba = AIR_CAST(unsigned char*, _nrgba->data);
   unsigned char *vrgba = _lpldOwn->rgba;
+  if (!(nrgba && vrgba)) {
+    fprintf(stderr, "%s: didn't have non-NULL nrgba %p and vrgba %p\n", me,
+            nrgba, vrgba);
+    return;
+  }
   for (unsigned int I=0; I<N; I++) {
     nrgba[3] *= _valid[I];   // needs to persist in _nrgba!!
     ELL_4V_COPY(vrgba, nrgba);
