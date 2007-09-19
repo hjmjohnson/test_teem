@@ -420,7 +420,7 @@ PolyData::drawImmediate() {
     if (0) {
       FILE *file;
       file = fopen("all.lmpd", "wb");
-      limnPolyDataLMPDWrite(file, lpld);
+      limnPolyDataWriteLMPD(file, lpld);
       fclose(file);
     }
     for (unsigned int primIdx=0; primIdx<lpld->primNum; primIdx++) {
@@ -533,7 +533,7 @@ void
 PolyData::IVWrite(FILE *file) const {
   char me[]="PolyData::IVWrite", *err;
 
-  if (limnPolyDataIVWrite(file, this->polyData())) {
+  if (limnPolyDataWriteIV(file, this->polyData())) {
     err = biffGetDone(LIMN);
     fprintf(stderr, "%s: couldn't save:\n%s", me, err);
     free(err);

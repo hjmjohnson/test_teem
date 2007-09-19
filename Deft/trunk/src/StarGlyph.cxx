@@ -159,7 +159,7 @@ StarGlyph::geomAlloc() {
   if (0) {
     FILE *file;
     file = fopen("new.lmpd", "wb");
-    limnPolyDataLMPDWrite(file, _lpldOwn);
+    limnPolyDataWriteLMPD(file, _lpldOwn);
     fclose(file);
   }
   return;
@@ -229,7 +229,7 @@ StarGlyph::geomSet() {
   if (0) {
     FILE *file;
     file = fopen("all.lmpd", "wb");
-    if (limnPolyDataLMPDWrite(file, _lpldOwn)) {
+    if (limnPolyDataWriteLMPD(file, _lpldOwn)) {
       fprintf(stderr, "!%s: problem:\n%s", me, biffGetDone(LIMN));
     }
     fclose(file);

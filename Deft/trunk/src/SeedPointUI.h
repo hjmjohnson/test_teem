@@ -64,8 +64,8 @@ private:
   fltk::CheckButton *_ten2GlyphDoButton;
   static void ten2GlyphDo_cb(fltk::CheckButton *but, SeedPointUI *ui);
 
-  fltk::CheckButton *_tractDoButton;
-  static void tractDo_cb(fltk::CheckButton *but, SeedPointUI *ui);
+  fltk::CheckButton *_fiberDoButton;
+  static void fiberDo_cb(fltk::CheckButton *but, SeedPointUI *ui);
 
   Slider *_scaleSlider;
   static void scale_cb(Slider *slider, SeedPointUI *ui);
@@ -73,6 +73,9 @@ private:
   Slider *_positionSlider[3];
   static void position_cb(Slider *slider, SeedPointUI *ui);
 
+  fltk::Choice *_fiberTypeMenu;
+  static void fiberType_cb(fltk::Choice *menu, SeedPointUI *ui);
+  
 };
 
 } /* namespace Deft */

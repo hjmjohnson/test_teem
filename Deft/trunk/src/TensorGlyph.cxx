@@ -921,7 +921,7 @@ TensorGlyph::glyphPaletteUpdate() {
             char filename[128];
             sprintf(filename, "glyph-%03u.iv", cpIdx + _baryRes*clIdx);
             file = fopen(filename, "w");
-            if (limnPolyDataIVWrite(file, lpld)) {
+            if (limnPolyDataWriteIV(file, lpld)) {
               char *err = biffGetDone(LIMN);
               fprintf(stderr, "%s: couldn't save %s:\n%s", me, filename, err);
               free(err);

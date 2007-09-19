@@ -219,7 +219,7 @@ SeedPoint::ten2GlyphDo(bool doit) {
 }
 
 void
-SeedPoint::tractDo(bool doit) {
+SeedPoint::fiberDo(bool doit) {
   hsline->visible(doit); 
   if (doit) {
     this->update();

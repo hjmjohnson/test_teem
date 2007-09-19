@@ -100,14 +100,14 @@ main(int argc, char **argv) {
   airMopAdd(mop, lpld, (airMopper)limnPolyDataNix, airMopAlways);
   if (airEndsWith(inS, ".lmpd")) {
     if (0) {
-      ret = (limnPolyDataLMPDRead(lpld, file)
+      ret = (limnPolyDataReadLMPD(lpld, file)
              || limnPolyDataVertexWindingFix(lpld, AIR_TRUE)
              || limnPolyDataVertexNormals(lpld));
     } else {
-      ret = limnPolyDataLMPDRead(lpld, file);
+      ret = limnPolyDataReadLMPD(lpld, file);
     }
   } else {
-    ret = (limnPolyDataOFFRead(lpld, file)
+    ret = (limnPolyDataReadOFF(lpld, file)
            || limnPolyDataVertexWindingFix(lpld, AIR_TRUE)
            || limnPolyDataVertexNormals(lpld));
   }
