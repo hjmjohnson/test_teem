@@ -67,9 +67,9 @@ SeedPointUI::SeedPointUI(SeedPoint *sp, Viewer *vw) {
   _starGlyphDoButton->callback((fltk::Callback*)starGlyphDo_cb, this);
 
   // ----------------------------------
-  _tractDoButton = new fltk::CheckButton(4*W/5, winy, W/5, lineH, "Tract");
-  _tractDoButton->value(_seedpoint->tractDo());
-  _tractDoButton->callback((fltk::Callback*)tractDo_cb, this);
+  _fiberDoButton = new fltk::CheckButton(4*W/5, winy, W/5, lineH, "Fiber");
+  _fiberDoButton->value(_seedpoint->fiberDo());
+  _fiberDoButton->callback((fltk::Callback*)fiberDo_cb, this);
 
   winy += lineH;
 
@@ -100,6 +100,19 @@ SeedPointUI::SeedPointUI(SeedPoint *sp, Viewer *vw) {
   for (unsigned int pli=0; pli<3; pli++) {
     _positionSlider[pli]->value(pos[pli]);
   }
+
+  // ----------------------------------
+  _fiberTypeMenu = new fltk::Choice(W/4, winy, W/4, incy=20, "Fiber Type");
+  const airEnum *enm = tenDwiFiberType;
+  int itu = airEnumUnknown(enm);
+  int itl = airEnumLast(enm);
+  for (int qi=itu+1; qi<=itl; qi++) {
+    _fiberTypeMenu->add(airEnumStr(enm, qi), this);
+  }
+  _fiberTypeMenu->callback((fltk::Callback*)(fiberType_cb), this);
+  const char *defStr = airEnumStr(enm, sp->fiberType());
+  _fiberTypeMenu->value(((fltk::Group*)_fiberTypeMenu)
+                        ->find(_fiberTypeMenu->find(defStr)));
 
   _win->end();
 }
@@ -151,9 +164,9 @@ SeedPointUI::starGlyphDo_cb(fltk::CheckButton *but, SeedPointUI *ui) {
 }
 
 void
-SeedPointUI::tractDo_cb(fltk::CheckButton *but, SeedPointUI *ui) {
+SeedPointUI::fiberDo_cb(fltk::CheckButton *but, SeedPointUI *ui) {
 
-  ui->_seedpoint->tractDo(but->value());
+  ui->_seedpoint->fiberDo(but->value());
   ui->redraw();
 }
 
@@ -173,6 +186,15 @@ SeedPointUI::position_cb(Slider *, SeedPointUI *ui) {
   ui->_seedpoint->positionSet(ui->_positionSlider[0]->value(),
                               ui->_positionSlider[1]->value(),
                               ui->_positionSlider[2]->value());
+  ui->_seedpoint->update();
+  ui->redraw();
+}
+
+void
+SeedPointUI::fiberType_cb(fltk::Choice *menu,
+                          SeedPointUI *ui) {
+  ui->_seedpoint->fiberType(airEnumVal(tenDwiFiberType,
+                                       menu->item()->label()));
   ui->_seedpoint->update();
   ui->redraw();
 }

@@ -63,8 +63,11 @@ public:
   void ten2GlyphDo(bool doit);
   bool ten2GlyphDo() const { return _ten2Glyph->visible(); }
   
-  void tractDo(bool doit);
-  bool tractDo() const { return hsline->visible(); }
+  void fiberDo(bool doit);
+  bool fiberDo() const { return hsline->visible(); }
+  
+  void fiberType(int type) { hsline->fiberType(type); }
+  int fiberType() const { return hsline->fiberType(); }
   
   void positionSet(double X, double Y, double Z);
   void positionGet(double *pos) const;
