@@ -317,43 +317,53 @@ parm[1]=cut-off<br>
 <tr>
 <td><tt>nrrdKernelHann</tt>
 <td>"hann:<i>cut</i>"
-<td>1:<br>
-parm[0]=cut-off<br>
-<td>Hann-windowed sinc() function.  Cut-off is measured in units of samples.
-
+<td>2:<br>
+parm[0]=scaling<br>
+parm[1]=cut-off<br>
+<td>Hann-windowed sinc() function.  The scaling parameter allows you to
+stretch the kernel so that its zero-crossings are either closer (parm[0]&lt;1)
+or further apart (parm[0]&gt;1) than the integers. parm[0]=1 is how most
+people would expect the kernel to be. The cut-off is measured
+in units of zero-crossings.
 <tr>
 <td><tt>nrrdKernelHannD</tt>
 <td>"hannd:<i>cut</i>"
-<td>1:<br>
-parm[0]=cut-off<br>
+<td>2:<br>
+parm[0]=scaling<br>
+parm[1]=cut-off<br>
 <td>First derivative of Hann-windowed sinc()
 
 <tr>
 <td><tt>nrrdKernelHannDD</tt>
 <td>"hanndd:<i>cut</i>"
-<td>1:<br>
-parm[0]=cut-off<br>
+<td>2:<br>
+parm[0]=scaling<br>
+parm[1]=cut-off<br>
 <td>Second derivative of Hann-windowed sinc()
 
 <tr>
 <td><tt>nrrdKernelBlackman</tt>
 <td>"hann:<i>cut</i>"
-<td>1:<br>
-parm[0]=cut-off<br>
-<td>Blackman-windowed sinc() function.  Cut-off is measured in units of samples.
+<td>2:<br>
+parm[0]=scaling<br>
+parm[1]=cut-off<br>
+<td>Blackman-windowed sinc() function.  Scaling and cut-off parameters
+have the same semantics as with <tt>nrrdKernelHann</tt> (above).
 
 <tr>
 <td><tt>nrrdKernelBlackmanD</tt>
 <td>"hannd:<i>cut</i>"
-<td>1:<br>
-parm[0]=cut-off<br>
+<td>2:<br>
+parm[0]=scaling<br>
+parm[1]=cut-off<br>
 <td>First derivative of Blackman-windowed sinc()
 
 <tr>
 <td><tt>nrrdKernelBlackmanDD</tt>
 <td>"hanndd:<i>cut</i>"
-<td>1:<br>
-parm[0]=cut-off<br>
+<td>2:<br>
+parm[0]=scaling<br>
+parm[1]=cut-off<br>
 <td>Second derivative of Blackman-windowed sinc()
 
 </table>
