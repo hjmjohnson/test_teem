@@ -36,9 +36,40 @@ Teem: Build
 
 <p>
 
-<h2>Windows users (except Cygwin): <a href="windows.html">Go here</a></h2>
+<pre>
 
-<h2>The basic steps</h2>
+
+</pre>
+
+<h2>CMake</h2>
+
+The best way to build Teem is with <a
+href="http://www.cmake.org">CMake</a>.  Pre-compiled binaries of CMake
+<a href="http://www.cmake.org/HTML/Download.html">are available</a>.
+CMake allows Teem to be built for any platform, including Windows,
+with relative ease, and provides the best control over shared
+libraries, external dependencies, and so forth.
+
+<p>
+
+The information below refers to a home-grown system of GNUMakefiles
+which is no longer supported.
+
+<pre>
+
+
+
+
+
+
+
+
+
+</pre>
+
+<h3>Windows users (except Cygwin): <a href="windows.html">Go here</a></h3>
+
+<h3>The basic steps</h3>
 
 To build <b>teem</b> you will need <a
 href="http://www.gnu.org/software/make/make.html">GNU make</a>.  I am
@@ -123,16 +154,19 @@ message from <tt>nrrdSanity</tt>.
 
 </ol>
 
-<h2>Making a better teem: zlib, bzip2, png, and pthread</h2>
+<h3>Making a better teem: zlib, bzip2, png, and pthread</h3>
 
 If you want <b>hoover</b> to be multi-threaded, or
 if you want <b>nrrd</b> to support zlib/gzip or bzip2
 compression, or allow <b>nrrd</b> to read and write PNG images, you
 need to set additional environment variables, as well as have compiled
 version of the associated libraries.  The following three variables
-need simply to be set (as with "<tt>setenv&nbsp;TEEM_ZLIB</tt>"), as
+need simply to be set (as with "<tt>setenv&nbsp;TEEM_ZLIB</tt>" for
+csh-style shells, or "<tt>export&nbsp;TEEM_ZLIB</tt>" for sh-style
+shells), as
 opposed to set to a specific string (as with
-"<tt>setenv&nbsp;TEEM_ZLIB&nbsp;true</tt>"):
+"<tt>setenv&nbsp;TEEM_ZLIB&nbsp;true</tt>"
+or "<tt>export&nbsp;TEEM_ZLIB=true</tt>"):
 
 <p>
 
