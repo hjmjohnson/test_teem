@@ -52,6 +52,41 @@ libraries, external dependencies, and so forth.
 
 <p>
 
+For those new to Cmake, the easiest path may be to use the text-based
+program ccmake, as follows:
+
+<ul>
+
+  <li> Go to a directory where the "teem" source subdirectory should be
+  created.
+  <li> <tt>svn co https://teem.svn.sourceforge.net/svnroot/teem/teem/trunk teem</tt>
+  <li> Make a directory for all the built object files and libraries
+  (e.g. teem-build)
+  <li> <tt>mkdir teem-build</tt>
+  <li> <tt>cd teem-build</tt>
+  <li> <tt>ccmake ../teem</tt> (or wherever the Teem source is)
+  <li> Type "c".  Cmake chews on a bunch of stuff, saying "Configuring ..."
+  <li> You get a screen of options to edit.  Use the up and down arrows to
+  go between them. Hit return to begin and end editing text fields, and to
+  toggle the binary ON/OFF fields.  When editing text fields, there's no
+  clear visual indication of whether you are or aren't editing the fields;
+  its crap.
+  <li> If you want to install the binaries and libraries somewhere, set
+  that directory as <tt>CMAKE_INSTALL_PREFIX</tt>.  In that directory
+  will be created subdirectories <tt>bin</tt>, <tt>include</tt>, and
+  <tt>lib</tt>.
+  <li> Turn ON "BUILD_SHARED_LIBS", and the leave ON the other formats
+  and encodings you want at the bottom.
+  <li> Type "c" again, then "g", which causes cmake to generate the Makefile
+  and quit.
+  <li> <tt>make</tt>
+  <li> <tt>make install</tt> (if you want)
+
+</ul>
+
+
+<p>
+
 The information below refers to a home-grown system of GNUMakefiles
 which is no longer supported.
 
