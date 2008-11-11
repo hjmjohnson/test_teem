@@ -42,7 +42,7 @@ Teem: Gage
 <ul>
 <li><a href="#term">Terminology</a>
 <li><a href="#usage">Self-contained usage example</a>
-<li><a href="#gage_t">The gage_t typedef</a>
+<li><a href="#gage_t">The gage_t typedef is no more</a>
 <li><a href="#diff">Differentiation</a>
 <li><a href="#steps">The steps of gageProbe()</a>
 <li><a href="#answer">The Answer array</a>
@@ -160,7 +160,7 @@ errors: one should <tt>free()</tt> the return of
 char me[]="gagedemo";
 gageContext *ctx;
 gagePerVolume *pvl;
-const gage_t *grad;
+const double *grad;
 Nrrd *nin;
 double kparm[NRRD_KERNEL_PARMS_NUM];
 int E;
@@ -215,22 +215,12 @@ for speed reasons, but in the case of a problem (such as sampling outside
 the volume), then error descriptions end up in <tt>ctx->errNum</tt>
 and <tt>ctx->errStr</tt>.
 
-<a name="gage_t"><h2>The gage_t typedef</h2></a>
+<a name="gage_t"><h2>The gage_t typedef is no more</h2></a>
 
-All of the measures that Gage handles are floating point.  While it
-would be ideal if the choice between float and double could be made at
-run time, this would create a more complicated API.  For the time
-being, the solution is to use a typedef, "<tt>gage_t</tt>", that
-resolves to either <tt>float</tt> or <tt>double</tt> at compile time.
-Its not pretty, but it is also far from the greatest shortcoming in
-gage.
-
-<p>
-
-Since modern processors can operate on double-precision floats with
-little performance hit, Gage may eventually switch to using
-<tt>double</tt>s internally, while still providing the <tt>gage_t</tt>
-typedef for legacy purposes.
+There used to be a <tt>gage_t</tt> typedef that was used for the
+return type of all the gage answer computations. This became annoying.
+After the Teem-1.9 release, <tt>double</tt> served this role, and 
+<tt>gage_t</tt> was removed.  Apologies for any broken code.
 
 <a name="diff"><h2>Differentiation</h2></a>
 
