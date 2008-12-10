@@ -1,3 +1,21 @@
+--------- teem 1.10 priority
+
+fix all 
+"dereferencing type-punned pointer will break strict-aliasing rules"
+warnings on a modern linux system
+
+Make sure the CMake and GNUMake agree on source files per-library
+
+decide if <LIB>_EXPORT should just be TEEM_EXPORT
+
+--------- for after teem 1.10
+
+Fix the "unu dist" segfault that I discovered awhile ago (I can
+provide the input file that triggers this)
+
+Fix the marching-cubes tables in seek; there's some evidence of a
+bug uncovered by the anisotropy crease research
+
 --------- teem 1.9 cut-off
 
 for cmake:
@@ -5,7 +23,6 @@ for cmake:
  - build pv on windows
  - see if wild-card expansion works as expected on windows
  - make cmd-line utilities link with static libs
- - enable turning on zlib, bz2, threads, and png
 
 [portable54-250:~/d/parepi/6] gk%
 tend estim -new -sigma 0.01 -est wls -i 6crop-dwi.nrrd \
@@ -16,7 +33,6 @@ tend estim -new -sigma 0.01 -est wls -i 6crop-dwi.nrrd \
 [ten] _tenEstimate1TensorSingle: estimation failed
 [ten] _tenEstimate1Tensor_WLS: trying to improve on first WLS
 [ten] _tenEstimate1TensorSimulateSingle
-
 
 gage: re-modularize to facilitate probing bricked data
 
@@ -40,8 +56,6 @@ solved the problem...
   and fails at link-time with "<new macro> symbol undefined"
 - want seperate directories for static and shared libraries
 - want bin/dev and bin/install targets
-
-add BSD architecture that guy emailed me about
 
 unu: jhisto works with axis[0] elements when given a single nrrd
 
@@ -112,9 +126,6 @@ nrrd: speed up nrrdCCFind
 
 bane: finish updating tutorial
 
-nrrd: nrrdKernel*Parse should allocate the thing and return it, instead of
-returning an int error code 
-
 dye: see if dyeColorParse should allocate the thing and return it
 
 FAQ on teem coding standards
@@ -137,8 +148,6 @@ make: Test that shared libraries work everywhere they should.
 limn: make it smarter- so that joining parts together is possible in a
 way that facilitates transformations and correct drawing.  This really
 requires general data structures for 2-D graphics primatives...
-
-make: finish documenting how GNUMake works for teem
 
 unrrdu: standardize hest framework for doing unu/gkms/tend style programs
 

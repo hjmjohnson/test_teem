@@ -36,14 +36,14 @@ Teem: Download
 
 <p>
 
+<h3> Checking out a source tree </h3>
+
 As of November 5, 2007 we have moved from CVS to using <a
-href="http://subversion.tigris.org/">Subversion</a>.  Subversion will
-better facilitates actions such as moving and renaming files as well
-other benefits.
-<br /><br />
-To check out the current source via subversion:
+href="http://subversion.tigris.org/">Subversion</a>.
+<br>
+To check out the current source:
 <blockquote>
-<tt>svn co https://teem.svn.sourceforge.net/svnroot/teem/teem/trunk teem</tt><br>
+<tt>svn co http://teem.svn.sourceforge.net/svnroot/teem/teem/trunk teem</tt><br>
 </blockquote>
 
 You can also browse the source online via
@@ -94,6 +94,45 @@ mailing list, which is the primary venue for asking questions about Teem.
 
 <!--  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
 
+<tr>
+  <td align=left valign=middle>
+    <font size="+1">teem-1.10.0</font><br>
+    <small>(Released: December 10, 2008)</small><br>
+
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.10.0-src.tar.gz?download">Source for all platforms</a>
+
+<br>
+
+  <td>
+  <td align=left>
+<a href="https://sourceforge.net/project/shownotes.php?group_id=85445&release_id=646135">3 years of changes</a>, but hopefully no show-stoppers.
+<ul>
+
+<li> Improved <a href="http://www.cmake.org">CMake</a> support.
+
+<li> <a href="../nrrd/index.html"><b>nrrd</b></a>/:
+  Negative byteskipping compatible with gzip encoding.
+
+<li> <a href="../gage/index.html"><b>gage</b></a>/:
+  <tt>gage_t</tt> is gone; use <tt>double</tt>. Fixed long-standing bug
+  in how the derivatives were normalized in volumes with only per-axis
+  spacing (that is, lacking full orientation info), which may actually be
+  an undesirable change.
+
+<li> <a href="../ten/index.html"><b>ten</b></a>/:
+<tt>tenDwiGageKind</tt> is the first dynamic gageKind, meaning that
+information is actually allocated in the gageKind, rather than being
+completely set at compile time (as is gageKindScl, gageKindScl, and
+tenGage), used for DWI-based (rather than tensor-based) tractography.
+
+  <li> Lots of other new stuff.
+
+
+</ul>
+
+<tr><td><hr noshade><td><td>
+
+<!--  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
 <tr>
   <td align=left valign=middle>
     <font size="+1">teem-1.9.0</font><br>
