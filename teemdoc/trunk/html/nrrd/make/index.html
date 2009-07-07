@@ -64,7 +64,10 @@ is constant along Y and Z:
 <blockquote><pre>
 echo "-1.3 1.3   -1.3 1.3   -1.3 1.3   -1.3 1.3" \
  | unu reshape -s 2 2 2 \
- | unu resample -s 64 64 64 -k tent -c node -o x.nrrd
+ | unu resample -s 64 64 64 -k tent -c node \
+ | unu axinfo -a 0 -sp 1 \
+ | unu axinfo -a 1 -sp 1 \
+ | unu axinfo -a 2 -sp 1 -o x.nrrd
 </pre></blockquote>
 
 <ul>
@@ -81,6 +84,8 @@ ordering of the samples, it remains the same as indicated by the
 "<tt>echo</tt>" command.
 <li> "<tt>unu resample</tt>" upsamples this is 64x64x64 using linear
 interpolation ("<tt>-k tent</tt>").
+<li> "<tt>unu axinfo</tt>" sets minimal spacing information on each 
+axis.  This will eventually be easier.
 </ul>
 
 <p>
