@@ -150,3 +150,4 @@ Deft_lmpd: $(OBJS) main-lmpd.o
 
 clean:
 	rm -f $(OBJS) *.o Deft_* puller
+	rm -rf puller.dSYM
