@@ -252,6 +252,17 @@ HyperStreamlineUI::HyperStreamlineUI(HyperStreamline *hs, Object *vobj,
   winy += incy;
   winy += 5;
 
+  _probeCapSlider = new Deft::Slider(0, winy, W, incy=40, "Fiber Select");
+  _probeCapSlider->align(fltk::ALIGN_LEFT);
+  _probeCapSlider->range(0, 1200);
+  _probeCapSlider->step(1);
+  _probeCapSlider->fastUpdate(0);
+  _probeCapSlider->value(0);
+  _probeCapSlider->callback((fltk::Callback*)_probeCap_cb, this);
+    
+  winy += incy;
+  winy += 5;
+
   _kernelMenu = new fltk::Choice(6*W/50, winy, 8*W/50, incy=lineH, "Kernel");
   for (unsigned int ki=kernelUnknown+1; ki<kernelLast; ki++) {
     _kernelMenu->add(kernelStr[ki], this);
@@ -627,6 +638,16 @@ HyperStreamlineUI::_stopSlider_cb(Deft::Slider *slider,
         ui->_hsline[idx]->stopRadius(slider->value());
       }
     }
+  }
+  ui->redraw();
+}
+
+void
+HyperStreamlineUI::_probeCap_cb(Deft::Slider *slider, 
+                                HyperStreamlineUI *ui) {
+  
+  for (unsigned int idx=0; idx<ui->_hsline.size(); idx++) {
+    ui->_hsline[idx]->probeCap(AIR_CAST(unsigned int, slider->value()));
   }
   ui->redraw();
 }

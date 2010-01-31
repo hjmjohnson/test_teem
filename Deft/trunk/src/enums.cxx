@@ -32,8 +32,8 @@ namespace Deft {
 ** this was basically a cut-and-paste from fltk/events.h from
 ** fltk version 2.0 ...
 */
-char
-_fltkEventStr[fltk::TOOLTIP+1][AIR_STRLEN_SMALL] = {
+const char *
+_fltkEventStr[fltk::TOOLTIP+1] = {
   "NO_EVENT",
   "PUSH",
   "RELEASE",
@@ -75,8 +75,8 @@ fltkEvent = &_fltkEvent;
 
 /* ------------------------------------------------------------- */
 
-char
-_viewerModeStr[DEFT_VIEWER_MODE_MAX+1][AIR_STRLEN_SMALL] = {
+const char *
+_viewerModeStr[DEFT_VIEWER_MODE_MAX+1] = {
   "unknown mode",
   "fov",
   "depth",
@@ -106,8 +106,8 @@ viewerMode = &_viewerMode;
 
 /* ------------------------------------------------------------- */
 
-char
-_colorTenQuantityStr[DEFT_COLOR_TEN_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
+const char *
+_colorTenQuantityStr[DEFT_COLOR_TEN_QUANTITY_MAX+1] = {
   "unknown query",
 
   "conf",
@@ -117,6 +117,7 @@ _colorTenQuantityStr[DEFT_COLOR_TEN_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
   "(Mode,FA)",
   "Mode",
   "FA",
+  "Omega",
   "Trace",
   "(Cl,Cp)",
   "Cl",
@@ -136,7 +137,15 @@ _colorTenQuantityStr[DEFT_COLOR_TEN_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
   "|GV(Om).evec0|",
   "(Gm(Om),|N(Om).evec0|)",
   "Da(Om)",
-  "Df(Om)"
+  "Df(Om)",
+
+  "|GV(Cn).evec0|",
+  "(Gm(Cn),|N(Cn).evec0|)",
+  "Da(Cn)",
+  "Df(Cn)",
+
+  "curv",
+  "disp"
 };
 
 airEnum
@@ -154,8 +163,8 @@ colorTenQuantity = &_colorTenQuantity;
 
 /* ------------------------------------------------------------- */
 
-char
-_alphaMaskTenQuantityStr[DEFT_ALPHA_MASK_TEN_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
+const char *
+_alphaMaskTenQuantityStr[DEFT_ALPHA_MASK_TEN_QUANTITY_MAX+1] = {
   "unknown query",
   "conf",
   "FA",
@@ -181,8 +190,8 @@ alphaMaskTenQuantity = &_alphaMaskTenQuantity;
 
 /* ------------------------------------------------------------- */
 
-char
-_colorDwiQuantityStr[DEFT_COLOR_DWI_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
+const char *
+_colorDwiQuantityStr[DEFT_COLOR_DWI_QUANTITY_MAX+1] = {
   "unknown query",
   "b0",
   "mdwi",
@@ -207,8 +216,8 @@ colorDwiQuantity = &_colorDwiQuantity;
 
 /* ------------------------------------------------------------- */
 
-char
-_alphaMaskDwiQuantityStr[DEFT_ALPHA_MASK_DWI_QUANTITY_MAX+1][AIR_STRLEN_SMALL] = {
+const char *
+_alphaMaskDwiQuantityStr[DEFT_ALPHA_MASK_DWI_QUANTITY_MAX+1] = {
   "unknown query",
   "b0",
   "mdwi",
@@ -227,5 +236,49 @@ _alphaMaskDwiQuantity = {
 
 airEnum *
 alphaMaskDwiQuantity = &_alphaMaskDwiQuantity;
+
+/* ------------------------------------------------------------- */
+
+const char *
+_colorSclQuantityStr[DEFT_COLOR_SCL_QUANTITY_MAX+1] = {
+  "unknown query",
+  "val",
+  "gradmag",
+  "mode"
+};
+
+airEnum
+_colorSclQuantity = {
+  "scl colormap query",
+  DEFT_COLOR_SCL_QUANTITY_MAX,
+  _colorSclQuantityStr, NULL,
+  NULL,
+  NULL, NULL,
+  AIR_FALSE
+};
+
+airEnum *
+colorSclQuantity = &_colorSclQuantity;
+
+/* ------------------------------------------------------------- */
+
+const char *
+_alphaMaskSclQuantityStr[DEFT_ALPHA_MASK_SCL_QUANTITY_MAX+1] = {
+  "unknown query",
+  "val",
+};
+
+airEnum
+_alphaMaskSclQuantity = {
+  "scl alpha mask query",
+  DEFT_ALPHA_MASK_SCL_QUANTITY_MAX,
+  _alphaMaskSclQuantityStr, NULL,
+  NULL,
+  NULL, NULL,
+  AIR_FALSE
+};
+
+airEnum *
+alphaMaskSclQuantity = &_alphaMaskSclQuantity;
 
 }

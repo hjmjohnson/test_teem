@@ -107,6 +107,9 @@ private:
   
   fltk::CheckButton *_stopFractionButton;
   Deft::Slider *_stopFractionSlider;
+
+  Deft::Slider *_probeCapSlider;
+  static void _probeCap_cb(Deft::Slider *slider, HyperStreamlineUI *ui);
   
   fltk::Choice *_kernelMenu;
   static void kernel_cb(fltk::Choice *menu, HyperStreamlineUI *ui);

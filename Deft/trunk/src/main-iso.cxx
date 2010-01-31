@@ -26,7 +26,7 @@
 #include "Contour.h"
 #include "Viewer.h"
 #include "ViewerUI.h"
-#include "Slider.H"
+#include "Slider.h"
 
 char *info = ("this might come in handy.");
 
@@ -126,7 +126,9 @@ main(int argc, char **argv) {
 
   bag.contour = new Deft::Contour();
   bag.contour->volumeSet(nin);
-  bag.contour->extract(0);
+  NrrdRange *nrange = nrrdRangeNewSet(nin, AIR_FALSE);
+  bag.contour->extract(AIR_LERP(0.999, nrange->min, nrange->max));
+  nrrdRangeNix(nrange);
 
   bag.scene->objectAdd(bag.contour);
 

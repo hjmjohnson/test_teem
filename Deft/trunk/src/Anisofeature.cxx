@@ -308,7 +308,7 @@ Anisofeature::strength(int sign, double strength) {
 
   if (!_hack) {
     int E=0;
-    if (!E) E |= seekStrengthSet(_sctx, sign, strength, strength);
+    if (!E) E |= seekStrengthSet(_sctx, sign, strength);
     ERROR_CHECK(SEEK);
   }
   _flag[flagFeatureParm] = true;

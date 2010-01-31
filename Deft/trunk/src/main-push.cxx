@@ -136,9 +136,8 @@ main(int argc, char *argv[]) {
   int camkeep;
   pushContext *pctx;
   Nrrd *_nin, *nin, *nPosIn=NULL;
-  NrrdKernelSpec *ksp00, *ksp11, *ksp22, *kspSSblur, *kspSS;
+  NrrdKernelSpec *ksp00, *ksp11, *ksp22;
   pushEnergySpec *ensp;
-  double rangeSS[2];
   
   float fr[3], at[3], up[3], fovy, neer, faar, dist, bg[3],
     anisoThresh, anisoThreshMin, glyphScale, sqdSharp;
@@ -168,7 +167,7 @@ main(int argc, char *argv[]) {
   hestOptAdd(&hopt, "wall", "wall", airTypeDouble, 1, 1,
              &(pctx->wall), "0.0",
              "spring constant of containing walls");
-  hestOptAdd(&hopt, "cnts", "scale", airTypeDouble, 1, 1, 
+  hestOptAdd(&hopt, "cntscl", "scale", airTypeDouble, 1, 1, 
              &(pctx->cntScl), "0.0",
              "scaling of containment force");
   hestOptAdd(&hopt, "limit", "frac", airTypeDouble, 1, 1, 
@@ -247,17 +246,6 @@ main(int argc, char *argv[]) {
              "cubicdd:1,0", "kernel for 2nd derivatives",
              NULL, NULL, nrrdHestKernelSpec);
 
-  hestOptAdd(&hopt, "ssn", "SS #", airTypeUInt, 1, 1, &(pctx->numSS),
-             "0", "how many scale-space samples to evaluate, "
-             "or 0 to turn-off all scale-space behavior");
-  hestOptAdd(&hopt, "ssr", "scale range", airTypeDouble, 2, 2, rangeSS,
-             "nan nan", "range of scales in scale-space");
-  hestOptAdd(&hopt, "kssblur", "kernel", airTypeOther, 1, 1, &kspSSblur,
-             "gauss:1,4", "kernel for blurring, to samplescale space",
-             NULL, NULL, nrrdHestKernelSpec);
-  hestOptAdd(&hopt, "kss", "kernel", airTypeOther, 1, 1, &kspSS,
-             "tent", "kernel for reconstructing from scale space samples",
-             NULL, NULL, nrrdHestKernelSpec);
   hestOptAdd(&hopt, "zc", "item", airTypeString, 1, 1, &zcStr, "omlapl",
              "item for zero-crossing surface (some 2nd deriv of a scalar)");
   hestOptAdd(&hopt, "gv", "item", airTypeString, 1, 1, &gvStr, "omgv",
@@ -346,20 +334,6 @@ main(int argc, char *argv[]) {
   nrrdKernelSpecSet(pctx->ksp00, ksp00->kernel, ksp00->parm);
   nrrdKernelSpecSet(pctx->ksp11, ksp11->kernel, ksp11->parm);
   nrrdKernelSpecSet(pctx->ksp22, ksp22->kernel, ksp22->parm);
-  nrrdKernelSpecSet(pctx->kspSSblur, kspSSblur->kernel, kspSSblur->parm);
-  nrrdKernelSpecSet(pctx->kspSS, kspSS->kernel, kspSS->parm);
-  if (pctx->numSS) {
-    pctx->minSS = rangeSS[0];
-    pctx->maxSS = rangeSS[1];
-    pctx->zcValSSItem = airEnumVal(tenGage, zcStr);
-    pctx->gradVecSSItem = airEnumVal(tenGage, gvStr);
-    if (!( pctx->zcValSSItem && pctx->gradVecSSItem )) {
-      fprintf(stderr, "%s: couldn't parse \"%s %s\" as 2 %s's (zc + gv)\n", me,
-              zcStr, gvStr, tenGage->name);
-      airMopError(mop);
-      return 1;
-    }
-  }
   if (strcmp("none", gravStr)) {
     pctx->gravItem = airEnumVal(tenGage, gravStr);
     if (tenGageUnknown == pctx->gravItem) {
@@ -503,10 +477,10 @@ main(int argc, char *argv[]) {
   double kparm[10] = {1,1,0};
   nrrdKernelSpecSet(ksp00_tmp, nrrdKernelTent, kparm);
   triplane->kernel(gageKernel00, ksp00_tmp);
-  triplane->colorQuantity(Deft::colorQuantityRgbLinear);
+  triplane->colorQuantity(Deft::colorTenQuantityRgbLinear);
   // HEY: you can eventually segfault if this isn't set here
   // shouldn't doing so be optional?
-  triplane->alphaMaskQuantity(Deft::alphaMaskQuantityConfidence);
+  triplane->alphaMaskQuantity(Deft::alphaMaskTenQuantityConfidence);
   triplane->visible(false);
 
   Deft::TriPlaneUI *planeUI = new Deft::TriPlaneUI(triplane, viewer);

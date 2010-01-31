@@ -48,6 +48,7 @@ main(int argc, char **argv) {
   float fr[3], at[3], up[3], fovy, neer, faar, dist, bg[3];
   int size[2], ortho, rght, atrel, ret, wire;
   lmpdBag bag;
+  double radius;
 
   mop = airMopNew();
   hparm = hestParmNew();
@@ -87,18 +88,20 @@ main(int argc, char **argv) {
              "initial window size");
   hestOptAdd(&hopt, "wire", NULL, airTypeInt, 0, 0, &wire, NULL,
              "use wireframe");
+  hestOptAdd(&hopt, "rad", "radius", airTypeDouble, 1, 1, &radius, "0.0",
+             "for lines, radius of tube wrapping");
   hestParseOrDie(hopt, argc-1, argv+1, hparm,
                  me, info, AIR_TRUE, AIR_TRUE, AIR_TRUE);
   airMopAdd(mop, hopt, (airMopper)hestOptFree, airMopAlways);
   airMopAdd(mop, hopt, (airMopper)hestParseFree, airMopAlways);
 
-  if (!(file = fopen(inS, "rb"))) {
+  if (!(file = airFopen(inS, stdin, "rb"))) {
     fprintf(stderr, "%s: couldn't open \"%s\" for reading\n", me, inS);
     airMopError(mop); return 1;
   }
   lpld = limnPolyDataNew();
   airMopAdd(mop, lpld, (airMopper)limnPolyDataNix, airMopAlways);
-  if (airEndsWith(inS, ".lmpd")) {
+  if (!strcmp("-", inS) || airEndsWith(inS, ".lmpd")) {
     if (0) {
       ret = (limnPolyDataReadLMPD(lpld, file)
              || limnPolyDataVertexWindingFix(lpld, AIR_TRUE)
@@ -135,6 +138,17 @@ main(int argc, char **argv) {
   // bag.viewer->helpPrint();
   Deft::ViewerUI *viewerUI = new Deft::ViewerUI(bag.viewer);
   viewerUI->show();
+
+  if ((1 << limnPrimitiveLineStrip) == limnPolyDataPrimitiveTypes(lpld)
+      && radius > 0) {
+    limnPolyData *tube = limnPolyDataNew();
+    limnPolyDataSpiralTubeWrap(tube, lpld, 
+                               limnPolyDataInfoBitFlag(lpld),
+                               NULL,
+                               8, 3, radius);
+    limnPolyDataCopy(lpld, tube);
+    limnPolyDataNix(tube);
+  }
 
   bag.poly = new Deft::PolyData(lpld);
   bag.poly->wireframe(wire);

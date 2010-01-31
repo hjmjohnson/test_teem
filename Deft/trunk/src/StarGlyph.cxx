@@ -48,8 +48,8 @@ StarGlyph::StarGlyph() : PolyData(limnPolyDataNew(), true) {
   }
 
   ELL_3V_SET(_offset, 0, 0, 0);
-  _scale = 1000;
-  _errThresh = 30;
+  _scale = 1300; // HEY!
+  _errThresh = 30; // HEY!
   _glyphBase = NULL;
 }
 

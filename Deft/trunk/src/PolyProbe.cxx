@@ -99,6 +99,9 @@ PolyProbe::volume(const Volume *vol) {
   } else if (!strcmp(TEN_DWI_GAGE_KIND_NAME, vol->kind()->name)) {
     _colorQuantityEnum = colorDwiQuantity;
     _alphaMaskQuantityEnum = alphaMaskDwiQuantity;
+  } else if (gageKindScl == vol->kind()) {
+    _colorQuantityEnum = colorSclQuantity;
+    _alphaMaskQuantityEnum = alphaMaskSclQuantity;
   } else {
     fprintf(stderr, "!%s: unrecognized kind %s!!!\n", me, vol->kind()->name);
     return;
@@ -212,6 +215,7 @@ PolyProbe::colorQuantity(int quantity) {
   }
   // else
   strcpy(fname, homeDir); // start making cmap filenames
+  fprintf(stderr, "%s: fname = |%s|\n", me, fname);
   if (tenGageKind == _gage->volume()->kind()) {
     switch(quantity) {
     case colorTenQuantityConf:
@@ -221,7 +225,7 @@ PolyProbe::colorQuantity(int quantity) {
       lret = nrrdLoad(_nrmap1D, fname, NULL);
       _cmap->rmap1D(_nrmap1D);
       _cmap->min1D(1);
-      _cmap->max1D(2);
+      _cmap->max1D(1.77);
       break;
     case colorTenQuantityRgbLinear:
       _queryColor.resize(1);
@@ -249,7 +253,7 @@ PolyProbe::colorQuantity(int quantity) {
       break;
     case colorTenQuantityMode:
       _queryColor.resize(1);
-      _queryColor[0] = tenGageModeWarp;
+      _queryColor[0] = tenGageMode;
       strcat(fname, "cmap/isobow4-1D.nrrd");
       lret = nrrdLoad(_nlut1D, fname, NULL);
       _cmap->lut1D(_nlut1D);
@@ -260,10 +264,23 @@ PolyProbe::colorQuantity(int quantity) {
       _queryColor.resize(1);
       _queryColor[0] = tenGageFA;
       strcat(fname, "cmap/gray.nrrd");
+      // strcat(fname, "cmap/lines.nrrd");
       lret = nrrdLoad(_nrmap1D, fname, NULL);
       _cmap->rmap1D(_nrmap1D);
       _cmap->min1D(0);
       _cmap->max1D(1);
+      _cmap->max1D(0.881);
+      break;
+    case colorTenQuantityOmega:
+      _queryColor.resize(1);
+      _queryColor[0] = tenGageOmega;
+      strcat(fname, "cmap/gray.nrrd");
+      // strcat(fname, "cmap/lines.nrrd");
+      lret = nrrdLoad(_nrmap1D, fname, NULL);
+      _cmap->rmap1D(_nrmap1D);
+      _cmap->min1D(0);
+      _cmap->max1D(1);
+      _cmap->max1D(0.881);
       break;
     case colorTenQuantityTrace:
       _queryColor.resize(1);
@@ -336,9 +353,10 @@ PolyProbe::colorQuantity(int quantity) {
         break;
       }
       break;
-    case colorTenQuantityTrDiffusionAngle:
-    case colorTenQuantityFADiffusionAngle:
-    case colorTenQuantityOmegaDiffusionAngle:
+    case colorTenQuantityTrDiffusionAlign:
+    case colorTenQuantityFADiffusionAlign:
+    case colorTenQuantityOmegaDiffusionAlign:
+    case colorTenQuantityConfDiffusionAlign:
       _queryColor.resize(1);
       strcat(fname, "cmap/isobow4-1D.nrrd");
       lret = nrrdLoad(_nrmap1D, fname, NULL);
@@ -346,26 +364,30 @@ PolyProbe::colorQuantity(int quantity) {
       _cmap->min1D(0);
       _cmap->max1D(1);
       switch(quantity) {
-      case colorTenQuantityTrDiffusionAngle:
-        _queryColor[0] = tenGageTraceDiffusionAngle;
+      case colorTenQuantityTrDiffusionAlign:
+        _queryColor[0] = tenGageTraceDiffusionAlign;
         break;
-      case colorTenQuantityFADiffusionAngle:
-        _queryColor[0] = tenGageFADiffusionAngle;
+      case colorTenQuantityFADiffusionAlign:
+        _queryColor[0] = tenGageFADiffusionAlign;
         break;
-      case colorTenQuantityOmegaDiffusionAngle:
-        _queryColor[0] = tenGageOmegaDiffusionAngle;
+      case colorTenQuantityOmegaDiffusionAlign:
+        _queryColor[0] = tenGageOmegaDiffusionAlign;
+        break;
+      case colorTenQuantityConfDiffusionAlign:
+        _queryColor[0] = tenGageConfDiffusionAlign;
         break;
       }
       break;
     case colorTenQuantityTrDiffusionFraction:
     case colorTenQuantityFADiffusionFraction:
     case colorTenQuantityOmegaDiffusionFraction:
+    case colorTenQuantityConfDiffusionFraction:
       _queryColor.resize(1);
       strcat(fname, "cmap/isobow4-1D.nrrd");
       lret = nrrdLoad(_nrmap1D, fname, NULL);
       _cmap->rmap1D(_nrmap1D);
       _cmap->min1D(0.26); // HEY: hack!
-      _cmap->max1D(0.41); // HEY: hack!
+      _cmap->max1D(0.44); // HEY: hack!
       switch(quantity) {
       case colorTenQuantityTrDiffusionFraction:
         _queryColor[0] = tenGageTraceDiffusionFraction;
@@ -376,11 +398,14 @@ PolyProbe::colorQuantity(int quantity) {
       case colorTenQuantityOmegaDiffusionFraction:
         _queryColor[0] = tenGageOmegaDiffusionFraction;
         break;
+      case colorTenQuantityConfDiffusionFraction:
+        _queryColor[0] = tenGageConfDiffusionFraction;
+        break;
       }
       break;
     case colorTenQuantityTrGradEvec0:
       _queryColor.resize(2);
-      _queryColor[0] = tenGageTraceDiffusionAngle;
+      _queryColor[0] = tenGageTraceDiffusionAlign;
       _cmap->min2D0(0);
       _cmap->max2D0(1);
       _queryColor[1] = tenGageTraceGradMag;
@@ -392,7 +417,7 @@ PolyProbe::colorQuantity(int quantity) {
       break;
     case colorTenQuantityFAGradEvec0:
       _queryColor.resize(2);
-      _queryColor[0] = tenGageFADiffusionAngle;
+      _queryColor[0] = tenGageFADiffusionAlign;
       _cmap->min2D0(0);
       _cmap->max2D0(1);
       _queryColor[1] = tenGageFAGradMag;
@@ -401,6 +426,23 @@ PolyProbe::colorQuantity(int quantity) {
       strcat(fname, "cmap/isobow4-2D.nrrd");
       lret = nrrdLoad(_nlut2D, fname, NULL);
       _cmap->lut2D(_nlut2D);
+      break;
+    case colorTenQuantityCurving:
+    case colorTenQuantityDispersion:
+      _queryColor.resize(1);
+      strcat(fname, "cmap/gray.nrrd");
+      lret = nrrdLoad(_nrmap1D, fname, NULL);
+      _cmap->rmap1D(_nrmap1D);
+      _cmap->min1D(0.0);
+      _cmap->max1D(0.1); // HEY: hack!
+      switch(quantity) {
+      case colorTenQuantityCurving:
+        _queryColor[0] = tenGageFiberCurving;
+        break;
+      case colorTenQuantityDispersion:
+        _queryColor[0] = tenGageFiberDispersion;
+        break;
+      }
       break;
     default:
       fprintf(stderr, "%s: unknown colorTenQuantity %d ??? \n", me, quantity);
@@ -443,7 +485,7 @@ PolyProbe::colorQuantity(int quantity) {
       lret = nrrdLoad(_nrmap1D, fname, NULL);
       _cmap->rmap1D(_nrmap1D);
       _cmap->min1D(0);
-      _cmap->max1D(100); // HEY: hack!
+      _cmap->max1D(75); // HEY: hack!
       break;
     case colorDwiQuantity1TensorErrorLog:
       _queryColor.resize(1);
@@ -474,6 +516,51 @@ PolyProbe::colorQuantity(int quantity) {
             airEnumStr(_gage->volume()->kind()->enm, _queryColor[0]),
             _queryColor[0]);
     */
+  } else if (gageKindScl == _gage->volume()->kind()) {
+    switch(quantity) {
+    case colorSclQuantityValue:
+      _queryColor.resize(1);
+      _queryColor[0] = gageSclValue;
+      strcat(fname, "cmap/gray.nrrd");
+      lret = nrrdLoad(_nrmap1D, fname, NULL);
+      fprintf(stderr, "%s: nrrdLoad(%p, %s) = %d\n",
+              me, _nrmap1D, fname, lret);
+      _cmap->rmap1D(_nrmap1D);
+      // HEY: HACK hack!
+      /* this value required to make the lung images for ssp paper */
+      // _cmap->max1D(65535);  /
+      _cmap->min1D(0);
+      _cmap->max1D(1);
+      _cmap->max1D(65535);
+      /* for zebrafish */
+      /*
+      _cmap->min1D(-0.0003);
+      _cmap->max1D(0.003);
+      */
+      break;
+    case colorSclQuantityGradMag:
+      _queryColor.resize(1);
+      _queryColor[0] = gageSclGradMag;
+      strcat(fname, "cmap/gray.nrrd");
+      lret = nrrdLoad(_nrmap1D, fname, NULL);
+      _cmap->rmap1D(_nrmap1D);
+      _cmap->min1D(0);
+      _cmap->max1D(1);
+      break;
+    case colorSclQuantityHessEvalMode:
+      _queryColor.resize(1);
+      _queryColor[0] = gageSclHessMode;
+      strcat(fname, "cmap/isobow4-1D.nrrd");
+      lret = nrrdLoad(_nlut1D, fname, NULL);
+      _cmap->lut1D(_nlut1D);
+      _cmap->min1D(-1);
+      _cmap->max1D(1);
+      break;
+    default:
+      fprintf(stderr, "%s: unknown colorSclQuantity %d ??? \n", me, quantity);
+      exit(1);
+      break;
+    }
   }
   if (lret) {
     fprintf(stderr, "%s: PANIC: couldn't load colormap \"%s\"\n", me, fname);
@@ -579,6 +666,13 @@ PolyProbe::alphaMaskQuantity(int quantity) {
     case alphaMaskDwiQuantityConfidence:
       _queryAlphaMask.resize(1);
       _queryAlphaMask[0] = tenDwiGageConfidence;
+      break;
+    }
+  } else if (gageKindScl == _gage->volume()->kind()) {
+    switch(quantity) {
+    case alphaMaskSclQuantityValue:
+      _queryAlphaMask.resize(1);
+      _queryAlphaMask[0] = gageSclValue;
       break;
     }
   }

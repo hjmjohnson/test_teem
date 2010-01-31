@@ -126,30 +126,39 @@ enum {
   colorTenQuantityModeFA,                 /*  4: */
   colorTenQuantityMode,                   /*  5: */
   colorTenQuantityFA,                     /*  6: */
-  colorTenQuantityTrace,                  /*  7: */
-  colorTenQuantityClCp,                   /*  8: */
-  colorTenQuantityCl,                     /*  9: */
-  colorTenQuantityCp,                     /* 10: */
-  colorTenQuantityCa,                     /* 11: */
+  colorTenQuantityOmega,                  /*  7: */
+  colorTenQuantityTrace,                  /*  8: */
+  colorTenQuantityClCp,                   /*  9: */
+  colorTenQuantityCl,                     /* 10: */
+  colorTenQuantityCp,                     /* 11: */
+  colorTenQuantityCa,                     /* 12: */
 
-  colorTenQuantityTrGradVecDotEvec0,      /* 12: */
-  colorTenQuantityTrGradEvec0,            /* 13: */
-  colorTenQuantityTrDiffusionAngle,       /* 14: */
-  colorTenQuantityTrDiffusionFraction,    /* 15: */
+  colorTenQuantityTrGradVecDotEvec0,      /* 13: */
+  colorTenQuantityTrGradEvec0,            /* 14: */
+  colorTenQuantityTrDiffusionAlign,       /* 15: */
+  colorTenQuantityTrDiffusionFraction,    /* 16: */
 
-  colorTenQuantityFAGradVecDotEvec0,      /* 16: */
-  colorTenQuantityFAGradEvec0,            /* 17: */
-  colorTenQuantityFADiffusionAngle,       /* 18: */
-  colorTenQuantityFADiffusionFraction,    /* 19: */
+  colorTenQuantityFAGradVecDotEvec0,      /* 17: */
+  colorTenQuantityFAGradEvec0,            /* 18: */
+  colorTenQuantityFADiffusionAlign,       /* 19: */
+  colorTenQuantityFADiffusionFraction,    /* 20: */
 
-  colorTenQuantityOmegaGradVecDotEvec0,   /* 20: */
-  colorTenQuantityOmegaNormalDotEvec0,    /* 21: */
-  colorTenQuantityOmegaDiffusionAngle,    /* 22: */
-  colorTenQuantityOmegaDiffusionFraction, /* 23: */
+  colorTenQuantityOmegaGradVecDotEvec0,   /* 21: */
+  colorTenQuantityOmegaNormalDotEvec0,    /* 22: */
+  colorTenQuantityOmegaDiffusionAlign,    /* 23: */
+  colorTenQuantityOmegaDiffusionFraction, /* 24: */
+
+  colorTenQuantityConfGradVecDotEvec0,    /* 25: */
+  colorTenQuantityConfNormalDotEvec0,     /* 26: */
+  colorTenQuantityConfDiffusionAlign,     /* 27: */
+  colorTenQuantityConfDiffusionFraction,  /* 28: */
+
+  colorTenQuantityCurving,                /* 29: */
+  colorTenQuantityDispersion,             /* 30: */
 
   colorTenQuantityLast
 };
-#define DEFT_COLOR_TEN_QUANTITY_MAX 23
+#define DEFT_COLOR_TEN_QUANTITY_MAX 30
 
 /*
 ** the weirdness here is that while "confidence" is itself
@@ -190,6 +199,22 @@ enum {
 };
 #define DEFT_ALPHA_MASK_DWI_QUANTITY_MAX   3
 
+enum {
+  colorSclQuantityUnknown,              /* 0 */
+  colorSclQuantityValue,                /* 1 */
+  colorSclQuantityGradMag,              /* 2 */
+  colorSclQuantityHessEvalMode,         /* 3 */
+  colorSclQuantityLast
+};
+#define DEFT_COLOR_SCL_QUANTITY_MAX        3
+
+enum {
+  alphaMaskSclQuantityUnknown,              /* 0 */
+  alphaMaskSclQuantityValue,                /* 1 */
+  alphaMaskSclQuantityLast
+};
+#define DEFT_ALPHA_MASK_SCL_QUANTITY_MAX       1
+
 /* enumsDeft.C */
 DEFT_API airEnum *fltkEvent;
 DEFT_API airEnum *viewerMode;
@@ -197,6 +222,8 @@ DEFT_API airEnum *colorTenQuantity;
 DEFT_API airEnum *alphaMaskTenQuantity;
 DEFT_API airEnum *colorDwiQuantity;
 DEFT_API airEnum *alphaMaskDwiQuantity;
+DEFT_API airEnum *colorSclQuantity;
+DEFT_API airEnum *alphaMaskSclQuantity;
 
 /* miscDeft.C */
 DEFT_API void sanity();

@@ -341,7 +341,8 @@ PolyData::drawImmediate() {
     GL_TRIANGLE_STRIP, /* 3: limnPrimitiveTriangleStrip */
     GL_TRIANGLE_FAN,   /* 4: limnPrimitiveTriangleFan */
     GL_QUADS,          /* 5: limnPrimitiveQuads */
-    GL_LINE_STRIP      /* 6: limnPrimitiveLineStrip */
+    GL_LINE_STRIP,     /* 6: limnPrimitiveLineStrip */
+    GL_LINES
   };
   float white[4] = {1.0f, 1.0f, 1.0f, 1.0f};
 
@@ -349,6 +350,11 @@ PolyData::drawImmediate() {
     /* there's nothing to render here */
     return;
   }
+  /*
+  int hackSet = AIR_FALSE;
+  unsigned int vertMin;
+  hackSet = nrrdGetenvUInt(&vertMin, NULL, "DEFT_HACK_VERT_MIN");
+  */
 
   /*
   {
@@ -383,7 +389,7 @@ PolyData::drawImmediate() {
   if (_lightingUse) {
     glEnable(GL_LIGHTING);
   }
-  if (0 && _flatShading) {
+  if (_flatShading) {
     glShadeModel(GL_FLAT);
   } else {
     glShadeModel(GL_SMOOTH);
@@ -426,6 +432,14 @@ PolyData::drawImmediate() {
     for (unsigned int primIdx=0; primIdx<lpld->primNum; primIdx++) {
       vertCnt = lpld->icnt[primIdx];
       if (limnPrimitiveNoop != lpld->type[primIdx]) {
+        /*
+          why didn't this work?
+        if (hackSet &&
+            limnPrimitiveTriangleStrip == lpld->type[primIdx]
+            && vertCnt < vertMin) {
+          continue;
+        }
+        */
         glWhat = glpt[lpld->type[primIdx]];
         /*
         fprintf(stderr, "!%s: glDrawElements(%u, %u, GL_UNSIGNED_INT, %p)\n",
@@ -439,6 +453,13 @@ PolyData::drawImmediate() {
     for (unsigned int primIdx=0; primIdx<lpld->primNum; primIdx++) {
       vertCnt = lpld->icnt[primIdx];
       if (limnPrimitiveNoop != lpld->type[primIdx]) {
+        /*
+        if (hackSet &&
+            limnPrimitiveTriangleStrip == lpld->type[primIdx]
+            && vertCnt < vertMin) {
+          continue;
+        }
+        */
         glWhat = glpt[lpld->type[primIdx]];
         glBegin(glWhat);
         for (unsigned int vii=0; vii<vertCnt; vii++) {

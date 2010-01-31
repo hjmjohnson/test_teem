@@ -42,6 +42,34 @@
 #include <fltk/Font.h>
 #include <fltk/Choice.h>
 
+#define LPLD 1
+
+#if LPLD
+typedef struct {
+  Deft::Slider *radSlider;
+  limnPolyData *orig, *tube;
+  Deft::Viewer *viewer;
+  Deft::PolyData *poly;
+} lpldBag;
+
+void
+tuberad_cb(fltk::Widget *widget, void *data) {
+  Deft::Slider *slider;
+  lpldBag *lbag;
+
+  slider = (Deft::Slider *)widget;
+  lbag = (lpldBag *)data;
+
+  limnPolyDataSpiralTubeWrap(lbag->tube, lbag->orig, 
+                             limnPolyDataInfoBitFlag(lbag->orig),
+                             NULL,
+                             8, 3, slider->value());
+  lbag->poly->changed();
+  lbag->viewer->redraw();
+}
+
+#endif
+
 char *info = ("this might come in handy.");
 
 /*
@@ -65,6 +93,11 @@ main(int argc, char **argv) {
   Nrrd *ninDwi;
   int camkeep;
   limnPolyData *baseGlyph;
+#if LPLD
+  lpldBag lbag;
+  char *lpldS;
+  limnPolyData *lpld=NULL;
+#endif
 
   mop = airMopNew();
 
@@ -77,6 +110,10 @@ main(int argc, char **argv) {
   hestOptAdd(&hopt, "ibg", "glyph", airTypeOther, 1, 1, &baseGlyph, NULL,
              "base geometry for DWI glyph",
              NULL, NULL, limnHestPolyDataOFF);
+#if LPLD
+  hestOptAdd(&hopt, "ipd", "lpld", airTypeString, 1, 1, &lpldS, "",
+             "random polydata");
+#endif
 
   hestOptAdd(&hopt, "fr", "from point", airTypeFloat, 3, 3, fr, "3 4 5",
              "position of camera, used to determine view vector");
@@ -163,6 +200,71 @@ main(int argc, char **argv) {
   Deft::ViewerUI *viewerUI = new Deft::ViewerUI(viewer);
   viewerUI->show();
   
+#if LPLD
+  if (airStrlen(lpldS)) {
+    FILE *file;
+    int ret, incy, winy = 0;
+    if (!(file = airFopen(lpldS, stdin, "rb"))) {
+      fprintf(stderr, "%s: couldn't open \"%s\" for reading\n", me, lpldS);
+      airMopError(mop); return 1;
+    }
+    lpld = limnPolyDataNew();
+    airMopAdd(mop, lpld, (airMopper)limnPolyDataNix, airMopAlways);
+    if (!strcmp("-", lpldS) || airEndsWith(lpldS, ".lmpd")) {
+      if (0) {
+        ret = (limnPolyDataReadLMPD(lpld, file)
+               || limnPolyDataVertexWindingFix(lpld, AIR_TRUE)
+               || limnPolyDataVertexNormals(lpld));
+      } else {
+        ret = limnPolyDataReadLMPD(lpld, file);
+      }
+    } else {
+      ret = (limnPolyDataReadOFF(lpld, file)
+             || limnPolyDataVertexWindingFix(lpld, AIR_TRUE)
+             || limnPolyDataVertexNormals(lpld));
+    }
+    if (ret) {
+      airMopAdd(mop, err = biffGetDone(LIMN), airFree, airMopAlways);
+      fprintf(stderr, "%s: trouble reading \"%s\":\n%s", me, lpldS, err);
+      airMopError(mop); return 1;
+    }
+
+    if ((1 << limnPrimitiveLineStrip) == limnPolyDataPrimitiveTypes(lpld)) {
+      fltk::Window *lwin = new fltk::Window(size[0]+20, 0, 400, 140);
+      lwin->begin();
+      lwin->resizable(lwin);
+
+      lbag.orig = lpld;
+      lbag.tube = limnPolyDataNew();
+      lbag.viewer = viewer;
+      
+      winy = 0;
+      lbag.radSlider = new Deft::Slider(0, winy, lwin->w(), incy=40,
+                                        "Tube Radius");
+      lbag.radSlider->align(fltk::ALIGN_LEFT);
+      lbag.radSlider->range(0.0, 2.0);
+      lbag.radSlider->fastUpdate(1);
+      lbag.radSlider->value(0.7);
+      limnPolyDataSpiralTubeWrap(lbag.tube, lbag.orig, 
+                                 limnPolyDataInfoBitFlag(lpld),
+                                 NULL,
+                                 8, 3, lbag.radSlider->value());
+      lbag.radSlider->callback(tuberad_cb, &lbag);
+
+      lwin->end();
+      lwin->show(argc,argv);
+
+      lbag.poly = new Deft::PolyData(lbag.tube);
+      lbag.poly->lightingUse(true);
+      lbag.poly->flatShading(false);
+      lbag.poly->twoSided(true);
+      lbag.poly->normalsUse(true);
+      lbag.poly->visible(true);
+      scene->objectAdd(lbag.poly);
+    }
+  }
+#endif
+
   // --------------------------------------------------
 
   Nrrd *ngrad, *nbmat;
@@ -255,7 +357,7 @@ main(int argc, char **argv) {
   hslineUI->add(triplane->hsline[2]);
 
   Deft::SeedPoint *seedpoint = new Deft::SeedPoint(volDwi, baseGlyph);
-  seedpoint->positionSet(10, 32, 15.5);
+  seedpoint->positionSet(6, 20, 29);
   
   kparm[0] = 1.0;
   nrrdKernelSpecSet(ksp, nrrdKernelTent, kparm);
