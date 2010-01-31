@@ -35,7 +35,7 @@ namespace Deft {
 // logically *is* a HyperStreamline has to use a different name
 // 
 // actually now that Deft::HyperStreamlineSingle got moved down to
-// teem::tenFiberSingle, this objections is mooted somewhat
+// teem::tenFiberSingle, this objection is somewhat moot
 
 class DEFT_EXPORT HyperStreamline : public PolyProbe {
 public: 
@@ -130,6 +130,21 @@ public:
   void tubeRadius(double radius);
   double tubeRadius() const { return _tubeRadius; }
 
+  // volume to probe in for probeItem, probeMeasr
+  void probeVol(const Nrrd *pnrrd, const gageKind *kind);
+
+  // if non-zero, item to probe at fiber vertices */
+  void probeItem(int item);
+  int probeItem() const { return _probeItem; }
+
+  // if non-zero, how to sort fibers based on probed values */
+  void probeMeasr(int measr);
+  int probeMeasr() const { return _probeMeasr; }
+
+  // limit number displayed 
+  void probeCap(unsigned int cap);
+  unsigned int probeCap() const { return _probeCap; }
+
   // have to learn from another hsline instance, and not the UI,
   // or else the objects would depend on the UI
   // HEY: isn't there some other C++ idiomatic way of expressing this?
@@ -138,7 +153,7 @@ public:
   void update();
 
   unsigned int seedNum() const { return _seedNum; }
-  unsigned int fiberNum() const { return _fiberArr->len; }
+  unsigned int fiberNum() const { return _fibers->fiberNum; }
   unsigned int fiberVertexNum() const { return _fiberVertexNum; }
   double fiberAllocatedTime() const { return _fiberAllocatedTime; }
   double fiberGeometryTime() const { return _fiberGeometryTime; }
@@ -160,20 +175,24 @@ private:
     _tubeGeometryTime,
     _tubeColorTime;
   limnPolyData *_lpldFibers, *_lpldTubes;
+  const Nrrd *_probeNrrd;
+  const gageKind *_probeKind;
+  int _probeItem, _probeMeasr;
+  unsigned int _probeCap;
 
-  Nrrd *_nseed;
+  Nrrd *_nseed, *_nTubeVertMap;
   unsigned int _seedNum; /* # seed points or 0 to say "none" (and this 
                             semantics makes it not completely redundant 
                             with _nseeds->axis[1].size */
 
-  airArray *_fiberArr;
-  tenFiberSingle *_fiber;
+  tenFiberMulti *_fibers;
   unsigned int _fiberVertexNum; // total # vertices on non-trivial fibers
 
   tenFiberContext *_tfx;
 
   void updateFiberAllocated();
   void updateFiberContext();
+  void updateProbe();
   void updateFiberGeometry();
   void updateFiberColor();
   void updateFiberStopColor();

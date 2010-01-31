@@ -80,7 +80,10 @@ Cmap::rmap1D(const Nrrd *nrmap1D) {
   if (!(nrmap1D
         && 2 == nrmap1D->dim
         && 4 == nrmap1D->axis[0].size)) {
-    fprintf(stderr, "%s: wrong dim/size nrrd for rmap1D\n", me);
+    fprintf(stderr, "%s: wrong dim/size nrrd for rmap1D (%p %u %u)\n", me,
+            nrmap1D,
+            nrmap1D ? nrmap1D->dim : 0,
+            nrmap1D ? AIR_CAST(unsigned int, nrmap1D->axis[0].size) : 0);
     return;
   }
   _nrmap1D = nrmap1D;

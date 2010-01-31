@@ -37,6 +37,7 @@ enum {
   flagUnknown,
   flagPosData,
   flagTenData,
+  flagRgbData,
   flagMaskThresh,
   flagClampEval,
   flagClampEvalUse,
@@ -65,7 +66,7 @@ enum {
 };
 
 TensorGlyph::TensorGlyph() {
-  // char me[]="TensorGlyph::TensorGlyph";
+  char me[]="TensorGlyph::TensorGlyph";
 
   // initialize all the flags
   for (unsigned int fi=flagUnknown+1; fi<flagLast; fi++) {
@@ -112,9 +113,11 @@ TensorGlyph::TensorGlyph() {
   _gshape = NULL;
   _tenData = NULL;
   _posData = NULL;
+  _rgbData = NULL;
   _inDataNum = 0;
   _inTenDataStride = 0;
   _inPosDataStride = 0;
+  _inRgbDataStride = 0;
   _maxNum = 0;
   _activeNum = 0;
   _glyphsDrawnNum = 0;
@@ -126,6 +129,7 @@ TensorGlyph::TensorGlyph() {
 
 void
 TensorGlyph::nListEmpty() {
+  // char me[]="TensorGlyph::nListEmpty";
 
   unsigned int *list = (unsigned int *)(_nList->data);
   if (list) {
@@ -159,6 +163,7 @@ TensorGlyph::~TensorGlyph() {
   _gshape = gageShapeNix(_gshape);
   _tenData = NULL;
   _posData = NULL;
+  _rgbData = NULL;
   _nAnisoCache = nrrdNuke(_nAnisoCache);
   _nDataCache = nrrdNuke(_nDataCache);
   nListEmpty();
@@ -208,6 +213,7 @@ TensorGlyph::volumeSet(const Nrrd *nten) {
   ell_3m_print_f(stderr, _measrFrame);
   _tenData = (float*)nten->data;
   _posData = NULL;
+  _rgbData = NULL;
   _inDataNum = nrrdElementNumber(nten)/nrrdKindSize(nrrdKind3DMaskedSymMatrix);
   _inTenDataStride = nrrdKindSize(nrrdKind3DMaskedSymMatrix);
   fprintf(stderr, "!%s: _inDataNum = %u, _inTenDataStride = %u\n", me, 
@@ -216,6 +222,7 @@ TensorGlyph::volumeSet(const Nrrd *nten) {
 
   flag[flagPosData] = true;
   flag[flagTenData] = true;
+  flag[flagRgbData] = true;
   return;
 }
 
@@ -223,6 +230,7 @@ void
 TensorGlyph::dataSet(unsigned int num,
                      const float *tenData, unsigned int tenStride,
                      const float *posData, unsigned int posStride,
+                     const float *rgbData, unsigned int rgbStride,
                      float measurementFrame[9]) {
   char me[]="TensorGlyph::dataSet";
 
@@ -240,11 +248,26 @@ TensorGlyph::dataSet(unsigned int num,
   _inDataNum = num;
   _tenData = tenData;
   _posData = posData;
+  _rgbData = rgbData;
   _inTenDataStride = tenStride;
   _inPosDataStride = posStride;
+  _inRgbDataStride = rgbStride;
   flag[flagPosData] = true;
   flag[flagTenData] = true;
+  flag[flagRgbData] = true;
   return;
+}
+
+void
+TensorGlyph::dataSet(unsigned int num,
+                     const float *tenData, unsigned int tenStride,
+                     const float *posData, unsigned int posStride,
+                     float measurementFrame[9]) {
+
+  this->dataSet(num, tenData, tenStride,
+                posData, posStride,
+                NULL, 0,
+                measurementFrame);
 }
 
 void
@@ -446,7 +469,7 @@ TensorGlyph::anisoCacheUpdate() {
 
   if (flag[flagAnisoType]
       || flag[flagTenData]) {
-    if (_dynamic) {
+    if (_dynamic || 3 == _inTenDataStride) {  /* hedge */
       _nAnisoCache = nrrdNuke(_nAnisoCache);
     } else {
       nrrdMaybeAlloc_va(_nAnisoCache, nrrdTypeFloat, 1,
@@ -477,7 +500,7 @@ TensorGlyph::anisoCacheUpdate() {
 
 void
 TensorGlyph::maxNumUpdate() {
-  // char me[]="TensorGlyph::maxNumUpdate";
+  char me[]="TensorGlyph::maxNumUpdate";
   unsigned int newMaxNum;
 
   this->anisoCacheUpdate();
@@ -487,7 +510,9 @@ TensorGlyph::maxNumUpdate() {
       || flag[flagTenData]
       || flag[flagMaskThresh]
       || flag[flagSkipNegEval]) {
-    if (_dynamic) {
+    // fprintf(stderr, "%s: _dynamic = %s, _inTenDataStride = %u\n", me,
+    //        _dynamic ? "true" : "false", _inTenDataStride);
+    if (_dynamic || 3 == _inTenDataStride) {  /* hedge */
       newMaxNum = _inDataNum;
     } else {
       size_t ii, nn;
@@ -495,6 +520,7 @@ TensorGlyph::maxNumUpdate() {
       const float *tdata;
       float eval[3];
       
+      // fprintf(stderr, "!%s: finding new _maxNum = %u\n", me, _maxNum);
       newMaxNum = 0;
       nn = nrrdElementNumber(_nAnisoCache);
       aniso = (float*)_nAnisoCache->data;
@@ -523,6 +549,8 @@ TensorGlyph::maxNumUpdate() {
       _maxNum = newMaxNum;
       flag[flagMaxNum] = true;
     }
+    // fprintf(stderr, "%s: _maxNum = %u, %s\n", me, 
+    //        _maxNum, flag[flagMaxNum] ? "CHANGED" : "(unchanged)");
   }
   return;
 }
@@ -550,7 +578,6 @@ TensorGlyph::dataAllocatedUpdate() {
   char me[]="TensorGlyph::dataAllocatedUpdate", *err;
 
   this->maxNumUpdate();
-
   if (flag[flagMaxNum]) {
     if (nrrdMaybeAlloc_va(_nDataCache, nrrdTypeFloat, 2,
                           AIR_CAST(size_t, DATA_IDX_NUM),
@@ -559,6 +586,11 @@ TensorGlyph::dataAllocatedUpdate() {
       fprintf(stderr, "%s: couldn't allocate raw data:\n%s", me, err);
       free(err); return;
     }
+    /*
+    fprintf(stderr, "!%s: allocated datacache %u x %u of %s\n", me,
+            DATA_IDX_NUM, _maxNum,
+            airEnumStr(nrrdType, nrrdTypeFloat));
+    */
     flag[flagMaxNum] = false;
     flag[flagDataAllocated] = true;
   }
@@ -567,7 +599,7 @@ TensorGlyph::dataAllocatedUpdate() {
 
 void
 TensorGlyph::dataBasicUpdate() {
-  // char me[]="TensorGlyph::dataBasicUpdate";
+  char me[]="TensorGlyph::dataBasicUpdate";
 
   this->dataAllocatedUpdate();
 
@@ -576,13 +608,14 @@ TensorGlyph::dataBasicUpdate() {
       || flag[flagClampEvalUse]
       || flag[flagAnisoCache]
       || flag[flagTenData]
-      || flag[flagPosData]) {
+      || flag[flagPosData]
+      || flag[flagRgbData]) {
 
     unsigned int idx, num, nn;
     float eval[3], evec[9], evecT[9], quat[4];
     const float *tenMeasr;
     float *dataCache = (float*)(_nDataCache->data);
-    float *aniso = (_dynamic
+    float *aniso = ((_dynamic || 3 == _inTenDataStride)  /* hedge */ 
                     ? NULL
                     : (float*)(_nAnisoCache->data));
     float measrFrameT[9], matMeasr[9], matWorld[9], tenWorld[7];
@@ -590,58 +623,97 @@ TensorGlyph::dataBasicUpdate() {
     ELL_3M_TRANSPOSE(measrFrameT, _measrFrame);
     nn = _inDataNum;
     num = 0;
-    for (idx=0; idx<nn; idx++) {
-      tenMeasr = _tenData + idx*_inTenDataStride;
-      if (!_dynamic) {
-        if (!( tenMeasr[0] >= _maskThresh )) {
-          continue;
+    if (!_maxNum && nn) {
+      fprintf(stderr, "!%s: probably a bug!!\n", me);
+      fprintf(stderr, "!%s: _maxNum = %u, nn = %u, dataCache = %p\n",
+              me, _maxNum, nn, dataCache);
+    } else {
+      for (idx=0; idx<nn; idx++) {
+        float *dataLine = dataCache + num*DATA_IDX_NUM;
+        dataLine[DATAIDX_DATA_IDX] = static_cast<float>(idx);
+        if (3 == _inTenDataStride) { /* hedge */
+          const float *vec;
+          double nvec[3], len, rot[9], zee[3], quat[4];
+          vec = _tenData + idx*_inTenDataStride;
+          len = ELL_3V_LEN(vec);
+          if (len) {
+            ELL_3V_SCALE(nvec, 1/len, vec);
+          } else {
+            ELL_3V_SET(nvec, 0, 0, 1);
+          }
+          dataLine[ANISO_DATA_IDX] = 1;
+          dataLine[MASK_DATA_IDX] = 1;
+          ELL_3V_COPY(dataLine + POS_DATA_IDX,
+                      _posData + idx*_inPosDataStride);
+          ELL_3V_SET(dataLine + EVAL_DATA_IDX,
+                     0.07*len, 0.07*len, len/2);
+          if (_rgbData) {
+            ELL_3V_COPY(dataLine + RGB_DATA_IDX,
+                        _rgbData + idx*_inRgbDataStride);
+          } else {
+            ELL_3V_SET(dataLine + RGB_DATA_IDX, 1, 1, 1);
+          }
+          ELL_3V_SET(zee, 0, 0, 1);
+          ell_3m_rotate_between_d(rot, zee, nvec);
+          ell_3m_to_q_d(quat, rot);
+          ELL_4V_COPY(dataLine + QUAT_DATA_IDX, quat);
+        } else {
+          tenMeasr = _tenData + idx*_inTenDataStride;
+          if (!_dynamic) {
+            if (!( tenMeasr[0] >= _maskThresh )) {
+              continue;
+            }
+            if (!( aniso[idx] >= _anisoThreshMin )) {
+              continue;
+            }
+          }
+          TEN_T2M(matMeasr, tenMeasr);
+          ell_3m_mul_f(matWorld, _measrFrame, matMeasr);
+          ell_3m_mul_f(matWorld, matWorld, measrFrameT);
+          tenWorld[0] = tenMeasr[0];
+          TEN_M2T(tenWorld, matWorld);
+          tenEigensolve_f(eval, evec, tenWorld);
+          if (!_dynamic && _skipNegEval && eval[2] < 0) {
+            continue;
+          }
+          if (_dynamic) {
+            dataLine[ANISO_DATA_IDX] = tenAnisoEval_f(eval, _anisoType);
+          } else {
+            dataLine[ANISO_DATA_IDX] = aniso[idx];
+          }
+          dataLine[MASK_DATA_IDX] = tenWorld[0];
+          if (_posData) {
+            ELL_3V_COPY(dataLine + POS_DATA_IDX,
+                        _posData + idx*_inPosDataStride);
+          } else {
+            double pI[3], pW[3];
+            unsigned int tmp = idx;
+            unsigned int d;
+            for (d=0; d<=(3)-1; d++) {
+              (pI)[d] = tmp % (_gshape->size)[d];
+              tmp /= (_gshape->size)[d];
+            }
+            gageShapeItoW(_gshape, pW, pI);
+            ELL_3V_COPY_TT(dataLine + POS_DATA_IDX, float, pW);
+          }
+          if (_clampEvalUse) {
+            ELL_3V_SET_TT(dataLine + EVAL_DATA_IDX, float,
+                          AIR_MAX(_clampEval, eval[0]),
+                          AIR_MAX(_clampEval, eval[1]),
+                          AIR_MAX(_clampEval, eval[2]));
+          } else {
+            ELL_3V_COPY(dataLine + EVAL_DATA_IDX, eval);
+          }
+          if (_rgbData) {
+            ELL_3V_COPY(dataLine + RGB_DATA_IDX,
+                        _rgbData + idx*_inRgbDataStride);
+          }
+          ELL_3M_TRANSPOSE(evecT, evec);
+          ell_3m_to_q_f(quat, evecT);
+          ELL_4V_COPY(dataLine + QUAT_DATA_IDX, quat);
         }
-        if (!( aniso[idx] >= _anisoThreshMin )) {
-          continue;
-        }
+        num++;
       }
-      TEN_T2M(matMeasr, tenMeasr);
-      ell_3m_mul_f(matWorld, _measrFrame, matMeasr);
-      ell_3m_mul_f(matWorld, matWorld, measrFrameT);
-      tenWorld[0] = tenMeasr[0];
-      TEN_M2T(tenWorld, matWorld);
-      tenEigensolve_f(eval, evec, tenWorld);
-      if (!_dynamic && _skipNegEval && eval[2] < 0) {
-        continue;
-      }
-      float *dataLine = dataCache + num*DATA_IDX_NUM;
-      if (_dynamic) {
-        dataLine[ANISO_DATA_IDX] = tenAnisoEval_f(eval, _anisoType);
-      } else {
-        dataLine[ANISO_DATA_IDX] = aniso[idx];
-      }
-      dataLine[MASK_DATA_IDX] = tenWorld[0];
-      dataLine[DATAIDX_DATA_IDX] = static_cast<float>(idx);
-      if (_posData) {
-        ELL_3V_COPY(dataLine + POS_DATA_IDX, _posData + idx*_inPosDataStride);
-      } else {
-        double pI[3], pW[3];
-        unsigned int tmp = idx;
-        unsigned int d;
-        for (d=0; d<=(3)-1; d++) {
-          (pI)[d] = tmp % (_gshape->size)[d];
-          tmp /= (_gshape->size)[d];
-        }
-        gageShapeItoW(_gshape, pW, pI);
-        ELL_3V_COPY_TT(dataLine + POS_DATA_IDX, float, pW);
-      }
-      if (_clampEvalUse) {
-        ELL_3V_SET_TT(dataLine + EVAL_DATA_IDX, float,
-                      AIR_MAX(_clampEval, eval[0]),
-                      AIR_MAX(_clampEval, eval[1]),
-                      AIR_MAX(_clampEval, eval[2]));
-      } else {
-        ELL_3V_COPY(dataLine + EVAL_DATA_IDX, eval);
-      }
-      ELL_3M_TRANSPOSE(evecT, evec);
-      ell_3m_to_q_f(quat, evecT);
-      ELL_4V_COPY(dataLine + QUAT_DATA_IDX, quat);
-      num++;
     }
     flag[flagDataAllocated] = false;
     flag[flagClampEval] = false;
@@ -649,7 +721,11 @@ TensorGlyph::dataBasicUpdate() {
     flag[flagAnisoCache] = false;
     flag[flagTenData] = false;
     flag[flagPosData] = false;
+    flag[flagRgbData] = false;
     flag[flagDataBasic] = true;
+    if (_rgbData) {
+      flag[flagDataRGB] = true;
+    }
   }
   return;
 }
@@ -674,7 +750,7 @@ TensorGlyph::dataSortedUpdate() {
   this->dataBasicUpdate();
 
   if (flag[flagDataBasic]) {
-    if (_dynamic) {
+    if (_dynamic || 3 == _inTenDataStride) {  /* hedge */
       /* for now a no-op */
     } else {
       qsort(_nDataCache->data, _maxNum, DATA_IDX_NUM*sizeof(float),
@@ -694,7 +770,7 @@ TensorGlyph::activeNumUpdate() {
 
   if (flag[flagAnisoThresh]
       || flag[flagDataSorted]) {
-    if (_dynamic) {
+    if (_dynamic || 3 == _inTenDataStride) { /* hedge */
       _activeNum = _maxNum;
     } else {
       float *dataCache = (float*)(_nDataCache->data);
@@ -737,29 +813,33 @@ TensorGlyph::dataBaryIdxUpdate() {
 
     for (unsigned int ii=0; ii<_maxNum; ii++) {
       float *dataLine = dataCache + ii*DATA_IDX_NUM;
-      eval = dataLine + EVAL_DATA_IDX;
-      cp1 = tenAnisoEval_f(eval, tenAniso_Cp1);
-      cl1 = tenAnisoEval_f(eval, tenAniso_Cl1);
-      cp2 = tenAnisoEval_f(eval, tenAniso_Cp2);
-      cl2 = tenAnisoEval_f(eval, tenAniso_Cl2);
-      switch(_glyphType) {
-      case tenGlyphTypeBox:
+      if (3 == _inTenDataStride) {  /* hedge */
         dataLine[BARYIDX_DATA_IDX] = 0;
-        break;
-      case tenGlyphTypeCylinder:
-      case tenGlyphTypeSphere:
-        if (cp2 >= cl2) {
-          dataLine[BARYIDX_DATA_IDX] = static_cast<float>(1);
-        } else {
-          dataLine[BARYIDX_DATA_IDX] = static_cast<float>(_baryRes);
+      } else {
+        eval = dataLine + EVAL_DATA_IDX;
+        cp1 = tenAnisoEval_f(eval, tenAniso_Cp1);
+        cl1 = tenAnisoEval_f(eval, tenAniso_Cl1);
+        cp2 = tenAnisoEval_f(eval, tenAniso_Cp2);
+        cl2 = tenAnisoEval_f(eval, tenAniso_Cl2);
+        switch(_glyphType) {
+        case tenGlyphTypeBox:
+          dataLine[BARYIDX_DATA_IDX] = 0;
+          break;
+        case tenGlyphTypeCylinder:
+        case tenGlyphTypeSphere:
+          if (cp2 >= cl2) {
+            dataLine[BARYIDX_DATA_IDX] = static_cast<float>(1);
+          } else {
+            dataLine[BARYIDX_DATA_IDX] = static_cast<float>(_baryRes);
+          }
+          break;
+        case tenGlyphTypeSuperquad:
+          cpIdx = airIndexClamp(0.0, cp1, 1.0, _baryRes);
+          clIdx = airIndexClamp(0.0, cl1, 1.0, _baryRes);
+          dataLine[BARYIDX_DATA_IDX] =
+            static_cast<float>(cpIdx + _baryRes*clIdx);
+          break;
         }
-        break;
-      case tenGlyphTypeSuperquad:
-        cpIdx = airIndexClamp(0.0, cp1, 1.0, _baryRes);
-        clIdx = airIndexClamp(0.0, cl1, 1.0, _baryRes);
-        dataLine[BARYIDX_DATA_IDX] =
-          static_cast<float>(cpIdx + _baryRes*clIdx);
-        break;
       }
     }
     flag[flagBaryRes] = false;
@@ -779,35 +859,37 @@ TensorGlyph::dataRGBUpdate() {
     float *dataCache = (float*)(_nDataCache->data);
     float evecPre[3], evec[3];
 
-    ELL_3V_SET(evecPre, 0, 0, 0);
-    evecPre[_rgbEvec] = 1.0;
-    for (unsigned int ii=0; ii<_maxNum; ii++) {
-      float *dataLine = dataCache + ii*DATA_IDX_NUM;
-      float *eval = dataLine + EVAL_DATA_IDX;
-      ell_q_3v_rotate_f(evec, dataLine + QUAT_DATA_IDX, evecPre);
-      double R = AIR_ABS(evec[0]);
-      double G = AIR_ABS(evec[1]);
-      double B = AIR_ABS(evec[2]);
-      /* desaturate by rgbMaxSat */
-      R = AIR_AFFINE(0.0, _rgbMaxSat, 1.0, _rgbIsoGray, R);
-      G = AIR_AFFINE(0.0, _rgbMaxSat, 1.0, _rgbIsoGray, G);
-      B = AIR_AFFINE(0.0, _rgbMaxSat, 1.0, _rgbIsoGray, B);
-      /* desaturate some by rgbAniso */
-      double rgbAniso = tenAnisoEval_f(eval, _rgbAnisoType);
-      double tmp = AIR_AFFINE(0.0, rgbAniso, 1.0, _rgbIsoGray, R);
-      R = AIR_AFFINE(0.0, _rgbModulate, 1.0, R, tmp);
-      tmp = AIR_AFFINE(0.0, rgbAniso, 1.0, _rgbIsoGray, G);
-      G = AIR_AFFINE(0.0, _rgbModulate, 1.0, G, tmp);
-      tmp = AIR_AFFINE(0.0, rgbAniso, 1.0, _rgbIsoGray, B);
-      B = AIR_AFFINE(0.0, _rgbModulate, 1.0, B, tmp);
-      /* clamp and do gamma */
-      R = AIR_CLAMP(0.0, R, 1.0);
-      G = AIR_CLAMP(0.0, G, 1.0);
-      B = AIR_CLAMP(0.0, B, 1.0);
-      R = pow(R, _rgbGamma);
-      G = pow(G, _rgbGamma);
-      B = pow(B, _rgbGamma);
-      ELL_3V_SET_TT(dataLine + RGB_DATA_IDX, float, R, G, B);
+    if (!_rgbData) {
+      ELL_3V_SET(evecPre, 0, 0, 0);
+      evecPre[_rgbEvec] = 1.0;
+      for (unsigned int ii=0; ii<_maxNum; ii++) {
+        float *dataLine = dataCache + ii*DATA_IDX_NUM;
+        float *eval = dataLine + EVAL_DATA_IDX;
+        ell_q_3v_rotate_f(evec, dataLine + QUAT_DATA_IDX, evecPre);
+        double R = AIR_ABS(evec[0]);
+        double G = AIR_ABS(evec[1]);
+        double B = AIR_ABS(evec[2]);
+        /* desaturate by rgbMaxSat */
+        R = AIR_AFFINE(0.0, _rgbMaxSat, 1.0, _rgbIsoGray, R);
+        G = AIR_AFFINE(0.0, _rgbMaxSat, 1.0, _rgbIsoGray, G);
+        B = AIR_AFFINE(0.0, _rgbMaxSat, 1.0, _rgbIsoGray, B);
+        /* desaturate some by rgbAniso */
+        double rgbAniso = tenAnisoEval_f(eval, _rgbAnisoType);
+        double tmp = AIR_AFFINE(0.0, rgbAniso, 1.0, _rgbIsoGray, R);
+        R = AIR_AFFINE(0.0, _rgbModulate, 1.0, R, tmp);
+        tmp = AIR_AFFINE(0.0, rgbAniso, 1.0, _rgbIsoGray, G);
+        G = AIR_AFFINE(0.0, _rgbModulate, 1.0, G, tmp);
+        tmp = AIR_AFFINE(0.0, rgbAniso, 1.0, _rgbIsoGray, B);
+        B = AIR_AFFINE(0.0, _rgbModulate, 1.0, B, tmp);
+        /* clamp and do gamma */
+        R = AIR_CLAMP(0.0, R, 1.0);
+        G = AIR_CLAMP(0.0, G, 1.0);
+        B = AIR_CLAMP(0.0, B, 1.0);
+        R = pow(R, _rgbGamma);
+        G = pow(G, _rgbGamma);
+        B = pow(B, _rgbGamma);
+        ELL_3V_SET_TT(dataLine + RGB_DATA_IDX, float, R, G, B);
+      }
     }
     flag[flagDataSorted] = false;
     flag[flagRGBParm] = false;
@@ -860,6 +942,7 @@ TensorGlyph::glyphPaletteUpdate() {
     limnPolyData *lpld = limnPolyDataNew();
     Deft::PolyData *surf = new Deft::PolyData(lpld, true);
     surf->wireframe(this->wireframe());
+    surf->twoSided(this->twoSided());
     surf->colorUse(false);
     surf->normalizeUse(false);
     surf->transformUse(false);
@@ -875,71 +958,79 @@ TensorGlyph::glyphPaletteUpdate() {
               airEnumStr(tenGlyphType, tenGlyphTypeSuperquad));
     }
 
-    switch(_glyphType) {
-    case tenGlyphTypeBox:
-      limnPolyDataCube(lpld, 1 << limnPolyDataInfoNorm, _cleanEdge);
+    if (3 == _inTenDataStride) {  /* hedge */
+      double mat[16];
+      limnPolyDataCone(lpld, 1 << limnPolyDataInfoNorm,
+                       _glyphRes, AIR_TRUE);
+      ELL_4M_TRANSLATE_SET(mat, 0, 0, 1);
+      limnPolyDataTransform_d(lpld, mat);
       list[0] = surf->compileDisplayList();
-      break;
-    case tenGlyphTypeCylinder:
-    case tenGlyphTypeSphere:
-      if (tenGlyphTypeCylinder == _glyphType) {
-        limnPolyDataCylinder(lpld, 1 << limnPolyDataInfoNorm,
-                             _glyphRes, _cleanEdge);
-      } else {
-        limnPolyDataSpiralSphere(lpld, 1 << limnPolyDataInfoNorm,
-                                 2*_glyphRes, _glyphRes);
-      }
-      list[1] = surf->compileDisplayList();
-      limnPolyDataTransform_f(lpld, ZtoX);
-      list[_baryRes] = surf->compileDisplayList();
-      break;
-    case tenGlyphTypeSuperquad:
-      float alpha, beta;
-      for (unsigned int cpIdx=0; cpIdx<_baryRes; cpIdx++) {
-        double cp = NRRD_CELL_POS(0.0, 1.0, _baryRes, cpIdx);
-        for (unsigned int clIdx=0; clIdx<_baryRes; clIdx++) {
-          double cl = NRRD_CELL_POS(0.0, 1.0, _baryRes, clIdx);
-          if (cpIdx + clIdx > _baryRes-1) {
-            continue;
-          }
-          if (cl > cp) {
-            trnsf = ZtoX;
-            alpha = AIR_CAST(float, pow(1-cp, _superquadSharpness));
-            beta = AIR_CAST(float, pow(1-cl, _superquadSharpness));
-          } else {
-            trnsf = ident;
-            alpha = AIR_CAST(float, pow(1-cl, _superquadSharpness));
-            beta = AIR_CAST(float, pow(1-cp, _superquadSharpness));
-          }
-          limnPolyDataSpiralSuperquadric(lpld,
-                                         1 << limnPolyDataInfoNorm,
-                                         alpha, beta,
-                                         2*_glyphRes, _glyphRes);
-          limnPolyDataTransform_f(lpld, trnsf);
-          if (_savingIV) {
-            FILE *file;
-            char filename[128];
-            sprintf(filename, "glyph-%03u.iv", cpIdx + _baryRes*clIdx);
-            file = fopen(filename, "w");
-            if (limnPolyDataWriteIV(file, lpld)) {
-              char *err = biffGetDone(LIMN);
-              fprintf(stderr, "%s: couldn't save %s:\n%s", me, filename, err);
-              free(err);
-            }
-            fclose(file);
-          }
-          list[cpIdx + _baryRes*clIdx] = surf->compileDisplayList();
-	  /*
-	  fprintf(stderr, "!%s: list[cpIdx + _baryRes*clIdx] = "
-		  "list[%u + _%u*%u] = list[%u] = %u\n", me,
-		  cpIdx, _baryRes, clIdx, cpIdx + _baryRes*clIdx, 
-		  list[cpIdx + _baryRes*clIdx]);
-	  */
+    } else {
+      switch(_glyphType) {
+      case tenGlyphTypeBox:
+        limnPolyDataCube(lpld, 1 << limnPolyDataInfoNorm, _cleanEdge);
+        list[0] = surf->compileDisplayList();
+        break;
+      case tenGlyphTypeCylinder:
+      case tenGlyphTypeSphere:
+        if (tenGlyphTypeCylinder == _glyphType) {
+          limnPolyDataCylinder(lpld, 1 << limnPolyDataInfoNorm,
+                               _glyphRes, _cleanEdge);
+        } else {
+          limnPolyDataSpiralSphere(lpld, 1 << limnPolyDataInfoNorm,
+                                   2*_glyphRes, _glyphRes);
         }
-      }
-      break;
+        list[1] = surf->compileDisplayList();
+        limnPolyDataTransform_f(lpld, ZtoX);
+        list[_baryRes] = surf->compileDisplayList();
+        break;
+      case tenGlyphTypeSuperquad:
+        float alpha, beta;
+        for (unsigned int cpIdx=0; cpIdx<_baryRes; cpIdx++) {
+          double cp = NRRD_CELL_POS(0.0, 1.0, _baryRes, cpIdx);
+          for (unsigned int clIdx=0; clIdx<_baryRes; clIdx++) {
+            double cl = NRRD_CELL_POS(0.0, 1.0, _baryRes, clIdx);
+            if (cpIdx + clIdx > _baryRes-1) {
+              continue;
+            }
+            if (cl > cp) {
+              trnsf = ZtoX;
+              alpha = AIR_CAST(float, pow(1-cp, _superquadSharpness));
+              beta = AIR_CAST(float, pow(1-cl, _superquadSharpness));
+            } else {
+              trnsf = ident;
+              alpha = AIR_CAST(float, pow(1-cl, _superquadSharpness));
+              beta = AIR_CAST(float, pow(1-cp, _superquadSharpness));
+            }
+            limnPolyDataSpiralSuperquadric(lpld,
+                                           1 << limnPolyDataInfoNorm,
+                                           alpha, beta,
+                                           2*_glyphRes, _glyphRes);
+            limnPolyDataTransform_f(lpld, trnsf);
+            if (_savingIV) {
+              FILE *file;
+              char filename[128];
+              sprintf(filename, "glyph-%03u.iv", cpIdx + _baryRes*clIdx);
+              file = fopen(filename, "w");
+              if (limnPolyDataWriteIV(file, lpld)) {
+                char *err = biffGetDone(LIMN);
+                fprintf(stderr, "%s: couldn't save %s:\n%s", me, filename, err);
+                free(err);
+              }
+              fclose(file);
+            }
+            list[cpIdx + _baryRes*clIdx] = surf->compileDisplayList();
+            /*
+              fprintf(stderr, "!%s: list[cpIdx + _baryRes*clIdx] = "
+              "list[%u + _%u*%u] = list[%u] = %u\n", me,
+              cpIdx, _baryRes, clIdx, cpIdx + _baryRes*clIdx, 
+              list[cpIdx + _baryRes*clIdx]);
+            */
+          }
+        }
+        break;
+      } /* switch */
     }
-
     // learn number of polygons per glyph, (NOTE) assuming that its the 
     // same for all entries of the palette
     _polygonsPerGlyph = limnPolyDataPolygonNumber(lpld);
@@ -961,7 +1052,7 @@ TensorGlyph::update() {
 
   if (!_tenData) {
     fprintf(stderr, "%s: never got data!\n", me);
-    exit(1);
+    exit(1); 
   }
  
   // this will recursively the rest of the updates
@@ -1024,7 +1115,7 @@ TensorGlyph::drawImmediate() {
     float *eval = dataLine + EVAL_DATA_IDX;
     float *pos = dataLine + POS_DATA_IDX;
     float *quat = dataLine + QUAT_DATA_IDX;
-    if (_dynamic) {
+    if (_dynamic || 3 == _inTenDataStride) { /* hedge */
       if (!( dataLine[MASK_DATA_IDX] >= _maskThresh )) {
         continue;
       }
@@ -1043,6 +1134,13 @@ TensorGlyph::drawImmediate() {
       glColor3fv(rgb);
     }
     glPushMatrix();
+    /*
+    fprintf(stderr, "!%s[%u]: pos(%g,%g,%g) rot(%g,%g,%g,%g) scl(%g,%g,%g)\n",
+            "bingo",  ii,
+            pos[0], pos[1], pos[2],
+            AIR_CAST(float, 180*angle/AIR_PI), axis[0], axis[1], axis[2],
+            glyphScale*eval[0], glyphScale*eval[1], glyphScale*eval[2]);
+    */
     glTranslatef(pos[0], pos[1], pos[2]);
     glRotatef(AIR_CAST(float, 180*angle/AIR_PI), axis[0], axis[1], axis[2]);
     glScalef(glyphScale*eval[0], glyphScale*eval[1], glyphScale*eval[2]);

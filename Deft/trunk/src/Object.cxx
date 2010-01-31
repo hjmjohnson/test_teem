@@ -42,6 +42,7 @@ Object::Object() {
   _compiling = false;
   _displayList = 0;
   _wireframe = false;
+  _flatShading = false;
   _twoSided = false;
   _visible = true;
   _colorUse = true;

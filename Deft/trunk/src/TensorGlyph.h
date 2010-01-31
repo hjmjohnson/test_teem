@@ -48,6 +48,11 @@ public:
   void dataSet(unsigned int num,
                const float *tenData, unsigned int tenStride,
                const float *posData, unsigned int posStride,
+               const float *rgbData, unsigned int rgbStride,
+               float measurementFrame[9]);
+  void dataSet(unsigned int num,
+               const float *tenData, unsigned int tenStride,
+               const float *posData, unsigned int posStride,
                float measurementFrame[9]);
   void dynamic(bool dyn);
   bool dynamic() const { return _dynamic; }
@@ -129,11 +134,13 @@ private:
   gageShape *_gshape;       // set with input volume data
   const float *_tenData,    // given tensor data (NOT owned)
     *_posData,              // given position data (NOT owned)
+    *_rgbData,              // given RGB data (NOT owned)
     *_dataCache;            // pointer nDataCache (is owned)
 
   unsigned int _inDataNum,  // total number of input tensor values
-    _inTenDataStride,       // stride of tenData
-    _inPosDataStride,       // stride of posData
+    _inTenDataStride,       // stride of _tenData
+    _inPosDataStride,       // stride of _posData
+    _inRgbDataStride,       // stride of _rgbData
     _maxNum,                // modest bound on max number of glyphs
     _activeNum,             // number of glyphs meeting aniso,mask thresh
     _glyphsDrawnNum,        // number of glyphs recently drawn

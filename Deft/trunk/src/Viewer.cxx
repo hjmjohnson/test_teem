@@ -287,7 +287,6 @@ Viewer::draw() {
 
 void
 Viewer::screenDump() {
-
   char me[]="Deft::Viewer::screenDump", *err, fname[AIR_STRLEN_SMALL];
   Nrrd *nimg, *nflip;
   airArray *mop;

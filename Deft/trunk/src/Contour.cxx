@@ -30,7 +30,7 @@ namespace Deft {
 Contour::Contour() {
 
   _sctx = seekContextNew();
-  seekVerboseSet(_sctx, 10);
+  seekVerboseSet(_sctx, 1);
   seekNormalsFindSet(_sctx, AIR_TRUE);
 }
 

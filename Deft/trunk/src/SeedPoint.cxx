@@ -137,7 +137,7 @@ SeedPoint::SeedPoint(const Volume *vol,
 
   hsline = new HyperStreamline(vol);
   hsline->visible(false);
-  hsline->verbose(2);
+  hsline->verbose(0);
 
   _npos = nrrdNew(); // will get set dynamically
   _ntmp = nrrdNew();

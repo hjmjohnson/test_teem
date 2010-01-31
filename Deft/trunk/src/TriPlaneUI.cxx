@@ -33,16 +33,18 @@ enum {
   kernelCatmulRom,
   kernelCubic333,
   kernelBSpline,
+  kernelC4H,
   kernelLast
 };
 
-const char kernelStr[6][128] = {
+const char kernelStr[7][128] = {
   "(unknown)",
   "box",
   "tent",
   "BC:0,1/2",
   "BC:1/3,1/3",
-  "BC:1,0"
+  "BC:1,0",
+  "C4H"
 };
 
 static char labelBuff[4][128] = {"All", "Axis 0", "Axis 1", "Axis 2"};
@@ -462,16 +464,20 @@ TriPlaneUI::kernel_cb(fltk::Choice *menu, TriPlaneUI *ui) {
     ELL_3V_SET(ui->_ksp->parm, 1, 0, 0);
     break;
   case kernelCatmulRom:
-    ui->_ksp->kernel = nrrdKernelBCCubic,
-    ELL_3V_SET(ui->_ksp->parm, 1, 0.0, 0.5);
+    ui->_ksp->kernel = nrrdKernelBCCubic;
+      ELL_3V_SET(ui->_ksp->parm, 1, 0.0, 0.5);
     break;
   case kernelBSpline:
-    ui->_ksp->kernel = nrrdKernelBCCubic,
+    ui->_ksp->kernel = nrrdKernelBCCubic;
     ELL_3V_SET(ui->_ksp->parm, 1, 1.0, 0.0);
     break;
   case kernelCubic333:
-    ui->_ksp->kernel = nrrdKernelBCCubic,
+    ui->_ksp->kernel = nrrdKernelBCCubic;
     ELL_3V_SET(ui->_ksp->parm, 1, 0.333333, 0.33333);
+    break;
+  case kernelC4H:
+    ui->_ksp->kernel = nrrdKernelC4Hexic;
+    ui->_ksp->parm[0] = 1;
     break;
   }
   ui->_triplane->kernel(gageKernel00, ui->_ksp);
