@@ -56,7 +56,7 @@ typedef struct {
   fltk::ValueInput *glyphScaleRadInput;
   Deft::Slider *isoval;
   Deft::Slider *strength;
-  Deft::Slider *alpha, *beta, *gamma;
+  Deft::Slider *alpha, *beta, *cwell, *gamma;
   /* Deft::Slider *height; */
   Deft::Slider *ccSelect, *rho, *sclMean, *sclWind;
   fltk::CheckButton *ccSingle;
@@ -75,7 +75,8 @@ typedef struct {
   NrrdRange *cvalRange;
   limnPolyData *phistLine, *phistTube;
   Deft::PolyData *phistSurf;
-  double icvalr[2], sclMin, sclMax, strnMin, scaleVec[3], glyphScaleRad;
+  double icvalr[2], sclMin, sclMax, strnMin, scaleVec[3], glyphScaleRad,
+    energyIncreasePermitFrac;
 } pullBag;
 
 void
@@ -171,10 +172,10 @@ outputShow(pullBag *bag) {
     bag->phistSurf->changed();
   }
 
-  bag->ncval = bag->nenr;
+  /* bag->ncval = bag->nenr; */
   /* bag->ncval = bag->nstrn; */
   /* bag->ncval = bag->nstuck; */
-  /* bag->ncval = bag->nscl;*/
+  bag->ncval = bag->nscl;
 
   if (bag->ncval) {
     nrrdRangeSet(bag->cvalRange, bag->ncval, AIR_FALSE);
@@ -450,6 +451,31 @@ void
 beta_cb(fltk::Widget *, pullBag *bag) {
 
   pullSysParmSet(bag->pctx, pullSysParmBeta, bag->beta->value());
+}
+
+void
+cwell_cb(fltk::Widget *, pullBag *bag) {
+  double *parm;
+
+  parm = bag->pctx->energySpecR->parm;
+  parm[1] = bag->cwell->value();
+  pullSysParmSet(bag->pctx, pullSysParmEnergyIncreasePermit,
+                 bag->energyIncreasePermitFrac*bag->cwell->value());
+  {
+    unsigned int ii, nn;
+    double xx, yy, de;
+    FILE *file;
+    
+    if ((file = fopen("eplot.txt", "w"))) {
+      nn = 800;
+      for (ii=0; ii<nn; ii++) {
+        xx = AIR_AFFINE(0, ii, nn-1, 0.0, 1.0);
+        yy = bag->pctx->energySpecR->energy->eval(&de, xx, parm);
+        fprintf(file, "%f %f\n", xx, yy);
+      }
+      fclose(file);
+    }
+  }
 }
 
 void
@@ -1033,7 +1059,7 @@ main(int argc, char **argv) {
 
   int winy = 10;
   int incy;
-  fltk::Window *win = new fltk::Window(400, 500, "pull UI");
+  fltk::Window *win = new fltk::Window(400, 600, "pull UI");
   win->begin();
   fltk::Button *stepButton = new fltk::Button(10, winy, 50, incy=20, "step");
   stepButton->callback((fltk::Callback*)step_cb, &bag);
@@ -1083,13 +1109,31 @@ main(int argc, char **argv) {
   bag.alpha->fastUpdate(1);
   bag.alpha->callback((fltk::Callback*)alpha_cb, &bag);
 
-  winy += incy;
-  bag.beta = new Deft::Slider(0, winy, win->w(), incy=55, "beta");
-  bag.beta->align(fltk::ALIGN_LEFT);
-  bag.beta->range(0, 1);
-  bag.beta->value(pctx->sysParm.beta);
-  bag.beta->fastUpdate(1);
-  bag.beta->callback((fltk::Callback*)beta_cb, &bag);
+  if (pullInterTypeAdditive == pctx->interType) {
+    winy += incy;
+    bag.beta = new Deft::Slider(0, winy, win->w(), incy=55, "beta");
+    bag.beta->align(fltk::ALIGN_LEFT);
+    bag.beta->range(0, 1);
+    bag.beta->value(pctx->sysParm.beta);
+    bag.beta->fastUpdate(1);
+    bag.beta->callback((fltk::Callback*)beta_cb, &bag);
+  }
+
+  if (pullEnergyCubicWell == pctx->energySpecR->energy
+      || pullEnergyBetterCubicWell == pctx->energySpecR->energy) {
+    winy += incy;
+    bag.cwell = new Deft::Slider(0, winy, win->w(), incy=55, "well depth");
+    bag.cwell->align(fltk::ALIGN_LEFT);
+    bag.cwell->range(-0.04, 0);
+    bag.cwell->value(bag.pctx->energySpecR->parm[1]);
+    bag.cwell->fastUpdate(1);
+    bag.cwell->callback((fltk::Callback*)cwell_cb, &bag);
+    /* remember eip as fraction of well depth */
+    bag.energyIncreasePermitFrac = 
+      energyIncreasePermit/bag.pctx->energySpecR->parm[1];
+  } else {
+    bag.energyIncreasePermitFrac = AIR_NAN;
+  }
 
   winy += incy;
   bag.gamma = new Deft::Slider(0, winy, win->w(), incy=55, "gamma");
