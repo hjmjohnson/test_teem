@@ -69,7 +69,7 @@ typedef struct {
   fltk::ValueInput *verbose;
   pullContext *pctx;
   Nrrd *nPosOut, *nTenOut, *nFrcOut, *nten, *ntmp, *nenr, *nscl,
-    *nidcc, *nstrn,
+    *nidcc, *nstrn, *ncovar,
     *nstuck, *nfrcOld, *nfrcNew, *nposOld, *nposNew, *nrgb, *nccrgb,
     *ncval, *ncmap, *ncmapOut, *nblur;
   NrrdRange *cvalRange;
@@ -112,6 +112,7 @@ outputGet(pullBag *bag) {
       || pullPropGet(bag->nenr, pullPropEnergy, bag->pctx)
       || pullPropGet(bag->nidcc, pullPropIdCC, bag->pctx)
       || pullPropGet(bag->nstuck, pullPropStuck, bag->pctx)
+      || pullPropGet(bag->ncovar, pullPropNeighCovar7Ten, bag->pctx)
       || pullPropGet(bag->nFrcOut, pullPropForce, bag->pctx)
       || (pullPhistEnabled
           ? pullPositionHistoryGet(bag->phistLine, bag->pctx)
@@ -131,6 +132,9 @@ outputGet(pullBag *bag) {
        : (nrrdCopy(bag->nfrcOld, bag->nfrcNew)
           || nrrdCopy(bag->nposOld, bag->nposNew)))
       || nrrdConvert(bag->nten, bag->nTenOut, nrrdTypeFloat)
+      /* hack to visualize the covariance tensors 
+      || nrrdCopy(bag->nten, bag->ncovar)
+      */
       || nrrdCrop(bag->ntmp, bag->nPosOut, cropMin, cropMax)
       || nrrdConvert(bag->nposNew, bag->ntmp, nrrdTypeFloat)
       || nrrdCrop(bag->ntmp, bag->nFrcOut, cropMin, cropMax)
@@ -173,9 +177,9 @@ outputShow(pullBag *bag) {
   }
 
   /* bag->ncval = bag->nenr; */
-  /* bag->ncval = bag->nstrn; */
+  bag->ncval = bag->nstrn;
   /* bag->ncval = bag->nstuck; */
-  bag->ncval = bag->nscl;
+  /* bag->ncval = bag->nscl; */
 
   if (bag->ncval) {
     nrrdRangeSet(bag->cvalRange, bag->ncval, AIR_FALSE);
@@ -543,6 +547,7 @@ save_cb(fltk::Widget *, pullBag *bag) {
   }
   nrrdSave("pos-all.nrrd", bag->nPosOut, NULL);
   nrrdSave("pos-sel.nrrd", nPosSel, NULL);
+  nrrdSave("covar-all.nrrd", bag->ncovar, NULL);
   if (bag->nstrn) {
     nrrdSave("strn-all.nrrd", bag->nstrn, NULL);
     nrrdSave("strn-sel.nrrd", nStrnSel, NULL);
@@ -1036,6 +1041,7 @@ main(int argc, char **argv) {
   bag.nenr = nrrdNew();
   bag.nscl = nrrdNew();
   bag.nidcc = nrrdNew();
+  bag.ncovar = nrrdNew();
   if (pctx->ispec[pullInfoStrength]) {
     printf("!%s: creating strength nrrd\n", me);
     bag.nstrn = nrrdNew();
