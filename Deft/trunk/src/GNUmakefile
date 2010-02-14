@@ -124,6 +124,7 @@ Deft_pull: $(OBJS) main-pull.o $(TEEM)/arch/darwin.32/lib/libteem.a
           -lteem -lpng -llevmar -lz -lbz2 -lm -lobjc
 	/Developer/Tools/Rez -t APPL -o $@  /usr/local/src/fltk-2.0/fltk/mac.r
 
+# -L/Users/gk/teem-install/lib 
 puller: main-pull.c $(TEEM)/arch/darwin.32/lib/libteem.a
 	cc -g -O3 -W -Wall -o puller  main-pull.c \
 	  -I$(TEEM)/include -I/usr/include \
