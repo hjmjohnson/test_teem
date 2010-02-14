@@ -69,7 +69,7 @@ typedef struct {
   fltk::ValueInput *verbose;
   pullContext *pctx;
   Nrrd *nPosOut, *nTenOut, *nFrcOut, *nten, *ntmp, *nenr, *nscl,
-    *nidcc, *nstrn, *ncovar,
+    *nidcc, *nstrn, *ncovar, *ntcovar,
     *nstuck, *nfrcOld, *nfrcNew, *nposOld, *nposNew, *nrgb, *nccrgb,
     *ncval, *ncmap, *ncmapOut, *nblur;
   NrrdRange *cvalRange;
@@ -113,6 +113,7 @@ outputGet(pullBag *bag) {
       || pullPropGet(bag->nidcc, pullPropIdCC, bag->pctx)
       || pullPropGet(bag->nstuck, pullPropStuck, bag->pctx)
       || pullPropGet(bag->ncovar, pullPropNeighCovar7Ten, bag->pctx)
+      || pullPropGet(bag->ntcovar, pullPropNeighTanCovar, bag->pctx)
       || pullPropGet(bag->nFrcOut, pullPropForce, bag->pctx)
       || (pullPhistEnabled
           ? pullPositionHistoryGet(bag->phistLine, bag->pctx)
@@ -132,8 +133,9 @@ outputGet(pullBag *bag) {
        : (nrrdCopy(bag->nfrcOld, bag->nfrcNew)
           || nrrdCopy(bag->nposOld, bag->nposNew)))
       || nrrdConvert(bag->nten, bag->nTenOut, nrrdTypeFloat)
-      /* hack to visualize the covariance tensors 
+      /* hacks to visualize the (tan) covariance tensors 
       || nrrdCopy(bag->nten, bag->ncovar)
+      || nrrdCopy(bag->nten, bag->ntcovar)
       */
       || nrrdCrop(bag->ntmp, bag->nPosOut, cropMin, cropMax)
       || nrrdConvert(bag->nposNew, bag->ntmp, nrrdTypeFloat)
@@ -176,8 +178,8 @@ outputShow(pullBag *bag) {
     bag->phistSurf->changed();
   }
 
-  /* bag->ncval = bag->nenr; */
-  bag->ncval = bag->nstrn;
+  bag->ncval = bag->nenr;
+  /* bag->ncval = bag->nstrn; */
   /* bag->ncval = bag->nstuck; */
   /* bag->ncval = bag->nscl; */
 
@@ -548,6 +550,7 @@ save_cb(fltk::Widget *, pullBag *bag) {
   nrrdSave("pos-all.nrrd", bag->nPosOut, NULL);
   nrrdSave("pos-sel.nrrd", nPosSel, NULL);
   nrrdSave("covar-all.nrrd", bag->ncovar, NULL);
+  nrrdSave("tcovar-all.nrrd", bag->ntcovar, NULL);
   if (bag->nstrn) {
     nrrdSave("strn-all.nrrd", bag->nstrn, NULL);
     nrrdSave("strn-sel.nrrd", nStrnSel, NULL);
@@ -592,13 +595,14 @@ main(int argc, char **argv) {
   /* things that used to be set directly inside pullContext */
   int energyFromStrength, nixAtVolumeEdgeSpace, constraintBeforeSeedThresh,
     binSingle, liveThresholdOnInit, permuteOnRebin, noPopCntlWithZeroAlpha,
-    useBetaForGammaLearn, restrictiveAddToBins, noAdd, unequalShapesAllow;
+    useBetaForGammaLearn, restrictiveAddToBins, noAdd, unequalShapesAllow,
+    popCntlEnoughTest;
   int verbose;
   int interType;
   unsigned int samplesAlongScaleNum, pointNumInitial, pointPerVoxel,
     ppvZRange[2], snap, iterMax, stuckIterMax, constraintIterMax,
     popCntlPeriod, addDescent, iterCallback, rngSeed, progressBinMod,
-    threadNum;
+    threadNum, eipHalfLife;
   double jitter, stepInitial, constraintStepMin, radiusSpace, binWidthSpace,
     radiusScale, alpha, beta, gamma, wall, energyIncreasePermit,
     backStepScale, opporStepScale, energyDecreaseMin, energyDecreasePopCntlMin,
@@ -711,6 +715,9 @@ main(int argc, char **argv) {
              &unequalShapesAllow, "false",
              "allow volumes to have different shapes (false is safe as "
              "different volume sizes are often accidental)");
+  hestOptAdd(&hopt, "pcet", "bool", airTypeBool, 1, 1, &popCntlEnoughTest,
+             "true", "use neighbor-counting \"enough\" heuristic to "
+             "bail out of pop cntl");
   hestOptAdd(&hopt, "nobin", NULL, airTypeBool, 0, 0,
              &binSingle, NULL,
              "turn off spatial binning (which prevents multi-threading "
@@ -869,6 +876,8 @@ main(int argc, char **argv) {
   hestOptAdd(&hopt, "pbm", "mod", airTypeUInt, 1, 1,
              &progressBinMod, "50",
              "progress bin mod");
+  hestOptAdd(&hopt, "eiphl", "hl", airTypeUInt, 1, 1, &eipHalfLife, "0",
+             "half-life of energyIncreasePermute (\"-eip\")");
   hestOptAdd(&hopt, "nt", "# threads", airTypeInt, 1, 1,
              &threadNum, "1", 
              (airThreadCapable
@@ -923,6 +932,7 @@ main(int argc, char **argv) {
       || pullFlagSet(pctx, pullFlagNixAtVolumeEdgeSpace, nixAtVolumeEdgeSpace)
       || pullFlagSet(pctx, pullFlagConstraintBeforeSeedThresh,
                      constraintBeforeSeedThresh)
+      || pullFlagSet(pctx, pullFlagPopCntlEnoughTest, popCntlEnoughTest)
       || pullFlagSet(pctx, pullFlagBinSingle, binSingle)
       || pullFlagSet(pctx, pullFlagNoAdd, noAdd)
       || pullFlagSet(pctx, pullFlagPermuteOnRebin, permuteOnRebin)
@@ -940,6 +950,8 @@ main(int argc, char **argv) {
       || pullIterParmSet(pctx, pullIterParmPopCntlPeriod, popCntlPeriod)
       || pullIterParmSet(pctx, pullIterParmAddDescent, addDescent)
       || pullIterParmSet(pctx, pullIterParmCallback, iterCallback)
+      || pullIterParmSet(pctx, pullIterParmEnergyIncreasePermitHalfLife,
+                         eipHalfLife)
       || pullSysParmSet(pctx, pullSysParmStepInitial, stepInitial)
       || pullSysParmSet(pctx, pullSysParmConstraintStepMin, constraintStepMin)
       || pullSysParmSet(pctx, pullSysParmRadiusSpace, radiusSpace)
@@ -1042,6 +1054,7 @@ main(int argc, char **argv) {
   bag.nscl = nrrdNew();
   bag.nidcc = nrrdNew();
   bag.ncovar = nrrdNew();
+  bag.ntcovar = nrrdNew();
   if (pctx->ispec[pullInfoStrength]) {
     printf("!%s: creating strength nrrd\n", me);
     bag.nstrn = nrrdNew();
