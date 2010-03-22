@@ -47,11 +47,18 @@ main(int, char **argv) {
   viewer->show(1, fakeArgv);
 
   limnPolyData *pld = limnPolyDataNew();
+  /*
   limnPolyDataSpiralSuperquadric(pld, 
                                  (1 << limnPolyDataInfoRGBA)
                                  | (1 << limnPolyDataInfoNorm),
                                  1, 1,
                                  10, 10);
+  */
+  limnPolyDataSpiralBetterquadric(pld, 
+                                  (1 << limnPolyDataInfoRGBA)
+                                  | (1 << limnPolyDataInfoNorm),
+                                  1, 4, 4, 0.0,
+                                  80, 80);
   ELL_4M_SCALE_SET(matScl, 0.5, 0.5, 0.5);
   limnPolyDataTransform_d(pld, matScl);
   Deft::PolyData *surf = new Deft::PolyData(pld, true);

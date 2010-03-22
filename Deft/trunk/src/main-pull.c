@@ -94,7 +94,6 @@ isovalue_cb(fltk::Widget *widget, pullBag *bag) {
   slider = (Deft::Slider *)widget;
   if (bag->contour) {
     bag->contour->extract(slider->value());
-    bag->contour->wireframe(false);
   }
   bag->viewer->redraw();
 }
@@ -189,32 +188,11 @@ outputShow(pullBag *bag) {
     bag->cvalRange->min = AIR_NAN;
     bag->cvalRange->max = AIR_NAN;
   }
-  float *cmapOut;
-  if (bag->ncmap
-      && bag->ncval
-      && AIR_EXISTS(bag->cvalRange->min)
-      && AIR_EXISTS(bag->cvalRange->max)) {
-    /*
-    bag->cvalRange->min = -282.437;
-    bag->cvalRange->max = -40.3172;
-    */
-    if (nrrdApply1DRegMap(bag->ncmapOut, bag->ncval, bag->cvalRange,
-                          bag->ncmap, nrrdTypeFloat, AIR_TRUE)) {
-      err = biffGetDone(NRRD);
-      fprintf(stderr, "%s: cmap error\n%s\n", me, err);
-      free(err);  exit(1);
-    }
-    cmapOut = AIR_CAST(float *, bag->ncmapOut->data);
-  } else {
-    cmapOut = NULL;
-  }
-
   if (bag->ncval) {
     cval = AIR_CAST(double *, bag->ncval->data);
   } else {
     cval = NULL;
   }
-  idcc = AIR_CAST(unsigned int *, bag->nidcc->data);
   if (cval) {
     nn = bag->ncval->axis[0].size;
     emean = 0;
@@ -233,7 +211,39 @@ outputShow(pullBag *bag) {
               bag->cvalRange->hasNonExist ? "HAS non-exist" : "no non-exist",
               emean, estdv);
     }
+    bag->cvalRange->min = AIR_LERP(0.7, bag->cvalRange->min, emean - 2*estdv);
+    bag->cvalRange->max = AIR_LERP(0.7, bag->cvalRange->max, emean + 2*estdv);
   }
+  float *cmapOut;
+  if (bag->ncmap
+      && bag->ncval
+      && AIR_EXISTS(bag->cvalRange->min)
+      && AIR_EXISTS(bag->cvalRange->max)) {
+    double mmin, mmax;
+    fprintf(stderr, "!%s: cval cmap range %g %g ----------- \n", me, 
+            bag->cvalRange->min, bag->cvalRange->max);
+    /*
+    mmin = -0.0342937;
+    mmax = -0.0105725;
+    */
+    /* */
+    /*
+    bag->cvalRange->min = AIR_LERP(0.05, mmin, mmax);
+    bag->cvalRange->max = AIR_LERP(0.3, mmin, mmax);
+    */
+    /* */
+    if (nrrdApply1DRegMap(bag->ncmapOut, bag->ncval, bag->cvalRange,
+                          bag->ncmap, nrrdTypeFloat, AIR_TRUE)) {
+      err = biffGetDone(NRRD);
+      fprintf(stderr, "%s: cmap error\n%s\n", me, err);
+      free(err);  exit(1);
+    }
+    cmapOut = AIR_CAST(float *, bag->ncmapOut->data);
+  } else {
+    cmapOut = NULL;
+  }
+
+  idcc = AIR_CAST(unsigned int *, bag->nidcc->data);
   stuck = AIR_CAST(unsigned char *, bag->nstuck->data);
   nn = bag->nPosOut->axis[1].size;
   pos = AIR_CAST(double *, bag->nPosOut->data);
@@ -395,6 +405,7 @@ cc_cb(fltk::Widget *, pullBag *bag) {
   printf("%s: found %u CCs\n", me, bag->pctx->CCNum);
   bag->ccSelect->range(0, bag->pctx->CCNum-1);
   if (bag->nccrgb->axis[1].size != bag->pctx->CCNum) {
+    airSrandMT(AIR_CAST(unsigned int, airTime()));
     if (nrrdMaybeAlloc_va(bag->nccrgb, nrrdTypeFloat, 2,
                           AIR_CAST(size_t, 3),
                           AIR_CAST(size_t, bag->pctx->CCNum))) {
@@ -620,6 +631,10 @@ main(int argc, char **argv) {
 
 #ifdef DEFT
   int saveAndQuit, fog;
+
+  hestOptAdd(&hopt, "csqvmm", "min max", airTypeDouble, 2, 2, 
+             Deft::colorSclQuantityValueMinMax, "nan nan", 
+             "min/max values for cutting planes of scalar values");
   hestOptAdd(&hopt, "saq", "save & quit", airTypeInt, 0, 0, &saveAndQuit,
              NULL, "save image and quit, for batch processing");
   hestOptAdd(&hopt, "cmap", "nin", airTypeOther, 1, 1, &(bag.ncmap), "",
@@ -1270,8 +1285,8 @@ main(int argc, char **argv) {
   glyph->superquadSharpness(sqdSharp);
   glyph->glyphResolution(glyphFacetRes);
   glyph->glyphScale(glyphScale);
-  glyph->rgbParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
-  glyph->rgbParmSet(tenAniso_Cl2, 0, 0, 1.0, 1, 0.0);
+  glyph->rgbEvecParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
+  glyph->rgbEvecParmSet(tenAniso_Cl2, 0, 0, 1.0, 1, 0.0);
   glyph->maskThresh(0.5);
   /*
   void rgbParmSet(int aniso, unsigned int evec,
@@ -1338,6 +1353,26 @@ main(int argc, char **argv) {
   triplane->kernel(gageKernel22, ksp);
   triplane->visible(false);
 
+
+  // HEY, WRONG: totally wrong place to be doing this
+  if (1) {
+    Deft::TensorGlyph *tgl[3];
+    tgl[0] = static_cast<Deft::TensorGlyph*>(triplane->glyph[0]);
+    tgl[1] = static_cast<Deft::TensorGlyph*>(triplane->glyph[1]);
+    tgl[2] = static_cast<Deft::TensorGlyph*>(triplane->glyph[2]);
+    /*
+    tgl[0]->parmCopy(glyph);
+    tgl[1]->parmCopy(glyph);
+    tgl[2]->parmCopy(glyph);
+    */
+    Deft::TensorGlyphUI *triglyphUI = new Deft::TensorGlyphUI(tgl[0],
+                                                              bag.viewer);
+    triglyphUI->label("triplane glyphs");
+    triglyphUI->add(tgl[1]);
+    triglyphUI->add(tgl[2]);
+    triglyphUI->show();
+  }
+
   bag.scene->groupAdd(triplane);
 
   Deft::TriPlaneUI *planeUI = new Deft::TriPlaneUI(triplane, bag.viewer);
@@ -1346,7 +1381,7 @@ main(int argc, char **argv) {
   /* -------------------------------------------------- */
 
   if (gageKindScl == vspec[0]->kind) {
-    fltk::Window *window = new fltk::Window(imgSize[0]+20, 0, 400, 90);
+    fltk::Window *window = new fltk::Window(400, 80, "isovalue");
     window->begin();
     window->resizable(window);
     
@@ -1356,6 +1391,7 @@ main(int argc, char **argv) {
     bag.isoval->align(fltk::ALIGN_LEFT);
     bag.isoval->range(bag.contour->minimum(), bag.contour->maximum());
     bag.isoval->value(bag.contour->maximum());
+    bag.contour->wireframe(false);
     bag.isoval->fastUpdate(0);
     bag.isoval->callback((fltk::Callback*)isovalue_cb, &bag);
     /* bag.isoval->value(1.0); */

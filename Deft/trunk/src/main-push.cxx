@@ -405,12 +405,12 @@ main(int argc, char *argv[]) {
   glyph->superquadSharpness(sqdSharp);
   glyph->glyphResolution(glyphFacetRes);
   glyph->glyphScale(glyphScale);
-  glyph->rgbParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
+  glyph->rgbEvecParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
   glyph->maskThresh(0.0);
   /*
-  void rgbParmSet(int aniso, unsigned int evec,
-                  double maxSat, double isoGray,
-                  double gamma, double modulate);
+  void rgbEvecParmSet(int aniso, unsigned int evec,
+                      double maxSat, double isoGray,
+                      double gamma, double modulate);
   */
 
   scene->objectAdd(glyph);

@@ -40,4 +40,7 @@ sanity() {
   return;
 }
 
+double
+colorSclQuantityValueMinMax[2] = { AIR_NAN, AIR_NAN };
+
 }

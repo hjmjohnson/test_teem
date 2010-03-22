@@ -331,7 +331,7 @@ PolyData::verticesGet(Nrrd *npos) {
 
 void
 PolyData::drawImmediate() {
-  char me[]="PolyData::drawImmediate";
+  // char me[]="PolyData::drawImmediate";
   const limnPolyData *lpld = this->lpld();
   int glWhat;
   const GLenum glpt[LIMN_PRIMITIVE_MAX+1] = {

@@ -44,6 +44,7 @@ public:
   void add(TensorGlyph *tg); // HEY: no remove?
   void show();
   void redraw();
+  void label(const char *label);
 
 private:
   // we do not own these 

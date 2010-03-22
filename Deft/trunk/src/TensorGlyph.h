@@ -70,14 +70,16 @@ public:
   double anisoThresh() const { return _anisoThresh; }
   void anisoThreshMin(double anisoThreshMin);
   double anisoThreshMin() const { return _anisoThreshMin; }
-  void rgbParmSet(int aniso, unsigned int evec,
-                  double maxSat, double isoGray,
-                  double gamma, double modulate);
+  void rgbEvecParmSet(int aniso, unsigned int evec,
+                      double maxSat, double isoGray,
+                      double gamma, double modulate);
   // void cmapSet(Nrrd *rmap, int aniso, int anisoSat);
   void glyphType(int glyphType);
   int glyphType() const { return _glyphType; }
   void cleanEdge(bool cleanEdge);
   bool cleanEdge() const { return _cleanEdge; }
+  void rgbUse(bool rgbu);
+  bool rgbUse() const { return _rgbUse; }
   void superquadSharpness(double sharpness);
   double superquadSharpness() const { return _superquadSharpness; }
   void glyphResolution(unsigned int res);
@@ -109,6 +111,7 @@ private:
 
   // basic glyph parameters
   bool _dynamic,
+    _rgbUse,
     _cleanEdge,             // no vertex sharing on cylinder and cube glyphs
     _skipNegEval,           // don't show tensors w/ negative eigenvalues
     _clampEvalUse;          // do clamping of eigenvalues to this
@@ -118,7 +121,8 @@ private:
   unsigned int _glyphRes,   // face resolution for all glyphs
     _baryRes,               // resolution of barycentric shape domain
     _rgbEvec;               // in {0,1,2}: which eigenvector used for coloring
-  double _glyphScale,       // over-all glyph scaling
+  double _baryEps,
+    _glyphScale,            // over-all glyph scaling
     _anisoThresh,           // culling based on anisotropy
     _anisoThreshMin,        // estimated lower bound on anisoThresh
     _maskThresh,            // culling based on confidence/mask value

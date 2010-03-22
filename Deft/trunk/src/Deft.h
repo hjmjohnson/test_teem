@@ -215,7 +215,7 @@ enum {
 };
 #define DEFT_ALPHA_MASK_SCL_QUANTITY_MAX       1
 
-/* enumsDeft.C */
+/* enums.cxx */
 DEFT_API airEnum *fltkEvent;
 DEFT_API airEnum *viewerMode;
 DEFT_API airEnum *colorTenQuantity;
@@ -225,8 +225,9 @@ DEFT_API airEnum *alphaMaskDwiQuantity;
 DEFT_API airEnum *colorSclQuantity;
 DEFT_API airEnum *alphaMaskSclQuantity;
 
-/* miscDeft.C */
+/* misc.cxx */
 DEFT_API void sanity();
+DEFT_API double colorSclQuantityValueMinMax[2];
 
 } /* namespace Deft */
 

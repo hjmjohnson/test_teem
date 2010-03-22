@@ -286,7 +286,10 @@ TriPlaneUI::glyphsDo_cb(fltk::CheckButton *but, TriPlaneUI *ui) {
   unsigned int pli;
 
   for (pli=0; ui->_glyphsDoButton[pli] != but; pli++);
+  fprintf(stderr, "!%s: do -> %d (pli %u)\n", "TriPlaneUI::glyphsDo_cb",
+          but->value(), pli);
   if (!pli) {
+            
     ui->_triplane->glyphsDo(0, but->value());
     ui->_triplane->glyphsDo(1, but->value());
     ui->_triplane->glyphsDo(2, but->value());
@@ -424,9 +427,9 @@ void
 TriPlaneUI::seedAnisoThresh_cb(Slider *slider, TriPlaneUI *ui) {
 
   ui->_triplane->seedAnisoThresh(slider->value());
-//   ui->_triplane->glyphsUpdate(0);
-//   ui->_triplane->glyphsUpdate(1);
-//   ui->_triplane->glyphsUpdate(2);
+  ui->_triplane->glyphsUpdate(0);
+  ui->_triplane->glyphsUpdate(1);
+  ui->_triplane->glyphsUpdate(2);
   ui->redraw();
 }
 
@@ -458,29 +461,43 @@ TriPlaneUI::kernel_cb(fltk::Choice *menu, TriPlaneUI *ui) {
   case kernelBox:
     ui->_ksp->kernel = nrrdKernelBox;
     ELL_3V_SET(ui->_ksp->parm, 1, 0, 0);
+    ui->_triplane->kernel(gageKernel00, ui->_ksp);
     break;
   case kernelTent:
     ui->_ksp->kernel = nrrdKernelTent;
     ELL_3V_SET(ui->_ksp->parm, 1, 0, 0);
+    ui->_triplane->kernel(gageKernel00, ui->_ksp);
     break;
   case kernelCatmulRom:
+    ELL_3V_SET(ui->_ksp->parm, 1, 0.0, 0.5);
     ui->_ksp->kernel = nrrdKernelBCCubic;
-      ELL_3V_SET(ui->_ksp->parm, 1, 0.0, 0.5);
+    ui->_triplane->kernel(gageKernel00, ui->_ksp);
+    ui->_ksp->kernel = nrrdKernelBCCubicD;
+    ui->_triplane->kernel(gageKernel11, ui->_ksp);
     break;
   case kernelBSpline:
-    ui->_ksp->kernel = nrrdKernelBCCubic;
     ELL_3V_SET(ui->_ksp->parm, 1, 1.0, 0.0);
+    ui->_ksp->kernel = nrrdKernelBCCubic;
+    ui->_triplane->kernel(gageKernel00, ui->_ksp);
+    ui->_ksp->kernel = nrrdKernelBCCubicD;
+    ui->_triplane->kernel(gageKernel11, ui->_ksp);
+    ui->_ksp->kernel = nrrdKernelBCCubicDD;
+    ui->_triplane->kernel(gageKernel22, ui->_ksp);
     break;
   case kernelCubic333:
     ui->_ksp->kernel = nrrdKernelBCCubic;
     ELL_3V_SET(ui->_ksp->parm, 1, 0.333333, 0.33333);
     break;
   case kernelC4H:
-    ui->_ksp->kernel = nrrdKernelC4Hexic;
     ui->_ksp->parm[0] = 1;
+    ui->_ksp->kernel = nrrdKernelC4Hexic;
+    ui->_triplane->kernel(gageKernel00, ui->_ksp);
+    ui->_ksp->kernel = nrrdKernelC4HexicD;
+    ui->_triplane->kernel(gageKernel11, ui->_ksp);
+    ui->_ksp->kernel = nrrdKernelC4HexicDD;
+    ui->_triplane->kernel(gageKernel22, ui->_ksp);
     break;
   }
-  ui->_triplane->kernel(gageKernel00, ui->_ksp);
   ui->_triplane->update();
   ui->redraw();
 }

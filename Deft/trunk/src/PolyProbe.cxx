@@ -532,11 +532,11 @@ PolyProbe::colorQuantity(int quantity) {
       _cmap->min1D(0);
       _cmap->max1D(1);
       _cmap->max1D(65535);
-      /* for zebrafish */
-      /*
-      _cmap->min1D(-0.0003);
-      _cmap->max1D(0.003);
-      */
+      if (AIR_EXISTS(colorSclQuantityValueMinMax[0]) &&
+          AIR_EXISTS(colorSclQuantityValueMinMax[1])) {
+        _cmap->min1D(colorSclQuantityValueMinMax[0]);
+        _cmap->max1D(colorSclQuantityValueMinMax[1]);
+      }
       break;
     case colorSclQuantityGradMag:
       _queryColor.resize(1);
