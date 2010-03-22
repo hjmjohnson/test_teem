@@ -554,6 +554,7 @@ main(int argc, char **argv) {
   float fr[3], at[3], up[3], fovy, neer, faar, dist, bg[3],
     anisoThresh, anisoThreshMin, glyphScale, sqdSharp;
   int sdaq, size[2], ortho, rght, atrel, glyphType, glyphFacetRes;
+  unsigned int baryRes;
   Nrrd *_nin=NULL, *nin=NULL, *nPos=NULL, *nseed=NULL;
 #if 0*3
   Nrrd *_ninBlur=NULL, *ninBlur;
@@ -710,6 +711,8 @@ main(int argc, char **argv) {
              "\"superquad\"=\"sqd\"", NULL, tenGlyphType);
   hestOptAdd(&hopt, "gsc", "scale", airTypeFloat, 1, 1, &glyphScale,
              "0.25", "over-all glyph size");
+  hestOptAdd(&hopt, "br", "barycentric res", airTypeInt, 1, 1, &baryRes, "50",
+             "resolution of sampling of tensor shape palette");
   hestOptAdd(&hopt, "gr", "glyph res", airTypeInt, 1, 1, &glyphFacetRes, "7",
              "resolution of polygonalization of glyphs (other than box)");
   hestOptAdd(&hopt, "sh", "sharpness", airTypeFloat, 1, 1, &sqdSharp, "2.5",
@@ -898,10 +901,6 @@ main(int argc, char **argv) {
       lbag.poly->visible(true);
       scene->objectAdd(lbag.poly);
     }
-
-
-
-
   }
 #endif
 
@@ -932,16 +931,21 @@ main(int argc, char **argv) {
   glyph->glyphType(glyphType);
   glyph->superquadSharpness(sqdSharp);
   glyph->glyphResolution(glyphFacetRes);
-  // glyph->barycentricResolution(12);
+  if (tenGlyphTypeBetterquad) {
+    glyph->barycentricResolution(baryRes);
+  } else {
+    glyph->barycentricResolution(20);
+  }
   glyph->skipNegativeEigenvalues(false);
   glyph->glyphScale(glyphScale);
-  glyph->rgbParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
+  glyph->rgbEvecParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
   glyph->visible(false);
+  glyph->rgbUse(false);
   glyph->update();
   /*
-  void rgbParmSet(int aniso, unsigned int evec,
-                  double maxSat, double isoGray,
-                  double gamma, double modulate);
+  void rgbEvecParmSet(int aniso, unsigned int evec,
+                      double maxSat, double isoGray,
+                      double gamma, double modulate);
   */
 
   scene->objectAdd(glyph);
@@ -993,12 +997,14 @@ main(int argc, char **argv) {
       glyphUI->add(tgl[2]);
     }
 
+#if 0
     triplane->alphaMaskThreshold(-1); // Brett
     triplane->sampling(0, 2); // Brett
     triplane->sampling(1, 2); // Brett
     triplane->sampling(2, 2); // Brett
     // triplane->plane[0]->visible(true); // Brett cor
     // triplane->position(0, 44.3); // Brett cor
+#endif
     
     Deft::TriPlaneUI *planeUI = new Deft::TriPlaneUI(triplane, viewer);
     planeUI->show();

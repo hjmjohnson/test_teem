@@ -29,7 +29,8 @@ namespace Deft {
 TriPlane::TriPlane(const Volume *vol) : Group(9) {
   char me[]="TriPlane::TriPlane", *err;
 
-  fprintf(stderr, "%s(%u): kind = %p\n", me, __LINE__, vol->kind());
+  fprintf(stderr, "%s(%u): --------- kind = %p (%s)\n",
+          me, __LINE__, vol->kind(), vol->kind()->name);
   _shape = gageShapeNew();
   _vol = vol;
   _bglyph = NULL;
@@ -81,15 +82,9 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
   plane[0] = new Plane(_size[1], _size[2]);
   plane[1] = new Plane(_size[0], _size[2]);
   plane[2] = new Plane(_size[0], _size[1]);
-  if (gageKindScl != _vol->kind()) {
-    seedPlane[0] = new Plane(_seedSize[1], _seedSize[2]);
-    seedPlane[1] = new Plane(_seedSize[0], _seedSize[2]);
-    seedPlane[2] = new Plane(_seedSize[0], _seedSize[1]);
-  } else {
-    seedPlane[0] = NULL;
-    seedPlane[1] = NULL;
-    seedPlane[2] = NULL;
-  }
+  seedPlane[0] = new Plane(_seedSize[1], _seedSize[2]);
+  seedPlane[1] = new Plane(_seedSize[0], _seedSize[2]);
+  seedPlane[2] = new Plane(_seedSize[0], _seedSize[1]);
   /*
   fprintf(stderr, "!%s: plane[0,1,2] = %p %p %p\n", me, 
           plane[0], plane[1], plane[2]);
@@ -101,13 +96,11 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
   plane[0]->volume(vol);
   plane[0]->edgeUSet(_edgeW[1]);
   plane[0]->edgeVSet(_edgeW[2]);
-  if (gageKindScl != _vol->kind()) {
-    seedPlane[0]->color(false);
-    seedPlane[0]->alphaMask(false);
-    seedPlane[0]->volume(vol);
-    seedPlane[0]->edgeUSet(_edgeW[1]);
-    seedPlane[0]->edgeVSet(_edgeW[2]);
-  }
+  seedPlane[0]->color(false);
+  seedPlane[0]->alphaMask(false);
+  seedPlane[0]->volume(vol);
+  seedPlane[0]->edgeUSet(_edgeW[1]);
+  seedPlane[0]->edgeVSet(_edgeW[2]);
   position(0, static_cast<float>(_size[0]/2));
 
   plane[1]->color(true);
@@ -115,13 +108,11 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
   plane[1]->volume(vol);
   plane[1]->edgeUSet(_edgeW[0]);
   plane[1]->edgeVSet(_edgeW[2]);
-  if (gageKindScl != _vol->kind()) {
-    seedPlane[1]->color(false);
-    seedPlane[1]->alphaMask(false);
-    seedPlane[1]->volume(vol);
-    seedPlane[1]->edgeUSet(_edgeW[0]);
-    seedPlane[1]->edgeVSet(_edgeW[2]);
-  }
+  seedPlane[1]->color(false);
+  seedPlane[1]->alphaMask(false);
+  seedPlane[1]->volume(vol);
+  seedPlane[1]->edgeUSet(_edgeW[0]);
+  seedPlane[1]->edgeVSet(_edgeW[2]);
   position(1, static_cast<float>(_size[1]/2));
 
   plane[2]->color(true);
@@ -129,13 +120,11 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
   plane[2]->volume(vol);
   plane[2]->edgeUSet(_edgeW[0]);
   plane[2]->edgeVSet(_edgeW[1]);
-  if (gageKindScl != _vol->kind()) {
-    seedPlane[2]->color(false);
-    seedPlane[2]->alphaMask(false);
-    seedPlane[2]->volume(vol);
-    seedPlane[2]->edgeUSet(_edgeW[0]);
-    seedPlane[2]->edgeVSet(_edgeW[1]);
-  }
+  seedPlane[2]->color(false);
+  seedPlane[2]->alphaMask(false);
+  seedPlane[2]->volume(vol);
+  seedPlane[2]->edgeUSet(_edgeW[0]);
+  seedPlane[2]->edgeVSet(_edgeW[1]);
   position(2, static_cast<float>(_size[2]/2));
 
   plane[0]->lightingUse(false);
@@ -145,23 +134,21 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
   plane[1]->brightness(1.2);
   plane[2]->brightness(1.2);
   
-  if (gageKindScl != _vol->kind()) {
-    seedPlane[0]->visible(false);
-    seedPlane[1]->visible(false);
-    seedPlane[2]->visible(false);
-    seedPlane[0]->wireframe(true);
-    seedPlane[1]->wireframe(true);
-    seedPlane[2]->wireframe(true);
-  }
+  seedPlane[0]->visible(false);
+  seedPlane[1]->visible(false);
+  seedPlane[2]->visible(false);
+  seedPlane[0]->wireframe(true);
+  seedPlane[1]->wireframe(true);
+  seedPlane[2]->wireframe(true);
   
   if (tenGageKind == _vol->kind()) {
     TensorGlyph *tgl[3];
     glyph[0] = tgl[0] = new TensorGlyph();
     glyph[1] = tgl[1] = new TensorGlyph();
     glyph[2] = tgl[2] = new TensorGlyph();
-    tgl[0]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
-    tgl[1]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
-    tgl[2]->rgbParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
+    tgl[0]->rgbEvecParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
+    tgl[1]->rgbEvecParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
+    tgl[2]->rgbEvecParmSet(tenAniso_Cl2, 0, 0.6, 1.0, 2.1, 1.0);
     tgl[0]->dynamic(true);
     tgl[1]->dynamic(true);
     tgl[2]->dynamic(true);
@@ -188,26 +175,39 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
     seedPlane[2]->noColorQuery(tenDwiGageADC, tenDwiGageFA,
                                tenDwiGageTensorAllDWIError);
   } else if (gageKindScl == _vol->kind()) {
-    glyph[0] = NULL;
-    glyph[1] = NULL;
-    glyph[2] = NULL;
+    TensorGlyph *tgl[3];
+    glyph[0] = tgl[0] = new TensorGlyph();
+    glyph[1] = tgl[1] = new TensorGlyph();
+    glyph[2] = tgl[2] = new TensorGlyph();
+    tgl[0]->rgbUse(false);
+    tgl[1]->rgbUse(false);
+    tgl[2]->rgbUse(false);
+    tgl[0]->dynamic(true);
+    tgl[1]->dynamic(true);
+    tgl[2]->dynamic(true);
+    seedPlane[0]->noColorQuery(gageSclHessianTen);
+    seedPlane[1]->noColorQuery(gageSclHessianTen);
+    seedPlane[2]->noColorQuery(gageSclHessianTen);
   }
 
   object[0] = plane[0];
   object[1] = plane[1];
   object[2] = plane[2];
+  glyph[0]->visible(_glyphsDo[0]);
+  glyph[1]->visible(_glyphsDo[1]);
+  glyph[2]->visible(_glyphsDo[2]);
+  
+  _seedValFloat[0] = nrrdNew();
+  _seedValFloat[1] = nrrdNew();
+  _seedValFloat[2] = nrrdNew();
+  _seedPosFloat[0] = nrrdNew();
+  _seedPosFloat[1] = nrrdNew();
+  _seedPosFloat[2] = nrrdNew();
+  
+  object[3] = glyph[0];
+  object[4] = glyph[1];
+  object[5] = glyph[2];
   if (gageKindScl != _vol->kind()) {
-    glyph[0]->visible(_glyphsDo[0]);
-    glyph[1]->visible(_glyphsDo[1]);
-    glyph[2]->visible(_glyphsDo[2]);
-
-    _seedValFloat[0] = nrrdNew();
-    _seedValFloat[1] = nrrdNew();
-    _seedValFloat[2] = nrrdNew();
-    _seedPosFloat[0] = nrrdNew();
-    _seedPosFloat[1] = nrrdNew();
-    _seedPosFloat[2] = nrrdNew();
-    
     hsline[0] = new HyperStreamline(vol);
     hsline[1] = new HyperStreamline(vol);
     hsline[2] = new HyperStreamline(vol);
@@ -222,16 +222,10 @@ TriPlane::TriPlane(const Volume *vol) : Group(9) {
     hsline[2]->twoSided(true);
     
     // this is what determines what will be drawn 
-    object[3] = glyph[0];
-    object[4] = glyph[1];
-    object[5] = glyph[2];
     object[6] = hsline[0];
     object[7] = hsline[1];
     object[8] = hsline[2];
   } else {
-    object[3] = NULL;
-    object[4] = NULL;
-    object[5] = NULL;
     object[6] = NULL;
     object[7] = NULL;
     object[8] = NULL;
@@ -246,13 +240,13 @@ TriPlane::~TriPlane() {
     delete hsline[0];
     delete hsline[1];
     delete hsline[2];
-    nrrdNuke(_seedValFloat[0]);
-    nrrdNuke(_seedValFloat[1]);
-    nrrdNuke(_seedValFloat[2]);
-    nrrdNuke(_seedPosFloat[0]);
-    nrrdNuke(_seedPosFloat[1]);
-    nrrdNuke(_seedPosFloat[2]);
   }
+  nrrdNuke(_seedValFloat[0]);
+  nrrdNuke(_seedValFloat[1]);
+  nrrdNuke(_seedValFloat[2]);
+  nrrdNuke(_seedPosFloat[0]);
+  nrrdNuke(_seedPosFloat[1]);
+  nrrdNuke(_seedPosFloat[2]);
 }
 
 void
@@ -293,22 +287,20 @@ void
 TriPlane::seedSampling(unsigned int axisIdx, double smpl) {
   // char me[]="TriPlane::seedSampling";
 
-  if (gageKindScl != _vol->kind()) {
-    axisIdx = AIR_MIN(axisIdx, 2);
-    _seedSize[axisIdx] = AIR_CAST(unsigned int,
-                                  pow(2.0, smpl)*_shape->size[axisIdx]);
-    if (0 != axisIdx) {
-      seedPlane[0]->resolution(_seedSize[1], _seedSize[2]);
-      seedPlane[0]->update();
-    }
-    if (1 != axisIdx) {
-      seedPlane[1]->resolution(_seedSize[0], _seedSize[2]);
-      seedPlane[1]->update();
-    }
-    if (2 != axisIdx) {
-      seedPlane[2]->resolution(_seedSize[0], _seedSize[1]);
-      seedPlane[2]->update();
-    }
+  axisIdx = AIR_MIN(axisIdx, 2);
+  _seedSize[axisIdx] = AIR_CAST(unsigned int,
+                                pow(2.0, smpl)*_shape->size[axisIdx]);
+  if (0 != axisIdx) {
+    seedPlane[0]->resolution(_seedSize[1], _seedSize[2]);
+    seedPlane[0]->update();
+  }
+  if (1 != axisIdx) {
+    seedPlane[1]->resolution(_seedSize[0], _seedSize[2]);
+    seedPlane[1]->update();
+  }
+  if (2 != axisIdx) {
+    seedPlane[2]->resolution(_seedSize[0], _seedSize[1]);
+    seedPlane[2]->update();
   }
   _seedSampling[axisIdx] = smpl;
 }
@@ -333,37 +325,40 @@ TriPlane::position(unsigned int pIdx, float pos) {
   _posI[pIdx] = pos;
   ELL_3V_SCALE_ADD2(vec, 1.0f, _origW, _posI[pIdx], _interW[pIdx]);
   plane[pIdx]->originSet(vec);
-  if (gageKindScl != _vol->kind()) {
-    seedPlane[pIdx]->originSet(vec);
-  }
+  seedPlane[pIdx]->originSet(vec);
   if (plane[pIdx]->visible()) {
     plane[pIdx]->update();
   } else {
     plane[pIdx]->updateGeometry();
   }
-  if (gageKindScl != _vol->kind()) {
-    if (_glyphsDo[pIdx] || _tractsDo[pIdx]) {
-      seedPlane[pIdx]->update();
-      this->glyphsUpdate(pIdx);
+  if (_glyphsDo[pIdx] || _tractsDo[pIdx]) {
+    seedPlane[pIdx]->update();
+    this->glyphsUpdate(pIdx);
+    if (gageKindScl != _vol->kind()) {
       this->tractsUpdate(pIdx);
-    } else {
-      seedPlane[pIdx]->updateGeometry();
     }
+  } else {
+    seedPlane[pIdx]->updateGeometry();
   }
 }
 
 void
 TriPlane::glyphsUpdate(unsigned int pIdx) {
-  /* char me[]="TriPlane::glyphsUpdate"; */
+  char me[]="TriPlane::glyphsUpdate";
 
-  if (gageKindScl == _vol->kind()) {
-    return;
-  }
+  fprintf(stderr, "!%s: pIdx %u, glyphsDo %u ============\n============\n",
+          me, pIdx, _glyphsDo[pIdx]);
   if (_glyphsDo[pIdx]) {
     nrrdConvert(_seedValFloat[pIdx],
                 seedPlane[pIdx]->values()[0]->nrrd(), 
                 nrrdTypeFloat);
-    if (tenGageKind == _vol->kind()) {
+    fprintf(stderr, "!%s: _seedValFloat[%u] has %u elements "
+            "(axis[1].size %u, data %p)", me,
+            pIdx, AIR_CAST(unsigned int, nrrdElementNumber(_seedValFloat[pIdx])),
+            AIR_CAST(unsigned int, _seedValFloat[pIdx]->axis[1].size),
+            _seedValFloat[pIdx]->data);
+    if (tenGageKind == _vol->kind()
+        || gageKindScl == _vol->kind()) {
       TensorGlyph *tgl = static_cast<TensorGlyph*>(glyph[pIdx]);
       tgl->dataSet(_seedValFloat[pIdx]->axis[1].size,
                    static_cast<float*>(_seedValFloat[pIdx]->data), 7,
@@ -422,9 +417,6 @@ void
 TriPlane::seedAnisoThresh(double aniso) {
   /* char me[]="TriPlane::seedAnisoThresh"; */
 
-  if (gageKindScl == _vol->kind()) {
-    return;
-  }
   if (tenGageKind == _vol->kind()) {
     static_cast<TensorGlyph*>(this->glyph[0])->anisoThresh(aniso);
     static_cast<TensorGlyph*>(this->glyph[1])->anisoThresh(aniso);
@@ -440,9 +432,6 @@ double
 TriPlane::seedAnisoThresh() const {
   double ret = AIR_NAN;
 
-  if (gageKindScl == _vol->kind()) {
-    return ret;
-  }
   if (this->glyph[0]) {
     if (tenGageKind == _vol->kind()) {
       ret = static_cast<TensorGlyph*>(this->glyph[0])->anisoThresh();
@@ -464,11 +453,9 @@ TriPlane::kernel(int which, const NrrdKernelSpec *ksp) {
   plane[0]->kernel(which, ksp);
   plane[1]->kernel(which, ksp);
   plane[2]->kernel(which, ksp);
-  if (gageKindScl != _vol->kind()) {
-    seedPlane[0]->kernel(which, ksp);
-    seedPlane[1]->kernel(which, ksp);
-    seedPlane[2]->kernel(which, ksp);
-  }
+  seedPlane[0]->kernel(which, ksp);
+  seedPlane[1]->kernel(which, ksp);
+  seedPlane[2]->kernel(which, ksp);
 }
 
 void
@@ -503,9 +490,6 @@ TriPlane::alphaMaskThreshold(double thresh) {
 void
 TriPlane::glyphsDo(unsigned int axisIdx, bool doit) {
 
-  if (gageKindScl == _vol->kind()) {
-    return;
-  }
   axisIdx = AIR_MIN(axisIdx, 2);
   bool old = _glyphsDo[axisIdx];
   _glyphsDo[axisIdx] = doit;
@@ -562,13 +546,13 @@ TriPlane::update() {
   plane[0]->update();
   plane[1]->update();
   plane[2]->update();
+  seedPlane[0]->update();
+  seedPlane[1]->update();
+  seedPlane[2]->update();
+  this->glyphsUpdate(0);
+  this->glyphsUpdate(1);
+  this->glyphsUpdate(2);
   if (gageKindScl != _vol->kind()) {
-    seedPlane[0]->update();
-    seedPlane[1]->update();
-    seedPlane[2]->update();
-    this->glyphsUpdate(0);
-    this->glyphsUpdate(1);
-    this->glyphsUpdate(2);
     this->tractsUpdate(0);
     this->tractsUpdate(1);
     this->tractsUpdate(2);

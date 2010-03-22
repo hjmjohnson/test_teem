@@ -37,6 +37,7 @@ enum {
   flagUnknown,
   flagPosData,
   flagTenData,
+  flagRgbUse,
   flagRgbData,
   flagMaskThresh,
   flagClampEval,
@@ -51,7 +52,7 @@ enum {
   flagDataSorted,
   flagAnisoThresh,
   flagActiveNum,
-  flagRGBParm,
+  flagRGBEvecParm,
   flagDataRGB,
   flagBaryRes,
   flagDataBaryIdx,
@@ -66,7 +67,7 @@ enum {
 };
 
 TensorGlyph::TensorGlyph() {
-  char me[]="TensorGlyph::TensorGlyph";
+  // char me[]="TensorGlyph::TensorGlyph";
 
   // initialize all the flags
   for (unsigned int fi=flagUnknown+1; fi<flagLast; fi++) {
@@ -77,6 +78,8 @@ TensorGlyph::TensorGlyph() {
   dynamic(false);
   _cleanEdge = false;
   cleanEdge(true);
+  _rgbUse = false;
+  rgbUse(true);
   _glyphType = tenGlyphTypeUnknown;
   glyphType(tenGlyphTypeBox);
   _anisoType = tenAnisoUnknown;
@@ -91,7 +94,7 @@ TensorGlyph::TensorGlyph() {
   _rgbIsoGray = -1;
   _rgbGamma = -1;
   _rgbModulate = -1;
-  rgbParmSet(tenAniso_Cl1, 0, 1, 1.0, 1.5, 0.8);
+  rgbEvecParmSet(tenAniso_Cl1, 0, 1, 1.0, 1.5, 0.8);
   _glyphScale = -1;
   glyphScale(1.0);
   _anisoThreshMin = -1;
@@ -106,8 +109,8 @@ TensorGlyph::TensorGlyph() {
   clampEval(0.0);
   _superquadSharpness = -1;
   superquadSharpness(3.0);
-  _skipNegEval = false;
-  skipNegativeEigenvalues(true);
+  _skipNegEval = true;
+  skipNegativeEigenvalues(false);
   
   ELL_3M_IDENTITY_SET(_measrFrame);
   _gshape = NULL;
@@ -356,9 +359,9 @@ TensorGlyph::anisoThresh(double thr) {
 }
 
 void
-TensorGlyph::rgbParmSet(int aniso, unsigned int evec,
-                        double maxSat, double isoGray,
-                        double gamma, double modulate) {
+TensorGlyph::rgbEvecParmSet(int aniso, unsigned int evec,
+                            double maxSat, double isoGray,
+                            double gamma, double modulate) {
 
   if (!( _rgbAnisoType == aniso
          && _rgbEvec == evec
@@ -372,7 +375,7 @@ TensorGlyph::rgbParmSet(int aniso, unsigned int evec,
     _rgbIsoGray = AIR_CLAMP(0.0, isoGray, 1.0);
     _rgbGamma = AIR_MAX(0.000001, gamma);
     _rgbModulate = AIR_CLAMP(0.0, modulate, 1.0);
-    flag[flagRGBParm] = true;
+    flag[flagRGBEvecParm] = true;
   }
   return;
 }
@@ -402,6 +405,7 @@ TensorGlyph::glyphResolution(unsigned int res) {
 
   if (_glyphRes != res) {
     _glyphRes = res;
+    _baryEps = 1.0/(10*_baryRes);
     flag[flagGlyphRes] = true;
   }
   return;
@@ -428,6 +432,16 @@ TensorGlyph::cleanEdge(bool clean) {
 }
 
 void
+TensorGlyph::rgbUse(bool rgbu) {
+
+  if (_rgbUse != rgbu) {
+    _rgbUse = rgbu;
+    flag[flagRgbUse] = true;
+  }
+  return;
+}
+
+void
 TensorGlyph::glyphScale(double scale) {
 
   if (_glyphScale != scale) {
@@ -449,12 +463,13 @@ TensorGlyph::parmCopy(TensorGlyph *src) {
   this->anisoThreshMin(src->anisoThreshMin());
   this->anisoThresh(src->anisoThresh()); // this is okay for initial set-up
   /*  ???
-  void rgbParmSet(int aniso, unsigned int evec,
-                  double maxSat, double isoGray,
-                  double gamma, double modulate);
+  void rgbEvecParmSet(int aniso, unsigned int evec,
+                      double maxSat, double isoGray,
+                      double gamma, double modulate);
   */
   this->glyphType(src->glyphType());
   this->cleanEdge(src->cleanEdge());
+  this->rgbUse(src->rgbUse());
   this->superquadSharpness(src->superquadSharpness());
   this->glyphResolution(src->glyphResolution());
   this->barycentricResolution(src->barycentricResolution());
@@ -500,7 +515,7 @@ TensorGlyph::anisoCacheUpdate() {
 
 void
 TensorGlyph::maxNumUpdate() {
-  char me[]="TensorGlyph::maxNumUpdate";
+  // char me[]="TensorGlyph::maxNumUpdate";
   unsigned int newMaxNum;
 
   this->anisoCacheUpdate();
@@ -609,6 +624,7 @@ TensorGlyph::dataBasicUpdate() {
       || flag[flagAnisoCache]
       || flag[flagTenData]
       || flag[flagPosData]
+      || flag[flagRgbUse]
       || flag[flagRgbData]) {
 
     unsigned int idx, num, nn;
@@ -704,9 +720,13 @@ TensorGlyph::dataBasicUpdate() {
           } else {
             ELL_3V_COPY(dataLine + EVAL_DATA_IDX, eval);
           }
-          if (_rgbData) {
-            ELL_3V_COPY(dataLine + RGB_DATA_IDX,
-                        _rgbData + idx*_inRgbDataStride);
+          if (_rgbUse) {
+            if (_rgbData) {
+              ELL_3V_COPY(dataLine + RGB_DATA_IDX,
+                          _rgbData + idx*_inRgbDataStride);
+            }
+          } else {
+            ELL_3V_SET(dataLine + RGB_DATA_IDX, 1, 1, 1);
           }
           ELL_3M_TRANSPOSE(evecT, evec);
           ell_3m_to_q_f(quat, evecT);
@@ -721,6 +741,7 @@ TensorGlyph::dataBasicUpdate() {
     flag[flagAnisoCache] = false;
     flag[flagTenData] = false;
     flag[flagPosData] = false;
+    flag[flagRgbUse] = false;
     flag[flagRgbData] = false;
     flag[flagDataBasic] = true;
     if (_rgbData) {
@@ -809,7 +830,11 @@ TensorGlyph::dataBaryIdxUpdate() {
       || flag[flagDataSorted]) {
     float *dataCache = (float*)(_nDataCache->data);
     float *eval, cl1, cp1, cl2, cp2;
-    unsigned int cpIdx, clIdx;
+    unsigned int cpIdx, clIdx, uIdx, vIdx;
+    double deval[3], uv[2];
+
+    FILE *fout;
+    fout = fopen("uv.txt", "w");
 
     for (unsigned int ii=0; ii<_maxNum; ii++) {
       float *dataLine = dataCache + ii*DATA_IDX_NUM;
@@ -839,9 +864,20 @@ TensorGlyph::dataBaryIdxUpdate() {
           dataLine[BARYIDX_DATA_IDX] =
             static_cast<float>(cpIdx + _baryRes*clIdx);
           break;
+        case tenGlyphTypeBetterquad:
+          ELL_3V_COPY(deval, eval);
+          tenGlyphBqdUvEval(uv, deval);
+          fprintf(fout, "%g %g\n", uv[0], uv[1]);
+          /* don't use  "+ _baryEps" on lookup */
+          uIdx = airIndexClamp(0.0, uv[0], 1.0, _baryRes);
+          vIdx = airIndexClamp(0.0, uv[1], 1.0, _baryRes);
+          dataLine[BARYIDX_DATA_IDX] =
+            static_cast<float>(uIdx + _baryRes*vIdx);
+          break;
         }
       }
     }
+    fclose(fout);
     flag[flagBaryRes] = false;
     flag[flagGlyphType] = false;
     flag[flagDataBaryIdx] = true;
@@ -855,7 +891,8 @@ TensorGlyph::dataRGBUpdate() {
 
   this->dataSortedUpdate();
   if (flag[flagDataSorted]
-      || flag[flagRGBParm]) {
+      || flag[flagRGBEvecParm]
+      || flag[flagRgbUse]) {
     float *dataCache = (float*)(_nDataCache->data);
     float evecPre[3], evec[3];
 
@@ -864,6 +901,10 @@ TensorGlyph::dataRGBUpdate() {
       evecPre[_rgbEvec] = 1.0;
       for (unsigned int ii=0; ii<_maxNum; ii++) {
         float *dataLine = dataCache + ii*DATA_IDX_NUM;
+        if (!_rgbUse) {
+          ELL_3V_SET_TT(dataLine + RGB_DATA_IDX, float, 1, 1, 1);
+          continue;
+        }
         float *eval = dataLine + EVAL_DATA_IDX;
         ell_q_3v_rotate_f(evec, dataLine + QUAT_DATA_IDX, evecPre);
         double R = AIR_ABS(evec[0]);
@@ -892,7 +933,8 @@ TensorGlyph::dataRGBUpdate() {
       }
     }
     flag[flagDataSorted] = false;
-    flag[flagRGBParm] = false;
+    flag[flagRGBEvecParm] = false;
+    flag[flagRgbUse] = false;
     flag[flagDataRGB] = true;
   }
   return;
@@ -917,6 +959,111 @@ TensorGlyph::activeSetUpdate() {
 }
 
 void
+baryFind(double bcoord[3], const double uvp[2],
+         const double uv0[2],
+         const double uv1[2],
+         const double uv2[2]) {
+  double mat[9], a, a01, a02, a12;
+  
+  ELL_3M_SET(mat,
+             uv0[0], uv0[1], 1,
+             uv1[0], uv1[1], 1,
+             uvp[0], uvp[1], 1);
+  a01 = ELL_3M_DET(mat); a01 = AIR_ABS(a01);
+  
+  ELL_3M_SET(mat,
+             uv0[0], uv0[1], 1,
+             uv2[0], uv2[1], 1,
+             uvp[0], uvp[1], 1);
+  a02 = ELL_3M_DET(mat); a02 = AIR_ABS(a02);
+  
+  ELL_3M_SET(mat,
+             uv1[0], uv1[1], 1,
+             uv2[0], uv2[1], 1,
+             uvp[0], uvp[1], 1);
+  a12 = ELL_3M_DET(mat); a12 = AIR_ABS(a12);
+
+  a = a01 + a02 + a12;
+  ELL_3V_SET(bcoord, a12/a, a02/a, a01/a);
+  return;
+}
+
+void
+baryBlend(double abc[3], const double co[3],
+          const double abc0[3],
+          const double abc1[3],
+          const double abc2[3]) {
+  unsigned int ii;
+
+  for (ii=0; ii<3; ii++) {
+    abc[ii] = co[0]*abc0[ii] + co[1]*abc1[ii] + co[2]*abc2[ii];
+  }
+  return;
+}
+
+void
+glyphBqdPaint(limnPolyData *pld, const double uv[2], float gray) {
+  double eval[3];
+  unsigned int vi, zone, gr;
+  int allpos, allneg;
+
+  tenGlyphBqdEvalUv(eval, uv);
+  zone = tenGlyphBqdZoneUv(uv);
+  if ((allpos = (0 == zone || 1 == zone)) ||
+      (allneg = (8 == zone || 9 == zone))) {
+    gr = (allpos ? 255 : airIndexClamp(0.0, gray, 1.0, 256));
+    for (vi=0; vi<pld->xyzwNum; vi++) {
+      ELL_4V_SET(pld->rgba + 4*vi, gr, gr, gr, 255);
+    }
+  } else {
+    double aval[3], sum, ss, tt, svec[3], tvec[3], vv, hh, pp, aa, bb, dd, xx, zz;
+    unsigned char cout;
+    ELL_3V_ABS(aval, eval);
+    sum = aval[0] + aval[1] + aval[2];
+    /* project eval onto octahedron */
+    ELL_3V_SCALE(eval, 1/sum, eval);
+    if (eval[1] > 0) {
+      /* y positive */
+      ELL_3V_SET(svec, -1.0/sqrt(2), 1.0/sqrt(2), 0);
+      ELL_3V_SET(tvec, 1.0/sqrt(2), 1.0/sqrt(2), 0);
+      ss = ELL_3V_DOT(eval, svec)*sqrt(2) + 1.0;
+      tt = ELL_3V_DOT(eval, tvec)*sqrt(2);
+    } else {
+      /* y negative */
+      ELL_3V_SET(svec, 0, 1.0/sqrt(2), -1.0/sqrt(2));
+      ELL_3V_SET(tvec, 0, 1.0/sqrt(2), 1.0/sqrt(2));
+      ss = ELL_3V_DOT(eval, svec)*sqrt(2);
+      tt = ELL_3V_DOT(eval, tvec)*sqrt(2) + 1;
+    }
+    ss = AIR_CLAMP(0, ss, 1);
+    tt = AIR_CLAMP(0, tt, 1);
+    pp = tt;
+    if (ss + tt > 1) {
+      vv = ss + tt - 1;
+      hh = 0;
+      aa = vv*vv;
+      bb = (pp*pp - vv*vv)/((pp-0.9999)*(pp-0.9999));
+      dd = -1;
+    } else {
+      vv = 0;
+      hh = 1 - (ss + tt);
+      aa = -hh*hh;
+      bb = 1;
+      dd = -(1 - hh*hh - 2*pp + pp*pp)/(pp*pp + 0.00001);
+    }
+    for (vi=0; vi<pld->xyzwNum; vi++) {
+      xx = pld->xyzw[0 + 4*vi];
+      zz = pld->xyzw[2 + 4*vi];
+      cout = (aa + bb*xx*xx + dd*zz*zz > 0
+              ? 255
+              : airIndexClamp(0.0, gray, 1.0, 256));
+      ELL_3V_SET(pld->rgba + 4*vi, cout, cout, cout);
+    }
+  }
+  return;
+}
+
+void
 TensorGlyph::glyphPaletteUpdate() {
   char me[]="TensorGlyph::glyphPaletteUpdate";
   float ZtoX[16] = {0, 0, 1, 0,
@@ -928,6 +1075,52 @@ TensorGlyph::glyphPaletteUpdate() {
                      0, 0, 1, 0,
                      0, 0, 0, 1};
   float *trnsf;
+  double abcBall[3]={1,1,1};
+  double abcCyli[3]={1,0,0};
+  double abcFunk[3]={0,3,2}; // only one with c != b 
+  double abcThrn[3]={1,3,3};
+  double abcOcta[3]={0,2,2};
+  double abcHalf[3]={0.5,0.5,0.5}; /* alpha is half-way between alpha of octa and cone
+                                      and beta has to be the same as alpha at for the
+                                      seam to be shape-continuous */
+  double abcCone[3]={1,2,2};
+  
+  unsigned int zone,
+    vertsZone[10][3] = {{0, 1, 2},   /* 0 */
+                        {0, 2, 3},   /* 1 */
+                        {1, 3, 4},   /* 2 */
+                        {1, 4, 5},   /* 3 */
+                        {4, 5, 9},   /* 4 */
+                        {1, 5, 6},   /* 5 */
+                        {5, 6, 9},   /* 6 */
+                        {6, 7, 9},   /* 7 */
+                        {7, 8, 10},  /* 8 */
+                        {8, 9, 10}}; /* 9 */
+  double *abcAll[10][11] = {
+    /* zone \ vert 0      1        2        3        4        5        6        7        8        9       10    */
+    /*  0 */ {abcBall, abcCyli, abcHalf,  NULL,    NULL,    NULL,    NULL,    NULL,    NULL,    NULL,    NULL   },
+    /*  1 */ {abcBall,  NULL,   abcHalf, abcCyli,  NULL,    NULL,    NULL,    NULL,    NULL,    NULL,    NULL   },
+    /*  2 */ { NULL,   abcOcta,  NULL,   abcCone, abcThrn,  NULL,    NULL,    NULL,    NULL,    NULL,    NULL   },
+    /*  3 */ { NULL,   abcOcta,  NULL,    NULL,   abcThrn, abcFunk,  NULL,    NULL,    NULL,    NULL,    NULL   },
+    /*  4 */ { NULL,    NULL,    NULL,    NULL,   abcThrn, abcFunk,  NULL,    NULL,    NULL,   abcCone,  NULL   },
+    /*  5 */ { NULL,   abcCone,  NULL,    NULL,    NULL,   abcFunk, abcThrn,  NULL,    NULL,    NULL,    NULL   },
+    /*  6 */ { NULL,    NULL,    NULL,    NULL,    NULL,   abcFunk, abcThrn,  NULL,    NULL,   abcOcta,  NULL   },
+    /*  7 */ { NULL,    NULL,    NULL,    NULL,    NULL,    NULL,   abcThrn, abcCone,  NULL,   abcOcta,  NULL   },
+    /*  8 */ { NULL,    NULL,    NULL,    NULL,    NULL,    NULL,    NULL,   abcCyli, abcHalf,  NULL,   abcBall },
+    /*  9 */ { NULL,    NULL,    NULL,    NULL,    NULL,    NULL,    NULL,    NULL,   abcHalf, abcCyli, abcBall }};
+  double uvVert[11][2] = {{1.00, 1.00},   /* 0 */
+                          {0.50, 1.00},   /* 1 */
+                          {0.75, 0.75},   /* 2 */
+                          {1.00, 0.50},   /* 3 */
+                          {1.00, 0.00},   /* 4 */
+                          {0.50, 0.50},   /* 5 */
+                          {0.00, 1.00},   /* 6 */
+                          {0.00, 0.50},   /* 7 */
+                          {0.25, 0.25},   /* 8 */
+                          {0.50, 0.00},   /* 9 */
+                          {0.00, 0.00}};  /* 10 */
+  double abc[3], uv[2], bcoord[3];
+  unsigned int pvi[3];
   
   if (flag[flagBaryRes]
       || flag[flagGlyphRes]
@@ -1029,6 +1222,45 @@ TensorGlyph::glyphPaletteUpdate() {
           }
         }
         break;
+      case tenGlyphTypeBetterquad:
+        surf->colorUse(true);
+        for (unsigned int vIdx=0; vIdx<_baryRes; vIdx++) {
+          uv[1] = NRRD_CELL_POS(0.0, 1.0, _baryRes, vIdx);
+          for (unsigned int uIdx=0; uIdx<_baryRes; uIdx++) {
+            uv[0] = NRRD_CELL_POS(0.0 + _baryEps, 1.0 + _baryEps, _baryRes, uIdx);
+            zone = tenGlyphBqdZoneUv(uv);
+            if (0 == zone || 5 == zone || 6 == zone || 7 == zone || 8 == zone) {
+              trnsf = ZtoX;
+            } else {              
+              trnsf = ident;
+            }
+            ELL_3V_COPY(pvi, vertsZone[zone]);
+            baryFind(bcoord, uv, uvVert[pvi[0]], uvVert[pvi[1]], uvVert[pvi[2]]);
+            baryBlend(abc, bcoord,
+                      abcAll[zone][pvi[0]],
+                      abcAll[zone][pvi[1]],
+                      abcAll[zone][pvi[2]]);
+            abc[0] = pow(abc[0], _superquadSharpness);
+            for (unsigned int bci=1; bci<=2; bci++) {
+              if (abc[bci] < 1) {
+                abc[bci] = pow(abc[bci], _superquadSharpness);
+              } else if (abc[bci] > 2) {
+                abc[bci] = (abc[bci] - 2)*_superquadSharpness + 2;
+              }
+            }
+            limnPolyDataSpiralBetterquadric(lpld,
+                                            (1 << limnPolyDataInfoNorm
+                                             | 1 << limnPolyDataInfoRGBA),
+                                            abc[0], abc[1], abc[2], 0.0,
+                                            2*_glyphRes, _glyphRes);
+            limnPolyDataTransform_f(lpld, trnsf);
+            limnPolyDataVertexNormals(lpld);
+            glyphBqdPaint(lpld, uv, 0.2);
+            surf->wireframe(true);
+            list[uIdx + _baryRes*vIdx] = surf->compileDisplayList();
+          }
+        }
+        break;
       } /* switch */
     }
     // learn number of polygons per glyph, (NOTE) assuming that its the 
@@ -1052,7 +1284,8 @@ TensorGlyph::update() {
 
   if (!_tenData) {
     fprintf(stderr, "%s: never got data!\n", me);
-    exit(1); 
+    // exit(1); 
+    return;
   }
  
   // this will recursively the rest of the updates
@@ -1143,7 +1376,20 @@ TensorGlyph::drawImmediate() {
     */
     glTranslatef(pos[0], pos[1], pos[2]);
     glRotatef(AIR_CAST(float, 180*angle/AIR_PI), axis[0], axis[1], axis[2]);
-    glScalef(glyphScale*eval[0], glyphScale*eval[1], glyphScale*eval[2]);
+    if (tenGlyphTypeBetterquad == _glyphType) {
+
+      glScalef(glyphScale*AIR_ABS(eval[0]),
+               glyphScale*AIR_ABS(eval[1]),
+               glyphScale*AIR_ABS(eval[2]));
+      
+      /* hack; don't scale by eigenvalues
+      glScalef(glyphScale,
+               glyphScale,
+               glyphScale);
+      */
+    } else {
+      glScalef(glyphScale*eval[0], glyphScale*eval[1], glyphScale*eval[2]);
+    }
     /*
     fprintf(stderr, "!%s: glCallList(list[%u] = %u)\n", me,
 	    baryIdx, list[baryIdx]);

@@ -66,6 +66,7 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
   _glyphTypeMenu->add(airEnumStr(tenGlyphType, tenGlyphTypeSphere), this);
   _glyphTypeMenu->add(airEnumStr(tenGlyphType, tenGlyphTypeCylinder), this);
   _glyphTypeMenu->add(airEnumStr(tenGlyphType, tenGlyphTypeSuperquad), this);
+  _glyphTypeMenu->add(airEnumStr(tenGlyphType, tenGlyphTypeBetterquad), this);
   _glyphTypeMenu->callback((fltk::Callback*)(glyphType_cb), this);
   def = airEnumStr(tenGlyphType, _tglyph[0]->glyphType());
   fltk::Group *tgroup = (fltk::Group*)(_glyphTypeMenu);
@@ -192,6 +193,13 @@ TensorGlyphUI::TensorGlyphUI(TensorGlyph *tg, Viewer *vw) {
 TensorGlyphUI::~TensorGlyphUI() {
 
   // nothing?
+}
+
+void
+TensorGlyphUI::label(const char *lab) {
+  if (lab) {
+    _win->label(lab, lab);
+  }
 }
 
 void

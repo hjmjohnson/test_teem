@@ -263,7 +263,7 @@ main(int argc, char **argv) {
   glyph->skipNegativeEigenvalues(false);
   // glyph->barycentricResolution(12);
   glyph->glyphScale(0.09);
-  glyph->rgbParmSet(tenAniso_Cl2, 0, 0.0, 1.0, 1, 0.0);
+  glyph->rgbEvecParmSet(tenAniso_Cl2, 0, 0.0, 1.0, 1, 0.0);
   glyph->visible(true);
   glyph->update();
   scene->objectAdd(glyph);

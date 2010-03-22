@@ -73,7 +73,7 @@ Object::changed() {
 
 void
 Object::draw() {
-  char me[]="Object::draw";
+  // char me[]="Object::draw";
   double time0;
 
   // fprintf(stderr, "!%s(%p): hello, visible = %s\n", me, this,

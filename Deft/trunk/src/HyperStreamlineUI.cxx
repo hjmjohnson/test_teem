@@ -376,7 +376,7 @@ HyperStreamlineUI::show() {
 void
 HyperStreamlineUI::redraw() {
   char buff[AIR_STRLEN_MED];
-  char me[]="HyperStreamlineUI::redraw";
+  // char me[]="HyperStreamlineUI::redraw";
   
   for (unsigned int idx=0; idx<_hsline.size(); idx++) {
     _hsline[idx]->update();

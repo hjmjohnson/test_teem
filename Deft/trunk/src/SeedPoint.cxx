@@ -116,7 +116,7 @@ SeedPoint::SeedPoint(const Volume *vol,
   _ten1Glyph->superquadSharpness(3.0);
   _ten1Glyph->glyphResolution(11);
   _ten1Glyph->glyphScale(_scale);
-  _ten1Glyph->rgbParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
+  _ten1Glyph->rgbEvecParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
 
   _ten2Glyph = new TensorGlyph();
   _ten2Glyph->visible(false);
@@ -128,7 +128,7 @@ SeedPoint::SeedPoint(const Volume *vol,
   _ten2Glyph->superquadSharpness(3.0);
   _ten2Glyph->glyphResolution(11);
   _ten2Glyph->glyphScale(_scale);
-  _ten2Glyph->rgbParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
+  _ten2Glyph->rgbEvecParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
   
   this->positionSet(_shape->size[0]/2.0,
                     _shape->size[1]/2.0,
@@ -194,7 +194,7 @@ SeedPoint::scale(double scl) {
 
 void
 SeedPoint::starGlyphDo(bool doit) { 
-  char me[]="SeedPoint::starGlyphDo";
+  // char me[]="SeedPoint::starGlyphDo";
 
   _starGlyph->visible(doit); 
   if (doit) {
@@ -228,7 +228,7 @@ SeedPoint::fiberDo(bool doit) {
 
 void
 SeedPoint::positionSet(double X, double Y, double Z) {
-  char me[]="SeedPoint::positionSet";
+  // char me[]="SeedPoint::positionSet";
   double ipos[4], wpos[4];
   float tmat[16];
 
@@ -269,7 +269,7 @@ SeedPoint::positionGet(double *pos) const {
 
 void
 SeedPoint::cursorScale(double scl) {
-  char me[]="SeedPoint::cursorScale";
+  // char me[]="SeedPoint::cursorScale";
   float tmat[16];
 
   _cursScale = scl;
@@ -282,7 +282,7 @@ SeedPoint::cursorScale(double scl) {
 
 void
 SeedPoint::update() {
-  char me[]="SeedPoint::update";
+  // char me[]="SeedPoint::update";
 
   if (_ten1Glyph->visible()) {
     _ten1Probe->update(true);
