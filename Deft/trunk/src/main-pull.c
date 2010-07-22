@@ -43,6 +43,7 @@ cc -g -O3 -W -Wall -o Deft_pull  main-pull.o \
 #include "Slider.h"
 #include "TriPlane.h"
 #include "TriPlaneUI.h"
+
 #endif
 
 #include <teem/pull.h>
@@ -56,6 +57,7 @@ typedef struct {
   fltk::ValueInput *glyphScaleRadInput;
   Deft::Slider *isoval;
   Deft::Slider *strength;
+  Deft::Slider *quality;
   Deft::Slider *alpha, *beta, *cwell, *gamma;
   /* Deft::Slider *height; */
   Deft::Slider *ccSelect, *rho, *sclMean, *sclWind;
@@ -69,14 +71,14 @@ typedef struct {
   fltk::ValueInput *verbose;
   pullContext *pctx;
   Nrrd *nPosOut, *nTenOut, *nFrcOut, *nten, *ntmp, *nenr, *nscl,
-    *nidcc, *nstrn, *ncovar, *ntcovar,
+    *nidcc, *nstrn, *nqual, *ncovar, *ntcovar,
     *nstuck, *nfrcOld, *nfrcNew, *nposOld, *nposNew, *nrgb, *nccrgb,
     *ncval, *ncmap, *ncmapOut, *nblur;
   NrrdRange *cvalRange;
   limnPolyData *phistLine, *phistTube;
   Deft::PolyData *phistSurf;
-  double icvalr[2], sclMin, sclMax, strnMin, scaleVec[3], glyphScaleRad,
-    energyIncreasePermitFrac;
+  double icvalr[2], sclMin, sclMax, strnMin, qualMin,
+    scaleVec[3], glyphScaleRad, energyIncreasePermitFrac;
 } pullBag;
 
 void
@@ -108,6 +110,9 @@ outputGet(pullBag *bag) {
                     bag->scaleVec, bag->glyphScaleRad,
                     bag->pctx)
       || pullPropGet(bag->nscl, pullPropScale, bag->pctx)
+      || (bag->pctx->ispec[pullInfoQuality]
+          ? pullInfoGet(bag->nqual, pullInfoQuality, bag->pctx)
+          : 0)
       || pullPropGet(bag->nenr, pullPropEnergy, bag->pctx)
       || pullPropGet(bag->nidcc, pullPropIdCC, bag->pctx)
       || pullPropGet(bag->nstuck, pullPropStuck, bag->pctx)
@@ -271,6 +276,10 @@ outputShow(pullBag *bag) {
   strnOut = (bag->nstrn 
              ? AIR_CAST(double *, bag->nstrn->data)
              : NULL);
+  double *qualOut;
+  qualOut = (bag->nqual
+             ? AIR_CAST(double *, bag->nqual->data)
+             : NULL);
   rgb = (float*)bag->nrgb->data;
   for (ii=0; ii<nn; ii++) {
     float ee, *ccrgb;
@@ -309,6 +318,8 @@ outputShow(pullBag *bag) {
                        bag->sclMax+0.00001) )) {
         ten[0] = 0;
       } else if (strnOut && strnOut[ii] < bag->strnMin) {
+        ten[0] = 0;
+      } else if (qualOut && qualOut[ii] < bag->qualMin-0.000001) {
         ten[0] = 0;
       } else if (bag->pctx->CCNum 
                  && (bag->ccSingle->value()
@@ -509,6 +520,13 @@ strength_cb(fltk::Widget *, pullBag *bag) {
 }
 
 void
+quality_cb(fltk::Widget *, pullBag *bag) {
+  
+  bag->qualMin = bag->quality->value();
+  outputShow(bag);
+}
+
+void
 save_cb(fltk::Widget *, pullBag *bag) {
   unsigned int ii, nn, count;
   float *ten;
@@ -586,7 +604,8 @@ main(int argc, char **argv) {
   float fr[3], at[3], up[3], fovy, neer, faar, dist, bg[3];
   int imgSize[2], ortho, rght, atrel, camkeep;
 
-  float anisoThresh, anisoThreshMin, glyphScale, sqdSharp;
+  float anisoThresh, anisoThreshMin, glyphScale, 
+    glyphHaloWidth, glyphNormPow, glyphEvalPow, sqdSharp;
   int glyphType, glyphFacetRes, aniso;
 
   pullBag bag;
@@ -609,7 +628,7 @@ main(int argc, char **argv) {
     useBetaForGammaLearn, restrictiveAddToBins, noAdd, unequalShapesAllow,
     popCntlEnoughTest;
   int verbose;
-  int interType;
+  int interType, allowCodimension3Constraints;
   unsigned int samplesAlongScaleNum, pointNumInitial, pointPerVoxel,
     ppvZRange[2], snap, iterMax, stuckIterMax, constraintIterMax,
     popCntlPeriod, addDescent, iterCallback, rngSeed, progressBinMod,
@@ -630,6 +649,7 @@ main(int argc, char **argv) {
   me = argv[0];
 
 #ifdef DEFT
+  unsigned int baryRes;
   int saveAndQuit, fog;
 
   hestOptAdd(&hopt, "csqvmm", "min max", airTypeDouble, 2, 2, 
@@ -692,6 +712,14 @@ main(int argc, char **argv) {
              "\"superquad\"=\"sqd\"", NULL, tenGlyphType);
   hestOptAdd(&hopt, "gsc", "scale", airTypeFloat, 1, 1, &glyphScale,
              "0.25", "over-all glyph size");
+  hestOptAdd(&hopt, "ghw", "hwidth", airTypeFloat, 1, 1, &glyphHaloWidth,
+             "0.0", "glyph halo width");
+  hestOptAdd(&hopt, "gnp", "npow", airTypeFloat, 1, 1, &glyphNormPow,
+             "1.0", "pow() exponent for compressing range of norms");
+  hestOptAdd(&hopt, "gep", "epow", airTypeFloat, 1, 1, &glyphEvalPow,
+             "1.0", "pow() exponent for compressing single eigenvalues");
+  hestOptAdd(&hopt, "br", "barycentric res", airTypeInt, 1, 1, &baryRes, "50",
+             "resolution of sampling of tensor shape palette");
   hestOptAdd(&hopt, "gr", "glyph res", airTypeInt, 1, 1, &glyphFacetRes, "7",
              "resolution of polygonalization of glyphs (other than box)");
   hestOptAdd(&hopt, "sh", "sharpness", airTypeFloat, 1, 1, &sqdSharp, "2.5",
@@ -885,6 +913,9 @@ main(int argc, char **argv) {
 	     &iterCallback, "1",
              "periodicity of calling rendering callback");
 
+  hestOptAdd(&hopt, "ac3c", "ac3c", airTypeBool, 1, 1, 
+             &allowCodimension3Constraints, "false",
+             "allow codimensions 3 constraints");
   hestOptAdd(&hopt, "rng", "seed", airTypeUInt, 1, 1, 
              &rngSeed, "42",
              "base seed value for RNGs");
@@ -957,6 +988,8 @@ main(int argc, char **argv) {
                      useBetaForGammaLearn)
       || pullFlagSet(pctx, pullFlagRestrictiveAddToBins,
                      restrictiveAddToBins)
+      || pullFlagSet(pctx, pullFlagAllowCodimension3Constraints,
+                     allowCodimension3Constraints)
       || pullInitUnequalShapesAllowSet(pctx, unequalShapesAllow)
       || pullIterParmSet(pctx, pullIterParmSnap, snap)
       || pullIterParmSet(pctx, pullIterParmMax, iterMax)
@@ -1014,10 +1047,13 @@ main(int argc, char **argv) {
     fprintf(stderr, "%s: trouble with flags:\n%s", me, err);
     airMopError(mop); return 1;
   }
+  fprintf(stderr, "!%s: calling meet multi functions\n", me);
   if (meetPullVolLoadMulti(vspec, vspecNum, cachePathSS, 
                            kSSblur, verbose)
+      || (fprintf(stderr, "!%s: bingo 0\n", me), 0)
       || meetPullVolAddMulti(pctx, vspec, vspecNum,
                              k00, k11, k22, kSSrecon)
+      || (fprintf(stderr, "!%s: bingo 1\n", me), 0)
       || meetPullInfoAddMulti(pctx, idef, idefNum)) {
     airMopAdd(mop, err = biffGetDone(MEET), airFree, airMopAlways);
     fprintf(stderr, "%s: trouble with volumes or infos:\n%s", me, err);
@@ -1071,10 +1107,16 @@ main(int argc, char **argv) {
   bag.ncovar = nrrdNew();
   bag.ntcovar = nrrdNew();
   if (pctx->ispec[pullInfoStrength]) {
-    printf("!%s: creating strength nrrd\n", me);
+    printf("!%s: trouble creating strength nrrd\n", me);
     bag.nstrn = nrrdNew();
   } else {
     bag.nstrn = NULL;
+  }
+  if (pctx->ispec[pullInfoQuality]) {
+    printf("!%s: trouble creating quality nrrd\n", me);
+    bag.nqual = nrrdNew();
+  } else {
+    bag.nqual = NULL;
   }
   bag.nstuck = nrrdNew();
   bag.nfrcOld = nrrdNew();
@@ -1223,12 +1265,23 @@ main(int argc, char **argv) {
     winy += incy;
     bag.strength = new Deft::Slider(0, winy, win->w(), incy=55, "strength");
     bag.strength->align(fltk::ALIGN_LEFT);
-    bag.strength->range(0, 10);
+    bag.strength->range(0, 1);
     bag.strength->callback((fltk::Callback*)strength_cb, &bag);
     bag.strength->fastUpdate(1);
     bag.strength->value(0);
   } else {
     bag.strnMin = 0;
+  }
+  if (pctx->ispec[pullInfoQuality]) {
+    winy += incy;
+    bag.quality = new Deft::Slider(0, winy, win->w(), incy=55, "quality");
+    bag.quality->align(fltk::ALIGN_LEFT);
+    bag.quality->range(-0.1, 1);
+    bag.quality->callback((fltk::Callback*)quality_cb, &bag);
+    bag.quality->fastUpdate(1);
+    bag.quality->value(-0.1);
+  } else {
+    bag.qualMin = 0;
   }
 
   /*
@@ -1263,6 +1316,7 @@ main(int argc, char **argv) {
   /* bag.viewer->helpPrint(); */
   Deft::ViewerUI *viewerUI = new Deft::ViewerUI(bag.viewer);
   viewerUI->show();
+  fltk::flush();
 
   /* -------------------------------------------------- */
   if (gageKindScl == vspec[0]->kind) {
@@ -1284,7 +1338,15 @@ main(int argc, char **argv) {
   glyph->glyphType(glyphType);
   glyph->superquadSharpness(sqdSharp);
   glyph->glyphResolution(glyphFacetRes);
+  if (tenGlyphTypeBetterquad) {
+    glyph->barycentricResolution(baryRes);
+  } else {
+    glyph->barycentricResolution(20);
+  }
   glyph->glyphScale(glyphScale);
+  glyph->glyphHaloWidth(glyphHaloWidth);
+  glyph->glyphNormPow(glyphNormPow);
+  glyph->glyphEvalPow(glyphEvalPow);
   glyph->rgbEvecParmSet(tenAniso_Cl2, 0, 0.7, 1.0, 2.3, 1.0);
   glyph->rgbEvecParmSet(tenAniso_Cl2, 0, 0, 1.0, 1, 0.0);
   glyph->maskThresh(0.5);
@@ -1353,18 +1415,15 @@ main(int argc, char **argv) {
   triplane->kernel(gageKernel22, ksp);
   triplane->visible(false);
 
-
   // HEY, WRONG: totally wrong place to be doing this
   if (1) {
     Deft::TensorGlyph *tgl[3];
     tgl[0] = static_cast<Deft::TensorGlyph*>(triplane->glyph[0]);
     tgl[1] = static_cast<Deft::TensorGlyph*>(triplane->glyph[1]);
     tgl[2] = static_cast<Deft::TensorGlyph*>(triplane->glyph[2]);
-    /*
     tgl[0]->parmCopy(glyph);
     tgl[1]->parmCopy(glyph);
     tgl[2]->parmCopy(glyph);
-    */
     Deft::TensorGlyphUI *triglyphUI = new Deft::TensorGlyphUI(tgl[0],
                                                               bag.viewer);
     triglyphUI->label("triplane glyphs");
@@ -1423,7 +1482,7 @@ main(int argc, char **argv) {
     bag.viewer->cameraReset();
   }
 
-  if (1) {
+  if (0) {
     Nrrd *nplot;
     nplot = nrrdNew();
     if (pullEnergyPlot(pctx, nplot, 1, 0, 0, 512)) {
@@ -1444,6 +1503,7 @@ main(int argc, char **argv) {
     bag.scene->draw();
     bag.viewer->screenDump();
   } else {
+
     /* set up callbacks in pull */
     pullCallbackSet(pctx, iter_cb, &bag);
 
