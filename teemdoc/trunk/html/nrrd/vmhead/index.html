@@ -134,16 +134,16 @@ direction points up.
 <p>
 
 In order to find what portion of the lower-res images corresponds to
-the field of view in the high-res images, one can use teem's <tt>affine</tt>
+the field of view in the high-res images, one can use teem's <tt>unu affine</tt>
 command.  Interpret the first affine command as asking, "135 is inside
 the interval [200,-200] in the same way as what number is in the
 interval [0,511]?"
 
 <blockquote><pre>
-affine 200 135 -200 0 511
-affine 200 -135 -200 0 511
-affine 200 165 -200 0 511
-affine 200 -105 -200 0 511
+unu affine 200 135 -200 0 511
+unu affine 200 -135 -200 0 511
+unu affine 200 165 -200 0 511
+unu affine 200 -105 -200 0 511
 </pre></blockquote>
 
 <p>
@@ -304,14 +304,14 @@ diff -a hdrs/c_vm1236.fro.txt hdrs/c_vm1261.fro.txt  ----&gt;
 &gt; A Coord of Bottom Right Hand Corner......: -240
 </pre></blockquote><p>
 
-Again, using affine to find where the high-res images live inside
+Again, using unu affine to find where the high-res images live inside
 the low-res images:
 
 <blockquote><pre>
-affine 240  135 -240 0 511
-affine 240 -135 -240 0 511
-affine 240  165 -240 0 511
-affine 240 -105 -240 0 511   -----&gt;
+unu affine 240  135 -240 0 511
+unu affine 240 -135 -240 0 511
+unu affine 240  165 -240 0 511
+unu affine 240 -105 -240 0 511   -----&gt;
 
 111.781
 399.219
