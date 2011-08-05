@@ -14,6 +14,10 @@ import teem
 import ctypes
 import numpy as np
 
+def lerp(o,O,i,v,I):
+    return (1.0*O-o)*(1.0*v-i)/(1.0*I-i) + 1.0*o
+
+
 class NrrdHistoDisplay(QMainWindow):
     def __init__(self, nrrd, parent=None):
         super(NrrdHistoDisplay, self).__init__(parent)
@@ -46,6 +50,7 @@ class NrrdHistoDisplay(QMainWindow):
         
         self.pixmapItem = QGraphicsPixmapItem(self.getPixmap(), None, self.localScene)
         self.pixmapItem.mousePressEvent = self.pixelClick
+        self.pixmapItem.mouseMoveEvent = self.pixelClick
         
         # menu creation
         openAction = QAction("Open...", self)
@@ -59,10 +64,12 @@ class NrrdHistoDisplay(QMainWindow):
         # info window creation
         groupBox = QGroupBox()
         self.binLabel = QLabel("n/a")
-        #self.itemsLabel  = QLabel("n/a")
+        self.valLabel  = QLabel("n/a")
+        self.hitLabel  = QLabel("n/a")
         boxLayout = QFormLayout()
         boxLayout.addRow("Bin:", self.binLabel)
-        #boxLayout.addRow("Items in Bin:", self.itemsLabel)
+        boxLayout.addRow("Value:", self.valLabel)
+        boxLayout.addRow("Hits:", self.hitLabel)
         groupBox.setLayout(boxLayout)
         
         infoWidget = QDockWidget("Information", self)
@@ -119,12 +126,14 @@ class NrrdHistoDisplay(QMainWindow):
         rect = self.pixmapItem.boundingRect()
         i_fast = int(event.pos().x())
         i_slow = int(event.pos().y())
+        i_fast = (0 if i_fast < 0
+                    else (self.num_bins-1 if i_fast > self.num_bins
+                                          else i_fast))
         self.binLabel.setText("%i" % i_fast)
-    
-        #val = (ctypes.c_void_p)()
-        #index = (ctypes.c_size_t * 1)(i_fast)
-        #print teem.nrrdSample_nva(val, self.nData._ctypesobj, index)
-        #self.binLabel.setText("%i" % val)
+        self.valLabel.setText("%g" % lerp(self.nData._ctypesobj.contents.axis[0].min,
+                                          self.nData._ctypesobj.contents.axis[0].max,
+                                          0.0,  i_fast + 0.5, self.num_bins))
+        self.hitLabel.setText("%d" % np.asarray(self.nData)[i_fast])
 
     def adjust(self):
         self.adjustSize()
