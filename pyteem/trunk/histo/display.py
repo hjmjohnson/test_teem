@@ -32,14 +32,17 @@ class NrrdHistoDisplay(QMainWindow):
         prelut[:,3] = 255
         self.lut = nrd.Nrrd()
         self.lut.fromNDArray(prelut)
+        self.rng = teem.nrrdRangeNew(0, 255)
         
         self.num_bins = 300
         self.img_height = 300
         
         self.nrrd = nrrd
-        self.nData = createHistogram(nrrd, self.num_bins)
-        nHistoImg = createHistoImage(self.nData, self.img_height)
-        self.nImg = colormapGrayscale(nHistoImg, self.lut)
+        self.nData = nrd.Nrrd()
+        self.nImg = nrd.Nrrd()
+        self.createHistogram(nrrd, self.num_bins)
+        nHistoImg = self.createHistoImage(self.img_height)
+        self.colormapGrayscale(nHistoImg)
         
         self.pixmapItem = QGraphicsPixmapItem(self.getPixmap(), None, self.localScene)
         self.pixmapItem.mousePressEvent = self.pixelClick
@@ -69,7 +72,6 @@ class NrrdHistoDisplay(QMainWindow):
         infoWidget.setWidget(groupBox)
         self.addDockWidget(Qt.RightDockWidgetArea, infoWidget) #using Qt.NoDockWidetArea here spits out warning... 
         self.infoWidget = infoWidget
-        
     
     def sizeHint(self):
         s = self.pixmapItem.boundingRect().size().toSize()
@@ -80,16 +82,20 @@ class NrrdHistoDisplay(QMainWindow):
         if (e.oldSize() != e.size()):
             if (self.num_bins != e.size().width()):
                 self.num_bins = e.size().width()
-                self.nData = createHistogram(self.nrrd, self.num_bins)
+                self.createHistogram(self.nrrd, self.num_bins)
             
             self.img_height = e.size().height()
-            nHistoImg = createHistoImage(self.nData, self.img_height)
-            self.nImg = colormapGrayscale(nHistoImg, self.lut)
+            nHistoImg = self.createHistoImage(self.img_height)
+            self.colormapGrayscale(nHistoImg)
     
             self.pixmapItem.setPixmap(self.getPixmap())
             rect = self.pixmapItem.boundingRect()
             self.localScene.setSceneRect(rect)
             self.adjust()
+    
+    def closeEvent(self, e):
+        teem.nrrdRangeNix(self.rng)
+        super(NrrdHistoDisplay, self).closeEvent(e)
     
     def open(self):
         (fileName, filter) = QFileDialog.getOpenFileName(self, "Open Image", os.getcwd(), "Text Files (*.nrrd)")
@@ -100,9 +106,9 @@ class NrrdHistoDisplay(QMainWindow):
         nrrd.load(fileName)
         
         self.nrrd = nrrd
-        self.nData = createHistogram(nrrd, self.num_bins)
-        nHistoImg = createHistoImage(self.nData, self.img_height)
-        self.nImg = colormapGrayscale(nHistoImg, self.lut)
+        self.createHistogram(nrrd, self.num_bins)
+        nHistoImg = self.createHistoImage(self.img_height)
+        self.colormapGrayscale(nHistoImg)
                 
         self.pixmapItem.setPixmap(self.getPixmap())
         rect = self.pixmapItem.boundingRect()
@@ -130,7 +136,21 @@ class NrrdHistoDisplay(QMainWindow):
         if (w_frame.intersects(frame)):
             widget.move((frame.x() + frame.width() + 10), w_frame.y())
         return
-
+    
+    def createHistogram(self, nin, num_bins):
+        teem.nrrdHisto(self.nData._ctypesobj, nin._ctypesobj, None, None, num_bins, teem.nrrdTypeUInt)
+        return
+    
+    def createHistoImage(self, height):
+        nimg = nrd.Nrrd()
+        teem.nrrdHistoDraw(nimg._ctypesobj, self.nData._ctypesobj, height, teem.AIR_TRUE, teem.AIR_NAN)
+        return nimg
+    
+    def colormapGrayscale(self, nin):
+        teem.nrrdApply1DLut(self.nImg._ctypesobj, nin._ctypesobj, self.rng, self.lut._ctypesobj,
+                        teem.nrrdTypeUChar, teem.AIR_FALSE)
+        return
+    
     def getPixmap(self):
         nrrd = self.nImg
         localArray = nrd.ExtendedArray(nrrd)
@@ -138,39 +158,6 @@ class NrrdHistoDisplay(QMainWindow):
         localImage = QImage(localArray.data, nrrd._ctypesobj.contents.axis[1].size, nrrd._ctypesobj.contents.axis[2].size, QImage.Format_ARGB32)
         pixmap = QPixmap(localImage)
         return pixmap
-
-
-def createHistogram(nin, num_bins):
-    nhist = nrd.Nrrd()
-    teem.nrrdHisto(nhist._ctypesobj, nin._ctypesobj, None, None, num_bins, teem.nrrdTypeUInt)
-    return nhist
-
-def createHistoImage(nhist, height):
-    nimg = nrd.Nrrd()
-    teem.nrrdHistoDraw(nimg._ctypesobj, nhist._ctypesobj, height, teem.AIR_TRUE, teem.AIR_NAN)
-    return nimg
-
-def colormapGrayscale(nin, lut):
-    #nin_list = [nin._ctypesobj, nin._ctypesobj, nin._ctypesobj]
-    #nin_array = (ctypes.POINTER(teem.Nrrd) * 3)(*nin_list)
-    #nout = nrd.Nrrd()
-    #teem.nrrdJoin(nout._ctypesobj, nin_array, 3, 0, teem.AIR_TRUE)
-    
-    #byte_grey = nrd.ExtendedArray(nin)
-    #(h, w) = byte_grey.shape
-    #rgba = np.zeros((h, w, 4), dtype=np.uint8)
-    #for y in range(h):
-    #    for x in range(w):
-    #        rgba[y][x][0:3] = byte_grey[y][x]
-    #        rgba[y][x][3] = 255
-    #nout = nrd.Nrrd()
-    #nout.fromNDArray(rgba)
-    
-    rng = teem.nrrdRangeNew(0, 255)
-    rgbaimg = nrd.Nrrd()
-    teem.nrrdApply1DLut(rgbaimg._ctypesobj, nin._ctypesobj, rng, lut._ctypesobj,
-                      teem.nrrdTypeUChar, teem.AIR_FALSE)
-    return rgbaimg
 
 def main():
     app = QApplication(sys.argv)
