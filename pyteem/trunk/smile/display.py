@@ -6,7 +6,7 @@
 # Import PySide classes
 import sys, os
 from PySide.QtCore import Qt, Slot, QSize, QPoint, QMutex
-from PySide.QtGui import QApplication, QMainWindow, QImage, QPixmap, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QDialogButtonBox, QDockWidget, QLabel, QGroupBox, QFormLayout, QAction, QKeySequence, QFileDialog, QSplashScreen
+from PySide.QtGui import QApplication, QMainWindow, QImage, QPixmap, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QDialogButtonBox, QDockWidget, QLabel, QGroupBox, QFormLayout, QAction, QKeySequence, QFileDialog, QSplashScreen, QTransform
 
 # Import Nrrd Interface
 import Nrrd as nrd
@@ -14,22 +14,37 @@ import teem
 import ctypes
 import numpy as np
 
-class NrrdHistoDisplay(QMainWindow):
+def lerp(o,O,i,v,I):
+    return (1.0*O-o)*(1.0*v-i)/(1.0*I-i) + 1.0*o
+
+class NrrdDisplay(QMainWindow):
     def __init__(self, nrrd, parent=None):
-        super(NrrdHistoDisplay, self).__init__(parent)
+        super(NrrdDisplay, self).__init__(parent)
         
-        self.setWindowTitle("Transformed Nrrd Visualizer")
+        self.setWindowTitle("Oriented Display")
         
+        # setup for 8-bit greyscale to RGBA colormapping for image display
+        prelut = np.ones([256,4],dtype=np.uint8)
+        prelut[:,0] = range(256)
+        prelut[:,1] = range(256)
+        prelut[:,2] = range(256)
+        prelut[:,3] = 255
+        self.lut = nrd.Nrrd()
+        self.lut.fromNDArray(prelut)
+        self.rng = teem.nrrdRangeNew(0, 255)
+        
+        # setup of QT display
         self.localGrphView = QGraphicsView()
         self.setCentralWidget(self.localGrphView)
         self.localScene = QGraphicsScene()
         self.localGrphView.setScene(self.localScene)
 
-        
         self.nrrd = nrrd
-        self.nImg = convertToGrayscale(self.nrrd)
+        self.transform = getOrientationTransform(self.nrrd)
+        self.nImg = nrd.Nrrd()
+        self.convertToGrayscale(self.nrrd, self.nImg)
         self.pixmapItem = QGraphicsPixmapItem(self.getPixmap(), None, self.localScene)
-        #self.pixmapItem.mousePressEvent = self.pixelClick
+        self.pixmapItem.mousePressEvent = self.pixelClick
         
         # menu creation
         openAction = QAction("Open...", self)
@@ -41,21 +56,21 @@ class NrrdHistoDisplay(QMainWindow):
         fileMenu.addAction(openAction)
         
         # info window creation
-        #groupBox = QGroupBox()
-        #self.binLabel = QLabel("n/a")
-        #self.itemsLabel  = QLabel("n/a")
-        #boxLayout = QFormLayout()
-        #boxLayout.addRow("Bin:", self.binLabel)
-        #boxLayout.addRow("Items in Bin:", self.itemsLabel)
-        #groupBox.setLayout(boxLayout)
+        groupBox = QGroupBox()
+        self.wSpaceLabel = QLabel("n/a")
+        self.iSpaceLabel  = QLabel("n/a")
+        boxLayout = QFormLayout()
+        boxLayout.addRow("World Space Coords:", self.wSpaceLabel)
+        boxLayout.addRow("Image Space Coords:", self.iSpaceLabel)
+        groupBox.setLayout(boxLayout)
         
-        #infoWidget = QDockWidget("Information", self)
-        #infoWidget.setAllowedAreas(Qt.NoDockWidgetArea)
-        #infoWidget.setFloating(True)
-        #infoWidget.setFeatures(QDockWidget.DockWidgetFloatable)
-        #infoWidget.setWidget(groupBox)
-        #self.addDockWidget(Qt.RightDockWidgetArea, infoWidget) #using Qt.NoDockWidetArea here spits out warning... 
-        #self.infoWidget = infoWidget
+        infoWidget = QDockWidget("Information", self)
+        infoWidget.setAllowedAreas(Qt.NoDockWidgetArea)
+        infoWidget.setFloating(True)
+        infoWidget.setFeatures(QDockWidget.DockWidgetFloatable)
+        infoWidget.setWidget(groupBox)
+        self.addDockWidget(Qt.RightDockWidgetArea, infoWidget) #using Qt.NoDockWidetArea here spits out warning... 
+        self.infoWidget = infoWidget
         
     
     def sizeHint(self):
@@ -63,7 +78,7 @@ class NrrdHistoDisplay(QMainWindow):
         return s
     
     def resizeEvent(self, e):
-        super(NrrdHistoDisplay, self).resizeEvent(e)
+        super(NrrdDisplay, self).resizeEvent(e)
     
     def open(self):
         (fileName, filter) = QFileDialog.getOpenFileName(self, "Open Image", os.getcwd(), "Text Files (*.nrrd)")
@@ -74,7 +89,8 @@ class NrrdHistoDisplay(QMainWindow):
         nrrd.load(fileName)
         
         self.nrrd = nrrd
-        self.nImg = convertToGrayscale(self.nrrd)
+        self.transform = getOrientationTransform(self.nrrd)
+        self.convertToGrayscale(self.nrrd, self.nImg)
         
         self.pixmapItem = QGraphicsPixmapItem(self.getPixmap(), None, self.localScene)
         self.pixmapItem.mousePressEvent = self.pixelClick
@@ -86,19 +102,14 @@ class NrrdHistoDisplay(QMainWindow):
         self.adjust()
     
     def pixelClick(self, event):
-        rect = self.pixmapItem.boundingRect()
         i_fast = int(event.pos().x())
         i_slow = int(event.pos().y())
-        self.binLabel.setText("%i" % i_fast)
-    
-        #val = (ctypes.c_void_p)()
-        #index = (ctypes.c_size_t * 1)(i_fast)
-        #print teem.nrrdSample_nva(val, self.nData._ctypesobj, index)
-        #self.binLabel.setText("%i" % val)
+        self.wSpaceLabel.setText("(%i, %i)" % (i_fast, i_slow))
+        # insert image space conversion code and label update here
 
     def adjust(self):
         self.adjustSize()
-        #self.positionWidget(self.infoWidget)
+        self.positionWidget(self.infoWidget)
 
     def positionWidget(self, widget):
         w_frame = self.infoWidget.geometry()
@@ -110,38 +121,28 @@ class NrrdHistoDisplay(QMainWindow):
     def getPixmap(self):
         nrrd = self.nImg
         localArray = nrd.ExtendedArray(nrrd)
-        #localImage = QImage(localArray.data, nrrd._ctypesobj.contents.axis[1].size, nrrd._ctypesobj.contents.axis[2].size, QImage.Format_RGB888)
         localImage = QImage(localArray.data, nrrd._ctypesobj.contents.axis[1].size, nrrd._ctypesobj.contents.axis[2].size, QImage.Format_RGB32)
-        pixmap = QPixmap(localImage)
+        pixmap = QPixmap(localImage.transformed(self.transform))
         return pixmap
 
+    def convertToGrayscale(self, nin, nout):
+        teem.nrrdApply1DLut(nout._ctypesobj, nin._ctypesobj, self.rng, self.lut._ctypesobj, teem.nrrdTypeUChar, teem.AIR_FALSE)
+        return
 
-def createHistogram(nin, num_bins):
-    nhist = nrd.Nrrd()
-    teem.nrrdHisto(nhist._ctypesobj, nin._ctypesobj, None, None, num_bins, teem.nrrdTypeUInt)
-    return nhist
-
-def createHistoImage(nhist, height):
-    nimg = nrd.Nrrd()
-    teem.nrrdHistoDraw(nimg._ctypesobj, nhist._ctypesobj, height, teem.AIR_TRUE, teem.AIR_NAN)
-    return nimg
-
-def convertToGrayscale(nin):
-    #nin_list = [nin._ctypesobj, nin._ctypesobj, nin._ctypesobj]
-    #nin_array = (ctypes.POINTER(teem.Nrrd) * 3)(*nin_list)
-    #nout = nrd.Nrrd()
-    #teem.nrrdJoin(nout._ctypesobj, nin_array, 3, 0, teem.AIR_TRUE)
-    
-    byte_grey = nrd.ExtendedArray(nin)
-    (h, w) = byte_grey.shape
-    rgba = np.zeros((h, w, 4), dtype=np.uint8)
-    for y in range(h):
-        for x in range(w):
-            rgba[y][x][0:3] = byte_grey[y][x]
-            rgba[y][x][3] = 255
-    nout = nrd.Nrrd()
-    nout.fromNDArray(rgba)
-    return nout
+def getOrientationTransform(nin):
+    # note this function is only designed to work for 8-bit greyscale images -- no good way to generalize to RGB/RGBA/CMYK/etc. without making major assumptions about axis positioning based on # of dimensions
+    m00 = nin._ctypesobj.contents.axis[0].spaceDirection[0]
+    m01 = nin._ctypesobj.contents.axis[1].spaceDirection[0]
+    m10 = nin._ctypesobj.contents.axis[0].spaceDirection[1]
+    m11 = nin._ctypesobj.contents.axis[1].spaceDirection[1]
+    # reminder: b/c this is being used to create a new image for display, with it's own image space, we don't have to worry about translation as defined by spaceOrigins... spaceOrigins however will need to be accounted for when attempting to determine the image space coordinate from a user click...
+    m02 = 0.0
+    m12 = 0.0
+    m20 = 0.0
+    m21 = 0.0
+    m22 = 1.0
+        
+    return QTransform(m00, m01, m02, m10, m11, m12, m20, m21, m22)
 
 def main():
     app = QApplication(sys.argv)
@@ -156,9 +157,9 @@ def main():
     
     nrrd = nrd.Nrrd()
     nrrd.load(fileName)
-    window = NrrdHistoDisplay(nrrd)
+    window = NrrdDisplay(nrrd)
     window.show()
-    #window.positionWidget(window.infoWidget)
+    window.positionWidget(window.infoWidget)
     splash.finish(window)
     
     sys.exit(app.exec_())
