@@ -199,7 +199,7 @@ class NrrdDisplay(QMainWindow):
         self.addDockWidget(Qt.RightDockWidgetArea, infoWidget) #using Qt.NoDockWidetArea here spits out warning... 
         self.infoWidget = infoWidget
     
-        # slider window creation
+        # slider window creation -- note: size of slider and text input box automatically determined by 'sizeHint' property of widgets (see wiki for explanation) 
         hbox = QWidget()
         isoVal = QIntValidator(0, 65535, self)
         self.isoEdit = QLineEdit("%i" % init_iso)
