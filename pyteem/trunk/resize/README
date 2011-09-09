@@ -1,0 +1,3 @@
+Again, just didn't get around to implementing this, but the proper Qt code basis can be found in histo... 
+
+You're going to need add a QComboBox to a dock widget window to allow the user to select the convolution kernel, have some QLineEdit (text input boxes) to allow you to change the parameters, and then run the proper teem functions on the nrrd and display the output on value change signals (can look up in documentation for a given widget) - the histo project does most of this and can be used as a model
