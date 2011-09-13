@@ -122,7 +122,7 @@ class NrrdDisplay(QMainWindow):
         nrrd = self.nImg
         localArray = nrd.ExtendedArray(nrrd)
         localImage = QImage(localArray.data, nrrd._ctypesobj.contents.axis[1].size, nrrd._ctypesobj.contents.axis[2].size, QImage.Format_RGB32)
-        pixmap = QPixmap(localImage.transformed(self.transform))
+        pixmap = QPixmap(localImage.transformed(self.transform, Qt.SmoothTransformation))
         return pixmap
 
     def convertToGrayscale(self, nin, nout):
