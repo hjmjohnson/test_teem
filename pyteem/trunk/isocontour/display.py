@@ -15,13 +15,14 @@ import teem
 import ctypes
 import numpy as np
 
+# global-ish variables (make sure init values only have to be updated in one place)
 init_aX = 1
 init_aY = 1
 init_scl = 100
 init_iso = 32000
 line_width = 2
 
-
+# helper functions
 def lerp(x0, y0, x1, y1, y):
     f = (float(y)-float(y0))/(float(y1)-float(y0))
     result = (1-f)*x0 + f*x1
@@ -135,12 +136,13 @@ class NrrdDisplay(QMainWindow):
         self.lut.fromNDArray(prelut)
         self.rng = teem.nrrdRangeNew(0, 65536)
         
-        # setup of QT display
+        # setup of QT display (QGraphicsView always contains a QGraphicsScene -- you can just display an image on a QLabel, but this has better support for things like only displaying parts images that are too big)
         self.localGrphView = QGraphicsView()
         self.setCentralWidget(self.localGrphView)
         self.localScene = QGraphicsScene()
         self.localGrphView.setScene(self.localScene)
 
+        # getting the nrrd file to actually display
         self.nrrd = nrrd
         self.transform = QTransform()
         self.nImg = nrd.Nrrd()
@@ -149,7 +151,7 @@ class NrrdDisplay(QMainWindow):
         self.pixmapItem = QGraphicsPixmapItem(self.getPixmap(), None, self.localScene)
         self.pixmapItem.mousePressEvent = self.pixelClick
         
-        # menu creation
+        # menu creation (Menus are composed of QActions in Qt)
         openAction = QAction("Open...", self)
         openAction.setShortcuts(QKeySequence.Open)
         openAction.setStatusTip("Open an existing file")
@@ -158,7 +160,6 @@ class NrrdDisplay(QMainWindow):
         genAction = QAction("Generate SVG", self)
         genAction.setStatusTip("Generate an SVG file of current isocountour")
         genAction.triggered.connect(self.generateSVG)
-        
         
         fileMenu = self.menuBar().addMenu("File")
         fileMenu.addAction(openAction)
@@ -174,7 +175,7 @@ class NrrdDisplay(QMainWindow):
         intVal = QIntValidator(1, 10000, self)
         self.xAspectEdit = QLineEdit("%i" % init_aX)
         self.xAspectEdit.setValidator(doubleVal)
-        self.xAspectEdit.editingFinished.connect(self.updateDisplay)
+        self.xAspectEdit.editingFinished.connect(self.updateDisplay) #the editingFinished() signal only gets sent if validation is passed
         self.yAspectEdit = QLineEdit("%i" % init_aY)
         self.yAspectEdit.setValidator(doubleVal)
         self.yAspectEdit.editingFinished.connect(self.updateDisplay)
@@ -188,9 +189,9 @@ class NrrdDisplay(QMainWindow):
         boxLayout.addRow("Aspect Ratio (width):", self.xAspectEdit)
         boxLayout.addRow("Aspect Ratio (height):", self.yAspectEdit)
         boxLayout.addRow("Scale (% orig. size):", self.scaleEdit)
-        groupBox.setLayout(boxLayout)
-        
-        infoWidget = QDockWidget("Information", self)
+        groupBox.setLayout(boxLayout)        
+
+        infoWidget = QDockWidget("Information", self) #see QDockWidget for documentation on what all these setup calls do
         infoWidget.setFocusPolicy(Qt.ClickFocus)
         infoWidget.setAllowedAreas(Qt.NoDockWidgetArea)
         infoWidget.setFloating(True)
@@ -230,7 +231,7 @@ class NrrdDisplay(QMainWindow):
         self.addDockWidget(Qt.BottomDockWidgetArea, sliderWidget)
         self.sliderWidget = sliderWidget
     
-    
+    # remiplented functions for subclass
     def sizeHint(self):
         s = self.pixmapItem.boundingRect().size().toSize()
         return s
@@ -238,6 +239,7 @@ class NrrdDisplay(QMainWindow):
     def resizeEvent(self, e):
         super(NrrdDisplay, self).resizeEvent(e)
     
+    # internal helper functions
     def updateDisplay(self):
         rx = float(self.xAspectEdit.text())
         ry = float(self.yAspectEdit.text())
@@ -306,8 +308,6 @@ class NrrdDisplay(QMainWindow):
         w2_frame = self.sliderWidget.geometry()
         if (w2_frame.intersects(frame)):
             self.sliderWidget.move(w2_frame.x(), (frame.y() + frame.height() + 10))
-            
-        
         return
 
     def getPixmap(self):
@@ -334,6 +334,7 @@ class NrrdDisplay(QMainWindow):
         if fileName == "":
             return
         
+        # code pretty much pulled directly from documentation of QSvgGenerator
         generator = QSvgGenerator()
         generator.setFileName(fileName)
         r = self.pixmapItem.boundingRect()
@@ -347,23 +348,27 @@ class NrrdDisplay(QMainWindow):
         painter.end()
         
 
-
+# the actual main for running the applications 
 def main():
     app = QApplication(sys.argv)
     
+    # show splash screen
     pixmap = QPixmap("splash.png")
     splash = QSplashScreen(pixmap)
     splash.show()
     
+    # open up file open dialog
     (fileName, filter) = QFileDialog.getOpenFileName(None, "Open Image", os.getcwd(), "Image Files (*.png);;Text Files (*.nrrd)")
     if fileName == "":
         sys.exit()
     
+    #load approriate file
     nrrd = nrd.Nrrd()
     nrrd.load(fileName)
     window = NrrdDisplay(nrrd)
     window.show()
     window.positionWidgets()
+    # kill splash when initialization has finished.
     splash.finish(window)
     
     sys.exit(app.exec_())
