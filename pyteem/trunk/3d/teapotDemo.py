@@ -22,6 +22,7 @@ except ImportError:
                             QtGui.QMessageBox.NoButton)
     sys.exit(1)
 
+# helper functions
 def affine(i,v,I,o,O):
     return (float(O)-float(o))*(float(v)-i)/(float(I)-float(i)) + float(o)
 
@@ -31,25 +32,28 @@ def delta(i,x,I,o,O):
 def inside(min, val, max):
     return min <= val and val < max
 
+# wrapper display class (could also use QMainWindow)
 class Window(QtGui.QWidget):
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
 
         self.glWidget = GLWidget()
         
+        #hBoxLayout will line up all sub-widgets horizontaly
         mainLayout = QtGui.QHBoxLayout()
         mainLayout.addWidget(self.glWidget)
         self.setLayout(mainLayout)
         
         self.setWindowTitle(self.tr("3D Camera Demo"))
     
+    # inherited function handles keyboard input (keyboard input response happens in main window, not in the widget like the mouse-click response)
     def keyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_U:
             self.glWidget.fixUp = not self.glWidget.fixUp
         else:
             super(Window, self).keyPressEvent(event)
     
-
+# QGLWidget subclass
 class GLWidget(QtOpenGL.QGLWidget):
     def __init__(self, parent=None):
         QtOpenGL.QGLWidget.__init__(self, parent)
@@ -69,11 +73,11 @@ class GLWidget(QtOpenGL.QGLWidget):
         self.mode = '' 
         
         self.lastPos = QtCore.QPoint()
-        
-
+    
+    # see sizeHints() section on wiki
     def minimumSizeHint(self):
         return QtCore.QSize(50, 50)
-
+    
     def sizeHint(self):
         return QtCore.QSize(400, 400)
     
@@ -105,6 +109,9 @@ class GLWidget(QtOpenGL.QGLWidget):
                       self.lookAt[0],    self.lookAt[1],     self.lookAt[2],
                       self.upVec[0],     self.upVec[1],      self.upVec[2])
     
+    # main openGL code goes in the next 3 functions
+    
+    # same as openGL initialize
     def initializeGL(self):
         
         # background
@@ -136,6 +143,7 @@ class GLWidget(QtOpenGL.QGLWidget):
         GL.glEnable(GL.GL_DEPTH_TEST)
         GL.glEnable(GL.GL_CULL_FACE)
     
+    # same as openGL draw
     def paintGL(self):
         
         GL.glClear(GL.GL_COLOR_BUFFER_BIT | GL.GL_DEPTH_BUFFER_BIT)
@@ -151,19 +159,20 @@ class GLWidget(QtOpenGL.QGLWidget):
         
         GL.glPopMatrix()
 
+    # same as openGL window re-size code
     def resizeGL(self, width, height):
         
         self.aspect = float(width)/float(height)
         
         GL.glViewport(0, 0, width, height)
         self.updateProjection()
-        
-    
+     
     def updateProjection (self):
         GL.glMatrixMode(GL.GL_PROJECTION)
         GL.glLoadIdentity()
         GLU.gluPerspective(self.fov, self.aspect, self.vspNear, self.vspFar)
     
+    # sublcassing mouse event response
     def mousePressEvent(self, event):
         self.lastPos = QtCore.QPoint(event.pos())
         xf = affine(0, self.lastPos.x(), self.width(), -1, 1)
@@ -196,7 +205,7 @@ class GLWidget(QtOpenGL.QGLWidget):
         
         # determine right click vs left click
         if event.buttons() & QtCore.Qt.LeftButton:
-            if event.modifiers() & QtCore.Qt.MetaModifier: #control pressed - standard mac modifier for right click
+            if event.modifiers() & QtCore.Qt.MetaModifier: #control pressed - standard mac modifier for right click (keyboard modifiers for clicks handled differently from other keyboard inputs)
                 button = 2
             else:
                 button = 0
@@ -228,7 +237,6 @@ class GLWidget(QtOpenGL.QGLWidget):
         #print "Viewer mode:", self.mode
         self.updateGL()
         
-    
     def mouseMoveEvent(self, event):
         x = event.x()
         oldX = self.lastPos.x()
