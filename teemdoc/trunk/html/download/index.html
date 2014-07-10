@@ -37,20 +37,16 @@ Teem: Download
 
 <p>
 
-<b> Checking out a source tree</b>: Teem source is version controlled
-with <a href="http://subversion.tigris.org/">Subversion</a>. To check
-out the current source: <blockquote> <tt>svn co
-https://teem.svn.sourceforge.net/svnroot/teem/teem/trunk teem</tt><br>
+<b> Checking out current source</b>: <blockquote><tt>svn co
+https://svn.code.sf.net/p/teem/code/teem/trunk teem</tt><br>
 </blockquote>
-
-You can also browse the source online via
-<a href="http://teem.svn.sourceforge.net/viewvc/teem/teem/trunk/">ViewVC</a>.
+See also <a href="../build.html">how to build teem</a>.
 
 <p>
 
-If you're downloading the software as "Source", you probably want to
-look at information on <a href="../build.html">how to build teem</a>.
-The "Pre-built" files do not include the source.  They contain only
+
+The pre-compiled versions linked to belowdo not include source.
+They contain only
 <tt>bin</tt>, <tt>lib</tt>, and <tt>include</tt> directories into
 which all the required teem files have been copied/compiled.  On all
 architectures (including Windows), all the programs have been
@@ -60,7 +56,7 @@ and bzip2 compression, as well as PNG support.
 <p>
 
 If you download and try Teem, or are interested in developing Teem or
-software that uses it, you are encouraged to join the 
+software that uses it, you are encouraged to join the
 <a href="http://lists.sourceforge.net/lists/listinfo/teem-users"><tt>teem-users</tt></a>
 mailing list, which is the primary venue for asking questions about Teem.
 
@@ -86,6 +82,39 @@ There is a <a href="http://sourceforge.net/project/showfiles.php?group_id=85445"
 
 <tr>
   <td align=left valign=middle>
+    <font size="+1">teem-1.11.0</font><br>
+    <small>(Released: December 20, 2012)</small><br>
+
+<a href="http://prdownloads.sourceforge.net/teem/teem-1.11.0-src.tar.gz?download">Source for all platforms</a>
+
+<br>
+
+  <td>
+  <td align=left>
+<a href="http://sourceforge.net/projects/teem/files/teem/1.11.0">4 years of changes</a>.
+<ul>
+
+<li> Improved (again) <a href="http://www.cmake.org">CMake</a> support.
+
+<li> Python/ctypes wrappers in <tt>teem/python/ctypes</tt> (thanks to
+Sam Quinan).
+
+<li> New program <tt>gprobe</tt>, which will eventually subsume <tt>vprobe</tt>
+and <tt>pprobe</tt>.
+
+<li> New <tt>unu</tt> commands <tt>fft</tt>, <tt>affine</tt>, <tt>diff</tt>, <tt>acrop</tt>, <tt>sselect</tt>
+
+<li> New libraries <tt>elf</tt> and <tt>tijk</tt> by Thomas Schultz to
+support visualization (elf) and computation (tijk) of high-order
+tensors and spherical harmonics.
+
+</ul>
+
+<tr><td><hr noshade><td><td>
+
+<!--  xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+<tr>
+  <td align=left valign=middle>
     <font size="+1">teem-1.10.0</font><br>
     <small>(Released: December 10, 2008)</small><br>
 
@@ -95,7 +124,7 @@ There is a <a href="http://sourceforge.net/project/showfiles.php?group_id=85445"
 
   <td>
   <td align=left>
-<a href="https://sourceforge.net/project/shownotes.php?group_id=85445&release_id=646135">3 years of changes</a>, but hopefully no show-stoppers.
+<a href="http://sourceforge.net/projects/teem/files/teem/1.10.0">3 years of changes</a>, but hopefully no show-stoppers.
 <ul>
 
 <li> Improved <a href="http://www.cmake.org">CMake</a> support.
