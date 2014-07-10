@@ -59,10 +59,9 @@ To build Teem with <tt>ccmake</tt>:
 
   <li> Go to a directory where the "teem" source subdirectory should be
   created.
-  <li> <tt>svn co https://teem.svn.sourceforge.net/svnroot/teem/teem/trunk teem</tt>
-  <li> Make a directory for all the built object files and libraries
-  (e.g. teem-build)
-  <li> <tt>mkdir teem-build</tt>
+  <li> <tt>svn co https://svn.code.sf.net/p/teem/code/teem/trunk teem</tt>
+  <li> Make a directory for all the built object files and libraries:<br>
+  <tt>mkdir teem-build</tt>
   <li> <tt>cd teem-build</tt>
   <li> <tt>ccmake ../teem</tt> (or wherever the Teem source is)
   <li> Type "c".  Cmake chews on a bunch of stuff, saying "Configuring ..."
@@ -76,7 +75,7 @@ To build Teem with <tt>ccmake</tt>:
   will be created subdirectories <tt>bin</tt>, <tt>include</tt>, and
   <tt>lib</tt>.
   <li> Turn ON "BUILD_SHARED_LIBS" if you want to created shared libraries
-  or DLL, and leave ON the other formats and encodings you want at the bottom.
+  or DLLs, and leave ON the other formats and encodings you want at the bottom.
   <li> Type "c" again, then "g", which causes cmake to generate the Makefile
   and quit.
   <li> <tt>make</tt>
